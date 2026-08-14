@@ -14,12 +14,15 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
+VERSION = "0.3.0"
+
 SEVERITY = {"none": 99, "critical": 0, "high": 1, "medium": 2, "low": 3}
 CONFIDENCE = {"high": 0, "medium": 1, "low": 2}
 SKIP_DIRS = {
     ".git", ".hg", ".svn", ".idea", ".vscode", ".venv", "venv", "env",
     "node_modules", "vendor", "dist", "build", "coverage", ".next", ".nuxt",
     ".cache", ".pytest_cache", ".mypy_cache", ".ruff_cache", "target", "bin", "obj",
+    "__pycache__",
 }
 TEXT_SUFFIXES = {
     ".py", ".pyi", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".java",
@@ -118,7 +121,7 @@ RULES: tuple[Rule, ...] = (
          "A third-party GitHub Action is referenced by a mutable tag or branch.", "Pin the action to a reviewed 40-character commit SHA and retain the release tag in a comment.",
          "CWE-829", "NIST SSDF PS.3", frozenset({".yml", ".yaml"})),
     Rule("SP301", "Redis KEYS in application path", "scale", "high", "medium",
-         rx(r"\b(?:redis\.)?keys\s*\("), "Redis KEYS can block the server while scanning the full keyspace.",
+         rx(r"\b(?:redis|redis_client|r)\.keys\s*\("), "Redis KEYS can block the server while scanning the full keyspace.",
          "Use cursor-based SCAN, a purpose-built index, or a bounded key namespace.", "CWE-400", "Capacity"),
     Rule("SP302", "Unbounded SQL result", "scale", "medium", "low",
          rx(r"\bSELECT\s+\*\s+FROM\b(?![^;\n]*\bLIMIT\b)"), "A query may return an unbounded, over-wide result set.",
@@ -146,9 +149,33 @@ def clean_evidence(line: str, redact: bool) -> str:
     return "[REDACTED: credential-like material]" if redact else compact
 
 
+def is_pure_comment(line: str, path: Path) -> bool:
+    stripped = line.strip()
+    if not stripped:
+        return False
+    suffix = path.suffix.lower()
+    name = path.name.lower()
+    if suffix in {".py", ".pyi", ".sh", ".bash", ".ps1", ".yaml", ".yml", ".toml",
+                  ".ini", ".cfg", ".conf", ".properties", ".env", ".rb", ".graphql", ".gql"} or \
+            name in {"dockerfile", "containerfile", "makefile", "procfile", ".env"}:
+        return stripped.startswith("#")
+    if suffix in {".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".java",
+                  ".kt", ".kts", ".go", ".rs", ".cs", ".php"}:
+        return stripped.startswith("//") or stripped.startswith("/*") or stripped.startswith("*")
+    if suffix == ".sql":
+        return stripped.startswith("--") or stripped.startswith("/*") or stripped.startswith("*")
+    if suffix in {".tf", ".hcl"}:
+        return stripped.startswith("#") or stripped.startswith("//")
+    return False
+
+
 def make_finding(rule: Rule, relative: str, line: int, evidence: str) -> Finding:
     safe_evidence = clean_evidence(evidence, rule.redact)
-    identity = f"{rule.rule_id}:{relative}:{safe_evidence}"
+    if rule.redact:
+        content_hash = hashlib.sha256(evidence.strip().encode("utf-8", "replace")).hexdigest()[:12]
+        identity = f"{rule.rule_id}:{relative}:{content_hash}"
+    else:
+        identity = f"{rule.rule_id}:{relative}:{safe_evidence}"
     fingerprint = hashlib.sha256(identity.encode("utf-8", "replace")).hexdigest()[:24]
     return Finding(rule.rule_id, rule.title, rule.category, rule.severity, rule.confidence,
                    relative, line, safe_evidence, rule.message,
@@ -165,6 +192,8 @@ def regex_findings(path: Path, relative: str, text: str) -> list[Finding]:
         if rule.suffixes and suffix not in rule.suffixes:
             continue
         for line_number, line in enumerate(lines, 1):
+            if rule.rule_id not in {"SP001", "SP002", "SP003"} and is_pure_comment(line, path):
+                continue
             if rule.pattern.search(line):
                 if rule.rule_id in {"SP001", "SP002", "SP003"} and PLACEHOLDERS.search(line):
                     continue
@@ -248,10 +277,21 @@ def load_baseline(path: Path | None) -> set[str]:
 
 
 def finalize_findings(findings: Iterable[Finding], baseline: set[str] | None = None) -> tuple[list[Finding], int]:
-    unique = {finding.fingerprint: finding for finding in findings}
-    active = [item for key, item in unique.items() if key not in (baseline or set())]
+    unique: dict[tuple[str, str, int], Finding] = {}
+    for finding in findings:
+        key = (finding.rule_id, finding.path, finding.line)
+        if key not in unique:
+            unique[key] = finding
+    active: list[Finding] = []
+    suppressed_count = 0
+    baseline_set = baseline or set()
+    for finding in unique.values():
+        if finding.fingerprint in baseline_set:
+            suppressed_count += 1
+        else:
+            active.append(finding)
     active.sort(key=lambda item: (SEVERITY[item.severity], CONFIDENCE[item.confidence], item.path, item.line))
-    return active, len(unique) - len(active)
+    return active, suppressed_count
 
 
 def scan(root: Path, max_bytes: int = 1_000_000, baseline: set[str] | None = None) -> tuple[list[Finding], dict[str, int]]:
@@ -264,8 +304,8 @@ def scan(root: Path, max_bytes: int = 1_000_000, baseline: set[str] | None = Non
         files_scanned += 1
         relative = path.relative_to(root).as_posix()
         try:
-            text = path.read_text(encoding="utf-8")
-        except (OSError, UnicodeError):
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
             continue
         findings.extend(regex_findings(path, relative, text))
         if path.suffix.lower() == ".py":
@@ -287,7 +327,7 @@ def verdict(findings: Sequence[Finding]) -> str:
 def json_report(root: Path, findings: Sequence[Finding], stats: dict[str, int]) -> dict[str, object]:
     return {
         "schema_version": "1.0",
-        "tool": {"name": "ShipProof", "version": "0.1.0"},
+        "tool": {"name": "ShipProof", "version": VERSION},
         "root": str(root.resolve()),
         "verdict": verdict(findings),
         "summary": {"findings": len(findings), **stats, "by_severity": dict(Counter(item.severity for item in findings))},
@@ -315,7 +355,7 @@ def sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
     rules: dict[str, Finding] = {item.rule_id: item for item in findings}
     level = {"critical": "error", "high": "error", "medium": "warning", "low": "note"}
     return {"version": "2.1.0", "$schema": "https://json.schemastore.org/sarif-2.1.0.json", "runs": [{
-        "tool": {"driver": {"name": "ShipProof", "version": "0.1.0", "informationUri": "https://github.com/kingggg5/shipproof",
+        "tool": {"driver": {"name": "ShipProof", "version": VERSION, "informationUri": "https://github.com/kingggg5/shipproof",
                             "rules": [{"id": item.rule_id, "name": item.title.replace(" ", "_"),
                                        "shortDescription": {"text": item.title}, "fullDescription": {"text": item.message},
                                        "help": {"text": item.remediation}, "properties": {"tags": [item.category, item.cwe, item.owasp]}}
@@ -342,6 +382,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
     args = parse_args(argv)
     try:
         if args.max_file_bytes <= 0:
