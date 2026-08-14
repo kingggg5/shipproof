@@ -32,10 +32,12 @@ A confirmed vulnerability needs an exact path, a triggering input or preconditio
 
 Map findings where helpful to:
 
-- [OWASP ASVS 5.0](https://github.com/OWASP/ASVS/tree/master/5.0), a web application and service verification standard.
-- [OWASP API Security Top 10](https://owasp.org/API-Security/), especially object/function authorization, resource consumption, and unsafe API consumption.
-- [NIST SP 800-218 SSDF](https://csrc.nist.gov/pubs/sp/800/218/final), covering preparation, software protection, well-secured production, and vulnerability response.
-- [OpenSSF Scorecard](https://scorecard.dev/), for repository and supply-chain hygiene signals.
+- OWASP ASVS 5.0 for versioned web application and service verification requirements.
+- OWASP API Security Top 10 for object/function authorization, resource consumption, and unsafe API consumption.
+- NIST SP 800-218 SSDF for preparation, software protection, well-secured production, and vulnerability response.
+- OpenSSF Scorecard for repository and supply-chain hygiene signals.
+
+Use mappings to communicate a confirmed control gap, not to imply certification or complete framework coverage. Source provenance belongs in the repository research notebook rather than this execution guide.
 
 ## Required negative tests
 
