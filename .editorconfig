@@ -9,7 +9,11 @@ trim_trailing_whitespace = true
 [*.py]
 indent_style = space
 indent_size = 4
+max_line_length = 100
 
-[{*.md,*.json,*.yaml,*.yml}]
+[*.{js,cjs,mjs,jsx,ts,tsx,json,yaml,yml,md}]
 indent_style = space
 indent_size = 2
+
+[Makefile]
+indent_style = tab
