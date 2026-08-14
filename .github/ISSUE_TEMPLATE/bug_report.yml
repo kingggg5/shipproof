@@ -1,0 +1,39 @@
+name: Bug report
+description: Report incorrect behavior or a false positive/negative.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Remove secrets, private source, and personal data before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: ShipProof version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Skill workflow
+        - Repository scanner
+        - Capacity model
+        - Installer
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal sanitized reproduction
+    validations:
+      required: true

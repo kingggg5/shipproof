@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+tests/tmp*/
+shipproof-report.*
+shipproof.sarif
+shipproof-self-scan.json
+.DS_Store
+Thumbs.db

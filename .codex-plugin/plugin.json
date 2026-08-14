@@ -1,0 +1,22 @@
+{
+  "name": "shipproof",
+  "version": "0.1.0",
+  "description": "Evidence-first production readiness audits for bugs, security, and scale.",
+  "author": {
+    "name": "Jesadakorn Pipitakun"
+  },
+  "homepage": "https://github.com/kingggg5/shipproof",
+  "repository": "https://github.com/kingggg5/shipproof",
+  "license": "MIT",
+  "keywords": ["security", "code-review", "scalability", "production-readiness", "sarif"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "ShipProof",
+    "shortDescription": "Audit bugs, security, and scale readiness.",
+    "longDescription": "Run local-first, evidence-backed audits for correctness defects, security vulnerabilities, supply-chain risks, and 10k-to-1M-user capacity assumptions.",
+    "developerName": "Jesadakorn Pipitakun",
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "defaultPrompt": "Use $audit-production-readiness to audit this repository for release-blocking bugs, security flaws, and 10k/1M-user scale risks."
+  }
+}
