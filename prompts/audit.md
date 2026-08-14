@@ -1,0 +1,1 @@
+Use $audit-production-readiness to audit this repository for production release. Build a threat model, run deterministic checks first, trace high-risk paths end to end, confirm findings before assigning severity, and report separate Security, Correctness, Scale, Operability, Data, and Supply Chain gates. Treat missing evidence as unknown, not pass.

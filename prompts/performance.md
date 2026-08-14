@@ -1,0 +1,1 @@
+Use $engineer-production-systems to optimize the named workload. Establish a reproducible baseline and SLO, profile before editing, locate the dominant bottleneck, make one narrow change, and compare p50/p95/p99 latency, throughput, CPU, allocations, peak memory, errors, and cost with the same workload. Include variance, warmup, environment, and rollback criteria.

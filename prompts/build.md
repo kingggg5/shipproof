@@ -1,0 +1,1 @@
+Use $engineer-production-systems to implement this change. First trace the affected path and state the security, correctness, compatibility, latency, CPU, memory, failure, and recovery constraints. Keep the change minimal, bound all externally controlled work, test trust boundaries and failures, run repository-native checks, and report only measured or directly verified claims.
