@@ -1,4 +1,4 @@
 interface:
   display_name: "ShipProof"
   short_description: "Audit bugs, security, and scale readiness"
-  default_prompt: "Use $audit-production-readiness to audit this repository for release-blocking bugs, security flaws, and 10k/1M-user scale risks."
+  default_prompt: "Use $audit-production-readiness to audit this repository across security, correctness, data/privacy, AI-agent, scale, operability, and supply-chain gates."

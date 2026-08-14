@@ -1,7 +1,7 @@
 {
   "name": "shipproof",
   "displayName": "ShipProof",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-first engineering and production audits for secure, efficient, scalable systems.",
   "author": {
     "name": "Jesadakorn Pipitakun",
@@ -10,6 +10,6 @@
   "homepage": "https://github.com/kingggg5/shipproof",
   "repository": "https://github.com/kingggg5/shipproof",
   "license": "MIT",
-  "keywords": ["security", "performance", "code-review", "systems", "production-readiness"],
+  "keywords": ["security", "performance", "code-review", "database", "ai-agents", "systems", "production-readiness"],
   "skills": "./skills/"
 }

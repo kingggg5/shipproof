@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  python:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
@@ -42,3 +42,32 @@ jobs:
         run: python skills/audit-production-readiness/scripts/scan_repo.py . --format markdown --fail-on high
       - name: Validate plugin manifests
         run: python -c "import json; from pathlib import Path; [json.loads(p.read_text()) for p in (Path('.codex-plugin/plugin.json'), Path('.claude-plugin/plugin.json'))]"
+
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "24"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Install from lockfile without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Test npm CLI
+        run: npm run test:node
+      - name: Smoke-test the Python bridge
+        if: matrix.node-version == '24'
+        run: |
+          node bin/shipproof.mjs doctor . --json
+          node bin/shipproof.mjs budget --baseline examples/performance/baseline.json --current examples/performance/current.json --budget examples/performance/budget.json
+          node bin/shipproof.mjs capacity --users 10000 --format json
+          node bin/shipproof.mjs scan . --fail-on high
+      - name: Verify published file set
+        run: npm pack --dry-run

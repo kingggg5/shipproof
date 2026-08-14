@@ -1,4 +1,4 @@
 interface:
   display_name: "ShipProof Engineer"
   short_description: "Build secure, efficient production systems"
-  default_prompt: "Use $engineer-production-systems to implement this change with explicit security, CPU, memory, latency, and scale evidence."
+  default_prompt: "Use $engineer-production-systems to implement this change with explicit security, correctness, data, CPU, memory, latency, failure, recovery, and scale evidence."

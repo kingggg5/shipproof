@@ -1,6 +1,6 @@
 {
   "name": "shipproof",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-first engineering and production audits for secure, efficient, scalable systems.",
   "author": {
     "name": "Jesadakorn Pipitakun"
@@ -13,7 +13,7 @@
   "interface": {
     "displayName": "ShipProof",
     "shortDescription": "Build and audit secure, efficient systems.",
-    "longDescription": "Guide production implementation and run local-first, evidence-backed audits across application code, kernels, browser engines, parsers, protocols, supply chains, and 10k-to-1M-user capacity assumptions.",
+    "longDescription": "Guide production implementation and run local-first, evidence-backed audits across full-stack applications, databases, AI agents, supply chains, kernels, browser engines, parsers, protocols, operations, and 10k-to-1M-user capacity assumptions.",
     "developerName": "Jesadakorn Pipitakun",
     "category": "Developer Tools",
     "capabilities": ["Read", "Write"],
