@@ -9,6 +9,7 @@ Use this reference for application, API, worker, data, and infrastructure code.
 3. Prefer a single process and data store until a measured constraint requires distribution.
 4. Put policy in one named function or module. Keep configuration external, typed, validated at startup, and safe by default.
 5. Keep domain decisions pure where practical. Put clocks, randomness, network, database, filesystem, and model calls behind narrow boundaries.
+6. Follow the repository's formatter and each language's indentation convention. Do not convert spaces to tabs or shorten identifiers as a memory optimization; source whitespace and identifier length are not application state.
 6. Represent money, identifiers, time, units, states, and permissions with types that prevent accidental mixing.
 
 ## Bound every amplifier

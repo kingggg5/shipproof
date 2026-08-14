@@ -7,9 +7,9 @@ import argparse
 import json
 import math
 import sys
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
-from typing import Sequence
 
 
 @dataclass(frozen=True)
@@ -32,20 +32,38 @@ class CapacityInputs:
     headroom: float = 1.5
 
 
-def validate(inputs: CapacityInputs) -> None:
+def validate_capacity_inputs(inputs: CapacityInputs) -> None:
     if isinstance(inputs.users, bool) or not isinstance(inputs.users, int) or inputs.users <= 0:
         raise ValueError("users must be a positive integer")
     for name in ("dau_ratio", "peak_hour_ratio", "read_ratio", "cache_hit_ratio"):
         value = getattr(inputs, name)
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+        ):
             raise ValueError(f"{name} must be a finite number")
         if not 0 <= value <= 1:
             raise ValueError(f"{name} must be between 0 and 1")
-    for name in ("actions_per_session", "requests_per_action", "burst_multiplier", "queries_per_read",
-                 "queries_per_write", "p95_latency_ms", "db_time_ms", "instance_rps",
-                 "cpu_ms_per_request", "memory_mb_per_instance", "headroom"):
+    for name in (
+        "actions_per_session",
+        "requests_per_action",
+        "burst_multiplier",
+        "queries_per_read",
+        "queries_per_write",
+        "p95_latency_ms",
+        "db_time_ms",
+        "instance_rps",
+        "cpu_ms_per_request",
+        "memory_mb_per_instance",
+        "headroom",
+    ):
         value = getattr(inputs, name)
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+        ):
             raise ValueError(f"{name} must be a finite number")
         if value <= 0:
             raise ValueError(f"{name} must be positive")
@@ -53,8 +71,8 @@ def validate(inputs: CapacityInputs) -> None:
         raise ValueError("headroom must be at least 1")
 
 
-def model(inputs: CapacityInputs) -> dict[str, object]:
-    validate(inputs)
+def build_capacity_model(inputs: CapacityInputs) -> dict[str, object]:
+    validate_capacity_inputs(inputs)
     daily_active_users = inputs.users * inputs.dau_ratio
     peak_hour_users = daily_active_users * inputs.peak_hour_ratio
     peak_hour_requests = peak_hour_users * inputs.actions_per_session * inputs.requests_per_action
@@ -72,12 +90,36 @@ def model(inputs: CapacityInputs) -> dict[str, object]:
     app_memory_mb = instances * inputs.memory_mb_per_instance
     db_connections = max(2, math.ceil(in_flight_db * inputs.headroom))
     test_stages = [
-        {"name": "smoke", "target_rps": round(max(1, design_peak_rps * 0.05), 2), "purpose": "Validate script and telemetry"},
-        {"name": "average", "target_rps": round(design_peak_rps * 0.50, 2), "purpose": "Establish steady-state baseline"},
-        {"name": "peak", "target_rps": round(design_peak_rps, 2), "purpose": "Prove SLO at design peak"},
-        {"name": "stress", "target_rps": round(design_peak_rps * 1.50, 2), "purpose": "Find the first bottleneck"},
-        {"name": "spike", "target_rps": round(design_peak_rps * 2.00, 2), "purpose": "Verify shedding and recovery"},
-        {"name": "soak", "target_rps": round(design_peak_rps, 2), "purpose": "Detect leaks and queue growth"},
+        {
+            "name": "smoke",
+            "target_rps": round(max(1, design_peak_rps * 0.05), 2),
+            "purpose": "Validate script and telemetry",
+        },
+        {
+            "name": "average",
+            "target_rps": round(design_peak_rps * 0.50, 2),
+            "purpose": "Establish steady-state baseline",
+        },
+        {
+            "name": "peak",
+            "target_rps": round(design_peak_rps, 2),
+            "purpose": "Prove SLO at design peak",
+        },
+        {
+            "name": "stress",
+            "target_rps": round(design_peak_rps * 1.50, 2),
+            "purpose": "Find the first bottleneck",
+        },
+        {
+            "name": "spike",
+            "target_rps": round(design_peak_rps * 2.00, 2),
+            "purpose": "Verify shedding and recovery",
+        },
+        {
+            "name": "soak",
+            "target_rps": round(design_peak_rps, 2),
+            "purpose": "Detect leaks and queue growth",
+        },
     ]
     return {
         "schema_version": "1.0",
@@ -110,15 +152,19 @@ def model(inputs: CapacityInputs) -> dict[str, object]:
     }
 
 
-def markdown_report(payload: dict[str, object]) -> str:
+def render_markdown_report(payload: dict[str, object]) -> str:
     inputs = payload["inputs"]
     derived = payload["derived"]
     stages = payload["load_test_stages"]
     lines = [
-        "# ShipProof capacity hypothesis", "",
-        f"Registered users are **not** treated as concurrent users. This model converts `{inputs['users']:,}` registered users into an explicit workload.", "",
-        "## Derived design targets", "",
-        "| Signal | Value |", "| --- | ---: |",
+        "# ShipProof capacity hypothesis",
+        "",
+        f"Registered users are **not** treated as concurrent users. This model converts `{inputs['users']:,}` registered users into an explicit workload.",
+        "",
+        "## Derived design targets",
+        "",
+        "| Signal | Value |",
+        "| --- | ---: |",
     ]
     labels = {
         "daily_active_users": "Daily active users",
@@ -136,8 +182,12 @@ def markdown_report(payload: dict[str, object]) -> str:
         "estimated_db_connections_with_headroom": "Estimated DB connections with headroom",
     }
     lines.extend(f"| {labels[key]} | {value:,} |" for key, value in derived.items())
-    lines.extend(["", "## Load-test ladder", "", "| Stage | Target RPS | Purpose |", "| --- | ---: | --- |"])
-    lines.extend(f"| {stage['name']} | {stage['target_rps']:,} | {stage['purpose']} |" for stage in stages)
+    lines.extend(
+        ["", "## Load-test ladder", "", "| Stage | Target RPS | Purpose |", "| --- | ---: | --- |"]
+    )
+    lines.extend(
+        f"| {stage['name']} | {stage['target_rps']:,} | {stage['purpose']} |" for stage in stages
+    )
     lines.extend(["", "## Assumptions to replace", "", "| Input | Value |", "| --- | ---: |"])
     lines.extend(f"| `{key}` | {value} |" for key, value in inputs.items())
     lines.extend(["", "## Required release evidence", ""])
@@ -146,7 +196,7 @@ def markdown_report(payload: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
-def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, help="Load inputs from a JSON configuration file")
     parser.add_argument("--users", type=int)
@@ -171,19 +221,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    if hasattr(sys.stdout, "reconfigure"):
-        try:
-            sys.stdout.reconfigure(encoding="utf-8")
-            sys.stderr.reconfigure(encoding="utf-8")
-        except Exception:
-            pass
-    args = parse_args(argv)
-    values = vars(args).copy()
-    config_path = values.pop("config")
-    output = values.pop("output")
-    output_format = values.pop("format")
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+    arguments = parse_arguments(argv)
+    argument_values = vars(arguments).copy()
+    config_path = argument_values.pop("config")
+    output_path = argument_values.pop("output")
+    output_format = argument_values.pop("format")
 
-    merged: dict[str, object] = {}
+    merged_inputs: dict[str, object] = {}
     if config_path:
         try:
             config_payload = json.loads(config_path.read_text(encoding="utf-8"))
@@ -192,37 +239,44 @@ def main(argv: Sequence[str] | None = None) -> int:
             config_inputs = config_payload.get("inputs", config_payload)
             if not isinstance(config_inputs, dict):
                 raise ValueError("config inputs must be a JSON object")
-            merged.update({k.replace("-", "_"): v for k, v in config_inputs.items()})
+            merged_inputs.update(
+                {key.replace("-", "_"): value for key, value in config_inputs.items()}
+            )
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             print(f"shipproof: {exc}", file=sys.stderr)
             return 2
 
     # Explicit CLI values override configuration; dataclass defaults fill omitted values.
-    for key, val in values.items():
+    for key, value in argument_values.items():
         clean_key = key.replace("-", "_")
-        if val is not None or clean_key not in merged:
-            if val is not None:
-                merged[clean_key] = val
+        if value is not None:
+            merged_inputs[clean_key] = value
 
-    if "users" not in merged or merged["users"] is None:
+    if "users" not in merged_inputs or merged_inputs["users"] is None:
         print("shipproof: error: --users is required (either via CLI or --config)", file=sys.stderr)
         return 2
 
     try:
         valid_fields = {f.name for f in fields(CapacityInputs)}
-        unknown_fields = sorted(set(merged) - valid_fields)
+        unknown_fields = sorted(set(merged_inputs) - valid_fields)
         if unknown_fields:
             raise ValueError(f"unknown config inputs: {', '.join(unknown_fields)}")
-        inputs = CapacityInputs(**merged)
-        payload = model(inputs)
+        capacity_inputs = CapacityInputs(**merged_inputs)
+        report_payload = build_capacity_model(capacity_inputs)
     except (ValueError, TypeError) as exc:
         print(f"shipproof: {exc}", file=sys.stderr)
         return 2
-    rendered = markdown_report(payload) if output_format == "markdown" else json.dumps(payload, indent=2)
-    if output:
-        output.write_text(rendered + ("" if rendered.endswith("\n") else "\n"), encoding="utf-8")
+    rendered_report = (
+        render_markdown_report(report_payload)
+        if output_format == "markdown"
+        else json.dumps(report_payload, indent=2)
+    )
+    if output_path:
+        output_path.write_text(
+            rendered_report + ("" if rendered_report.endswith("\n") else "\n"), encoding="utf-8"
+        )
     else:
-        print(rendered)
+        print(rendered_report)
     return 0
 
 

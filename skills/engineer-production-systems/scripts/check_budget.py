@@ -7,11 +7,11 @@ import argparse
 import json
 import math
 import sys
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Mapping, Sequence
 
 
-def load_object(path: str | Path) -> dict[str, object]:
+def load_json_object(path: str | Path) -> dict[str, object]:
     try:
         if str(path) == "-":
             value = json.loads(sys.stdin.read())
@@ -24,77 +24,90 @@ def load_object(path: str | Path) -> dict[str, object]:
     return value
 
 
-def metric_values(payload: Mapping[str, object], label: str) -> Mapping[str, object]:
+def extract_metric_values(payload: Mapping[str, object], label: str) -> Mapping[str, object]:
     values = payload.get("metrics", payload)
     if not isinstance(values, dict):
         raise ValueError(f"{label} metrics must be a JSON object")
     return values
 
 
-def number(value: object, label: str) -> float:
+def require_finite_number(value: object, label: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
         raise ValueError(f"{label} must be a finite number")
     return float(value)
 
 
-def evaluate(
+def evaluate_resource_budget(
     baseline_payload: Mapping[str, object],
     current_payload: Mapping[str, object],
     budget_payload: Mapping[str, object],
 ) -> dict[str, object]:
-    baseline = metric_values(baseline_payload, "baseline")
-    current = metric_values(current_payload, "current")
-    budgets = metric_values(budget_payload, "budget")
-    if not budgets:
+    baseline_metrics = extract_metric_values(baseline_payload, "baseline")
+    current_metrics = extract_metric_values(current_payload, "current")
+    budget_rules = extract_metric_values(budget_payload, "budget")
+    if not budget_rules:
         raise ValueError("budget must define at least one metric")
 
     results: list[dict[str, object]] = []
-    for name, raw_rule in budgets.items():
-        if not isinstance(name, str) or not isinstance(raw_rule, dict):
+    for metric_name, rule_config in budget_rules.items():
+        if not isinstance(metric_name, str) or not isinstance(rule_config, dict):
             raise ValueError("each budget metric must map a name to an object")
-        if name not in baseline or name not in current:
-            raise ValueError(f"metric {name!r} is missing from baseline or current data")
+        if metric_name not in baseline_metrics or metric_name not in current_metrics:
+            raise ValueError(f"metric {metric_name!r} is missing from baseline or current data")
 
-        before = number(baseline[name], f"baseline.{name}")
-        after = number(current[name], f"current.{name}")
-        direction = raw_rule.get("direction", "lower")
+        baseline_value = require_finite_number(
+            baseline_metrics[metric_name], f"baseline.{metric_name}"
+        )
+        current_value = require_finite_number(
+            current_metrics[metric_name], f"current.{metric_name}"
+        )
+        direction = rule_config.get("direction", "lower")
         if direction not in ("lower", "higher"):
-            raise ValueError(f"budget.{name}.direction must be 'lower' or 'higher'")
+            raise ValueError(f"budget.{metric_name}.direction must be 'lower' or 'higher'")
 
         reasons: list[str] = []
-        allowed = raw_rule.get("max_regression_percent")
-        delta_percent: float | None = None
-        if allowed is not None:
-            allowed_value = number(allowed, f"budget.{name}.max_regression_percent")
-            if allowed_value < 0:
-                raise ValueError(f"budget.{name}.max_regression_percent cannot be negative")
-            if before <= 0:
-                raise ValueError(f"baseline.{name} must be positive for relative comparison")
-            change = (after - before) / before * 100
-            delta_percent = change if direction == "lower" else -change
-            if delta_percent > allowed_value + 1e-7:
-                reasons.append(f"regressed {delta_percent:.2f}% (allowed {allowed_value:.2f}%)")
+        maximum_regression = rule_config.get("max_regression_percent")
+        regression_percent: float | None = None
+        if maximum_regression is not None:
+            maximum_regression_value = require_finite_number(
+                maximum_regression,
+                f"budget.{metric_name}.max_regression_percent",
+            )
+            if maximum_regression_value < 0:
+                raise ValueError(f"budget.{metric_name}.max_regression_percent cannot be negative")
+            if baseline_value <= 0:
+                raise ValueError(f"baseline.{metric_name} must be positive for relative comparison")
+            change_percent = (current_value - baseline_value) / baseline_value * 100
+            regression_percent = change_percent if direction == "lower" else -change_percent
+            if regression_percent > maximum_regression_value + 1e-7:
+                reasons.append(
+                    f"regressed {regression_percent:.2f}% (allowed {maximum_regression_value:.2f}%)"
+                )
 
-        if "max" in raw_rule:
-            maximum = number(raw_rule["max"], f"budget.{name}.max")
-            if after > maximum:
-                reasons.append(f"{after:g} exceeds maximum {maximum:g}")
-        if "min" in raw_rule:
-            minimum = number(raw_rule["min"], f"budget.{name}.min")
-            if after < minimum:
-                reasons.append(f"{after:g} is below minimum {minimum:g}")
-        if allowed is None and "max" not in raw_rule and "min" not in raw_rule:
-            raise ValueError(f"budget.{name} must define a relative or absolute limit")
+        if "max" in rule_config:
+            maximum = require_finite_number(rule_config["max"], f"budget.{metric_name}.max")
+            if current_value > maximum:
+                reasons.append(f"{current_value:g} exceeds maximum {maximum:g}")
+        if "min" in rule_config:
+            minimum = require_finite_number(rule_config["min"], f"budget.{metric_name}.min")
+            if current_value < minimum:
+                reasons.append(f"{current_value:g} is below minimum {minimum:g}")
+        if maximum_regression is None and "max" not in rule_config and "min" not in rule_config:
+            raise ValueError(f"budget.{metric_name} must define a relative or absolute limit")
 
-        results.append({
-            "metric": name,
-            "direction": direction,
-            "baseline": before,
-            "current": after,
-            "regression_percent": None if delta_percent is None else round(delta_percent, 4),
-            "status": "fail" if reasons else "pass",
-            "reasons": reasons,
-        })
+        results.append(
+            {
+                "metric": metric_name,
+                "direction": direction,
+                "baseline": baseline_value,
+                "current": current_value,
+                "regression_percent": None
+                if regression_percent is None
+                else round(regression_percent, 4),
+                "status": "fail" if reasons else "pass",
+                "reasons": reasons,
+            }
+        )
 
     return {
         "schema_version": "1.0",
@@ -103,49 +116,71 @@ def evaluate(
     }
 
 
-def markdown(payload: Mapping[str, object]) -> str:
+def render_markdown_report(payload: Mapping[str, object]) -> str:
     verdict = "PASS" if payload["passed"] else "FAIL"
-    lines = [f"# ShipProof resource budget: {verdict}", "", "| Metric | Baseline | Current | Regression | Status | Reason |", "| --- | ---: | ---: | ---: | --- | --- |"]
+    lines = [
+        f"# ShipProof resource budget: {verdict}",
+        "",
+        "| Metric | Baseline | Current | Regression | Status | Reason |",
+        "| --- | ---: | ---: | ---: | --- | --- |",
+    ]
     for item in payload["results"]:
-        regression = "n/a" if item["regression_percent"] is None else f"{item['regression_percent']:.2f}%"
+        regression = (
+            "n/a" if item["regression_percent"] is None else f"{item['regression_percent']:.2f}%"
+        )
         reason = "; ".join(item["reasons"]) or "within budget"
-        lines.append(f"| `{item['metric']}` | {item['baseline']:g} | {item['current']:g} | {regression} | {item['status'].upper()} | {reason} |")
+        lines.append(
+            f"| `{item['metric']}` | {item['baseline']:g} | {item['current']:g} | {regression} | {item['status'].upper()} | {reason} |"
+        )
     lines.append("")
     return "\n".join(lines)
 
 
-def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--baseline", type=str, required=True, help="Baseline JSON file path or '-' for stdin")
-    parser.add_argument("--current", type=str, required=True, help="Current JSON file path or '-' for stdin")
-    parser.add_argument("--budget", type=str, required=True, help="Budget JSON file path or '-' for stdin")
+    parser.add_argument(
+        "--baseline", type=str, required=True, help="Baseline JSON file path or '-' for stdin"
+    )
+    parser.add_argument(
+        "--current", type=str, required=True, help="Current JSON file path or '-' for stdin"
+    )
+    parser.add_argument(
+        "--budget", type=str, required=True, help="Budget JSON file path or '-' for stdin"
+    )
     parser.add_argument("--format", choices=("json", "markdown"), default="markdown")
     parser.add_argument("--output", type=Path)
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    if hasattr(sys.stdout, "reconfigure"):
-        try:
-            sys.stdout.reconfigure(encoding="utf-8")
-            sys.stderr.reconfigure(encoding="utf-8")
-        except Exception:
-            pass
-    args = parse_args(argv)
-    if (args.baseline, args.current, args.budget).count("-") > 1:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+    arguments = parse_arguments(argv)
+    if (arguments.baseline, arguments.current, arguments.budget).count("-") > 1:
         print("shipproof: stdin ('-') may be used for only one input", file=sys.stderr)
         return 2
     try:
-        payload = evaluate(load_object(args.baseline), load_object(args.current), load_object(args.budget))
+        report_payload = evaluate_resource_budget(
+            load_json_object(arguments.baseline),
+            load_json_object(arguments.current),
+            load_json_object(arguments.budget),
+        )
     except ValueError as exc:
         print(f"shipproof: {exc}", file=sys.stderr)
         return 2
-    rendered = markdown(payload) if args.format == "markdown" else json.dumps(payload, indent=2)
-    if args.output:
-        args.output.write_text(rendered + ("" if rendered.endswith("\n") else "\n"), encoding="utf-8")
+    rendered_report = (
+        render_markdown_report(report_payload)
+        if arguments.format == "markdown"
+        else json.dumps(report_payload, indent=2)
+    )
+    if arguments.output:
+        arguments.output.write_text(
+            rendered_report + ("" if rendered_report.endswith("\n") else "\n"), encoding="utf-8"
+        )
     else:
-        print(rendered)
-    return 0 if payload["passed"] else 1
+        print(rendered_report)
+    return 0 if report_payload["passed"] else 1
 
 
 if __name__ == "__main__":
