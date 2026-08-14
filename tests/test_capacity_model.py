@@ -15,6 +15,8 @@ class CapacityModelTests(unittest.TestCase):
         payload = model(CapacityInputs(users=10_000))
         self.assertEqual(payload["derived"]["daily_active_users"], 2_000)
         self.assertGreater(payload["derived"]["design_peak_rps"], 0)
+        self.assertGreater(payload["derived"]["estimated_cpu_cores_with_headroom"], 0)
+        self.assertEqual(payload["derived"]["estimated_app_memory_mb"], 512)
         self.assertIn("warning", payload)
 
     def test_one_million_users_requires_more_capacity(self):
