@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 .coverage
+coverage.xml
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -9,6 +10,8 @@ node_modules/
 .venv/
 venv/
 tests/tmp*/
+benchmarks/.work/*
+!benchmarks/.work/.gitkeep
 shipproof-report.*
 shipproof.sarif
 shipproof-self-scan.json

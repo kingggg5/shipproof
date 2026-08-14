@@ -32,7 +32,7 @@ jobs:
           ruff check .
           ruff format --check .
       - name: Check Node.js syntax
-        run: node --check bin/shipproof.mjs && node --check lib/cli.mjs
+        run: npm run lint:node
       - name: Check whitespace
         run: git diff --check
 
@@ -53,7 +53,17 @@ jobs:
       - name: Compile
         run: python -m compileall -q skills tests
       - name: Test
-        run: python -m unittest discover -s tests -v
+        run: |
+          python -m unittest discover -s tests -v
+          python -m unittest discover -s examples/demo-api/fixtures/after/tests -v
+      - name: Composite action smoke test
+        if: matrix.python-version == '3.12'
+        uses: ./
+        with:
+          path: .
+          format: sarif
+          output: shipproof.sarif
+          fail-on: high
       - name: Resource budget smoke test
         run: >-
           python skills/engineer-production-systems/scripts/check_budget.py
@@ -62,6 +72,11 @@ jobs:
           --budget examples/performance/budget.json
       - name: Self-audit
         run: python skills/audit-production-readiness/scripts/scan_repo.py . --format markdown --fail-on high
+      - name: Scanner regression budget
+        if: matrix.python-version == '3.12'
+        run: >-
+          python scripts/benchmark-scanner.py --files 1000
+          --max-seconds 8 --max-memory-mb 256
       - name: Validate plugin manifests
         run: python -c "import json; from pathlib import Path; [json.loads(p.read_text()) for p in (Path('.codex-plugin/plugin.json'), Path('.claude-plugin/plugin.json'))]"
 
@@ -90,6 +105,34 @@ jobs:
           node bin/shipproof.mjs doctor . --json
           node bin/shipproof.mjs budget --baseline examples/performance/baseline.json --current examples/performance/current.json --budget examples/performance/budget.json
           node bin/shipproof.mjs capacity --users 10000 --format json
+          node bin/shipproof.mjs capacity --config examples/capacity/shipproof.config.json --export-k6 generated-load-test.js --format json
+          node --check generated-load-test.js
+          node bin/shipproof.mjs evidence . --list --format json
           node bin/shipproof.mjs scan . --fail-on high
       - name: Verify published file set
         run: npm pack --dry-run
+
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install coverage tools
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-dev.txt
+          npm ci --ignore-scripts
+      - name: Enforce Python branch coverage
+        run: npm run test:python:coverage
+      - name: Enforce Node line coverage
+        run: npm run test:node:coverage
