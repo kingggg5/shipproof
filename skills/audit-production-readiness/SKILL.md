@@ -1,6 +1,6 @@
 ---
 name: audit-production-readiness
-description: Audit a repository or service for release-blocking bugs, security vulnerabilities, supply-chain weaknesses, operability gaps, and evidence-based readiness for 10k to 1M users. Use for deep code audits, pre-production reviews, vulnerability scans, scale reviews, incident-prevention reviews, release gates, or when a user asks whether a system is safe, correct, reliable, or able to handle a stated user load.
+description: Audit a repository or service for release-blocking bugs, security, data/privacy, AI-agent, supply-chain, operability, and scale risks. Use for deep code audits, threat models, pre-production reviews, vulnerability triage, incidents, defensive investigation, release gates, or evidence-based 10k-to-1M-user readiness.
 ---
 
 # Audit Production Readiness
@@ -22,7 +22,7 @@ Produce a release decision backed by exact code, test, runtime, and workload evi
 
 Identify the stack, entry points, trust boundaries, data stores, background jobs, external dependencies, deployment topology, and business-critical flows. Capture authorization and tenancy invariants before looking for violations. For scale work, collect registered users, DAU, peak-hour share, actions per session, requests per action, read/write mix, latency SLO, cache hit rate, and measured per-instance throughput.
 
-Read [correctness.md](references/correctness.md) for failure modes. Read [security.md](references/security.md) for threat modeling and control coverage. Read [scale.md](references/scale.md) when scale is in scope. For CPU, RAM, latency, kernel, driver, browser-engine, parser, IPC, or network-protocol work, also read the shared [performance](../engineer-production-systems/references/performance.md), [systems](../engineer-production-systems/references/systems.md), and [tool-routing](../engineer-production-systems/references/tool-routing.md) references.
+Read [correctness.md](references/correctness.md) for failure modes. Read [security.md](references/security.md) for threat modeling and control coverage. Read [supply-chain.md](references/supply-chain.md) for dependencies, builds, CI, artifacts, and releases. Read [operations.md](references/operations.md) for telemetry, incidents, recovery, and governance. Read [scale.md](references/scale.md) when scale is in scope. Use the shared [architecture](../engineer-production-systems/references/architecture.md), [data](../engineer-production-systems/references/data.md), or [agent security](../engineer-production-systems/references/agent-security.md) reference when those boundaries are material. For CPU, RAM, latency, kernel, driver, browser-engine, parser, IPC, protocol, or authorized defensive reverse-engineering work, also read the shared [performance](../engineer-production-systems/references/performance.md), [systems](../engineer-production-systems/references/systems.md), and [tool-routing](../engineer-production-systems/references/tool-routing.md) references.
 
 ### 2. Build an evidence baseline
 
@@ -74,7 +74,7 @@ Deduplicate by root cause and fingerprint. Use a reviewed baseline only for acce
 
 ### 6. Report a release decision
 
-Read [reporting.md](references/reporting.md) and report separate gates for Security, Correctness, Scale, Operability, and Supply Chain. Do not collapse them into one score.
+Read [reporting.md](references/reporting.md) and report separate gates for Security, Correctness, Data & Privacy, Scale, Operability, and Supply Chain. Do not collapse them into one score.
 
 - **BLOCK**: confirmed critical/high issue, broken critical invariant, or no safe rollback for a high-risk release.
 - **CONDITIONAL**: medium risk, material unknown, or missing production evidence with an owner and due date.

@@ -10,6 +10,7 @@ Report each gate independently:
 | --- | --- |
 | Security | Threat model, authorization tests, SAST/secret/dependency/IaC results, triage |
 | Correctness | Critical invariants, deterministic tests, concurrency and failure-path evidence |
+| Data & Privacy | Schema/transaction invariants, tenant isolation, retention/deletion, migration and restore evidence |
 | Scale | Workload assumptions, measured breakpoint, SLO thresholds, recovery behavior |
 | Operability | Traces/metrics/logs, alerts, runbooks, rollback and restore drills |
 | Supply chain | Locked dependencies, pinned CI actions, artifact/SBOM provenance, update policy |
