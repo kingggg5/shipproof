@@ -1,0 +1,14 @@
+{
+  "metrics": {
+    "p95_latency_ms": {
+      "direction": "lower",
+      "max_regression_percent": 10,
+      "max": 150
+    },
+    "rss_mb": {
+      "direction": "lower",
+      "max_regression_percent": 10,
+      "max": 192
+    }
+  }
+}

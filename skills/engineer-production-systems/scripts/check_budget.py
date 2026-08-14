@@ -10,6 +10,8 @@ import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+VERSION = "0.4.0"
+
 
 def load_json_object(path: str | Path) -> dict[str, object]:
     try:
@@ -109,10 +111,17 @@ def evaluate_resource_budget(
             }
         )
 
+    passed = all(item["status"] == "pass" for item in results)
     return {
         "schema_version": "1.0",
-        "passed": all(item["status"] == "pass" for item in results),
+        "tool": {"name": "ShipProof", "version": VERSION, "command": "budget"},
+        "verdict": "PASS_WITH_EVIDENCE" if passed else "BLOCK",
+        "passed": passed,
         "results": results,
+        "limitations": [
+            "Results are only as representative as the supplied measurements.",
+            "This gate does not measure performance or distinguish environment noise.",
+        ],
     }
 
 

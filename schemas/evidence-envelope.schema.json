@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/evidence-envelope.schema.json",
+  "title": "ShipProof evidence envelope",
+  "type": "object",
+  "required": ["schema_version", "tool", "verdict", "limitations"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "tool": {
+      "type": "object",
+      "required": ["name", "version", "command"],
+      "properties": {
+        "name": { "const": "ShipProof" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "command": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "verdict": { "enum": ["PASS", "PASS_WITH_EVIDENCE", "CONDITIONAL", "WARN", "BLOCK"] },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "additionalProperties": true
+}

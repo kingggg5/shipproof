@@ -2,6 +2,8 @@
 
 Publishing is intentionally human-gated. CI validates the exact package contents, but the repository does not publish merely because a branch changed.
 
+Pushing a protected tag that exactly matches `package.json` (for example `v0.4.0`) runs the GitHub Release workflow. It repeats the complete verification suite, validates the matching checked-in release-note file, builds the npm tarball, and creates a prerelease for every `0.x` version. `gh release create --verify-tag` prevents the workflow from inventing a missing remote tag. Registry publication remains a separate, explicitly approved step.
+
 ## Pre-release
 
 1. Update `package.json`, both plugin manifests, scanner metadata, tests, and `CHANGELOG.md` to the same version.
@@ -9,6 +11,7 @@ Publishing is intentionally human-gated. CI validates the exact package contents
 3. Inspect `npm pack --dry-run`; verify only the allowlisted files are included and no secret, fixture, report, or development cache is present.
 4. Review dependency, CodeQL, SARIF, and branch-protection results.
 5. Create a signed or protected tag only from the reviewed commit.
+6. Push the tag, confirm the Release workflow, and inspect the attached tarball before promoting or publishing it elsewhere.
 
 ## npm trusted publishing
 

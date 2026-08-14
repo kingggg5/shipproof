@@ -1,7 +1,13 @@
 [tool.ruff]
 target-version = "py310"
 line-length = 100
-extend-exclude = [".npm-cache", "tmp*", "tests/tmp*"]
+extend-exclude = [
+  ".npm-cache",
+  "examples/demo-api/fixtures/before",
+  "fixtures",
+  "tmp*",
+  "tests/tmp*",
+]
 
 [tool.ruff.lint]
 select = ["B", "E4", "E7", "E9", "F", "I", "PIE", "RUF", "S", "SIM", "UP"]
@@ -13,3 +19,19 @@ select = ["B", "E4", "E7", "E9", "F", "I", "PIE", "RUF", "S", "SIM", "UP"]
 indent-style = "space"
 line-ending = "lf"
 quote-style = "double"
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+source = [
+  "skills/audit-production-readiness/scripts",
+  "skills/engineer-production-systems/scripts",
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
+
+[tool.coverage.xml]
+output = "coverage.xml"

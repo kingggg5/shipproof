@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/kingggg5/shipproof/main/schemas/shipproof-policy.schema.json",
+  "title": "ShipProof repository policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": { "const": 1 },
+    "scan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "exclude": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "type": "string" }
+        },
+        "max_file_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000000
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fail_on": {
+          "enum": ["critical", "high", "medium", "low", "none"]
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "current", "budget"],
+      "properties": {
+        "baseline": { "type": "string", "minLength": 1 },
+        "current": { "type": "string", "minLength": 1 },
+        "budget": { "type": "string", "minLength": 1 }
+      }
+    },
+    "capacity": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["config"],
+          "properties": {
+            "config": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["target_users"],
+          "properties": {
+            "target_users": { "type": "integer", "minimum": 1 },
+            "inputs": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "dau_ratio": { "type": "number" },
+                "peak_hour_ratio": { "type": "number" },
+                "actions_per_session": { "type": "number" },
+                "requests_per_action": { "type": "number" },
+                "burst_multiplier": { "type": "number" },
+                "read_ratio": { "type": "number" },
+                "cache_hit_ratio": { "type": "number" },
+                "queries_per_read": { "type": "number" },
+                "queries_per_write": { "type": "number" },
+                "p95_latency_ms": { "type": "number" },
+                "db_time_ms": { "type": "number" },
+                "instance_rps": { "type": "number" },
+                "cpu_ms_per_request": { "type": "number" },
+                "memory_mb_per_instance": { "type": "number" },
+                "headroom": { "type": "number" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

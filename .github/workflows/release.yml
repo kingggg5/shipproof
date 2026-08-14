@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout the tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install development tools
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-dev.txt
+          npm ci --ignore-scripts
+      - name: Verify release source
+        run: npm run check
+      - id: release
+        name: Validate tag and notes
+        run: node scripts/release-info.mjs
+      - name: Build npm tarball
+        run: |
+          mkdir release-artifacts
+          npm pack --pack-destination release-artifacts
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHIPPROOF_PRERELEASE: ${{ steps.release.outputs.prerelease }}
+          SHIPPROOF_VERSION: ${{ steps.release.outputs.version }}
+          SHIPPROOF_NOTES: ${{ steps.release.outputs.notes }}
+        run: |
+          release_flags=(--verify-tag --title "ShipProof v${SHIPPROOF_VERSION}" --notes-file "${SHIPPROOF_NOTES}")
+          if [[ "${SHIPPROOF_PRERELEASE}" == "true" ]]; then
+            release_flags+=(--prerelease --latest=false)
+          fi
+          gh release create "${GITHUB_REF_NAME}" "release-artifacts/kingggg5-shipproof-${SHIPPROOF_VERSION}.tgz" "${release_flags[@]}"

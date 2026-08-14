@@ -1,105 +1,181 @@
-# 2025–2026 research synthesis
+# ShipProof research notebook
 
 Last reviewed: 2026-08-14.
 
-ShipProof uses community reports to discover questions and primary standards, specifications, vendor documentation, and executable evidence to make decisions. It does not copy another project's source or prompts. The implementation is deliberately local-first, dependency-light, and conservative about claims.
+This notebook records the external pages consulted while ShipProof was designed. It is intentionally separate from the [production playbook](production-playbook.md): the playbook contains ShipProof's operating model; this file preserves provenance, challenges assumptions, and makes later re-verification possible.
 
-## Findings that changed the design
+ShipProof does not copy another project's source, prompts, or documentation. Community discussions are useful for discovering failure questions, but no ShipProof control is accepted solely because a post, comment, or competing repository recommends it.
 
-### Secure design must precede scanning
+## Reading protocol
 
-The [OWASP Top 10:2025](https://owasp.org/Top10/2025/0x00_2025-Introduction/) puts broken access control first and elevates software supply-chain failures while retaining insecure design and adding mishandling of exceptional conditions. OWASP explicitly says the Top 10 is an awareness document and discourages tools from claiming full coverage. [ASVS 5.0.0](https://owasp.org/www-project-application-security-verification-standard/) is the stable verifiable requirements baseline released in May 2025.
+For each research pass:
 
-Design consequence: ShipProof begins with business and authorization invariants, keeps gates independent, includes failure semantics, and never markets its regex/AST scanner as OWASP coverage or certification.
+1. Write the decision question before opening sources.
+2. Prefer the owning specification, standards body, or project documentation.
+3. Record the smallest observation that changes a ShipProof decision; do not paste the source into this repository.
+4. Record what ShipProof deliberately does **not** infer from the page.
+5. Put operational guidance in a focused skill reference and keep the source link here.
+6. Re-check dated or fast-moving material when a release depends on exact syntax or behavior.
 
-### Security ownership belongs with the producer
+## Decision ledger
 
-[CISA's 2025 product security bad-practices guidance](https://www.cisa.gov/news-events/alerts/2025/01/17/cisa-and-fbi-release-updated-guidance-product-security-bad-practices) calls out preventable classes such as default credentials, injection, and memory-unsafety and reinforces secure defaults. Its buffer-overflow guidance recommends memory-safe languages for new exposed code where feasible, compiler protections, sanitizers, fuzzing, manual review, root-cause analysis, and a memory-safety roadmap.
+| ShipProof decision | Reasoning retained by this project | What would change it |
+| --- | --- | --- |
+| Keep release gates independent | A clean majority cannot cancel one broken critical invariant | Evidence that a combined score preserves veto-level risk without hiding unknowns |
+| Start from authorization and business invariants | Scanners cannot reconstruct product ownership and permitted state transitions reliably | A repository supplies an executable policy model that can become the stronger source of truth |
+| Keep the bundled scanner conservative | Broad pattern matching creates false confidence for reachability, memory safety, and protocol state | A new detector has precise positive/negative tests, a complete path model, and acceptable noise |
+| Prefer a small architecture first | Distribution creates retries, partial failure, coordination, and operational cost | Measured scaling, isolation, ownership, or deployment constraints justify a boundary |
+| Make capacity inputs explicit | Registered accounts, DAU, peak sessions, concurrency, and RPS describe different things | Product analytics and production-shaped tests replace assumptions with measured values |
+| Treat AI as an untrusted decision component | Natural language and retrieved content cannot grant authority | A deterministic policy boundary still must authorize effects even if models improve |
+| Separate read and consequential write tools | Narrow capabilities reduce confused-deputy and excessive-agency risk | Low-risk writes may be policy-approved when bounded, reversible, and fully audited |
+| Keep runtime and dependency count small | Fewer execution paths simplify installation, review, and supply-chain evidence | A dependency removes more maintained risk than it introduces and has a clear owner |
 
-Design consequence: the engineering skill asks for class-level prevention before detection, routes new systems work toward memory-safe components when appropriate, and preserves a layered evidence ladder for legacy kernel, browser, parser, and protocol code.
+## Source notes
 
-### A secure lifecycle includes provenance and response
+Only primary pages that directly affected a decision are retained below. A link is evidence of what was consulted, not an endorsement and not proof that ShipProof implements every requirement on that page.
 
-The [NIST Secure Software Development Framework](https://csrc.nist.gov/projects/ssdf) covers preparation, protected development environments, well-secured production, provenance, and vulnerability response. It also links the SP 800-218A profile for generative AI and dual-use foundation models. [SLSA 1.2](https://slsa.dev/spec/v1.2/build-track-basics) separates build integrity guarantees and requires signed hosted-build provenance for Build L2.
+### Application security
 
-Design consequence: ShipProof reviews the full source-to-artifact path, dependency resolution, CI identities, SBOM/provenance, protected release, rollback, and response—not merely source lines.
+#### OWASP Application Security Verification Standard 5.0.0
 
-### Agentic systems add an authorization boundary
+- **Page opened:** [OWASP ASVS project](https://owasp.org/www-project-application-security-verification-standard/)
+- **Question:** Which web security controls can be mapped to stable, testable requirement identifiers?
+- **Observation:** ASVS 5.0.0 is a verification baseline and recommends version-qualified identifiers because identifiers can change between versions.
+- **ShipProof decision:** Use ASVS only as an optional mapping after a concrete invariant and test exist. Never market the local scanner as ASVS certification or full coverage.
+- **Not inferred:** Passing ShipProof proves ASVS compliance or absence of vulnerabilities.
 
-The [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/) records goal hijacking, tool misuse, identity/privilege abuse, agentic supply-chain compromise, unexpected code execution, and memory/context poisoning. The [MCP security guidance](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices) requires narrow consent, secure state, sandboxing, scope minimization, and defenses against confused deputies; the current authorization specification requires audience-bound tokens and prohibits token passthrough.
+#### OWASP API Security Top 10
 
-OpenAI's 2026 [Codex Security workflow](https://openai.com/index/codex-security-now-in-research-preview/) emphasizes repository-specific threat modeling, identification, isolated validation, remediation, and human-reviewed patches. OpenAI's [Codex operating controls](https://openai.com/index/running-codex-safely/) emphasize technical boundaries, explicit approval for risky actions, and agent-native telemetry.
+- **Page opened:** [OWASP API Security](https://owasp.org/API-Security/)
+- **Question:** Which boundary failures deserve early manual tracing in API reviews?
+- **Observation:** Object/function authorization, property exposure, resource consumption, and unsafe downstream API use are distinct failure classes.
+- **ShipProof decision:** Trace caller, tenant, object, action, allowed fields, resource limits, and downstream trust separately.
+- **Not inferred:** A category list replaces a product-specific threat model.
 
-Design consequence: retrieved content, memory, tool metadata, and model output are untrusted data; every tool call is re-authorized at execution; writes are split from reads; scopes, arguments, output, cost, and time are bounded; audit events and kill switches are required.
+#### CISA Secure by Design guidance
 
-### Database scale is evidence, not user count
+- **Page opened:** [CISA product security bad practices](https://www.cisa.gov/news-events/alerts/2025/01/17/cisa-and-fbi-release-updated-guidance-product-security-bad-practices)
+- **Question:** Should prevention of whole bug classes appear before scanner selection?
+- **Observation:** Producer-owned secure defaults and class-level prevention are stronger than shifting responsibility to customers.
+- **ShipProof decision:** Prefer safe APIs, memory-safe components where feasible, explicit authorization, safe defaults, and bounded behavior before adding detection layers.
+- **Not inferred:** One language, scanner, or platform makes a product secure by default.
 
-Current [PostgreSQL documentation](https://www.postgresql.org/docs/current/using-explain.html) continues to make query plans the basis for understanding execution. Google SRE guidance on [cascading failures](https://sre.google/sre-book/addressing-cascading-failures/) and k6 guidance on [thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/) reinforce overload control, measurable SLOs, and staged load evidence.
+### Development and supply chain
 
-Community posts on Medium, Reddit, and Stack Overflow repeatedly expose the same modeling error: registered accounts, DAU, peak sessions, virtual users, and RPS are not interchangeable. They also surface practical hypotheses—pool exhaustion, locks, production-shaped data, retry storms, hot keys, logging cost, and recovery—but do not establish a universal architecture.
+#### NIST Secure Software Development Framework
 
-Design consequence: the capacity tool exposes every ratio, CPU/memory assumption, and headroom value. The data guide requires query-plan, pool, lock, migration, restore, and RPO/RTO evidence before recommending replicas, partitioning, sharding, services, or orchestration.
+- **Page opened:** [NIST SSDF](https://csrc.nist.gov/projects/ssdf)
+- **Question:** Where does a source-code-only review stop being sufficient?
+- **Observation:** Secure development spans preparation, protected development, well-secured software, provenance, and vulnerability response.
+- **ShipProof decision:** Review the source-to-artifact path, release identity, response process, rollback, and recovery alongside code.
+- **Not inferred:** A checklist proves an organization's actual process is operating.
 
-### Observability must remain interoperable and bounded
+#### SLSA build track
 
-[OpenTelemetry semantic conventions](https://opentelemetry.io/docs/concepts/semantic-conventions/) define common names across traces, metrics, logs, profiles, and resources.
+- **Page opened:** [SLSA v1.2 build track basics](https://slsa.dev/spec/v1.2/build-track-basics)
+- **Question:** What claims can build provenance support?
+- **Observation:** Build integrity levels describe properties of how artifacts are produced and attested.
+- **ShipProof decision:** Preserve source commit, builder identity, inputs, artifact digest, and provenance verification as release evidence.
+- **Not inferred:** Provenance proves that source code is correct or non-malicious.
 
-Design consequence: ShipProof asks for correlated telemetry and audit evidence using standard naming when available, but explicitly limits high-cardinality labels and sensitive fields so observability does not become a memory, cost, privacy, or credential leak.
+#### npm trusted publishing
 
-### npm publication is a supply-chain event
+- **Page opened:** [npm trusted publishers](https://docs.npmjs.com/trusted-publishers/)
+- **Question:** How should an npm release avoid long-lived write credentials?
+- **Observation:** Supported CI systems can publish through short-lived OIDC identity; eligible public workflows can receive provenance automatically. Exact runtime and CLI prerequisites change and must be checked before release.
+- **ShipProof decision:** Keep publication human-gated, prefer trusted publishing when configured, allowlist package contents, and verify `npm pack` before release.
+- **Not inferred:** ShipProof is published to the registry before the owner configures and completes that release.
 
-The npm CLI supports package `bin`, `files`, `engines`, and lifecycle controls. Current npm guidance recommends [trusted publishing](https://docs.npmjs.com/trusted-publishers/) with short-lived OIDC credentials instead of long-lived tokens and automatically attaches provenance for eligible public packages. npm also warns that [provenance](https://docs.npmjs.com/generating-provenance-statements/) links source and build but does not prove a package contains no malicious code.
+### AI agents and MCP
 
-Design consequence: the CLI has no runtime npm dependencies or install lifecycle script, package contents are allowlisted, `npm pack --dry-run` is a CI gate, registry publication is human-gated, and the README distinguishes GitHub npm installation from an unpublished registry release.
+#### MCP authorization and security guidance
 
-### A large open-source project needs a memorable front door
+- **Pages opened:** [dated authorization specification](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization) and [security best practices](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices)
+- **Question:** Which authorization boundary must survive model and tool composition?
+- **Observation:** HTTP authorization requires resource/audience binding, token validation, narrow consent, and no token passthrough. MCP evolves, so implementation work must select and test against an explicit protocol version.
+- **ShipProof decision:** Re-authorize tool calls at execution, bind credentials to the destination, minimize scopes, split read/write capabilities, and treat tool metadata as untrusted.
+- **Not inferred:** MCP supplies business authorization or makes a tool safe automatically.
 
-[Loop Engineering](https://github.com/cobusgreyling/loop-engineering) demonstrates a useful open-source product pattern: one memorable CLI routes to focused capabilities, `doctor` creates a day-two health habit, and automation advances from report-only to assisted operation with human gates. Its repository is MIT-licensed.
+#### Agentic application threat catalog
 
-Design consequence: ShipProof independently implements a much smaller `shipproof` front door around its existing gates, keeps each skill focused, and defines Observe/Assist/Operate authority levels. It does not import Loop Engineering source or prompts and does not implement unattended external actions.
+- **Page opened:** [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/)
+- **Question:** Which failures appear when a model can plan, remember, and call tools?
+- **Observation:** Goal hijacking, tool misuse, privilege abuse, poisoned context, unexpected execution, and agent supply-chain risks cross traditional component boundaries.
+- **ShipProof decision:** Test policy compliance separately from task success and keep retrieved content, memory, model output, and other agents below the authorization boundary.
+- **Not inferred:** A taxonomy predicts every product-specific agent failure.
 
-## Why the implementation stays small
+### Scale, data, and observability
 
-- One shared skill tree prevents Codex and Claude guidance from drifting.
-- Progressive references keep the initial agent context small and load only the relevant discipline.
-- The npm CLI routes to existing Python gates instead of duplicating security and capacity logic in JavaScript.
-- `spawnSync` receives an executable plus argument array with shell interpretation disabled.
-- Project and personal skill installation skips existing directories unless `--force`; replacement verifies each target remains below the fixed skills root.
-- The CLI never executes commands found in repository configuration.
-- Fixed prompt names map to packaged files rather than arbitrary paths.
-- No network, telemetry, package installation, exploit, DAST, fuzz, or load activity occurs by default.
+#### PostgreSQL query plans
+
+- **Page opened:** [PostgreSQL EXPLAIN](https://www.postgresql.org/docs/current/using-explain.html)
+- **Question:** What evidence should precede database architecture changes?
+- **Observation:** Plans expose estimated and actual execution behavior that code shape alone cannot establish.
+- **ShipProof decision:** Require production-shaped plans, pool/lock evidence, and growth data before recommending indexes, replicas, partitioning, or sharding.
+- **Not inferred:** One plan from a small dataset predicts production behavior.
+
+#### Overload and load-test thresholds
+
+- **Pages opened:** [Google SRE on cascading failures](https://sre.google/sre-book/addressing-cascading-failures/) and [Grafana k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)
+- **Question:** How should ShipProof distinguish capacity arithmetic from readiness evidence?
+- **Observation:** Overload controls, measurable objectives, and staged tests matter more than a raw maximum RPS number.
+- **ShipProof decision:** Model assumptions explicitly, then test steady, peak, breakpoint, spike, soak, impaired dependency, shedding, and recovery behavior.
+- **Not inferred:** A universal error rate, latency target, traffic ratio, or instance size applies to every product.
+
+#### OpenTelemetry semantic conventions
+
+- **Page opened:** [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/concepts/semantic-conventions/)
+- **Question:** How can telemetry remain portable without becoming a cost or privacy hazard?
+- **Observation:** Shared naming improves correlation across signals, while product-specific attributes still require governance.
+- **ShipProof decision:** Prefer standard names where applicable and bound labels, fields, payloads, retention, and sensitive data.
+- **Not inferred:** Instrumentation alone creates useful alerts, ownership, or incident readiness.
+
+### Deep systems verification
+
+#### Sanitizers and fuzzing ecosystems
+
+- **Pages opened:** [LLVM libFuzzer](https://llvm.org/docs/LibFuzzer.html), [Linux KCSAN](https://docs.kernel.org/dev-tools/kcsan.html), [syzkaller](https://github.com/google/syzkaller), and [OSS-Fuzz](https://github.com/google/oss-fuzz)
+- **Question:** What evidence is credible for memory-unsafe, concurrent, parser-heavy, kernel, browser, and protocol code?
+- **Observation:** Target-specific instrumentation, runtime checking, coverage feedback, corpora, and minimized reproducers expose defect classes that regex and general AI review cannot establish.
+- **ShipProof decision:** Keep the built-in scan fast and conservative; route deep work through an evidence ladder in an authorized isolated environment.
+- **Not inferred:** One sanitizer or fuzzer configuration proves absence of defects.
+
+### Distribution and ecosystem adapters
+
+#### GitHub composite actions
+
+- **Page opened:** [GitHub composite action tutorial](https://docs.github.com/en/actions/tutorials/create-actions/create-a-composite-action)
+- **Question:** What is the smallest reusable pull-request integration that can live with ShipProof's source?
+- **Observation:** A root action metadata file can define explicit inputs, outputs, and composite shell steps, and releases can be consumed through version tags.
+- **ShipProof decision:** Start with `action.yml` in this repository, explicit inputs, minimal caller permissions, and tested major/immutable tags. Avoid a second action repository until it has a distinct lifecycle.
+- **Not inferred:** A composite action automatically has safe permissions or makes third-party version tags immutable.
+
+#### Grafana k6 scenarios and thresholds
+
+- **Pages opened:** [k6 scenarios](https://grafana.com/docs/k6/latest/using-k6/scenarios/) and [k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)
+- **Question:** Which parts of capacity math can become a runnable load-test artifact without inventing product behavior?
+- **Observation:** k6 scripts can declare separate scenarios, checks, and pass/fail thresholds, while the tested routes, data, and objectives remain product inputs.
+- **ShipProof decision:** Generate a deterministic script only from reviewed route/workload/SLO configuration, keep base URL and credentials in environment variables, and require separate authorization to run it.
+- **Not inferred:** Capacity estimates supply valid endpoints, payloads, user journeys, or safe production traffic automatically.
+
+#### MCP TypeScript SDK stdio server
+
+- **Page opened:** [MCP TypeScript SDK v1.29 server guide](https://github.com/modelcontextprotocol/typescript-sdk/blob/v1.29.0/docs/server.md)
+- **Question:** How can ShipProof expose native AI tools without opening a network service or duplicating core logic?
+- **Observation:** The SDK supports a local stdio transport and registered tools with structured input/output schemas and explicit error results.
+- **ShipProof decision:** Build MCP as an optional TypeScript adapter, begin with stdio and narrow read-only tools, and reuse the same versioned evidence contracts as the CLI.
+- **Not inferred:** MCP tool registration provides repository path isolation, business authorization, output bounds, or safe arguments by itself.
+
+## Originality and clean-room boundary
+
+- ShipProof's skills, prompts, CLI, scanners, capacity model, budget gate, tests, and prose were implemented independently for this repository.
+- Community repositories and posts are treated as question discovery, not authoritative requirements. Their code and prompts are not imported.
+- Generic industry terms such as threat model, idempotency, SLO, provenance, and human approval are used in their normal technical meaning.
+- Each retained rule must connect to a ShipProof invariant, a verification method, and a limitation. Rules that cannot meet that standard are omitted or labeled experimental.
 
 ## Deliberate limitations
 
-- The scanner is heuristic and cannot prove reachability, exploitability, runtime configuration, dependency safety, or absence of vulnerabilities.
-- AI review can miss defects or invent paths. Confirm findings and retain human release authority.
-- Capacity arithmetic cannot predict nonlinear overload. Only production-shaped testing can establish a breakpoint and recovery behavior.
-- Reverse-engineering guidance is restricted to authorized defensive investigation and remediation.
-- ShipProof does not replace product/domain experts, privacy counsel, independent security review, incident response, or platform-specific testing.
-- npm support is prepared and installable from GitHub; registry availability depends on the owner completing trusted-publisher setup.
-
-## Primary source index
-
-- [OpenAI: Build skills](https://learn.chatgpt.com/docs/build-skills)
-- [OpenAI: Build plugins](https://learn.chatgpt.com/docs/build-plugins)
-- [OpenAI: Codex Security](https://openai.com/index/codex-security-now-in-research-preview/)
-- [OpenAI: Running Codex safely](https://openai.com/index/running-codex-safely/)
-- [Claude Code: Skills](https://code.claude.com/docs/en/skills)
-- [Claude Code: Plugins reference](https://code.claude.com/docs/en/plugins-reference)
-- [OWASP Top 10:2025](https://owasp.org/Top10/2025/0x00_2025-Introduction/)
-- [OWASP ASVS 5.0](https://owasp.org/www-project-application-security-verification-standard/)
-- [OWASP Agentic Top 10](https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/)
-- [NIST SSDF](https://csrc.nist.gov/projects/ssdf)
-- [CISA Product Security Bad Practices](https://www.cisa.gov/news-events/alerts/2025/01/17/cisa-and-fbi-release-updated-guidance-product-security-bad-practices)
-- [MCP Security Best Practices](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices)
-- [SLSA 1.2 Build Track](https://slsa.dev/spec/v1.2/build-track-basics)
-- [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/)
-- [npm Provenance](https://docs.npmjs.com/generating-provenance-statements/)
-- [OpenTelemetry Semantic Conventions](https://opentelemetry.io/docs/concepts/semantic-conventions/)
-- [PostgreSQL EXPLAIN](https://www.postgresql.org/docs/current/using-explain.html)
-- [Google SRE: Cascading Failures](https://sre.google/sre-book/addressing-cascading-failures/)
-- [Grafana k6 Thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)
-- [LLVM libFuzzer](https://llvm.org/docs/LibFuzzer.html)
-- [Linux Kernel Concurrency Sanitizer](https://docs.kernel.org/dev-tools/kcsan.html)
-- [syzkaller](https://github.com/google/syzkaller)
-- [OSS-Fuzz](https://github.com/google/oss-fuzz)
+- Static and AI review cannot prove reachability, exploitability, runtime configuration, dependency safety, or absence of vulnerabilities.
+- Capacity arithmetic cannot predict nonlinear overload; production-shaped tests are required.
+- Source pages and versions change. Re-check the primary page before making a release depend on exact syntax, support, or conformance.
+- ShipProof does not replace product owners, privacy or legal review, independent security assessment, incident response, or platform-specific testing.

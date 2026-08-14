@@ -15,7 +15,10 @@ from scan_repo import (  # noqa: E402
     deduplicate_and_suppress_findings,
     find_python_ast_issues,
     find_regex_issues,
+    is_excluded,
     iter_scannable_files,
+    normalize_exclude_patterns,
+    render_markdown_report,
 )
 
 
@@ -44,6 +47,49 @@ class ScanRepoTests(unittest.TestCase):
         )
         timeout_lines = [item.line for item in findings if item.rule_id == "SP304"]
         self.assertEqual(timeout_lines, [2])
+
+    def test_multiline_interpolated_sql_is_ast_checked(self):
+        findings = self.findings(
+            "repository.py",
+            'database.execute(\n    f"SELECT id FROM users WHERE email = {email}"\n)\n',
+        )
+        self.assertEqual([item.rule_id for item in findings], ["SP103"])
+
+    def test_bound_sql_parameters_are_not_flagged(self):
+        findings = self.findings(
+            "repository.py",
+            'database.execute("SELECT id FROM users WHERE email = ?", (email,))\n',
+        )
+        self.assertFalse(any(item.rule_id == "SP103" for item in findings))
+
+    def test_sensitive_fastapi_route_requires_visible_authorization(self):
+        findings = self.findings(
+            "app.py",
+            """from fastapi import Depends, FastAPI
+app = FastAPI()
+def require_admin(): ...
+@app.get('/admin/users')
+def unsafe(): ...
+@app.get('/admin/audit', dependencies=[Depends(require_admin)])
+def safe(): ...
+""",
+        )
+        auth_lines = [item.line for item in findings if item.rule_id == "SP108"]
+        self.assertEqual(auth_lines, [4])
+
+    def test_route_page_size_requires_request_boundary_maximum(self):
+        findings = self.findings(
+            "app.py",
+            """from fastapi import FastAPI, Query
+app = FastAPI()
+@app.get('/items')
+def unsafe(limit: int = 50): ...
+@app.get('/bounded')
+def safe(page_size: int = Query(50, ge=1, le=100)): ...
+""",
+        )
+        pagination_lines = [item.line for item in findings if item.rule_id == "SP305"]
+        self.assertEqual(pagination_lines, [4])
 
     def test_blocking_sleep_only_flags_async_context(self):
         source = "import time\ndef sync():\n    time.sleep(1)\nasync def async_job():\n    time.sleep(1)\n"
@@ -82,6 +128,18 @@ class ScanRepoTests(unittest.TestCase):
         self.assertEqual(payload["runs"][0]["results"][0]["ruleId"], "SP101")
         self.assertEqual(payload["runs"][0]["tool"]["driver"]["version"], VERSION)
         json.dumps(payload)
+
+    def test_markdown_report_renders_finding_evidence_and_conditional_verdict(self):
+        findings = self.findings("query.sql", "SELECT * FROM users\n")
+        report = render_markdown_report(
+            Path("."),
+            findings,
+            {"files_scanned": 1, "suppressed": 0},
+        )
+        self.assertIn("**Verdict:** CONDITIONAL", report)
+        self.assertIn("SP302", report)
+        self.assertIn("**Fix:**", report)
+        self.assertIn("## Limitations", report)
 
     def test_identical_text_multiple_lines_reported(self):
         source = (
@@ -127,6 +185,17 @@ class ScanRepoTests(unittest.TestCase):
         with patch("scan_repo.os.walk", return_value=[("/repo", subdirectories, [])]):
             self.assertEqual(list(iter_scannable_files(Path("/repo"), 1_000)), [])
         self.assertEqual(subdirectories, ["bin", "src"])
+
+    def test_exclude_patterns_prune_a_directory_tree(self):
+        patterns = normalize_exclude_patterns(["generated/**", "reports/*.json"])
+        self.assertTrue(is_excluded("generated", patterns))
+        self.assertTrue(is_excluded("generated/api/client.py", patterns))
+        self.assertTrue(is_excluded("reports/scan.json", patterns))
+        self.assertFalse(is_excluded("src/api.py", patterns))
+
+    def test_exclude_patterns_reject_parent_traversal(self):
+        with self.assertRaisesRegex(ValueError, "unsafe exclude pattern"):
+            normalize_exclude_patterns(["../secrets/**"])
 
 
 if __name__ == "__main__":

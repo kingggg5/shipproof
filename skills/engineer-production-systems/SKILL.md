@@ -37,6 +37,7 @@ Unknown values remain explicit assumptions. Do not invent a one-million-user arc
 ### 3. Select the narrowest relevant review path
 
 - Read [engineering.md](references/engineering.md) for application and service code.
+- Read [engineering-loop.md](references/engineering-loop.md) for autonomous iteration, continuous improvement, or repeated build-and-verify work.
 - Read [architecture.md](references/architecture.md) when boundaries, deployment topology, APIs, frontend/backend separation, or a monolith-to-services decision is in scope.
 - Read [data.md](references/data.md) for schemas, SQL/NoSQL access, transactions, migrations, tenancy, retention, backup, or database performance.
 - Read [performance.md](references/performance.md) when CPU, RAM, latency, throughput, startup, or cost matters.

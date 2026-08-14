@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/shipproof-config.schema.json",
+  "title": "ShipProof configuration",
+  "type": "object",
+  "required": ["schema_version", "capacity"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": { "const": "1.0" },
+    "capacity": {
+      "type": "object",
+      "required": ["inputs"],
+      "properties": {
+        "inputs": { "$ref": "#/$defs/capacityInputs" },
+        "k6": { "$ref": "#/$defs/k6" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "capacityInputs": {
+      "type": "object",
+      "required": ["users"],
+      "properties": {
+        "users": { "type": "integer", "minimum": 1 },
+        "dau_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "peak_hour_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "actions_per_session": { "type": "number", "exclusiveMinimum": 0 },
+        "requests_per_action": { "type": "number", "exclusiveMinimum": 0 },
+        "burst_multiplier": { "type": "number", "exclusiveMinimum": 0 },
+        "read_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cache_hit_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "queries_per_read": { "type": "number", "exclusiveMinimum": 0 },
+        "queries_per_write": { "type": "number", "exclusiveMinimum": 0 },
+        "p95_latency_ms": { "type": "number", "exclusiveMinimum": 0 },
+        "db_time_ms": { "type": "number", "exclusiveMinimum": 0 },
+        "instance_rps": { "type": "number", "exclusiveMinimum": 0 },
+        "cpu_ms_per_request": { "type": "number", "exclusiveMinimum": 0 },
+        "memory_mb_per_instance": { "type": "number", "exclusiveMinimum": 0 },
+        "headroom": { "type": "number", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "k6": {
+      "type": "object",
+      "required": ["routes"],
+      "properties": {
+        "base_url_env": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+        "auth_token_env": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+        "duration": { "type": "string", "pattern": "^[1-9][0-9]*(ms|s|m|h)$" },
+        "error_rate_threshold": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "p95_latency_ms": { "type": "number", "exclusiveMinimum": 0 },
+        "preallocated_vus": { "type": "integer", "minimum": 1 },
+        "max_vus": { "type": "integer", "minimum": 1 },
+        "routes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/k6Route" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "k6Route": {
+      "type": "object",
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$" },
+        "path": { "type": "string", "pattern": "^/[^/].*|^/$", "maxLength": 2048 },
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
+        "weight": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "expected_statuses": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 100, "maximum": 599 }
+        },
+        "body": {}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

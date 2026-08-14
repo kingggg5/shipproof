@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import fnmatch
 import hashlib
 import json
 import os
@@ -15,7 +16,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.3.1"
+VERSION = "0.4.0"
 
 SEVERITY = {"none": 99, "critical": 0, "high": 1, "medium": 2, "low": 3}
 CONFIDENCE = {"high": 0, "medium": 1, "low": 2}
@@ -33,6 +34,7 @@ SKIP_DIRS = {
     "dist",
     "build",
     "coverage",
+    "fixtures",
     ".next",
     ".nuxt",
     ".cache",
@@ -260,6 +262,19 @@ RULES: tuple[Rule, ...] = (
         frozenset({".py", ".pyi"}),
     ),
     Rule(
+        "SP108",
+        "Sensitive route lacks visible authorization",
+        "security",
+        "high",
+        "medium",
+        compile_pattern("$^"),
+        "An admin or internal route has no visible authorization dependency.",
+        "Require an explicit authorization dependency or verify and document an application-wide control.",
+        "CWE-862",
+        "OWASP ASVS V4",
+        frozenset({".py"}),
+    ),
+    Rule(
         "SP201",
         "Debug mode enabled",
         "security",
@@ -334,6 +349,19 @@ RULES: tuple[Rule, ...] = (
         "Reliability",
         frozenset({".py"}),
     ),
+    Rule(
+        "SP305",
+        "Unbounded pagination input",
+        "scale",
+        "medium",
+        "high",
+        compile_pattern("$^"),
+        "A route accepts a page-size parameter without a visible upper bound.",
+        "Enforce a positive maximum at the request boundary and retain a database LIMIT.",
+        "CWE-400",
+        "Capacity",
+        frozenset({".py"}),
+    ),
 )
 
 
@@ -341,13 +369,56 @@ def is_text_file(path: Path) -> bool:
     return path.suffix.lower() in TEXT_SUFFIXES or path.name.lower() in TEXT_NAMES
 
 
-def iter_scannable_files(root: Path, max_file_bytes: int) -> Iterable[Path]:
+def normalize_exclude_patterns(patterns: Sequence[str]) -> tuple[str, ...]:
+    normalized: list[str] = []
+    for value in patterns:
+        pattern = value.replace("\\", "/").removeprefix("./")
+        if (
+            not pattern
+            or pattern.startswith("/")
+            or "\x00" in pattern
+            or ".." in pattern.split("/")
+            or len(pattern) > 512
+        ):
+            raise ValueError(f"unsafe exclude pattern: {value!r}")
+        normalized.append(pattern)
+    return tuple(dict.fromkeys(normalized))
+
+
+def is_excluded(relative_path: str, patterns: Sequence[str]) -> bool:
+    for pattern in patterns:
+        if fnmatch.fnmatchcase(relative_path, pattern):
+            return True
+        if pattern.endswith("/**") and relative_path == pattern.removesuffix("/**"):
+            return True
+    return False
+
+
+def iter_scannable_files(
+    root: Path,
+    max_file_bytes: int,
+    exclude_patterns: Sequence[str] = (),
+) -> Iterable[Path]:
     """Walk deterministically while pruning ignored trees before descending into them."""
     for directory, subdirectories, filenames in os.walk(root, topdown=True, onerror=lambda _: None):
-        subdirectories[:] = sorted(name for name in subdirectories if name not in SKIP_DIRS)
+        relative_directory = Path(directory).relative_to(root)
+        subdirectories[:] = sorted(
+            name
+            for name in subdirectories
+            if name not in SKIP_DIRS
+            and not is_excluded(
+                (relative_directory / name).as_posix().removeprefix("./"),
+                exclude_patterns,
+            )
+        )
         for filename in sorted(filenames):
             path = Path(directory, filename)
+            if path.is_symlink():
+                continue
             if not is_text_file(path):
+                continue
+            relative_path = path.relative_to(root).as_posix()
+            if is_excluded(relative_path, exclude_patterns):
                 continue
             try:
                 if path.stat().st_size <= max_file_bytes:
@@ -439,7 +510,7 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
     suffix = path.suffix.lower()
     lines = source_text.splitlines()
     for rule in RULES:
-        if rule.rule_id == "SP303":
+        if rule.rule_id in {"SP108", "SP303", "SP305"}:
             continue
         if suffix in DOCUMENT_SUFFIXES and rule.rule_id not in SECRET_RULE_IDS:
             continue
@@ -485,6 +556,112 @@ def resolve_dotted_name(node: ast.AST) -> str:
     return ".".join(reversed(parts))
 
 
+ROUTE_METHODS = frozenset({"get", "post", "put", "patch", "delete", "options", "head"})
+SENSITIVE_ROUTE_SEGMENTS = frozenset({"admin", "internal", "management"})
+AUTHORIZATION_DEPENDENCY_HINTS = ("auth", "admin", "permission", "policy", "role", "scope")
+PAGE_SIZE_PARAMETERS = frozenset({"limit", "page_size", "per_page"})
+
+
+def find_rule(rule_id: str) -> Rule:
+    return next(rule for rule in RULES if rule.rule_id == rule_id)
+
+
+def route_decorator_calls(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> list[ast.Call]:
+    route_calls: list[ast.Call] = []
+    for decorator in node.decorator_list:
+        if not isinstance(decorator, ast.Call):
+            continue
+        method = resolve_dotted_name(decorator.func).rsplit(".", 1)[-1].lower()
+        if method in ROUTE_METHODS:
+            route_calls.append(decorator)
+    return route_calls
+
+
+def route_path(route_call: ast.Call) -> str | None:
+    if not route_call.args:
+        return None
+    value = route_call.args[0]
+    return value.value if isinstance(value, ast.Constant) and isinstance(value.value, str) else None
+
+
+def has_visible_authorization_dependency(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+    route_calls: Sequence[ast.Call],
+) -> bool:
+    candidates: list[ast.AST] = [
+        *node.args.defaults,
+        *(value for value in node.args.kw_defaults if value is not None),
+        *(
+            argument.annotation
+            for argument in [*node.args.args, *node.args.kwonlyargs]
+            if argument.annotation
+        ),
+    ]
+    for route_call in route_calls:
+        candidates.extend(
+            keyword.value for keyword in route_call.keywords if keyword.arg == "dependencies"
+        )
+    for candidate in candidates:
+        for child in ast.walk(candidate):
+            if not isinstance(child, ast.Call):
+                continue
+            if resolve_dotted_name(child.func).rsplit(".", 1)[-1] != "Depends" or not child.args:
+                continue
+            dependency_name = resolve_dotted_name(child.args[0]).lower()
+            if any(hint in dependency_name for hint in AUTHORIZATION_DEPENDENCY_HINTS):
+                return True
+    return False
+
+
+def parameter_defaults(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> list[tuple[ast.arg, ast.AST | None]]:
+    positional = [*node.args.posonlyargs, *node.args.args]
+    positional_defaults: list[ast.AST | None] = [None] * (
+        len(positional) - len(node.args.defaults)
+    ) + list(node.args.defaults)
+    return [
+        *zip(positional, positional_defaults, strict=True),
+        *zip(node.args.kwonlyargs, node.args.kw_defaults, strict=True),
+    ]
+
+
+def has_page_size_bound(argument: ast.arg, default: ast.AST | None) -> bool:
+    candidates = [value for value in (argument.annotation, default) if value is not None]
+    for candidate in candidates:
+        for child in ast.walk(candidate):
+            if not isinstance(child, ast.Call):
+                continue
+            validator = resolve_dotted_name(child.func).rsplit(".", 1)[-1]
+            if validator not in {"Query", "Field"}:
+                continue
+            if any(
+                keyword.arg == "le" and isinstance(keyword.value, ast.Constant)
+                for keyword in child.keywords
+            ):
+                return True
+    return False
+
+
+def is_interpolated_sql_value(node: ast.AST) -> bool:
+    if isinstance(node, ast.JoinedStr):
+        return True
+    if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Mod)):
+        return any(
+            isinstance(child, ast.Constant) and isinstance(child.value, str)
+            for child in ast.walk(node)
+        )
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "format"
+        and isinstance(node.func.value, ast.Constant)
+        and isinstance(node.func.value.value, str)
+    )
+
+
 class PythonSecurityVisitor(ast.NodeVisitor):
     def __init__(self, relative_path: str, source_lines: Sequence[str]) -> None:
         self.relative_path = relative_path
@@ -499,12 +676,33 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         )
         self.findings.append(make_finding(rule, self.relative_path, line_number, evidence))
 
+    def inspect_route(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        route_calls = route_decorator_calls(node)
+        if not route_calls:
+            return
+        sensitive_route = next(
+            (
+                route_call
+                for route_call in route_calls
+                if (path := route_path(route_call))
+                and SENSITIVE_ROUTE_SEGMENTS.intersection(path.lower().split("/"))
+            ),
+            None,
+        )
+        if sensitive_route and not has_visible_authorization_dependency(node, route_calls):
+            self.add_finding(find_rule("SP108"), sensitive_route)
+        for argument, default in parameter_defaults(node):
+            if argument.arg in PAGE_SIZE_PARAMETERS and not has_page_size_bound(argument, default):
+                self.add_finding(find_rule("SP305"), argument)
+
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self.inspect_route(node)
         self.async_function_depth += 1
         self.generic_visit(node)
         self.async_function_depth -= 1
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self.inspect_route(node)
         previous_depth = self.async_function_depth
         self.async_function_depth = 0
         self.generic_visit(node)
@@ -512,6 +710,13 @@ class PythonSecurityVisitor(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> None:
         name = resolve_dotted_name(node.func)
+        method = name.rsplit(".", 1)[-1]
+        if (
+            method in {"execute", "query", "raw"}
+            and node.args
+            and is_interpolated_sql_value(node.args[0])
+        ):
+            self.add_finding(find_rule("SP103"), node.args[0])
         if name in {
             "requests.get",
             "requests.post",
@@ -592,13 +797,15 @@ def scan_repository(
     root: Path,
     max_file_bytes: int = 1_000_000,
     baseline: set[str] | None = None,
+    exclude_patterns: Sequence[str] = (),
 ) -> tuple[list[Finding], dict[str, int]]:
     repository_root = root.resolve()
     if not repository_root.is_dir():
         raise ValueError(f"not a directory: {repository_root}")
     findings: list[Finding] = []
     files_scanned = 0
-    for path in iter_scannable_files(repository_root, max_file_bytes):
+    normalized_excludes = normalize_exclude_patterns(exclude_patterns)
+    for path in iter_scannable_files(repository_root, max_file_bytes, normalized_excludes):
         files_scanned += 1
         relative_path = path.relative_to(repository_root).as_posix()
         try:
@@ -627,7 +834,7 @@ def build_json_report(
 ) -> dict[str, object]:
     return {
         "schema_version": "1.0",
-        "tool": {"name": "ShipProof", "version": VERSION},
+        "tool": {"name": "ShipProof", "version": VERSION, "command": "scan"},
         "root": str(root.resolve()),
         "verdict": determine_verdict(findings),
         "summary": {
@@ -747,6 +954,12 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--fail-on", choices=tuple(SEVERITY), default="high")
     parser.add_argument("--max-file-bytes", type=int, default=1_000_000)
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        help="Exclude a repository-relative glob; repeat for multiple patterns",
+    )
     return parser.parse_args(argv)
 
 
@@ -760,8 +973,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise ValueError("max-file-bytes must be positive")
         findings, stats = scan_repository(
             arguments.root,
-            arguments.max_file_bytes,
-            load_baseline_fingerprints(arguments.baseline),
+            max_file_bytes=arguments.max_file_bytes,
+            baseline=load_baseline_fingerprints(arguments.baseline),
+            exclude_patterns=arguments.exclude,
         )
         payload = build_json_report(arguments.root, findings, stats)
         if arguments.baseline_out:
