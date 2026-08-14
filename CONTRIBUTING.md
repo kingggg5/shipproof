@@ -5,9 +5,12 @@ Thank you for improving ShipProof. Keep contributions narrow, evidence-based, an
 ## Before opening a pull request
 
 ```bash
+npm ci --ignore-scripts
+npm run test:node
 python -m unittest discover -s tests -v
 python -m compileall -q skills tests install.py
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
+npm pack --dry-run
 ```
 
 ## Adding a scanner rule
@@ -27,6 +30,10 @@ Do not add broad rules claiming to detect kernel, browser-engine, parser, or pro
 ## Changing engineering guidance or budgets
 
 Keep the two skills consistent and update the relevant reference rather than duplicating advice. A new performance metric needs a defined unit, direction, workload, variance expectation, relative threshold, absolute limit when applicable, and a test for missing/invalid evidence. Do not weaken a threshold merely to make CI pass.
+
+## Changing the npm CLI
+
+Keep the front door dependency-free and cross-platform. Do not execute shell strings, repository-supplied commands, install lifecycle scripts, or arbitrary prompt paths. Route deterministic Python gates to their existing implementation rather than duplicating them in JavaScript. Add a Node test for every parser, path, overwrite, and exit-code change, then inspect `npm pack --dry-run` for unintended files.
 
 ## Safety
 

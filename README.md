@@ -1,23 +1,36 @@
 # ShipProof
 
-**Teach coding agents to build secure, fast, resource-bounded software—and prove it before release.**
+**Secure-by-design engineering skills and evidence gates for AI coding agents.**
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
+[![npm-ready](https://img.shields.io/badge/npm-ready-CB3837?logo=npm)](package.json)
 [![Codex](https://img.shields.io/badge/Codex-skill%20%2B%20plugin-111827)](https://learn.chatgpt.com/docs/build-skills)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20%2B%20plugin-D97757)](https://code.claude.com/docs/en/skills)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-ShipProof is a portable pair of AI Agent Skills plus zero-dependency Python gates. It guides Codex or Claude Code while code is being designed and written, then audits the result with reproducible evidence.
+ShipProof teaches Codex and Claude Code how to design, implement, investigate, and audit production software across application code, APIs, databases, AI agents, supply chains, kernels, browser engines, parsers, and network protocols. Its zero-dependency npm front door and local Python gates turn assumptions into repeatable CI evidence.
 
-It does **not** promise “perfect,” “unhackable,” “maximum performance,” or “one million users” from a static scan. It turns those goals into explicit invariants, resource budgets, target-specific tests, and release gates.
+It does **not** promise “perfect,” “unhackable,” “maximum performance,” or “one million users” from a static scan. It makes assumptions visible, verifies what can be verified, and preserves human authority for consequential actions and releases.
+
+## Start in one minute
+
+```bash
+npm install --global github:kingggg5/shipproof
+shipproof doctor .
+shipproof init . --target both
+```
+
+`init` adds repository-scoped skills to `.agents/skills` for Codex and `.claude/skills` for Claude Code. It skips existing skill directories unless you explicitly pass `--force`.
+
+Node.js 20+ runs the front-door CLI. Python 3.10+ is needed only for `scan`, `budget`, and `capacity`. There are no runtime npm or Python package dependencies.
 
 ## Two modes, one workflow
 
 | Skill | Use it for | Outcome |
 | --- | --- | --- |
-| `engineer-production-systems` | Design, implementation, refactoring, hardening, CPU/RAM/latency work, kernels, browser engines, parsers, and protocols | Small, bounded, testable production code with explicit assumptions |
-| `audit-production-readiness` | Deep review, vulnerability triage, pre-production checks, incident prevention, and 10k-to-1M-user planning | Independent Security, Correctness, Scale, Operability, and Supply Chain gates |
+| `engineer-production-systems` | Design, implementation, refactoring, hardening, performance, data, AI/MCP, and authorized defensive systems work | Small, bounded, testable production code with explicit assumptions |
+| `audit-production-readiness` | Deep review, vulnerability triage, incidents, release gates, and 10k-to-1M-user planning | Independent Security, Correctness, Data & Privacy, Scale, Operability, and Supply Chain gates |
 
 ```mermaid
 flowchart LR
@@ -42,6 +55,8 @@ flowchart LR
 - Treat static and AI findings as leads until a path, reproducer, sanitizer failure, or focused test confirms them.
 - Keep dangerous actions human-approved and never upload private code or run active tests without authorization.
 
+Progressive references cover production architecture, full-stack boundaries, database invariants and migrations, AI/RAG/MCP security, software supply chains, operability and incident response, performance, low-level systems, and authorized defensive reverse engineering. The agent loads only the relevant discipline instead of carrying one giant prompt.
+
 ## Systems coverage
 
 ShipProof routes high-risk code to a stricter evidence ladder:
@@ -61,24 +76,42 @@ Both hosts use the open `SKILL.md` structure, so ShipProof keeps one source of t
 
 | Host | Skill metadata | Plugin manifest | Personal skill path |
 | --- | --- | --- | --- |
-| Codex | `skills/*/SKILL.md` + optional `agents/openai.yaml` | `.codex-plugin/plugin.json` | `$CODEX_HOME/skills` or `~/.codex/skills` |
+| Codex | `skills/*/SKILL.md` + optional `agents/openai.yaml` | `.codex-plugin/plugin.json` | `~/.agents/skills` or `<repo>/.agents/skills` |
 | Claude Code | `skills/*/SKILL.md` | `.claude-plugin/plugin.json` | `~/.claude/skills` |
 
-## Install
+## One front door
 
-Python 3.10+ is the only runtime requirement.
+```text
+shipproof doctor [path] [--json]
+shipproof init [path] [--target codex|claude|both] [--force]
+shipproof install [--target codex|claude|both] [--force]
+shipproof prompt <build|audit|threat-model|database|performance|systems|incident|ai-agent>
+shipproof scan [path] [--format markdown|json|sarif] [--fail-on high]
+shipproof budget --baseline baseline.json --current current.json --budget budget.json
+shipproof capacity --users 1000000 [workload assumptions]
+```
+
+- `doctor` is read-only and checks runtimes, source control, CI, lockfiles, security policy, and skill integration.
+- `init` installs project skills; `install` installs personal skills.
+- `prompt` prints a focused versioned prompt without network calls.
+- `scan`, `budget`, and `capacity` safely route to one Python implementation with shell interpretation disabled.
+
+See [the command reference](docs/commands.md) for options and exit codes.
+
+## Install alternatives
+
+Install from a clone:
 
 ```bash
 git clone https://github.com/kingggg5/shipproof.git
 cd shipproof
-python install.py
+npm install --global .
 ```
 
-The default installs both skills for Codex and Claude Code. Limit the target when needed:
+Python-only fallback:
 
 ```bash
-python install.py --target codex
-python install.py --target claude
+python install.py --target both
 ```
 
 Then invoke the skill while building:
@@ -176,13 +209,16 @@ ShipProof routes the agent to tools already present in the environment and never
 - [LLVM libFuzzer](https://llvm.org/docs/LibFuzzer.html), [OSS-Fuzz](https://github.com/google/oss-fuzz), or [syzkaller](https://github.com/google/syzkaller) for authorized target-specific fuzzing.
 - [Grafana k6](https://grafana.com/docs/k6/latest/) or the project's existing harness for SLO-driven load testing.
 
-## What came from CodeVibes—and what did not
+## Research and independent design
 
-[CodeVibes](https://github.com/danish296/codevibes) is MIT-licensed and demonstrates useful product ideas: prioritize high-risk files, show progress, combine deterministic candidates with contextual AI, and return actionable findings. ShipProof independently implements those ideas as portable agent instructions and local CI gates.
+ShipProof is independently implemented. Its 2025–2026 design is grounded in primary guidance from OWASP ASVS and the Web/Agentic Top 10, NIST SSDF, CISA Secure by Design, MCP security specifications, SLSA, npm trusted publishing/provenance, OpenTelemetry, PostgreSQL, and mature sanitizing/fuzzing projects. Community projects and engineering reports are used to discover questions, never as proof.
 
-ShipProof does not copy CodeVibes' React/Express application, DeepSeek service, SQLite history, Vibe Score, or source code. It deliberately avoids a single score because one critical defect must not be averaged away by many clean files.
+- See [docs/research.md](docs/research.md) for the source-by-source synthesis, design consequences, and limitations.
+- See [docs/web-applications-playbook.md](docs/web-applications-playbook.md) for modern Web Application, API, RSC, database concurrency, and event loop resilience playbooks.
+- See [docs/systems-and-scale-playbook.md](docs/systems-and-scale-playbook.md) for the comprehensive systems vulnerability catalog (kernels, browser engines, protocols) and 10k-to-1M workload scaling formulas.
+- See [docs/2025-2026-engineering-standards.md](docs/2025-2026-engineering-standards.md) for 2025–2026 standards including Python 3.13 No-GIL concurrency, Post-Quantum FIPS 203 ML-KEM, WASI 0.3, and MCP Agentic Security.
 
-The design also learns from [NVIDIA SkillSpector](https://github.com/NVIDIA/SkillSpector) (bounded input, static-first analysis, baselines, SARIF), [Vercel deepsec](https://github.com/vercel-labs/deepsec) (resumable stages, explicit cost/time caps, revalidation), [OSV-Scanner](https://github.com/google/osv-scanner) (authoritative dependency matching and call analysis), and mature fuzzing projects. See [docs/research.md](docs/research.md) for the source-by-source synthesis and limitations.
+ShipProof deliberately avoids a single readiness score because one critical defect must not be averaged away by many clean files.
 
 ## About large vulnerability claims
 
@@ -193,12 +229,17 @@ Verified primary material does show the broader lesson: modern AI-assisted resea
 ## Development
 
 ```bash
+npm ci --ignore-scripts
+npm run test:node
 python -m unittest discover -s tests -v
 python -m compileall -q skills tests install.py
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
+npm pack --dry-run
 ```
 
-The runtime uses only the Python standard library. Read [CONTRIBUTING.md](CONTRIBUTING.md) before adding a detector: each rule needs positive and negative tests, a mapping, remediation, and false-positive analysis.
+The runtimes use only Node and the Python standard library. CI tests Node 20/24 and Python 3.10/3.12, verifies package contents, and runs CodeQL for Python and JavaScript/TypeScript. Read [CONTRIBUTING.md](CONTRIBUTING.md) before adding a detector: each rule needs positive and negative tests, a mapping, remediation, and false-positive analysis.
+
+The scoped npm manifest is ready for a future registry release. Until the owner configures npm trusted publishing, use the GitHub npm install shown above; this project does not claim an unpublished registry release. See [docs/releasing.md](docs/releasing.md).
 
 ## License and security
 
