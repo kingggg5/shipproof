@@ -43,4 +43,4 @@ Use protocol-level traffic for most load and a smaller browser workload for end-
 
 Prefer the simplest design that meets measured SLO, durability, isolation, and recovery needs. Add caching, queues, replicas, sharding, service separation, or orchestration only for a named bottleneck or organizational boundary. Every new component adds failure modes and operational cost.
 
-Primary references: [Google SRE on cascading failures](https://sre.google/sre-book/addressing-cascading-failures/) and [Grafana k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/).
+Keep source provenance in the repository research notebook. This execution guide remains self-contained and project evidence overrides generic examples.
