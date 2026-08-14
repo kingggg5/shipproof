@@ -40,3 +40,15 @@ Analyze fragmentation/reassembly, amplification, downgrade, reflection, resource
 7. Reproducer, root-cause fix, regression test, and monitored rollout.
 
 No single layer replaces the others. A clean AI review is not evidence that decades-old code contains no hidden vulnerability.
+
+## Authorized defensive reverse engineering
+
+Use reverse engineering only for software, firmware, files, or traffic the user owns or is explicitly authorized to assess. Establish scope, evidence-handling rules, legal constraints, and stop conditions first.
+
+1. Hash and preserve the original artifact; work on isolated copies without live credentials or production connectivity.
+2. Identify format, architecture, compiler/runtime clues, imports, capabilities, exposed parsers, and privilege boundaries using passive inspection first.
+3. Form one testable hypothesis at a time. Correlate static control/data flow with traces from a sandboxed execution.
+4. Minimize the input or sequence that triggers the defect. Confirm root cause under a debugger, sanitizer, emulator, or instrumented build when available.
+5. Patch the source-level invariant where possible, add a regression corpus/test, compare behavior and resources, and document residual uncertainty.
+
+Do not provide persistence, credential theft, stealth, evasion, unauthorized access, or destructive deployment workflows. For a suspected malicious artifact, prioritize containment, indicators, behavior, and remediation rather than improving its capability.

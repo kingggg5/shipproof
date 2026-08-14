@@ -1,6 +1,6 @@
 ---
 name: engineer-production-systems
-description: Design, write, refactor, or optimize production code so it is secure, correct, resource-bounded, fast, observable, and maintainable. Use when building features, choosing implementation patterns, reducing CPU/RAM/latency, hardening code, planning for 10k to 1M users, or working on kernels, browser engines, parsers, network protocols, or other memory-unsafe systems code.
+description: Design, write, refactor, or optimize production code so it is secure, correct, resource-bounded, observable, and maintainable. Use for full-stack features, APIs, databases, AI/RAG/MCP tools, CPU/RAM/latency work, 10k-to-1M-user planning, or authorized kernel, browser, parser, protocol, and defensive reverse-engineering work.
 ---
 
 # Engineer Production Systems
@@ -37,8 +37,11 @@ Unknown values remain explicit assumptions. Do not invent a one-million-user arc
 ### 3. Select the narrowest relevant review path
 
 - Read [engineering.md](references/engineering.md) for application and service code.
+- Read [architecture.md](references/architecture.md) when boundaries, deployment topology, APIs, frontend/backend separation, or a monolith-to-services decision is in scope.
+- Read [data.md](references/data.md) for schemas, SQL/NoSQL access, transactions, migrations, tenancy, retention, backup, or database performance.
 - Read [performance.md](references/performance.md) when CPU, RAM, latency, throughput, startup, or cost matters.
 - Read [systems.md](references/systems.md) for kernels, drivers, C/C++, unsafe Rust, browser engines, codecs, parsers, IPC, or network protocols.
+- Read [agent-security.md](references/agent-security.md) for AI agents, RAG, memory, MCP, tool calling, or autonomous workflows.
 - Read [tool-routing.md](references/tool-routing.md) before recommending scanners, profilers, sanitizers, fuzzers, or load tools.
 
 ### 4. Design for bounded work

@@ -11,9 +11,12 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 
-def load_object(path: Path) -> dict[str, object]:
+def load_object(path: str | Path) -> dict[str, object]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        if str(path) == "-":
+            value = json.loads(sys.stdin.read())
+        else:
+            value = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"cannot read {path}: {exc}") from exc
     if not isinstance(value, dict):
@@ -69,7 +72,7 @@ def evaluate(
                 raise ValueError(f"baseline.{name} must be positive for relative comparison")
             change = (after - before) / before * 100
             delta_percent = change if direction == "lower" else -change
-            if delta_percent > allowed_value:
+            if delta_percent > allowed_value + 1e-7:
                 reasons.append(f"regressed {delta_percent:.2f}% (allowed {allowed_value:.2f}%)")
 
         if "max" in raw_rule:
@@ -113,16 +116,25 @@ def markdown(payload: Mapping[str, object]) -> str:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--baseline", type=Path, required=True)
-    parser.add_argument("--current", type=Path, required=True)
-    parser.add_argument("--budget", type=Path, required=True)
+    parser.add_argument("--baseline", type=str, required=True, help="Baseline JSON file path or '-' for stdin")
+    parser.add_argument("--current", type=str, required=True, help="Current JSON file path or '-' for stdin")
+    parser.add_argument("--budget", type=str, required=True, help="Budget JSON file path or '-' for stdin")
     parser.add_argument("--format", choices=("json", "markdown"), default="markdown")
     parser.add_argument("--output", type=Path)
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
     args = parse_args(argv)
+    if (args.baseline, args.current, args.budget).count("-") > 1:
+        print("shipproof: stdin ('-') may be used for only one input", file=sys.stderr)
+        return 2
     try:
         payload = evaluate(load_object(args.baseline), load_object(args.current), load_object(args.budget))
     except ValueError as exc:
