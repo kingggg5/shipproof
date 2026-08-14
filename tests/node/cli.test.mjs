@@ -40,6 +40,7 @@ test("prompt catalog is allowlisted", () => {
   assert.equal(runCli(["prompt", "database", "ignored"]), 2);
   assert.ok(internals.PROMPT_FILES.has("database"));
   assert.ok(internals.PROMPT_FILES.has("ai-agent"));
+  assert.ok(internals.PROMPT_FILES.has("loop"));
 });
 
 test("unknown commands fail closed", () => {
