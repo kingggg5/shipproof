@@ -32,5 +32,13 @@ jobs:
         run: python -m compileall -q skills tests install.py
       - name: Test
         run: python -m unittest discover -s tests -v
+      - name: Resource budget smoke test
+        run: >-
+          python skills/engineer-production-systems/scripts/check_budget.py
+          --baseline examples/performance/baseline.json
+          --current examples/performance/current.json
+          --budget examples/performance/budget.json
       - name: Self-audit
         run: python skills/audit-production-readiness/scripts/scan_repo.py . --format markdown --fail-on high
+      - name: Validate plugin manifests
+        run: python -c "import json; from pathlib import Path; [json.loads(p.read_text()) for p in (Path('.codex-plugin/plugin.json'), Path('.claude-plugin/plugin.json'))]"

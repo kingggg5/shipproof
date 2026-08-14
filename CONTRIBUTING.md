@@ -22,6 +22,12 @@ Every rule must include:
 
 Prefer structural/AST checks over broad regexes. Do not add a high-severity rule that only recognizes a keyword without a plausible failure path.
 
+Do not add broad rules claiming to detect kernel, browser-engine, parser, or protocol memory-safety defects. Route those classes to target-specific static analysis, sanitizers, fuzzing, and reproducible tests unless a deterministic low-noise rule can be demonstrated.
+
+## Changing engineering guidance or budgets
+
+Keep the two skills consistent and update the relevant reference rather than duplicating advice. A new performance metric needs a defined unit, direction, workload, variance expectation, relative threshold, absolute limit when applicable, and a test for missing/invalid evidence. Do not weaken a threshold merely to make CI pass.
+
 ## Safety
 
 The default workflow must remain read-only and local-first. Do not add telemetry, code upload, dependency installation, network calls, active exploitation, or load generation to the default path. Any future active testing must require explicit scope and authorization.
