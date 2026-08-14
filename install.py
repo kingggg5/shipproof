@@ -14,7 +14,7 @@ SKILL_NAMES = ("engineer-production-systems", "audit-production-readiness")
 
 def skill_root(host: str, codex_home: Path | None = None, claude_home: Path | None = None) -> Path:
     if host == "codex":
-        base = codex_home or Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
+        base = codex_home or Path(os.environ.get("SHIPPROOF_CODEX_HOME", Path.home() / ".agents"))
     elif host == "claude":
         base = claude_home or Path.home() / ".claude"
     else:
@@ -46,7 +46,7 @@ def install(
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", choices=("codex", "claude", "both"), default="both")
-    parser.add_argument("--codex-home", type=Path, help="Override CODEX_HOME")
+    parser.add_argument("--codex-home", type=Path, help="Override ~/.agents")
     parser.add_argument("--claude-home", type=Path, help="Override ~/.claude")
     args = parser.parse_args(argv)
     for host, path in install(args.target, args.codex_home, args.claude_home):

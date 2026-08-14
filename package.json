@@ -1,0 +1,63 @@
+{
+  "name": "@kingggg5/shipproof",
+  "version": "0.3.0",
+  "description": "Secure-by-design engineering skills and evidence gates for Codex and Claude Code.",
+  "type": "module",
+  "bin": {
+    "shipproof": "bin/shipproof.mjs"
+  },
+  "files": [
+    ".claude-plugin",
+    ".codex-plugin",
+    "bin",
+    "lib",
+    "prompts",
+    "skills/audit-production-readiness/SKILL.md",
+    "skills/audit-production-readiness/agents",
+    "skills/audit-production-readiness/references",
+    "skills/audit-production-readiness/scripts/*.py",
+    "skills/engineer-production-systems/SKILL.md",
+    "skills/engineer-production-systems/agents",
+    "skills/engineer-production-systems/references",
+    "skills/engineer-production-systems/scripts/*.py",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "check": "npm run test && npm run pack:check",
+    "pack:check": "npm pack --dry-run",
+    "test": "npm run test:node && npm run test:python",
+    "test:node": "node tests/node/cli.test.mjs",
+    "test:python": "python -m unittest discover -s tests -p test_*.py -v"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kingggg5/shipproof.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kingggg5/shipproof/issues"
+  },
+  "homepage": "https://github.com/kingggg5/shipproof#readme",
+  "keywords": [
+    "ai-agents",
+    "application-security",
+    "claude-code",
+    "codex",
+    "performance",
+    "production-readiness",
+    "sarif",
+    "secure-by-design",
+    "software-supply-chain"
+  ],
+  "author": "Jesadakorn Pipitakun",
+  "license": "MIT"
+}
