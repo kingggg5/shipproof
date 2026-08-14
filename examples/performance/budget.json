@@ -1,0 +1,23 @@
+{
+  "metrics": {
+    "p95_latency_ms": {
+      "direction": "lower",
+      "max_regression_percent": 10,
+      "max": 160
+    },
+    "cpu_ms": {
+      "direction": "lower",
+      "max_regression_percent": 8
+    },
+    "rss_mb": {
+      "direction": "lower",
+      "max_regression_percent": 5,
+      "max": 220
+    },
+    "throughput_rps": {
+      "direction": "higher",
+      "max_regression_percent": 5,
+      "min": 750
+    }
+  }
+}

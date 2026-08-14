@@ -1,0 +1,8 @@
+{
+  "metrics": {
+    "p95_latency_ms": 120,
+    "cpu_ms": 8.5,
+    "rss_mb": 180,
+    "throughput_rps": 850
+  }
+}
