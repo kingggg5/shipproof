@@ -213,10 +213,7 @@ ShipProof routes the agent to tools already present in the environment and never
 
 ShipProof is independently implemented. Its 2025–2026 design is grounded in primary guidance from OWASP ASVS and the Web/Agentic Top 10, NIST SSDF, CISA Secure by Design, MCP security specifications, SLSA, npm trusted publishing/provenance, OpenTelemetry, PostgreSQL, and mature sanitizing/fuzzing projects. Community projects and engineering reports are used to discover questions, never as proof.
 
-- See [docs/research.md](docs/research.md) for the source-by-source synthesis, design consequences, and limitations.
-- See [docs/web-applications-playbook.md](docs/web-applications-playbook.md) for modern Web Application, API, RSC, database concurrency, and event loop resilience playbooks.
-- See [docs/systems-and-scale-playbook.md](docs/systems-and-scale-playbook.md) for the comprehensive systems vulnerability catalog (kernels, browser engines, protocols) and 10k-to-1M workload scaling formulas.
-- See [docs/2025-2026-engineering-standards.md](docs/2025-2026-engineering-standards.md) for 2025–2026 standards including Python 3.13 No-GIL concurrency, Post-Quantum FIPS 203 ML-KEM, WASI 0.3, and MCP Agentic Security.
+- See [docs/research.md](docs/research.md) for the source-by-source synthesis, design consequences, independent clean-room implementation rationale, and explicit limitations. Operational guidance is split across the two skills' focused references so an agent loads only the material relevant to the current task.
 
 ShipProof deliberately avoids a single readiness score because one critical defect must not be averaged away by many clean files.
 
