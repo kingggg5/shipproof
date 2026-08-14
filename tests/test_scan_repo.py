@@ -18,6 +18,7 @@ from scan_repo import (  # noqa: E402
     is_excluded,
     iter_scannable_files,
     normalize_exclude_patterns,
+    render_markdown_report,
 )
 
 
@@ -127,6 +128,18 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertEqual(payload["runs"][0]["results"][0]["ruleId"], "SP101")
         self.assertEqual(payload["runs"][0]["tool"]["driver"]["version"], VERSION)
         json.dumps(payload)
+
+    def test_markdown_report_renders_finding_evidence_and_conditional_verdict(self):
+        findings = self.findings("query.sql", "SELECT * FROM users\n")
+        report = render_markdown_report(
+            Path("."),
+            findings,
+            {"files_scanned": 1, "suppressed": 0},
+        )
+        self.assertIn("**Verdict:** CONDITIONAL", report)
+        self.assertIn("SP302", report)
+        self.assertIn("**Fix:**", report)
+        self.assertIn("## Limitations", report)
 
     def test_identical_text_multiple_lines_reported(self):
         source = (
