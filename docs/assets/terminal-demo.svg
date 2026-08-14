@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690" role="img" aria-labelledby="title description">
+  <title id="title">ShipProof before and after terminal demo</title>
+  <description id="description">A vulnerable API scan finds five issues. After fixes and tests, the scan passes with zero findings.</description>
+  <rect width="1200" height="690" rx="24" fill="#0b1020"/>
+  <rect width="1200" height="56" rx="24" fill="#161d31"/>
+  <rect y="32" width="1200" height="24" fill="#161d31"/>
+  <circle cx="30" cy="28" r="8" fill="#ff6b6b"/>
+  <circle cx="56" cy="28" r="8" fill="#ffd166"/>
+  <circle cx="82" cy="28" r="8" fill="#52d273"/>
+  <text x="600" y="35" text-anchor="middle" fill="#a9b3c9" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">ShipProof · evidence before claims</text>
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18">
+    <text x="38" y="100" fill="#7dd3fc">$ shipproof scan examples/demo-api/fixtures/before --fail-on high</text>
+    <text x="38" y="142" fill="#f8fafc">ShipProof Production Readiness</text>
+    <text x="38" y="180" fill="#f87171">BLOCK</text>
+    <text x="190" y="180" fill="#cbd5e1">5 findings · 4 high · 1 medium</text>
+    <text x="64" y="220" fill="#fca5a5">SP108 HIGH</text>
+    <text x="250" y="220" fill="#cbd5e1">admin route has no visible authorization</text>
+    <text x="64" y="254" fill="#fca5a5">SP103 HIGH</text>
+    <text x="250" y="254" fill="#cbd5e1">SQL built with interpolation</text>
+    <text x="64" y="288" fill="#fca5a5">SP304 HIGH</text>
+    <text x="250" y="288" fill="#cbd5e1">outbound request has no timeout</text>
+    <text x="64" y="322" fill="#fca5a5">SP201 HIGH</text>
+    <text x="250" y="322" fill="#cbd5e1">debug mode enabled</text>
+    <text x="64" y="356" fill="#facc15">SP305 MEDIUM</text>
+    <text x="250" y="356" fill="#cbd5e1">pagination input has no upper bound</text>
+    <line x1="38" y1="390" x2="1162" y2="390" stroke="#2f3a55"/>
+    <text x="38" y="432" fill="#7dd3fc">$ python -m unittest discover -s examples/demo-api/fixtures/after/tests</text>
+    <text x="38" y="470" fill="#86efac">Ran 2 tests · OK</text>
+    <text x="38" y="518" fill="#7dd3fc">$ shipproof scan examples/demo-api/fixtures/after --fail-on high</text>
+    <text x="38" y="560" fill="#86efac">PASS_WITH_EVIDENCE</text>
+    <text x="300" y="560" fill="#cbd5e1">0 findings · 3 files scanned</text>
+    <rect x="38" y="600" width="1124" height="54" rx="12" fill="#12251d" stroke="#245d42"/>
+    <text x="64" y="634" fill="#86efac">Before → scan → findings → fix → tests → PASS</text>
+  </g>
+</svg>

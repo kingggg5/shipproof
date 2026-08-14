@@ -1,0 +1,48 @@
+name: ShipProof production gate
+description: Run the deterministic ShipProof repository scanner without executing project code.
+author: Jesadakorn Pipitakun
+branding:
+  icon: shield
+  color: blue
+inputs:
+  path:
+    description: Repository-relative directory to scan.
+    required: false
+    default: .
+  format:
+    description: Report format (sarif, json, or markdown).
+    required: false
+    default: sarif
+  output:
+    description: Repository-relative report path.
+    required: false
+    default: shipproof.sarif
+  fail-on:
+    description: Minimum severity that fails the step (critical, high, medium, low, or none).
+    required: false
+    default: high
+  baseline:
+    description: Optional repository-relative fingerprint baseline.
+    required: false
+    default: ""
+  max-file-bytes:
+    description: Maximum source file size inspected by the scanner.
+    required: false
+    default: "1000000"
+outputs:
+  report-path:
+    description: Absolute path of the generated report.
+    value: ${{ steps.scan.outputs.report-path }}
+runs:
+  using: composite
+  steps:
+    - id: scan
+      shell: bash
+      env:
+        SHIPPROOF_INPUT_PATH: ${{ inputs.path }}
+        SHIPPROOF_INPUT_FORMAT: ${{ inputs.format }}
+        SHIPPROOF_INPUT_OUTPUT: ${{ inputs.output }}
+        SHIPPROOF_INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        SHIPPROOF_INPUT_BASELINE: ${{ inputs.baseline }}
+        SHIPPROOF_INPUT_MAX_FILE_BYTES: ${{ inputs.max-file-bytes }}
+      run: node "$GITHUB_ACTION_PATH/scripts/run-action.mjs"

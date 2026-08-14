@@ -1,0 +1,9 @@
+- id: shipproof-scan
+  name: ShipProof production risk scan
+  description: Run the fast, deterministic ShipProof repository scanner.
+  entry: shipproof scan . --format markdown --fail-on high
+  language: node
+  pass_filenames: false
+  always_run: true
+  require_serial: true
+  stages: [pre-commit]

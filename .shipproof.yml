@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=./schemas/shipproof-policy.schema.json
+version: 1
+scan:
+  path: .
+  exclude:
+    - examples/demo-api/fixtures/**
+  max_file_bytes: 1000000
+security:
+  fail_on: high
+performance:
+  baseline: examples/performance/baseline.json
+  current: examples/performance/current.json
+  budget: examples/performance/budget.json
+capacity:
+  config: examples/capacity/shipproof.config.json
