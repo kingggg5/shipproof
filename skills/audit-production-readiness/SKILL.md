@@ -22,7 +22,7 @@ Produce a release decision backed by exact code, test, runtime, and workload evi
 
 Identify the stack, entry points, trust boundaries, data stores, background jobs, external dependencies, deployment topology, and business-critical flows. Capture authorization and tenancy invariants before looking for violations. For scale work, collect registered users, DAU, peak-hour share, actions per session, requests per action, read/write mix, latency SLO, cache hit rate, and measured per-instance throughput.
 
-Read [correctness.md](references/correctness.md) for failure modes. Read [security.md](references/security.md) for threat modeling and control coverage. Read [scale.md](references/scale.md) when scale or performance is in scope.
+Read [correctness.md](references/correctness.md) for failure modes. Read [security.md](references/security.md) for threat modeling and control coverage. Read [scale.md](references/scale.md) when scale is in scope. For CPU, RAM, latency, kernel, driver, browser-engine, parser, IPC, or network-protocol work, also read the shared [performance](../engineer-production-systems/references/performance.md), [systems](../engineer-production-systems/references/systems.md), and [tool-routing](../engineer-production-systems/references/tool-routing.md) references.
 
 ### 2. Build an evidence baseline
 
@@ -39,6 +39,8 @@ python scripts/scan_repo.py . --format sarif --output shipproof.sarif --fail-on 
 ```
 
 Treat its regex and AST results as leads that require confirmation. When available, layer CodeQL or Semgrep for data flow, Gitleaks for history-aware secret detection, and Trivy for dependencies, images, IaC, secrets, and SBOMs. Do not silently install tools or download databases.
+
+For memory-unsafe or parser-heavy targets, do not imitate deep detection with broad regex rules. Inspect existing sanitizer and fuzz coverage, then propose or run only authorized target-specific ASan/UBSan/MSan/TSan, KASAN/KCSAN, libFuzzer/AFL++/OSS-Fuzz, or syzkaller workflows.
 
 ### 3. Trace high-risk paths manually
 

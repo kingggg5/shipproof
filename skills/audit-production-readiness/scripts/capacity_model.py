@@ -26,6 +26,8 @@ class CapacityInputs:
     p95_latency_ms: float = 300.0
     db_time_ms: float = 40.0
     instance_rps: float = 200.0
+    cpu_ms_per_request: float = 5.0
+    memory_mb_per_instance: float = 512.0
     headroom: float = 1.5
 
 
@@ -37,7 +39,8 @@ def validate(inputs: CapacityInputs) -> None:
         if not 0 <= value <= 1:
             raise ValueError(f"{name} must be between 0 and 1")
     for name in ("actions_per_session", "requests_per_action", "burst_multiplier", "queries_per_read",
-                 "queries_per_write", "p95_latency_ms", "db_time_ms", "instance_rps", "headroom"):
+                 "queries_per_write", "p95_latency_ms", "db_time_ms", "instance_rps",
+                 "cpu_ms_per_request", "memory_mb_per_instance", "headroom"):
         if getattr(inputs, name) <= 0:
             raise ValueError(f"{name} must be positive")
     if inputs.headroom < 1:
@@ -59,6 +62,8 @@ def model(inputs: CapacityInputs) -> dict[str, object]:
     in_flight_requests = design_peak_rps * inputs.p95_latency_ms / 1000
     in_flight_db = db_qps * inputs.db_time_ms / 1000
     instances = max(1, math.ceil(design_peak_rps * inputs.headroom / inputs.instance_rps))
+    cpu_cores = design_peak_rps * inputs.cpu_ms_per_request / 1000 * inputs.headroom
+    app_memory_mb = instances * inputs.memory_mb_per_instance
     db_connections = max(2, math.ceil(in_flight_db * inputs.headroom))
     test_stages = [
         {"name": "smoke", "target_rps": round(max(1, design_peak_rps * 0.05), 2), "purpose": "Validate script and telemetry"},
@@ -82,11 +87,14 @@ def model(inputs: CapacityInputs) -> dict[str, object]:
             "estimated_in_flight_requests_at_p95": round(in_flight_requests, 2),
             "estimated_in_flight_database_work": round(in_flight_db, 2),
             "minimum_app_instances_with_headroom": instances,
+            "estimated_cpu_cores_with_headroom": round(cpu_cores, 2),
+            "estimated_app_memory_mb": round(app_memory_mb, 2),
             "estimated_db_connections_with_headroom": db_connections,
         },
         "load_test_stages": test_stages,
         "required_evidence": [
             "Measured sustainable RPS per instance at the latency and error SLO",
+            "CPU time per request and peak RSS per instance from a production-shaped benchmark",
             "Endpoint-level traffic mix, payload sizes, and think time from analytics",
             "Database CPU, locks, slow queries, pool wait time, and storage IOPS at each stage",
             "Queue depth, retry volume, dependency latency, and rate-limit behavior",
@@ -117,6 +125,8 @@ def markdown_report(payload: dict[str, object]) -> str:
         "estimated_in_flight_requests_at_p95": "Estimated in-flight requests at p95",
         "estimated_in_flight_database_work": "Estimated in-flight database work",
         "minimum_app_instances_with_headroom": "Minimum app instances with headroom",
+        "estimated_cpu_cores_with_headroom": "Estimated CPU cores with headroom",
+        "estimated_app_memory_mb": "Estimated app memory (MB)",
         "estimated_db_connections_with_headroom": "Estimated DB connections with headroom",
     }
     lines.extend(f"| {labels[key]} | {value:,} |" for key, value in derived.items())
@@ -145,6 +155,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--p95-latency-ms", type=float, default=300)
     parser.add_argument("--db-time-ms", type=float, default=40)
     parser.add_argument("--instance-rps", type=float, default=200)
+    parser.add_argument("--cpu-ms-per-request", type=float, default=5)
+    parser.add_argument("--memory-mb-per-instance", type=float, default=512)
     parser.add_argument("--headroom", type=float, default=1.5)
     parser.add_argument("--format", choices=("json", "markdown"), default="markdown")
     parser.add_argument("--output", type=argparse.FileType("w", encoding="utf-8"))
