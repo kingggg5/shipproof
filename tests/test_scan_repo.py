@@ -70,7 +70,34 @@ class ScanRepoTests(unittest.TestCase):
         payload = sarif_report(findings)
         self.assertEqual(payload["version"], "2.1.0")
         self.assertEqual(payload["runs"][0]["results"][0]["ruleId"], "SP101")
+        self.assertEqual(payload["runs"][0]["tool"]["driver"]["version"], "0.3.0")
         json.dumps(payload)
+
+    def test_identical_text_multiple_lines_reported(self):
+        source = "def a():\n    result = ev" + "al(value)\n\n\ndef b():\n    result = ev" + "al(value)\n"
+        findings = self.findings("app.py", source)
+        eval_lines = [item.line for item in findings if item.rule_id == "SP101"]
+        self.assertEqual(eval_lines, [2, 6])
+
+    def test_baseline_suppresses_multiple_identical_findings(self):
+        source = "def a():\n    result = ev" + "al(value)\n\n\ndef b():\n    result = ev" + "al(value)\n"
+        candidates = regex_findings(Path("app.py"), "app.py", source)
+        fp = candidates[0].fingerprint
+        active, suppressed = finalize_findings(candidates, {fp})
+        self.assertEqual(active, [])
+        self.assertEqual(suppressed, 2)
+
+    def test_pure_comments_are_ignored_for_code_rules(self):
+        source = "# never call ev" + "al(value) here\nresult = ev" + "al(value)\n"
+        findings = self.findings("app.py", source)
+        eval_lines = [item.line for item in findings if item.rule_id == "SP101"]
+        self.assertEqual(eval_lines, [2])
+
+    def test_secrets_in_comments_are_still_flagged(self):
+        secret = "AKIA" + "B" * 16
+        source = f'# old_key = "{secret}"\n'
+        findings = self.findings("app.py", source)
+        self.assertTrue(any(item.rule_id == "SP002" for item in findings))
 
 
 if __name__ == "__main__":

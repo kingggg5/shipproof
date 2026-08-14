@@ -46,6 +46,28 @@ class BudgetTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "direction"):
             evaluate({"rss_mb": 100}, {"rss_mb": 101}, {"rss_mb": {"direction": "sideways", "max": 120}})
 
+    def test_cli_execution_with_files(self):
+        import contextlib
+        import io
+        import json
+        from check_budget import main
+        from unittest.mock import patch
+        payloads = [
+            json.dumps({"p95_ms": 100}),
+            json.dumps({"p95_ms": 103}),
+            json.dumps({"p95_ms": {"max_regression_percent": 5}}),
+        ]
+        with patch("check_budget.Path.read_text", side_effect=payloads), contextlib.redirect_stdout(io.StringIO()):
+            code = main(["--baseline", "base.json", "--current", "curr.json", "--budget", "budg.json"])
+            self.assertEqual(code, 0)
+
+    def test_multiple_stdin_inputs_fail_closed(self):
+        import contextlib
+        import io
+        from check_budget import main
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(main(["--baseline", "-", "--current", "-", "--budget", "budget.json"]), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

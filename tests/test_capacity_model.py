@@ -29,9 +29,43 @@ class CapacityModelTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             model(CapacityInputs(users=10_000, dau_ratio=1.2))
 
+    def test_boolean_users_fail_closed(self):
+        with self.assertRaises(ValueError):
+            model(CapacityInputs(users=True))
+
     def test_load_ladder_contains_failure_modes(self):
         names = {stage["name"] for stage in model(CapacityInputs(users=10_000))["load_test_stages"]}
         self.assertEqual(names, {"smoke", "average", "peak", "stress", "spike", "soak"})
+
+    def test_cli_config_file(self):
+        import json
+        from capacity_model import main
+        from unittest.mock import patch
+        with patch("capacity_model.Path.read_text", return_value=json.dumps({"users": 50000, "dau_ratio": 0.3})), \
+                patch("capacity_model.Path.write_text") as write_text:
+            code = main(["--config", "workload.json", "--output", "report.md"])
+            self.assertEqual(code, 0)
+            self.assertIn("50,000", write_text.call_args.args[0])
+
+    def test_config_values_are_not_overwritten_by_cli_defaults(self):
+        import json
+        from capacity_model import main
+        from unittest.mock import patch
+        with patch("capacity_model.Path.read_text", return_value=json.dumps({"users": 10000, "dau_ratio": 0.3})), \
+                patch("capacity_model.Path.write_text") as write_text:
+            self.assertEqual(main(["--config", "workload.json", "--output", "report.md", "--format", "json"]), 0)
+        payload = json.loads(write_text.call_args.args[0])
+        self.assertEqual(payload["inputs"]["dau_ratio"], 0.3)
+
+    def test_unknown_config_field_fails_closed(self):
+        import contextlib
+        import io
+        import json
+        from capacity_model import main
+        from unittest.mock import patch
+        with patch("capacity_model.Path.read_text", return_value=json.dumps({"users": 10000, "surprise": 1})), \
+                contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(main(["--config", "workload.json"]), 2)
 
 
 if __name__ == "__main__":
