@@ -6,12 +6,26 @@ Thank you for improving ShipProof. Keep contributions narrow, evidence-based, an
 
 ```bash
 npm ci --ignore-scripts
-npm run test:node
-python -m unittest discover -s tests -v
-python -m compileall -q skills tests install.py
+python -m pip install -r requirements-dev.txt
+npm run lint
+npm run test
+python -m compileall -q skills tests
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 npm pack --dry-run
 ```
+
+## Code style and naming
+
+Follow each ecosystem's standard instead of applying one whitespace rule to every file:
+
+- Python uses four spaces and descriptive `snake_case`; classes use `PascalCase`.
+- JavaScript uses two spaces and descriptive `camelCase`; constants use `UPPER_SNAKE_CASE`.
+- JSON, YAML, and Markdown use two spaces. YAML indentation must never use tabs.
+- Makefile recipes use tabs because the format requires them.
+
+Tabs do not reduce runtime memory: source indentation is not retained as application state. Optimize shipped JavaScript with the consumer's build/minification pipeline and optimize Python with measured algorithm, I/O, allocation, and concurrency changes. Do not shorten names solely to reduce source bytes.
+
+Name functions after the behavior they perform (`build_capacity_model`, `runDoctorCommand`) and collections after what they contain (`budget_rules`, `installationResults`). Avoid vague names such as `data`, `obj`, `tmp`, or `result` when a domain-specific name is available. Keep abbreviations only when they are established domain units such as CPU, RAM, RPS, p95, or SARIF.
 
 ## Adding a scanner rule
 
@@ -33,7 +47,7 @@ Keep the two skills consistent and update the relevant reference rather than dup
 
 ## Changing the npm CLI
 
-Keep the front door dependency-free and cross-platform. Do not execute shell strings, repository-supplied commands, install lifecycle scripts, or arbitrary prompt paths. Route deterministic Python gates to their existing implementation rather than duplicating them in JavaScript. Add a Node test for every parser, path, overwrite, and exit-code change, then inspect `npm pack --dry-run` for unintended files.
+Keep the front door dependency-free and cross-platform. Do not execute shell strings, repository-supplied commands, install lifecycle scripts, or arbitrary prompt paths. Route deterministic Python gates to their existing implementation rather than duplicating them in JavaScript or another installer. Add a Node test for every parser, path, overwrite, and exit-code change, then inspect `npm pack --dry-run` for unintended files.
 
 ## Safety
 

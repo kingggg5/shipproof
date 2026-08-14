@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1 - 2026-08-14
+
+- Replace ambiguous internal identifiers with domain-specific function and variable names.
+- Prune ignored directory trees during scanning to reduce traversal time and peak memory on large repositories.
+- Scan `bin` sources and documentation/configuration files for credential patterns without applying code-only rules to prose.
+- Enforce Python 3.10+ detection and reject extra prompt arguments in the npm CLI.
+- Add ecosystem-specific EditorConfig rules, pinned Ruff development checks, and a dedicated CI quality job.
+- Remove the duplicate Python installer, misleading npm-ready badge, and repository-specific vulnerability-claim discussion from the public README.
+
 ## 0.3.0 - 2026-08-14
 
 - Add a zero-dependency npm front door with `doctor`, project/user skill installation, prompt catalog, scanner, resource-budget, and capacity commands.

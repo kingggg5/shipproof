@@ -5,7 +5,7 @@ Publishing is intentionally human-gated. CI validates the exact package contents
 ## Pre-release
 
 1. Update `package.json`, both plugin manifests, scanner metadata, tests, and `CHANGELOG.md` to the same version.
-2. Run `npm ci --ignore-scripts`, `npm run check`, Python compile checks, and the local scanner.
+2. Run `npm ci --ignore-scripts`, install `requirements-dev.txt`, run `npm run check`, Python compile checks, and the local scanner.
 3. Inspect `npm pack --dry-run`; verify only the allowlisted files are included and no secret, fixture, report, or development cache is present.
 4. Review dependency, CodeQL, SARIF, and branch-protection results.
 5. Create a signed or protected tag only from the reviewed commit.

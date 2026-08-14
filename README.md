@@ -4,7 +4,6 @@
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![npm-ready](https://img.shields.io/badge/npm-ready-CB3837?logo=npm)](package.json)
 [![Codex](https://img.shields.io/badge/Codex-skill%20%2B%20plugin-111827)](https://learn.chatgpt.com/docs/build-skills)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20%2B%20plugin-D97757)](https://code.claude.com/docs/en/skills)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -98,7 +97,7 @@ shipproof capacity --users 1000000 [workload assumptions]
 
 See [the command reference](docs/commands.md) for options and exit codes.
 
-## Install alternatives
+## Install from a clone
 
 Install from a clone:
 
@@ -106,12 +105,6 @@ Install from a clone:
 git clone https://github.com/kingggg5/shipproof.git
 cd shipproof
 npm install --global .
-```
-
-Python-only fallback:
-
-```bash
-python install.py --target both
 ```
 
 Then invoke the skill while building:
@@ -217,24 +210,19 @@ ShipProof is independently implemented. Its 2025–2026 design is grounded in pr
 
 ShipProof deliberately avoids a single readiness score because one critical defect must not be averaged away by many clean files.
 
-## About large vulnerability claims
-
-The cited counts—107 Critical, 990 High, 1,286 Medium, and 53 Low—sum to 2,436. We could not locate a primary public report that ties this exact distribution to the Linux kernel, WebKit, FreeBSD, or a 40-year-old bug, so ShipProof does not repeat it as a verified benchmark.
-
-Verified primary material does show the broader lesson: modern AI-assisted research has found serious flaws in mature operating systems and browsers, while projects such as OSS-Fuzz report thousands of vulnerabilities over years of continuous fuzzing. The engineering response is layered verification and retained regression evidence, not trusting a headline or one model pass.
-
 ## Development
 
 ```bash
 npm ci --ignore-scripts
-npm run test:node
-python -m unittest discover -s tests -v
-python -m compileall -q skills tests install.py
+python -m pip install -r requirements-dev.txt
+npm run lint
+npm run test
+python -m compileall -q skills tests
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 npm pack --dry-run
 ```
 
-The runtimes use only Node and the Python standard library. CI tests Node 20/24 and Python 3.10/3.12, verifies package contents, and runs CodeQL for Python and JavaScript/TypeScript. Read [CONTRIBUTING.md](CONTRIBUTING.md) before adding a detector: each rule needs positive and negative tests, a mapping, remediation, and false-positive analysis.
+The runtime uses only Node and the Python standard library; Ruff is development-only. CI tests Node 20/24 and Python 3.10/3.12, verifies package contents, and runs CodeQL for Python and JavaScript/TypeScript. Read [CONTRIBUTING.md](CONTRIBUTING.md) before adding a detector: each rule needs positive and negative tests, a mapping, remediation, and false-positive analysis.
 
 The scoped npm manifest is ready for a future registry release. Until the owner configures npm trusted publishing, use the GitHub npm install shown above; this project does not claim an unpublished registry release. See [docs/releasing.md](docs/releasing.md).
 

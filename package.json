@@ -1,6 +1,6 @@
 {
   "name": "@kingggg5/shipproof",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Secure-by-design engineering skills and evidence gates for Codex and Claude Code.",
   "type": "module",
   "bin": {
@@ -26,7 +26,10 @@
     "SECURITY.md"
   ],
   "scripts": {
-    "check": "npm run test && npm run pack:check",
+    "check": "npm run lint && npm run test && npm run pack:check",
+    "lint": "npm run lint:node && npm run lint:python",
+    "lint:node": "node --check bin/shipproof.mjs && node --check lib/cli.mjs",
+    "lint:python": "ruff check . && ruff format --check .",
     "pack:check": "npm pack --dry-run",
     "test": "npm run test:node && npm run test:python",
     "test:node": "node tests/node/cli.test.mjs",
