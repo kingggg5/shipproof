@@ -4,20 +4,28 @@ import json
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 SCRIPTS = Path(__file__).parents[1] / "skills" / "audit-production-readiness" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from scan_repo import finalize_findings, python_ast_findings, regex_findings, sarif_report  # noqa: E402
+from scan_repo import (  # noqa: E402
+    VERSION,
+    build_sarif_report,
+    deduplicate_and_suppress_findings,
+    find_python_ast_issues,
+    find_regex_issues,
+    iter_scannable_files,
+)
 
 
 class ScanRepoTests(unittest.TestCase):
     def findings(self, name: str, source: str):
         path = Path(name)
-        candidates = regex_findings(path, name, source)
+        candidates = find_regex_issues(path, name, source)
         if path.suffix == ".py":
-            candidates.extend(python_ast_findings(name, source))
-        return finalize_findings(candidates)[0]
+            candidates.extend(find_python_ast_issues(name, source))
+        return deduplicate_and_suppress_findings(candidates)[0]
 
     def test_secret_is_redacted(self):
         secret = "AKIA" + "A" * 16
@@ -31,7 +39,9 @@ class ScanRepoTests(unittest.TestCase):
         self.assertFalse(any(item.rule_id == "SP003" for item in findings))
 
     def test_request_timeout_is_ast_checked(self):
-        findings = self.findings("client.py", "import requests\nrequests.get(url)\nrequests.post(url, timeout=2)\n")
+        findings = self.findings(
+            "client.py", "import requests\nrequests.get(url)\nrequests.post(url, timeout=2)\n"
+        )
         timeout_lines = [item.line for item in findings if item.rule_id == "SP304"]
         self.assertEqual(timeout_lines, [2])
 
@@ -47,14 +57,14 @@ class ScanRepoTests(unittest.TestCase):
         self.assertFalse(any(item.rule_id == "SP303" for item in findings))
 
     def test_combined_cors_risk(self):
-        source = "allow_" + "origins=[\"*\"]\nallow_" + "credentials=True\n"
+        source = "allow_" + 'origins=["*"]\nallow_' + "credentials=True\n"
         findings = self.findings("api.py", source)
         self.assertTrue(any(item.rule_id == "SP107" for item in findings))
 
     def test_baseline_suppresses_exact_fingerprint(self):
         source = "result = " + "ev" + "al(value)\n"
         findings = self.findings("app.py", source)
-        active, suppressed = finalize_findings(findings, {findings[0].fingerprint})
+        active, suppressed = deduplicate_and_suppress_findings(findings, {findings[0].fingerprint})
         self.assertEqual(active, [])
         self.assertEqual(suppressed, 1)
 
@@ -67,23 +77,27 @@ class ScanRepoTests(unittest.TestCase):
     def test_sarif_uses_supported_version(self):
         source = "result = " + "ev" + "al(value)\n"
         findings = self.findings("app.py", source)
-        payload = sarif_report(findings)
+        payload = build_sarif_report(findings)
         self.assertEqual(payload["version"], "2.1.0")
         self.assertEqual(payload["runs"][0]["results"][0]["ruleId"], "SP101")
-        self.assertEqual(payload["runs"][0]["tool"]["driver"]["version"], "0.3.0")
+        self.assertEqual(payload["runs"][0]["tool"]["driver"]["version"], VERSION)
         json.dumps(payload)
 
     def test_identical_text_multiple_lines_reported(self):
-        source = "def a():\n    result = ev" + "al(value)\n\n\ndef b():\n    result = ev" + "al(value)\n"
+        source = (
+            "def a():\n    result = ev" + "al(value)\n\n\ndef b():\n    result = ev" + "al(value)\n"
+        )
         findings = self.findings("app.py", source)
         eval_lines = [item.line for item in findings if item.rule_id == "SP101"]
         self.assertEqual(eval_lines, [2, 6])
 
     def test_baseline_suppresses_multiple_identical_findings(self):
-        source = "def a():\n    result = ev" + "al(value)\n\n\ndef b():\n    result = ev" + "al(value)\n"
-        candidates = regex_findings(Path("app.py"), "app.py", source)
+        source = (
+            "def a():\n    result = ev" + "al(value)\n\n\ndef b():\n    result = ev" + "al(value)\n"
+        )
+        candidates = find_regex_issues(Path("app.py"), "app.py", source)
         fp = candidates[0].fingerprint
-        active, suppressed = finalize_findings(candidates, {fp})
+        active, suppressed = deduplicate_and_suppress_findings(candidates, {fp})
         self.assertEqual(active, [])
         self.assertEqual(suppressed, 2)
 
@@ -93,11 +107,26 @@ class ScanRepoTests(unittest.TestCase):
         eval_lines = [item.line for item in findings if item.rule_id == "SP101"]
         self.assertEqual(eval_lines, [2])
 
+    def test_javascript_regexp_exec_is_not_dynamic_code_execution(self):
+        findings = self.findings("cli.mjs", "const match = /Python (\\d+)/.exec(version);\n")
+        self.assertFalse(any(item.rule_id == "SP101" for item in findings))
+
     def test_secrets_in_comments_are_still_flagged(self):
         secret = "AKIA" + "B" * 16
         source = f'# old_key = "{secret}"\n'
         findings = self.findings("app.py", source)
         self.assertTrue(any(item.rule_id == "SP002" for item in findings))
+
+    def test_documentation_is_scanned_only_for_secrets(self):
+        secret = "AKIA" + "C" * 16
+        findings = self.findings("notes.md", f"Never call eval here. Leaked key: {secret}\n")
+        self.assertEqual([item.rule_id for item in findings], ["SP002"])
+
+    def test_ignored_directories_are_pruned_before_traversal(self):
+        subdirectories = ["node_modules", "src", "bin", ".git"]
+        with patch("scan_repo.os.walk", return_value=[("/repo", subdirectories, [])]):
+            self.assertEqual(list(iter_scannable_files(Path("/repo"), 1_000)), [])
+        self.assertEqual(subdirectories, ["bin", "src"])
 
 
 if __name__ == "__main__":

@@ -4,10 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { installSkills, internals, run } from "../../lib/cli.mjs";
+import { installSkills, internals, runCli } from "../../lib/cli.mjs";
 
 test("package exposes two complete skills", () => {
-  assert.deepEqual(internals.skillNames(), ["audit-production-readiness", "engineer-production-systems"]);
+  assert.deepEqual(internals.listSkillNames(), ["audit-production-readiness", "engineer-production-systems"]);
 });
 
 test("project install is explicit and non-destructive by default", () => {
@@ -35,17 +35,25 @@ test("force replaces only the named skill directories", () => {
   }
 });
 
-test("prompt catalog is allowlisted", async () => {
-  assert.equal(await run(["prompt", "missing"]), 2);
-  assert.ok(internals.PROMPTS.has("database"));
-  assert.ok(internals.PROMPTS.has("ai-agent"));
+test("prompt catalog is allowlisted", () => {
+  assert.equal(runCli(["prompt", "missing"]), 2);
+  assert.equal(runCli(["prompt", "database", "ignored"]), 2);
+  assert.ok(internals.PROMPT_FILES.has("database"));
+  assert.ok(internals.PROMPT_FILES.has("ai-agent"));
 });
 
-test("unknown commands fail closed", async () => {
-  assert.equal(await run(["definitely-not-a-command"]), 2);
+test("unknown commands fail closed", () => {
+  assert.equal(runCli(["definitely-not-a-command"]), 2);
 });
 
-test("management commands reject unknown options and ignored paths", async () => {
-  assert.equal(await run(["doctor", ".", "--surprise"]), 2);
-  assert.equal(await run(["install", "ignored-path"]), 2);
+test("management commands reject unknown options and ignored paths", () => {
+  assert.equal(runCli(["doctor", ".", "--surprise"]), 2);
+  assert.equal(runCli(["install", "ignored-path"]), 2);
+});
+
+test("Python runtime policy requires version 3.10 or newer", () => {
+  assert.equal(internals.isSupportedPythonVersion("Python 3.9.19"), false);
+  assert.equal(internals.isSupportedPythonVersion("Python 3.10.0"), true);
+  assert.equal(internals.isSupportedPythonVersion("Python 4.0.0"), true);
+  assert.equal(internals.isSupportedPythonVersion("not Python"), false);
 });
