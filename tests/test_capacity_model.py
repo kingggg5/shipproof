@@ -7,7 +7,13 @@ from pathlib import Path
 SCRIPTS = Path(__file__).parents[1] / "skills" / "audit-production-readiness" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from capacity_model import CapacityInputs, build_capacity_model  # noqa: E402
+from capacity_model import (  # noqa: E402
+    CapacityInputs,
+    build_capacity_model,
+    load_config,
+    render_k6_script,
+    validate_k6_config,
+)
 
 
 class CapacityModelTests(unittest.TestCase):
@@ -95,6 +101,79 @@ class CapacityModelTests(unittest.TestCase):
             contextlib.redirect_stderr(io.StringIO()),
         ):
             self.assertEqual(main(["--config", "workload.json"]), 2)
+
+    def test_k6_script_is_deterministic_and_uses_environment_variables(self):
+        model = build_capacity_model(CapacityInputs(users=100_000))
+        config = {
+            "base_url_env": "SERVICE_URL",
+            "auth_token_env": "LOAD_TOKEN",
+            "duration": "30s",
+            "routes": [
+                {"name": "health", "path": "/health", "weight": 3},
+                {
+                    "name": "create-ticket",
+                    "path": "/api/tickets",
+                    "method": "POST",
+                    "expected_statuses": [201, 202],
+                    "body": {"subject": "capacity probe"},
+                },
+            ],
+        }
+        first = render_k6_script(model, config)
+        second = render_k6_script(model, config)
+        self.assertEqual(first, second)
+        self.assertIn('__ENV["SERVICE_URL"]', first)
+        self.assertIn('__ENV["LOAD_TOKEN"]', first)
+        self.assertIn('executor: "constant-arrival-rate"', first)
+        self.assertNotIn("https://", first)
+
+    def test_k6_config_rejects_remote_targets_and_unknown_fields(self):
+        with self.assertRaises(ValueError):
+            validate_k6_config(
+                {"routes": [{"name": "unsafe", "path": "https://example.com/", "script": "x"}]}
+            )
+
+    def test_cli_exports_k6_without_overwriting_existing_file(self):
+        import contextlib
+        import io
+        import json
+        from unittest.mock import MagicMock, patch
+
+        from capacity_model import main, write_new_file
+
+        config = json.dumps(
+            {
+                "schema_version": "1.0",
+                "capacity": {
+                    "inputs": {"users": 10000},
+                    "k6": {"routes": [{"name": "health", "path": "/health"}]},
+                },
+            }
+        )
+        with (
+            patch("capacity_model.Path.read_text", return_value=config),
+            patch("capacity_model.write_new_file") as writer,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            self.assertEqual(
+                main(["--config", "shipproof.json", "--export-k6", "load.js"]),
+                0,
+            )
+        self.assertIn('executor: "constant-arrival-rate"', writer.call_args.args[1])
+
+        existing_path = MagicMock()
+        existing_path.exists.return_value = True
+        with self.assertRaises(ValueError):
+            write_new_file(existing_path, "content", False)
+
+    def test_checked_in_k6_example_matches_versioned_config(self):
+        root = Path(__file__).parents[1]
+        inputs, k6 = load_config(root / "examples" / "capacity" / "shipproof.config.json")
+        generated = render_k6_script(build_capacity_model(CapacityInputs(**inputs)), k6)
+        expected = (root / "examples" / "capacity" / "generated-load-test.js").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(generated, expected)
 
 
 if __name__ == "__main__":
