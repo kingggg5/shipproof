@@ -1,0 +1,33 @@
+{
+  "$schema": "../../schemas/shipproof-config.schema.json",
+  "schema_version": "1.0",
+  "capacity": {
+    "inputs": {
+      "users": 100000,
+      "dau_ratio": 0.25,
+      "peak_hour_ratio": 0.2,
+      "actions_per_session": 8,
+      "requests_per_action": 1,
+      "burst_multiplier": 2,
+      "p95_latency_ms": 300,
+      "instance_rps": 200,
+      "headroom": 1.5
+    },
+    "k6": {
+      "base_url_env": "BASE_URL",
+      "auth_token_env": "LOAD_TEST_TOKEN",
+      "duration": "1m",
+      "error_rate_threshold": 0.01,
+      "p95_latency_ms": 300,
+      "routes": [
+        {
+          "name": "health",
+          "path": "/health",
+          "method": "GET",
+          "weight": 1,
+          "expected_statuses": [200]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "metrics": {
+    "p95_latency_ms": 240,
+    "rss_mb": 320
+  }
+}
