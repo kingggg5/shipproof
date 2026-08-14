@@ -1,49 +1,72 @@
 # ShipProof
 
-**Evidence-first production readiness audits for bugs, security, and scale.**
+**Teach coding agents to build secure, fast, resource-bounded software—and prove it before release.**
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
+[![Codex](https://img.shields.io/badge/Codex-skill%20%2B%20plugin-111827)](https://learn.chatgpt.com/docs/build-skills)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20%2B%20plugin-D97757)](https://code.claude.com/docs/en/skills)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-ShipProof is an open-source Codex plugin and skill for deep repository review. It combines a zero-dependency local scanner, an explicit 10k-to-1M-user capacity model, and an AI-guided workflow that separates confirmed evidence from hypotheses and unknowns.
+ShipProof is a portable pair of AI Agent Skills plus zero-dependency Python gates. It guides Codex or Claude Code while code is being designed and written, then audits the result with reproducible evidence.
 
-It is inspired by [CodeVibes](https://github.com/danish296/codevibes), but takes a different scope: local-first auditing, release gates, SARIF, stable baselines, threat modeling, supply-chain review, and measurable workload planning instead of a single quality score.
+It does **not** promise “perfect,” “unhackable,” “maximum performance,” or “one million users” from a static scan. It turns those goals into explicit invariants, resource budgets, target-specific tests, and release gates.
 
-> ShipProof does not certify software as secure or prove capacity from static code. It finds evidence, makes assumptions visible, and defines the tests needed for a defensible release decision.
+## Two modes, one workflow
 
-## Why ShipProof
-
-| Capability | ShipProof approach |
-| --- | --- |
-| Privacy | Repository analysis starts locally; no API key or code upload is required |
-| Bugs | Review business invariants, concurrency, retries, transactions, timeouts, and failure paths |
-| Security | Threat model plus layered SAST, secret, dependency, IaC, and authorization evidence |
-| Scale | Convert users into peak RPS, concurrency, DB work, and a staged load-test plan |
-| Triage | Severity and confidence stay separate; findings have stable fingerprints |
-| CI | Exit codes, JSON, Markdown, SARIF 2.1.0, pinned actions, tests, and CodeQL |
-| Decisions | Independent Security, Correctness, Scale, Operability, and Supply Chain gates |
-
-## How AI is used
+| Skill | Use it for | Outcome |
+| --- | --- | --- |
+| `engineer-production-systems` | Design, implementation, refactoring, hardening, CPU/RAM/latency work, kernels, browser engines, parsers, and protocols | Small, bounded, testable production code with explicit assumptions |
+| `audit-production-readiness` | Deep review, vulnerability triage, pre-production checks, incident prevention, and 10k-to-1M-user planning | Independent Security, Correctness, Scale, Operability, and Supply Chain gates |
 
 ```mermaid
 flowchart LR
-    A["Repository + workload goals"] --> B["Deterministic local checks"]
-    B --> C["AI traces context and invariants"]
-    C --> D["Human-confirmed evidence"]
-    D --> E{"Release gates"}
-    E -->|"Blocking risk"| F["BLOCK"]
-    E -->|"Missing evidence"| G["CONDITIONAL"]
-    E -->|"Verified"| H["PASS WITH EVIDENCE"]
-    F --> I["Minimal fix + regression test"]
-    G --> J["Targeted verification plan"]
+    A["Requirements + workload"] --> B["Engineering contract"]
+    B --> C["AI implements bounded code"]
+    C --> D["Tests + scanners + benchmarks"]
+    D --> E["CPU/RAM/latency budget gate"]
+    E --> F["Production readiness audit"]
+    F --> G{"Human release decision"}
+    G -->|"blocking evidence"| H["Fix + regression test"]
+    G -->|"missing evidence"| I["Targeted experiment"]
+    G -->|"verified"| J["Release"]
 ```
 
-AI helps trace cross-file behavior, build a threat model, deduplicate root causes, challenge architecture assumptions, and propose the smallest verifiable remediation. Deterministic scripts own reproducible detection and capacity arithmetic. A human retains release authority.
+## What it tells the AI to do
+
+- Read the real architecture and trace the affected path before changing code.
+- Define authorization, tenancy, correctness, workload, latency, CPU, memory, and recovery constraints.
+- Bound input, output, recursion, concurrency, fan-out, queues, caches, retries, timeouts, logs, and retained state.
+- Prefer simple composition and narrow interfaces over speculative abstractions or premature microservices.
+- Measure before and after with the same workload; report variance and tail behavior, not one fast run.
+- Treat static and AI findings as leads until a path, reproducer, sanitizer failure, or focused test confirms them.
+- Keep dangerous actions human-approved and never upload private code or run active tests without authorization.
+
+## Systems coverage
+
+ShipProof routes high-risk code to a stricter evidence ladder:
+
+| Target | Review focus | Recommended evidence when authorized |
+| --- | --- | --- |
+| Kernel and drivers | User/kernel boundaries, lifetime/refcounts, copy-to/from-user, ioctl/netlink, locks/RCU, teardown races | KASAN, KMSAN, KCSAN, UBSAN, syzkaller, minimized reproducers |
+| Browser engines | GC/refcount boundaries, parsers/codecs, JIT, IPC, sandbox/origin identity, re-entrancy | ASan, UBSan, MSan, coverage-guided fuzzing, regression corpora |
+| Network protocols | Framing, integer/length checks, explicit state machines, negotiation, replay, fragmentation, amplification | Structure-aware fuzzing, protocol corpora/dictionaries, fault and sequence tests |
+| Services and apps | Authn/authz, tenancy, transactions, retries, idempotency, timeouts, queues, dependency budgets | Unit/integration tests, SAST/SCA, load/soak tests, traces and resource profiles |
+
+The bundled scanner stays deliberately conservative. Deep memory-safety and protocol findings need compiler instrumentation, sanitizers, fuzzers, and target-specific reasoning—not misleading regex matches.
+
+## Codex and Claude compatibility
+
+Both hosts use the open `SKILL.md` structure, so ShipProof keeps one source of truth.
+
+| Host | Skill metadata | Plugin manifest | Personal skill path |
+| --- | --- | --- | --- |
+| Codex | `skills/*/SKILL.md` + optional `agents/openai.yaml` | `.codex-plugin/plugin.json` | `$CODEX_HOME/skills` or `~/.codex/skills` |
+| Claude Code | `skills/*/SKILL.md` | `.claude-plugin/plugin.json` | `~/.claude/skills` |
 
 ## Install
 
-Clone the repository, then run the cross-platform installer (Python 3.10+):
+Python 3.10+ is the only runtime requirement.
 
 ```bash
 git clone https://github.com/kingggg5/shipproof.git
@@ -51,82 +74,121 @@ cd shipproof
 python install.py
 ```
 
-This copies `audit-production-readiness` into `$CODEX_HOME/skills`, or `~/.codex/skills` when `CODEX_HOME` is unset. Restart Codex, then ask:
+The default installs both skills for Codex and Claude Code. Limit the target when needed:
+
+```bash
+python install.py --target codex
+python install.py --target claude
+```
+
+Then invoke the skill while building:
+
+```text
+Use $engineer-production-systems to implement this feature with explicit security,
+CPU, RAM, latency, and failure budgets.
+```
+
+Before release:
 
 ```text
 Use $audit-production-readiness to audit this repository for production.
 ```
 
-The repository also contains `.codex-plugin/plugin.json` for plugin-capable Codex clients.
-
-## Use the tools directly
-
-Run a fast local scan and fail on high or critical findings:
+Claude Code can also load the repository directly as a plugin during development:
 
 ```bash
-python skills/audit-production-readiness/scripts/scan_repo.py . \
-  --format markdown --output shipproof-report.md --fail-on high
+claude --plugin-dir .
 ```
 
-Generate SARIF 2.1.0 for GitHub code scanning:
+Plugin-installed Claude skills use the namespaced commands `/shipproof:engineer-production-systems` and `/shipproof:audit-production-readiness`.
+
+## Reproducible resource budgets
+
+Benchmarks remain owned by your project. ShipProof only evaluates their numeric outputs, which keeps CI local, fast, and provider-independent.
+
+`perf-baseline.json`:
+
+```json
+{"metrics":{"p95_latency_ms":120,"cpu_ms":8.5,"rss_mb":180,"throughput_rps":850}}
+```
+
+`perf-current.json` has the same keys. Define reviewed limits in `perf-budget.json`:
+
+```json
+{
+  "metrics": {
+    "p95_latency_ms": {"direction":"lower","max_regression_percent":10,"max":160},
+    "cpu_ms": {"direction":"lower","max_regression_percent":8},
+    "rss_mb": {"direction":"lower","max_regression_percent":5,"max":220},
+    "throughput_rps": {"direction":"higher","max_regression_percent":5,"min":750}
+  }
+}
+```
+
+Run the gate:
+
+```bash
+python skills/engineer-production-systems/scripts/check_budget.py \
+  --baseline perf-baseline.json --current perf-current.json \
+  --budget perf-budget.json --format markdown
+```
+
+Runnable sample files live in [`examples/performance`](examples/performance).
+
+Exit codes are `0` for pass, `1` for a measured budget failure, and `2` for missing or invalid evidence.
+
+## Audit and capacity tools
+
+Fast local scan with Markdown, JSON, or SARIF 2.1.0 output:
 
 ```bash
 python skills/audit-production-readiness/scripts/scan_repo.py . \
   --format sarif --output shipproof.sarif --fail-on high
 ```
 
-Create a reviewed baseline for existing debt:
+Create a reviewed fingerprint baseline for accepted debt:
 
 ```bash
 python skills/audit-production-readiness/scripts/scan_repo.py . \
   --format json --baseline-out .shipproof-baseline.json --fail-on none
 ```
 
-Model a one-million-user target. Replace every example ratio with product analytics and measured throughput:
+Turn one million registered users into a transparent workload hypothesis, including CPU and memory assumptions:
 
 ```bash
 python skills/audit-production-readiness/scripts/capacity_model.py \
   --users 1000000 --dau-ratio 0.25 --peak-hour-ratio 0.20 \
-  --actions-per-session 12 --requests-per-action 2 \
-  --instance-rps 250 --format markdown
+  --actions-per-session 12 --requests-per-action 2 --instance-rps 250 \
+  --cpu-ms-per-request 5 --memory-mb-per-instance 512 --format markdown
 ```
 
-Exit codes are `0` for pass, `1` when the severity gate fails, and `2` for invalid input or configuration.
+Replace every sample value with analytics and a production-shaped benchmark. Registered users are not concurrent users, and capacity arithmetic is not a load test.
 
-## Layer with mature scanners
+## Layer with mature tools
 
-ShipProof's bundled scanner is intentionally fast and explainable, not a replacement for deeper tools. For production evidence, add the tools relevant to the target:
+ShipProof routes the agent to tools already present in the environment and never silently installs them:
 
-- [CodeQL](https://docs.github.com/en/code-security/concepts/code-scanning/codeql/codeql-cli) or [Semgrep](https://semgrep.dev/docs/) for data-flow/static analysis.
+- [CodeQL](https://docs.github.com/en/code-security/concepts/code-scanning/codeql/codeql-cli) or [Semgrep](https://semgrep.dev/docs/) for source and data-flow analysis.
+- [OSV-Scanner](https://google.github.io/osv-scanner/) or [Trivy](https://trivy.dev/docs/latest/) for dependencies, containers, IaC, secrets, licenses, and SBOM evidence.
 - [Gitleaks](https://github.com/gitleaks/gitleaks) for current and historical secrets.
-- [Trivy](https://trivy.dev/docs/latest/target/filesystem/) for dependencies, filesystems, images, IaC, secrets, licenses, and SBOMs.
-- [OpenSSF Scorecard](https://scorecard.dev/) for open-source repository and supply-chain signals.
-- [Grafana k6](https://grafana.com/docs/k6/latest/) for SLO-driven smoke, load, stress, spike, and soak tests.
+- [SkillSpector](https://github.com/NVIDIA/SkillSpector) for trust checks before installing third-party agent skills.
+- [OpenSSF Scorecard](https://scorecard.dev/) for repository and supply-chain posture.
+- [LLVM libFuzzer](https://llvm.org/docs/LibFuzzer.html), [OSS-Fuzz](https://github.com/google/oss-fuzz), or [syzkaller](https://github.com/google/syzkaller) for authorized target-specific fuzzing.
+- [Grafana k6](https://grafana.com/docs/k6/latest/) or the project's existing harness for SLO-driven load testing.
 
-The skill can use tools already available in the environment, but never installs them, sends code away, or attacks a target without explicit authorization.
+## What came from CodeVibes—and what did not
 
-## Design principles
+[CodeVibes](https://github.com/danish296/codevibes) is MIT-licensed and demonstrates useful product ideas: prioritize high-risk files, show progress, combine deterministic candidates with contextual AI, and return actionable findings. ShipProof independently implements those ideas as portable agent instructions and local CI gates.
 
-1. **Evidence over confidence.** Every confirmed finding needs a reachable path, broken invariant, impact, fix, and verification.
-2. **Unknown is not green.** Missing production metrics or load tests produce a conditional gate.
-3. **Users are not requests.** Registered-user targets must become a workload model before architecture advice.
-4. **Simple until measured otherwise.** Do not prescribe microservices, Kubernetes, caching, or sharding without a named constraint.
-5. **Independent gates.** A good aggregate score must never hide a critical security or correctness failure.
-6. **Safe by default.** Audit read-only; redact secrets; require authorization for load, fuzz, DAST, or exploit testing.
+ShipProof does not copy CodeVibes' React/Express application, DeepSeek service, SQLite history, Vibe Score, or source code. It deliberately avoids a single score because one critical defect must not be averaged away by many clean files.
 
-## Research basis
+The design also learns from [NVIDIA SkillSpector](https://github.com/NVIDIA/SkillSpector) (bounded input, static-first analysis, baselines, SARIF), [Vercel deepsec](https://github.com/vercel-labs/deepsec) (resumable stages, explicit cost/time caps, revalidation), [OSV-Scanner](https://github.com/google/osv-scanner) (authoritative dependency matching and call analysis), and mature fuzzing projects. See [docs/research.md](docs/research.md) for the source-by-source synthesis and limitations.
 
-The workflow combines primary standards and operational guidance with community failure reports:
+## About large vulnerability claims
 
-- [OWASP ASVS 5.0](https://github.com/OWASP/ASVS/tree/master/5.0) and [NIST SSDF SP 800-218](https://csrc.nist.gov/pubs/sp/800/218/final) shape verification and secure-development coverage.
-- [GitHub SARIF documentation](https://docs.github.com/en/code-security/concepts/code-scanning/sarif-files) defines interoperable static-analysis output.
-- [Google SRE: Addressing Cascading Failures](https://sre.google/sre-book/addressing-cascading-failures/) ties capacity planning to realistic overload tests and graceful degradation.
-- [Grafana k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/) turn latency and error SLOs into automated pass/fail criteria.
-- A [2026 Medium production account](https://medium.com/real-world-net/we-hit-1m-users-heres-what-broke-first-in-our-net-system-68617da49a33) describes failures emerging in layers: queries, jobs, caches, logging, authentication, and deployment.
-- Stack Overflow discussions reinforce that [ten million stored users do not mean ten million concurrent users](https://stackoverflow.com/questions/5645393/how-to-do-load-testing-using-jmeter-and-visualvm) and that [connection-pool exhaustion often exposes leaks or long transactions](https://stackoverflow.com/questions/57974810/how-dbcontext-and-connections-to-db-should-be-implemented-to-handle-load-testing).
-- Experienced engineers on Reddit similarly emphasize [measuring real bottlenecks and traffic shape](https://www.reddit.com/r/ExperiencedDevs/comments/y39rgz/building_highly_scalable_distributed_systems/) instead of declaring an architecture infinitely scalable.
+The cited counts—107 Critical, 990 High, 1,286 Medium, and 53 Low—sum to 2,436. We could not locate a primary public report that ties this exact distribution to the Linux kernel, WebKit, FreeBSD, or a 40-year-old bug, so ShipProof does not repeat it as a verified benchmark.
 
-See [docs/research.md](docs/research.md) for the design synthesis and limitations.
+Verified primary material does show the broader lesson: modern AI-assisted research has found serious flaws in mature operating systems and browsers, while projects such as OSS-Fuzz report thousands of vulnerabilities over years of continuous fuzzing. The engineering response is layered verification and retained regression evidence, not trusting a headline or one model pass.
 
 ## Development
 
@@ -136,8 +198,8 @@ python -m compileall -q skills tests install.py
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 ```
 
-ShipProof uses only the Python standard library at runtime. Read [CONTRIBUTING.md](CONTRIBUTING.md) before adding a rule; every rule must include a positive test, a negative test, mappings, remediation, and a false-positive analysis.
+The runtime uses only the Python standard library. Read [CONTRIBUTING.md](CONTRIBUTING.md) before adding a detector: each rule needs positive and negative tests, a mapping, remediation, and false-positive analysis.
 
-## License
+## License and security
 
-[MIT](LICENSE). Security reports should follow [SECURITY.md](SECURITY.md).
+[MIT](LICENSE). Report vulnerabilities privately according to [SECURITY.md](SECURITY.md).
