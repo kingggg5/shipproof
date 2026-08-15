@@ -30,6 +30,19 @@ function resolveInside(root, candidate, label) {
   return resolvedCandidate;
 }
 
+function readBoolean(environment, name, fallback = "false") {
+  const value = environment[name] || fallback;
+  if (!["true", "false"].includes(value)) throw new Error(`${name} must be true or false`);
+  return value === "true";
+}
+
+function readExcludePatterns(environment) {
+  const value = environment.SHIPPROOF_INPUT_EXCLUDE || "";
+  const patterns = value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+  if (patterns.length > 100) throw new Error("exclude accepts at most 100 patterns");
+  return patterns;
+}
+
 export function validateActionInputs(environment = process.env) {
   const workspace = environment.GITHUB_WORKSPACE;
   if (!workspace) throw new Error("GITHUB_WORKSPACE is required");
@@ -42,6 +55,8 @@ export function validateActionInputs(environment = process.env) {
   if (!Number.isSafeInteger(maxFileBytes) || maxFileBytes < 1024 || maxFileBytes > 100_000_000) {
     throw new Error("max-file-bytes must be an integer from 1024 through 100000000");
   }
+  const includeGas = readBoolean(environment, "SHIPPROOF_INPUT_INCLUDE_GAS");
+  const exclude = readExcludePatterns(environment);
 
   const realWorkspace = realpathSync.native(resolve(workspace));
   const targetCandidate = resolveInside(workspace, environment.SHIPPROOF_INPUT_PATH || ".", "path");
@@ -75,7 +90,7 @@ export function validateActionInputs(environment = process.env) {
   if (baseline && !isInside(realWorkspace, baseline)) {
     throw new Error("baseline resolves outside the workspace");
   }
-  return { target, format, output, failOn, baseline, maxFileBytes };
+  return { target, format, output, failOn, baseline, maxFileBytes, includeGas, exclude };
 }
 
 export function buildScannerArguments(inputs) {
@@ -91,6 +106,8 @@ export function buildScannerArguments(inputs) {
     "--max-file-bytes",
     String(inputs.maxFileBytes),
   ];
+  if (inputs.includeGas) argumentsList.push("--include-gas");
+  for (const pattern of inputs.exclude || []) argumentsList.push("--exclude", pattern);
   if (inputs.baseline) argumentsList.push("--baseline", inputs.baseline);
   return argumentsList;
 }

@@ -21,7 +21,8 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 100000000
-        }
+        },
+        "include_gas": { "type": "boolean" }
       }
     },
     "security": {

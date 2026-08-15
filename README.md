@@ -67,6 +67,7 @@ jobs:
 
 `v0.4.0` is the public-beta contract. Pin ShipProof to the release commit SHA when immutable supply-chain references are required. The project will not publish a misleading `@v1` alias until the stable CLI compatibility guarantee exists.
 
+For Google Apps Script repositories, use a reviewed post-`v0.4.0` commit and set `include-gas: true` (or `scan.include_gas: true` in policy). This opt-in scans `.gs` server code and inline `<script>` blocks in `.html` templates; it does not execute Apps Script template directives or replace `clasp`/runtime UAT. The action also accepts newline-separated repository-relative `exclude` patterns for non-runtime tooling directories.
 ## One policy, one command
 
 Commit a bounded [`.shipproof.yml`](.shipproof.yml), then run every declared repository gate:
@@ -91,7 +92,7 @@ capacity:
 shipproof check .
 ```
 
-The dependency-free YAML subset rejects executable tags, anchors, duplicate keys, unknown fields, path traversal, and arbitrary commands. The full shape is documented by the [policy schema](schemas/shipproof-policy.schema.json).
+The dependency-free YAML subset rejects executable tags, anchors, duplicate keys, unknown fields, path traversal, and arbitrary commands. Set `scan.include_gas: true` only for repositories that intentionally contain Google Apps Script `.gs`/HTML-template source; the default remains `false`. The full shape is documented by the [policy schema](schemas/shipproof-policy.schema.json).
 
 ## Two modes, one workflow
 

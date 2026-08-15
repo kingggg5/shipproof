@@ -67,9 +67,10 @@ Prints a versioned prompt from an allowlisted catalog. Names are `build`, `audit
 shipproof scan . --format markdown --fail-on high
 shipproof scan . --format sarif --output shipproof.sarif --fail-on high
 shipproof scan . --format json --baseline-out .shipproof-baseline.json --fail-on none
+shipproof scan . --include-gas --format sarif --fail-on high
 ```
 
-The arguments after `scan` match `scan_repo.py`. `--fail-on` accepts `critical`, `high`, `medium`, `low`, or `none`. Repeat `--exclude` with repository-relative glob patterns to skip generated or vendored paths. Parent traversal and absolute patterns are rejected. Exit `0` means no finding met the threshold, `1` means the threshold failed, and `2` means evidence or input was invalid.
+The arguments after `scan` match `scan_repo.py`. `--include-gas` is opt-in and adds `.gs` plus `.html` discovery. `.gs` is scanned as JavaScript-like server code; `.html` secrets are scanned across the file and code rules are applied only to inline `<script>` blocks with original line numbers. Apps Script template directives are not executed. `--fail-on` accepts `critical`, `high`, `medium`, `low`, or `none`. Repeat `--exclude` with repository-relative glob patterns to skip generated or vendored paths. Parent traversal and absolute patterns are rejected. Exit `0` means no finding met the threshold, `1` means the threshold failed, and `2` means evidence or input was invalid.
 
 ## `check`
 
@@ -78,7 +79,7 @@ shipproof check .
 shipproof check . --config .shipproof.yml --format json
 ```
 
-Loads a version-1 repository policy and executes its fixed scan, performance-budget, and capacity gates. The configuration is a strict, dependency-free YAML subset: mappings use two-space indentation, `scan.exclude` is a scalar list, and anchors, tags, block scalars, executable values, duplicate keys, unknown fields, path traversal, and arbitrary commands are rejected.
+Loads a version-1 repository policy and executes its fixed scan, performance-budget, and capacity gates. Set `scan.include_gas: true` to opt into Google Apps Script `.gs` and HTML-template coverage; the default is `false`. The configuration is a strict, dependency-free YAML subset: mappings use two-space indentation, `scan.exclude` is a scalar list, and anchors, tags, block scalars, executable values, duplicate keys, unknown fields, path traversal, and arbitrary commands are rejected.
 
 Exit `0` means every declared evidence gate passed, exit `1` means a declared scan or performance gate blocked, and exit `2` means the policy or required evidence was invalid or unavailable. Capacity remains explicitly `CONDITIONAL` evidence and does not block merely because the model requires production-shaped validation.
 

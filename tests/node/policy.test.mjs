@@ -21,6 +21,13 @@ test("builds only fixed allowlisted gate commands", () => {
   assert.ok(gates.every((gate) => !gate.argumentsList.some((value) => value.includes(";"))));
 });
 
+test("preserves opt-in GAS scanning through the policy gate", () => {
+  const policy = validatePolicy({ version: 1, scan: { include_gas: true } });
+  assert.equal(policy.scan.include_gas, true);
+  const [gate] = buildPolicyGates(internals.PACKAGE_ROOT, policy);
+  assert.ok(gate.argumentsList.includes("--include-gas"));
+});
+
 test("rejects unsupported YAML features, duplicate keys, and unknown policy keys", () => {
   assert.throws(() => parsePolicyText("version: 1\nscan: &defaults\n  path: .\n"), /unsupported YAML/);
   assert.throws(() => parsePolicyText("version: 1\nversion: 1\n"), /duplicate key/);

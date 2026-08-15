@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -19,6 +20,7 @@ from scan_repo import (  # noqa: E402
     iter_scannable_files,
     normalize_exclude_patterns,
     render_markdown_report,
+    scan_repository,
 )
 
 
@@ -179,6 +181,69 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         secret = "AKIA" + "C" * 16
         findings = self.findings("notes.md", f"Never call eval here. Leaked key: {secret}\n")
         self.assertEqual([item.rule_id for item in findings], ["SP002"])
+
+    def test_gas_sources_are_opt_in_and_scan_server_side_code(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "Code.gs").write_text(
+                "// eval(input) is only a comment\nconst value = eval(input);\n",
+                encoding="utf-8",
+            )
+
+            default_findings, default_stats = scan_repository(root)
+            self.assertEqual(default_findings, [])
+            self.assertEqual(default_stats["files_scanned"], 0)
+            self.assertEqual(default_stats["gas_files_scanned"], 0)
+
+            findings, stats = scan_repository(root, include_gas=True)
+            self.assertEqual(stats["files_scanned"], 1)
+            self.assertEqual(stats["gas_files_scanned"], 1)
+            self.assertEqual(
+                [(item.rule_id, item.path, item.line) for item in findings],
+                [("SP101", "Code.gs", 2)],
+            )
+
+    def test_html_scans_inline_javascript_only_and_preserves_source_lines(self):
+        source = (
+            "<p>eval(input) in visible text</p>\n"
+            "<script>\n"
+            "  // eval(input) is only a comment\n"
+            "  const value = eval(input);\n"
+            "</script>\n"
+            "<?!= include('Page_Dash'); ?>\n"
+        )
+        findings = self.findings("Page_Dash.html", source)
+        dynamic_code = [item for item in findings if item.rule_id == "SP101"]
+        self.assertEqual([(item.path, item.line) for item in dynamic_code], [("Page_Dash.html", 4)])
+
+    def test_html_secrets_are_scanned_and_redacted_outside_script_blocks(self):
+        secret = "AKIA" + "D" * 16
+        findings = self.findings("Page_Dash.html", f'<meta data-key="{secret}">\n')
+        aws = next(item for item in findings if item.rule_id == "SP002")
+        self.assertEqual(aws.line, 1)
+        self.assertNotIn(secret, aws.evidence)
+
+    def test_gas_exclude_patterns_and_baseline_apply_to_opt_in_sources(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "Code.gs").write_text("const value = eval(input);\n", encoding="utf-8")
+            (root / "vendor").mkdir()
+            (root / "vendor" / "ignored.gs").write_text(
+                "const value = eval(input);\n", encoding="utf-8"
+            )
+            findings, stats = scan_repository(
+                root,
+                include_gas=True,
+                exclude_patterns=["vendor/**"],
+            )
+            self.assertEqual(stats["gas_files_scanned"], 1)
+            self.assertEqual([item.path for item in findings], ["Code.gs"])
+            active, suppressed = deduplicate_and_suppress_findings(
+                findings,
+                {findings[0].fingerprint},
+            )
+            self.assertEqual(active, [])
+            self.assertEqual(suppressed, 1)
 
     def test_ignored_directories_are_pruned_before_traversal(self):
         subdirectories = ["node_modules", "src", "bin", ".git"]

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in Google Apps Script scanning with `--include-gas`, `include-gas: true`, and `scan.include_gas: true`.
+- Discover `.gs` server code and `.html` templates without changing the default scan set.
+- Apply code rules to `.gs` and inline HTML `<script>` blocks while scanning HTML secrets across the full file and preserving source line numbers.
+
 ## 0.4.0 - 2026-08-14
 
 - Prepare version 0.4.0 with versioned config/evidence schemas and aligned scan, budget, and capacity envelopes.

@@ -29,6 +29,14 @@ inputs:
     description: Maximum source file size inspected by the scanner.
     required: false
     default: "1000000"
+  exclude:
+    description: Newline-separated repository-relative glob patterns to exclude from scanning.
+    required: false
+    default: ""
+  include-gas:
+    description: Opt in to Google Apps Script .gs and HTML/template source scanning.
+    required: false
+    default: "false"
 outputs:
   report-path:
     description: Absolute path of the generated report.
@@ -45,4 +53,6 @@ runs:
         SHIPPROOF_INPUT_FAIL_ON: ${{ inputs.fail-on }}
         SHIPPROOF_INPUT_BASELINE: ${{ inputs.baseline }}
         SHIPPROOF_INPUT_MAX_FILE_BYTES: ${{ inputs.max-file-bytes }}
+        SHIPPROOF_INPUT_EXCLUDE: ${{ inputs.exclude }}
+        SHIPPROOF_INPUT_INCLUDE_GAS: ${{ inputs.include-gas }}
       run: node "$GITHUB_ACTION_PATH/scripts/run-action.mjs"

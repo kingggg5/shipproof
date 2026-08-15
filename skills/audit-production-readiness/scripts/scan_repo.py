@@ -49,6 +49,8 @@ TEXT_SUFFIXES = {
     ".py",
     ".pyi",
     ".js",
+    ".gs",
+    ".html",
     ".jsx",
     ".mjs",
     ".cjs",
@@ -85,6 +87,10 @@ TEXT_SUFFIXES = {
     ".txt",
 }
 DOCUMENT_SUFFIXES = {".md", ".rst", ".txt"}
+GAS_SOURCE_SUFFIXES = frozenset({".gs", ".html"})
+HTML_SCRIPT_BLOCK_RE = re.compile(
+    r"<script\b[^>]*>(?P<body>.*?)</script\s*>", re.IGNORECASE | re.DOTALL
+)
 TEXT_NAMES = {
     "dockerfile",
     "containerfile",
@@ -101,6 +107,10 @@ SECRET_RULE_IDS = {"SP001", "SP002", "SP003"}
 PLACEHOLDERS = re.compile(
     r"(?i)(example|sample|placeholder|dummy|changeme|replace[_-]?me|your[_-]?|test[_-]?only|"
     r"not[_-]?a[_-]?real|fake|redacted|xxxx|<[^>]+>|\$\{|process\.env|os\.environ)"
+)
+NON_TAG_PLACEHOLDERS = re.compile(
+    r"(?i)(example|sample|placeholder|dummy|changeme|replace[_-]?me|your[_-]?|test[_-]?only|"
+    r"not[_-]?a[_-]?real|fake|redacted|xxxx|\$\{|process\.env|os\.environ)"
 )
 
 
@@ -365,8 +375,11 @@ RULES: tuple[Rule, ...] = (
 )
 
 
-def is_text_file(path: Path) -> bool:
-    return path.suffix.lower() in TEXT_SUFFIXES or path.name.lower() in TEXT_NAMES
+def is_text_file(path: Path, include_gas: bool = False) -> bool:
+    suffix = path.suffix.lower()
+    if suffix in GAS_SOURCE_SUFFIXES and not include_gas:
+        return False
+    return suffix in TEXT_SUFFIXES or path.name.lower() in TEXT_NAMES
 
 
 def normalize_exclude_patterns(patterns: Sequence[str]) -> tuple[str, ...]:
@@ -398,6 +411,7 @@ def iter_scannable_files(
     root: Path,
     max_file_bytes: int,
     exclude_patterns: Sequence[str] = (),
+    include_gas: bool = False,
 ) -> Iterable[Path]:
     """Walk deterministically while pruning ignored trees before descending into them."""
     for directory, subdirectories, filenames in os.walk(root, topdown=True, onerror=lambda _: None):
@@ -415,7 +429,7 @@ def iter_scannable_files(
             path = Path(directory, filename)
             if path.is_symlink():
                 continue
-            if not is_text_file(path):
+            if not is_text_file(path, include_gas):
                 continue
             relative_path = path.relative_to(root).as_posix()
             if is_excluded(relative_path, exclude_patterns):
@@ -459,6 +473,7 @@ def is_pure_comment(line: str, path: Path) -> bool:
         return stripped.startswith("#")
     if suffix in {
         ".js",
+        ".gs",
         ".jsx",
         ".mjs",
         ".cjs",
@@ -478,6 +493,30 @@ def is_pure_comment(line: str, path: Path) -> bool:
     if suffix in {".tf", ".hcl"}:
         return stripped.startswith(("#", "//"))
     return False
+
+
+def html_inline_javascript_source(source_text: str) -> str:
+    """Project inline HTML scripts onto the original line grid for stable findings."""
+    projected_lines = [""] * (source_text.count("\n") + 1)
+    for match in HTML_SCRIPT_BLOCK_RE.finditer(source_text):
+        body = match.group("body")
+        first_line = source_text.count("\n", 0, match.start("body"))
+        for offset, line in enumerate(body.splitlines()):
+            line_number = first_line + offset
+            if line_number >= len(projected_lines):
+                break
+            projected_lines[line_number] += line
+    return "\n".join(projected_lines)
+
+
+def code_scan_source(path: Path, source_text: str) -> tuple[str, str, Path]:
+    """Return source, effective suffix, and comment syntax path for code rules."""
+    suffix = path.suffix.lower()
+    if suffix == ".html":
+        return html_inline_javascript_source(source_text), ".js", Path("inline-script.js")
+    if suffix == ".gs":
+        return source_text, ".js", Path("source.gs")
+    return source_text, suffix, path
 
 
 def make_finding(rule: Rule, relative_path: str, line_number: int, evidence: str) -> Finding:
@@ -508,19 +547,25 @@ def make_finding(rule: Rule, relative_path: str, line_number: int, evidence: str
 def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[Finding]:
     findings: list[Finding] = []
     suffix = path.suffix.lower()
-    lines = source_text.splitlines()
+    code_source, effective_suffix, code_path = code_scan_source(path, source_text)
+    raw_lines = source_text.splitlines()
+    code_lines = code_source.splitlines()
+    secret_placeholder_pattern = NON_TAG_PLACEHOLDERS if suffix == ".html" else PLACEHOLDERS
     for rule in RULES:
         if rule.rule_id in {"SP108", "SP303", "SP305"}:
             continue
         if suffix in DOCUMENT_SUFFIXES and rule.rule_id not in SECRET_RULE_IDS:
             continue
-        if rule.suffixes and suffix not in rule.suffixes:
+        if rule.suffixes and effective_suffix not in rule.suffixes:
             continue
+        is_secret_rule = rule.rule_id in SECRET_RULE_IDS
+        lines = raw_lines if is_secret_rule else code_lines
+        scan_path = path if is_secret_rule else code_path
         for line_number, line in enumerate(lines, 1):
-            if rule.rule_id not in SECRET_RULE_IDS and is_pure_comment(line, path):
+            if not is_secret_rule and is_pure_comment(line, scan_path):
                 continue
             if rule.pattern.search(line) and not (
-                rule.rule_id in SECRET_RULE_IDS and PLACEHOLDERS.search(line)
+                is_secret_rule and secret_placeholder_pattern.search(line)
             ):
                 findings.append(make_finding(rule, relative_path, line_number, line))
 
@@ -529,7 +574,7 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
         and re.search(r"allow_origins\s*=\s*\[[\"']\*[\"']\]", source_text)
         and re.search(r"allow_credentials\s*=\s*True", source_text)
     ):
-        line = next((i for i, value in enumerate(lines, 1) if "allow_origins" in value), 1)
+        line = next((i for i, value in enumerate(raw_lines, 1) if "allow_origins" in value), 1)
         rule = Rule(
             "SP107",
             "Credentialed wildcard CORS",
@@ -542,7 +587,9 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
             "CWE-942",
             "OWASP ASVS V3",
         )
-        findings.append(make_finding(rule, relative_path, line, lines[line - 1] if lines else ""))
+        findings.append(
+            make_finding(rule, relative_path, line, raw_lines[line - 1] if raw_lines else "")
+        )
     return findings
 
 
@@ -798,15 +845,24 @@ def scan_repository(
     max_file_bytes: int = 1_000_000,
     baseline: set[str] | None = None,
     exclude_patterns: Sequence[str] = (),
+    include_gas: bool = False,
 ) -> tuple[list[Finding], dict[str, int]]:
     repository_root = root.resolve()
     if not repository_root.is_dir():
         raise ValueError(f"not a directory: {repository_root}")
     findings: list[Finding] = []
     files_scanned = 0
+    gas_files_scanned = 0
     normalized_excludes = normalize_exclude_patterns(exclude_patterns)
-    for path in iter_scannable_files(repository_root, max_file_bytes, normalized_excludes):
+    for path in iter_scannable_files(
+        repository_root,
+        max_file_bytes,
+        normalized_excludes,
+        include_gas=include_gas,
+    ):
         files_scanned += 1
+        if path.suffix.lower() in GAS_SOURCE_SUFFIXES:
+            gas_files_scanned += 1
         relative_path = path.relative_to(repository_root).as_posix()
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
@@ -817,7 +873,11 @@ def scan_repository(
             findings.extend(find_python_ast_issues(relative_path, text))
 
     active, suppressed = deduplicate_and_suppress_findings(findings, baseline)
-    return active, {"files_scanned": files_scanned, "suppressed": suppressed}
+    return active, {
+        "files_scanned": files_scanned,
+        "gas_files_scanned": gas_files_scanned,
+        "suppressed": suppressed,
+    }
 
 
 def determine_verdict(findings: Sequence[Finding]) -> str:
@@ -846,6 +906,7 @@ def build_json_report(
         "limitations": [
             "Fast heuristic scan; confirm every finding.",
             "No runtime reachability, dependency CVE database, or git-history scan.",
+            "Apps Script .gs and HTML/template files are opt-in; HTML code coverage is limited to inline <script> blocks and does not execute template directives.",
         ],
     }
 
@@ -857,7 +918,7 @@ def render_markdown_report(root: Path, findings: Sequence[Finding], stats: dict[
         "",
         f"**Verdict:** {determine_verdict(findings)}",
         "",
-        f"Scanned `{stats['files_scanned']}` files; found `{len(findings)}` active issues; suppressed `{stats['suppressed']}`.",
+        f"Scanned `{stats['files_scanned']}` files (GAS source files: `{stats.get('gas_files_scanned', 0)}`); found `{len(findings)}` active issues; suppressed `{stats['suppressed']}`.",
         "",
         "| Critical | High | Medium | Low |",
         "| ---: | ---: | ---: | ---: |",
@@ -955,6 +1016,11 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--fail-on", choices=tuple(SEVERITY), default="high")
     parser.add_argument("--max-file-bytes", type=int, default=1_000_000)
     parser.add_argument(
+        "--include-gas",
+        action="store_true",
+        help="Opt in to Google Apps Script .gs and HTML/template source scanning",
+    )
+    parser.add_argument(
         "--exclude",
         action="append",
         default=[],
@@ -976,6 +1042,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             max_file_bytes=arguments.max_file_bytes,
             baseline=load_baseline_fingerprints(arguments.baseline),
             exclude_patterns=arguments.exclude,
+            include_gas=arguments.include_gas,
         )
         payload = build_json_report(arguments.root, findings, stats)
         if arguments.baseline_out:

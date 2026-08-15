@@ -19,10 +19,20 @@ test("composite action validates values and repository path boundaries", () => {
       SHIPPROOF_INPUT_OUTPUT: "reports/shipproof.sarif",
       SHIPPROOF_INPUT_FORMAT: "sarif",
       SHIPPROOF_INPUT_FAIL_ON: "high",
+      SHIPPROOF_INPUT_INCLUDE_GAS: "true",
+      SHIPPROOF_INPUT_EXCLUDE: "vendor/**\nreports/**",
       SHIPPROOF_INPUT_MAX_FILE_BYTES: "1000000",
     });
     assert.equal(inputs.format, "sarif");
+    assert.equal(inputs.includeGas, true);
+    assert.deepEqual(inputs.exclude, ["vendor/**", "reports/**"]);
+    assert.ok(buildScannerArguments(inputs).includes("--include-gas"));
+    assert.ok(buildScannerArguments(inputs).includes("--exclude"));
     assert.ok(buildScannerArguments(inputs).includes("--max-file-bytes"));
+    assert.throws(() => validateActionInputs({
+      GITHUB_WORKSPACE: root,
+      SHIPPROOF_INPUT_INCLUDE_GAS: "yes",
+    }), /true or false/);
     assert.throws(() => validateActionInputs({
       GITHUB_WORKSPACE: root,
       SHIPPROOF_INPUT_PATH: "..",
