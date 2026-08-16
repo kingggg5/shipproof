@@ -70,3 +70,54 @@ test("evidence adapters are marker-driven and fixed", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("formatActionSummary formats markdown, json, and sarif reports", async () => {
+  const { formatActionSummary } = await import("../../scripts/run-action.mjs");
+  const root = mkdtempSync(join(tmpdir(), "shipproof-summary-"));
+  try {
+    const mdPath = join(root, "report.md");
+    writeFileSync(mdPath, "# Report Markdown Content", "utf8");
+    assert.equal(formatActionSummary(mdPath, "markdown"), "# Report Markdown Content");
+
+    const jsonPath = join(root, "report.json");
+    writeFileSync(jsonPath, JSON.stringify({
+      verdict: "PASS_WITH_EVIDENCE",
+      summary: { files_scanned: 10 },
+      findings: [
+        { severity: "high", rule_id: "SP108", path: "app.py", line: 12, title: "Auth Missing" },
+        { severity: "medium", rule_id: "SP305", path: "app.py", line: 20, title: "Page Size" },
+        { severity: "low", rule_id: "SP406", path: "app.py", line: 30, title: "Error" },
+      ],
+    }), "utf8");
+    const jsonSummary = formatActionSummary(jsonPath, "json");
+    assert.match(jsonSummary, /PASS_WITH_EVIDENCE/);
+    assert.match(jsonSummary, /SP108/);
+
+    const sarifPath = join(root, "report.sarif");
+    writeFileSync(sarifPath, JSON.stringify({
+      runs: [{
+        results: [
+          {
+            ruleId: "SP101",
+            level: "error",
+            message: { text: "eval used" },
+            locations: [{ physicalLocation: { artifactLocation: { uri: "app.py" }, region: { startLine: 5 } } }],
+          },
+          {
+            ruleId: "SP305",
+            level: "warning",
+            message: { text: "unbounded" },
+            locations: [{ physicalLocation: { artifactLocation: { uri: "app.py" }, region: { startLine: 15 } } }],
+          },
+        ],
+      }],
+    }), "utf8");
+    const sarifSummary = formatActionSummary(sarifPath, "sarif");
+    assert.match(sarifSummary, /SP101/);
+    assert.match(sarifSummary, /BLOCKED/);
+
+    assert.equal(formatActionSummary(join(root, "nonexistent.json"), "json"), "");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

@@ -50,7 +50,7 @@
     "test:node": "node tests/node/cli.test.mjs && node tests/node/platform.test.mjs && node tests/node/policy.test.mjs && node tests/node/e2e.test.mjs",
     "test:node:coverage": "node --experimental-test-coverage --test-coverage-include=lib/policy.mjs --test-coverage-include=lib/safe-path.mjs --test-coverage-include=scripts/run-action.mjs --test-coverage-lines=70 tests/node/all.test.mjs",
     "test:python": "python -m unittest discover -s tests -p test_*.py -v && python -m unittest discover -s examples/demo-api/fixtures/after/tests -v",
-    "test:python:coverage": "coverage erase && coverage run -m unittest discover -s tests -p test_*.py && coverage run --append -m unittest discover -s examples/demo-api/fixtures/after/tests && coverage report && coverage xml"
+    "test:python:coverage": "python -m coverage erase && python -m coverage run -m unittest discover -s tests -p test_*.py && python -m coverage run --append -m unittest discover -s examples/demo-api/fixtures/after/tests && python -m coverage report && python -m coverage xml"
   },
   "engines": {
     "node": ">=20"
