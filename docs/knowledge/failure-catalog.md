@@ -9,7 +9,7 @@
 > `DEP` (dependency/SCA tooling), or `MANUAL` (process/human review).
 > This catalog feeds the Rule Factory: high-value L0/L1 items become detector candidates.
 
-Status: v1 — 353 items across 14 categories.
+Status: v1 — 463 items across 21 sections (failure-mode categories, language supplements, and dataset guide).
 
 ## 1. Web security — injection & input handling
 
@@ -442,3 +442,158 @@ Status: v1 — 353 items across 14 categories.
 - Kubernetes: [Misconfigurations make up 59% of k8s security incidents (Altoros)](https://www.altoros.com/blog/misconfigurations-make-up-59-of-kubernetes-security-incidents/), [Red Hat: most common k8s security issues](https://www.redhat.com/en/blog/most-common-kubernetes-security-issues-and-concerns-to-address), [Ten most common k8s security misconfigurations (Picus)](https://www.picussecurity.com/resource/blog/the-ten-most-common-kubernetes-security-misconfigurations-how-to-address-them), [Defending k8s clusters against network misconfigurations (arXiv)](https://arxiv.org/html/2506.21134v1)
 - AI-code security context: [Veracode GenAI code security research](https://www.veracode.com/blog/genai-code-security-research/), [SecurityScan.ai on securing AI-generated code](https://securityscan.ai/securing-ai-generated-code/), CodeQL changelog (query counts), Semgrep rules licensing (see docs/research.md in this repository).
 - Framework and language references: React docs (hooks/effects), Node.js docs (event loop, streams), Redis docs, Django/Flask/FastAPI security checklists, OWASP ASVS v4, OWASP Top 10, MITRE CWE corpus, Google SRE book, AWS Well-Architected Framework.
+
+## 15. Vibe coding & AI-agent engineering
+
+Grounding: an Escape.tech scan of 5,600 vibe-coded apps found 2,000+ vulnerabilities and 400+ exposed secrets ([ox.security](https://www.ox.security/blog/vibe-coding-security/)); the Cloud Security Alliance confirmed 74 AI-linked CVEs through March 2026 and reports 62% of AI-generated solutions contain design flaws ([CSA research note](https://labs.cloudsecurityalliance.org/wp-content/uploads/2026/04/CSA_research_note_ai_codegen_vulnerability_debt_20260406-csa-styled.pdf), [Georgia Tech](https://news.research.gatech.edu/2026/04/13/bad-vibes-ai-generated-code-vulnerable-researchers-warn)); Wiz found 20% of vibe-coded apps seriously flawed ([Kaspersky summary](https://www.kaspersky.com/blog/vibe-coding-2025-risks/54584/)).
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| VB-001 | Plaintext API keys shipped in vibe-coded apps | 400+ secrets found in 5,600-app scan → scan + rotate | SHIPPED SP001-3/SP003 | Escape.tech |
+| VB-002 | Auth "working" only as UI gating | 75% of scanned apps had exploitable gaps → server checks | SHIPPED SP108 | community scan |
+| VB-003 | Agent invents package names (slopsquatting bait) | Typosquat installs malware → verify deps exist | DEP | CSA note |
+| VB-004 | Hallucinated SDK methods pass review but crash at runtime | Broken prod paths → compile/smoke gates | RUNTIME | GT research |
+| VB-005 | Generated config exposes admin dashboards by default | No-auth admin on public URL → bind + auth | CONFIG | Wiz |
+| VB-006 | Debug mode left on because the template had it | Verbose errors/debugger RCE → production flags | SHIPPED SP201 | classic |
+| VB-007 | "It works on the demo" — no tests ever written | Regressions ship silently → test requirement in loop | MANUAL | process |
+| VB-008 | CORS set to permissive to make the demo call work | Any-site reads → exact origins | SHIPPED SP107 | Escape.tech |
+| VB-009 | Database URL with credentials pasted into client env | Full DB in browser → server-only | SHIPPED SP403/SP503 | Wiz |
+| VB-010 | Agent loops retrying failed builds burning tokens/cost | Runaway spend → budgets + stop conditions | L1 | cost |
+| VB-011 | Accept-all file upload added for convenience | Malicious payload storage → validate | L1 | Escape.tech |
+| VB-012 | Generated SQL works but is injection-vulnerable | SQLi class of AI-linked CVEs → parameterize | SHIPPED SP103/SP118 | GT research |
+| VB-013 | Command injection via "flexible" shell features | Critical class in AI-linked CVEs → argv | SHIPPED SP102 | GT research |
+| VB-014 | Agent deletes/rewrites guardrails to make tests pass | Weakened security silently → review diffs of policy files | MANUAL | process |
+| VB-015 | Secrets committed while iterating with the agent | Permanent history leak → pre-commit scan | SHIPPED SP001-3 | gitleaks-class |
+| VB-016 | No rate limiting anywhere on new AI-first endpoints | Abuse + bill shock → throttling | SHIPPED SP402/SP501 | cost |
+| VB-017 | Generated code calls internal services from public handlers | SSRF surface → allowlists | SHIPPED SP109/SP124 | CWE-918 |
+| VB-018 | Migration files generated but never reviewed/applied deliberately | Schema drift → migration gate | MANUAL | DB ops |
+| VB-019 | Copy-pasted Stack-overflow-style license headers stripped | License contamination → attribution check | MANUAL | legal |
+| VB-020 | Agent-generated regexes with catastrophic backtracking | ReDoS on user input → rewrite | SHIPPED SP114 | CWE-1333 |
+| VB-021 | Env vars read client-side only (config illusion) | Silent feature breakage in prod → runtime config | L1 | config |
+| VB-022 | One giant handler doing auth+logic+IO | Untestable risk blob → layering | MANUAL | arch |
+| VB-023 | Generated API lacks pagination from day one | Table growth = outage → paginate now | SHIPPED SP302/SP305 | scale |
+| VB-024 | Timeouts absent because agent never waited long | Hangs under real latency → timeouts | SHIPPED SP304 | SRE |
+| VB-025 | Secrets echoed into LLM prompts for "debugging" | Secrets in vendor logs → redact | DATAFLOW | policy |
+| VB-026 | Prompt/agent code trusted with filesystem write everywhere | Blast radius → scoped workspaces | CONFIG | MCP sec |
+| VB-027 | Generated tests assert on implementation not behavior | Green but meaningless → behavior tests | MANUAL | process |
+| VB-028 | Accepting agent's claim "security handled" without evidence | Trust gap → verify with independent scan | MANUAL | ShipProof thesis |
+| VB-029 | Dependency versions pasted from stale training data | Known-CVE versions installed → SCA gate | DEP | CSA note |
+| VB-030 | Multiple agents editing same module without merge discipline | Conflicting invariants → small PRs | MANUAL | process |
+| VB-031 | Error swallowing to keep agent loop unblocked | Silent corruption → explicit failure | MANUAL | SRE |
+| VB-032 | Feature flags hardcoded true to "unblock" demo | Dead flags hide risk → flag hygiene | L0 | config |
+| VB-033 | Generated IaC with public buckets/ports by default | Cloud exposure → policy-as-code | CONFIG | Wiz |
+| VB-034 | No rollback path for vibe-shipped deploys | Incident length → revert drill | MANUAL | SRE |
+| VB-035 | Agent code assumes happy-path responses (no 4xx/5xx handling) | Crashes on real-world responses → error paths | L1 | reliability |
+
+## 16. Go
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| GO-001 | Goroutine started per request without lifecycle bound | Leaks under load → errgroup/context | L1 | 100 Go Mistakes |
+| GO-002 | Blocking send on unbuffered channel with no receiver | Goroutine leak/deadlock → select+ctx | L1 | Go docs |
+| GO-003 | `for range` channel without ctx cancellation | Never exits → ctx ranges | L1 | Go docs |
+| GO-004 | Loop variable captured in goroutine pre-1.22 semantics | All see last value → per-iteration copy (or 1.22+) | L1 | Go 1.22 notes |
+| GO-005 | Write to nil map | Panic on first write → make() | L1 | spec |
+| GO-006 | Ignoring returned error (`_ =` or bare call) | Silent failures → handle or comment why | L1 | errcheck |
+| GO-007 | `defer` inside loop | Resource held until function end → refactor scope | L1 | 100 Go Mistakes |
+| GO-008 | HTTP response body not closed (or closed before read) | FD/goroutine leak | SHIPPED SP315 | net/http |
+| GO-009 | `err == nil` checked but typed nil interface returned | "nil but not nil" → return error explicitly | L1 | Go FAQ |
+| GO-010 | Mutex copied by value (struct with sync fields passed around) | Broken locking → pointer/mutex guard | L1 | go vet |
+| GO-011 | `time.After` in hot loop | Timer leak per iteration → Ticker/NewTimer+Stop | L1 | perf |
+| GO-012 | Unbounded goroutine fan-out | Resource exhaustion → worker pool | SHIPPED SP306 | Go patterns |
+| GO-013 | `context.Background()` used in request path | No cancellation/trace → derive from request ctx | L1 | Go blogs |
+| GO-014 | Slice aliasing after append capacity growth | Hidden shared buffers → copy when sharing | L1 | spec |
+| GO-015 | String concatenation in hot loop | Quadratic → strings.Builder | L1 | perf |
+| GO-016 | Map iteration order assumed stable | Random by design → sort keys | L1 | spec |
+| GO-017 | Shadowed `err` in nested scopes | Errors lost → rename/receive | L1 | go vet shadow |
+| GO-018 | Closing over loop `wg` misuse (Add inside goroutine) | WaitGroup races → Add before go | L1 | sync docs |
+
+## 17. Rust
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| RS-001 | `unwrap()`/`expect()` in service paths | Panic kills request/task → propagate Results | L1 | tzutoo/medium |
+| RS-002 | Arithmetic overflow relying on debug panics | Release silently wraps → checked/saturating | L1 | corrode.dev |
+| RS-003 | `unsafe` blocks used "C-style" to dodge borrow rules | Soundness holes → isolate + document | L1 | users.rust-lang |
+| RS-004 | `.clone()` sprinkled to appease the borrow checker | CPU/alloc waste → borrows/refs | L1 | reintech |
+| RS-005 | Slice indexing with unvalidated user index | Panic on out-of-bounds → get() | L1 | bad-habits |
+| RS-006 | `panic = abort` combined with catch_unwind assumptions | Process dies on panic → review policy | CONFIG | cargo docs |
+| RS-007 | Blocking IO inside async fn (tokio) | Executor starvation → spawn_blocking | L1 | tokio docs |
+| RS-008 | Holding std MutexGuard across .await | Deadlock risk → scope guards | L1 | tokio |
+| RS-009 | `unwrap_or_default()` masking real errors | Silent wrong behavior → explicit match | L1 | practice |
+| RS-010 | Large `move` closures copying big structures | Memory blowup → references/Arc | L1 | perf |
+| RS-011 | Ignoring `Result` with `let _ =` | Errors dropped → handle | L1 | clippy |
+| RS-012 | Building unbounded channels | OOM under burst → bounded | L1 | tokio |
+| RS-013 | `String` vs `&str` misuse in APIs | needless clones/allocs → &str params | L1 | clippy |
+| RS-014 | Tests only on happy path because errors are typed | Error paths untested → table tests on Err | MANUAL | practice |
+| RS-015 | Feature flags altering API silently | Surprise breakage → documented semantics | MANUAL | cargo |
+
+## 18. Java / JVM
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| JV-001 | `==` on boxed types/strings | Identity vs equality bugs → equals | L0 | JLS |
+| JV-002 | SimpleDateFormat shared statically | Thread corruption → java.time/ThreadLocal | L1 | classic |
+| JV-003 | Streams/Connections not closed on exception | Resource leak → try-with-resources | L1 | effective java |
+| JV-004 | Catching generic Exception to silence | Swallows everything → narrow types | L0 | Sonar-class |
+| JV-005 | String concat in loops | Quadratic → StringBuilder | L1 | perf |
+| JV-006 | HashMap mutated during iteration | ConcurrentModificationException → concurrent maps | L1 | JDK |
+| JV-007 | equals without hashCode | Broken hashing collections → implement both | L1 | effective java |
+| JV-008 | `Optional.get()` without check | NoSuchElementException → orElse/ifPresent | L1 | API notes |
+| JV-009 | New thread per request (no pool) | Resource exhaustion → executors | L1 | classic |
+| JV-010 | Unbounded core pool / unbounded LinkedBlockingQueue | Task pile-up → bounded queues + policy | L1 | JDK |
+| JV-011 | Double-checked locking without volatile | Broken publishing → holder/volatile | L1 | JMM |
+| JV-012 | Timezone-default Date formatting | Wrong hours across regions → ZonedDateTime | L1 | java.time |
+| JV-013 | `System.currentTimeMillis` for durations | Clock skew/monotonic issues → nanoTime | L1 | classic |
+| JV-014 | Reflection-heavy hot paths | CPU + JIT degradation → caches | RUNTIME | perf |
+| JV-015 | Static mutable state in webapps (WAR classloaders) | Leaks across redeploys → instances | L1 | app-servers |
+
+## 19. C# / .NET
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| CS-001 | `.Result`/`.Wait()` on async in context | Classic deadlock → async all the way | L1 | Stephen Cleary |
+| CS-002 | `async void` outside event handlers | Unobservable exceptions → Task | L1 | MSDN |
+| CS-003 | Missing `ConfigureAwait(false)` in libraries | Context capture overhead/deadlock | L1 | MSDN |
+| CS-004 | Fire-and-forget tasks without exception observation | Silent failures → store/await | L1 | TPL |
+| CS-005 | `DateTime.Now` for measurement | Skew → Stopwatch/UtcNow | L1 | classic |
+| CS-006 | Disposables not disposed (no using) | Handles leak → using/Dispose | L1 | Roslyn |
+| CS-007 | CancellationToken ignored in long ops | Unstoppable work → pass tokens | L1 | TPL |
+| CS-008 | Locks held across awaits | Deadlocks → SemaphoreSlim + scope | L1 | practice |
+| CS-009 | String concatenation in hot loops | GC pressure → StringBuilder | L1 | perf |
+| CS-010 | `ToList()` everywhere mid-LINQ | N enumerations materialized → compose first | L1 | LINQ |
+| CS-011 | HttpContext accessed after response/_background | Null/object-disposed → capture needed data | L1 | ASP.NET |
+| CS-012 | Sync IO in ASP.NET (classic pipeline) | Thread starvation → async IO | L1 | ASP.NET |
+
+## 20. PHP / Ruby / other ecosystems
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| PHP-001 | `unserialize` on user input | Object injection RCE | SHIPPED SP113 | CWE-502 |
+| PHP-002 | String interpolation into SQL/HTML without escaping | SQLi/XSS → prepared statements/escape | L0 | OWASP PHP |
+| PHP-003 | `==` loose comparison (0 == "string") | Auth bypass class → `===` | L0 | PHP docs |
+| PHP-004 | `extract($_GET)`/register_globals-style patterns | Variable injection → explicit input | L0 | classic |
+| PHP-005 | `$_FILES` trusted by extension only | Malicious uploads → magic-byte checks | L1 | OWASP |
+| PHP-006 | session autostart with default cookie flags | Theft → secure flags | CONFIG | php.ini |
+| RB-001 | `eval` in DSL/config handling | RCE → safe parsing | SHIPPED SP101 | CWE-95 |
+| RB-002 | `send_file` with user path | Traversal → allowlist | L1 | Rails |
+| RB-003 | Mass assignment without strong params | Privilege escalation → permit lists | L1 | Rails |
+| RB-004 | N+1 in ActiveRecord loops | Query storms → includes | SHIPPED SP307-class | Rails |
+| RB-005 | `rescue => nil` swallowing | Silent failures → handle | L0 | practice |
+| SEC-CC-001 | C: `strcpy`/`sprintf`/`gets` family | Buffer overflows → bounded APIs | L0 | CWE-120 |
+| SEC-CC-002 | C: format string from user | Info leak/write → constants | L0 | CWE-134 |
+| SEC-CC-003 | C++: dangling pointers/refs after container growth | UB → stable iterators/refs | DATAFLOW | core |
+| SEC-CC-004 | Swift/Kotlin: force unwraps (`!`/`!!`) in app code | Crashes → safe handling | L1 | idioms |
+
+## 21. Recommended datasets (Hugging Face and public)
+
+For building evaluation corpora aligned with the catalog categories. Always re-license-check per dataset and never redistribute restricted corpora inside ShipProof.
+
+| Dataset | What it contains | Fit |
+| --- | --- | --- |
+| [DiverseVul (paper 2304.00409)](https://huggingface.co/papers/2304.00409) | 18,945 vulnerable functions (150 CWEs) + 330k benign, from fix commits in 933 C/C++ projects | Recall corpus for C/C++ rules; CWE diversity |
+| [CIRCL/vulnerability-cwe-patch](https://huggingface.co/datasets/CIRCL/vulnerability-cwe-patch) | Structured real-world vulnerabilities enriched with CWE ids and patch refs | Maps CVE↔CWE↔fix to mine new L0/L1 patterns |
+| [HF Repo2RLEnv cve_patches pipeline](https://github.com/huggingface/Repo2RLEnv/blob/main/docs/pipelines/cve_patches.md) | CVE/GHSA/PYSEC advisories linked to fix commits | Python/JS CVE fix-commit mining (our core languages) |
+| OWASP Benchmark | Java SAST ground-truth suite | Java-adapter evaluation only |
+| NIST SARD / Juliet | Multi-language synthetic weaknesses | Coverage smoke tests (language-filtered) |
+| OSV.dev + GitHub GHSA feeds (API) | Live advisories per ecosystem | Continuous regression ingestion |
