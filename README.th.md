@@ -132,16 +132,22 @@ shipproof explain SP108
 
 ## การตรวจจับที่ปรับตาม Framework อัตโนมัติ
 
-ShipProof จะตรวจสอบไฟล์โครงสร้างของโปรเจกต์และเปิดใช้งานกฎการตรวจสอบที่เหมาะสมกับ Framework นั้นๆ โดยอัตโนมัติ:
+ShipProof จะตรวจสอบไฟล์โครงสร้างของโปรเจกต์และเปิดใช้งานกฎการตรวจสอบที่เหมาะสมกับ Framework และ Runtime นั้นๆ โดยอัตโนมัติ:
 
-| Framework | การตรวจจับ | รายการที่ตรวจสอบ |
+| กลุ่มเทคโนโลยี / Framework | การตรวจจับ | รายการที่ตรวจสอบเจาะจง |
 | :--- | :--- | :--- |
-| **Next.js & React** | `package.json` (`next`, `react`) | ป้องกัน Secret หลุดใน `NEXT_PUBLIC_` (`SP403`), ป้องกัน Supabase `service_role` key หลุดฝั่ง Client (`SP503`), ป้องกันการสร้าง DB Client ซ้ำซ้อนใน Serverless (`SP313`) |
-| **Express / Fastify** | `package.json` (`express`, `fastify`) | ตรวจสอบ Helmet Headers (`SP401`), ป้องกัน Error Object หลุดไปที่ Response (`SP406`), ตรวจสอบความปลอดภัย Stripe Webhook (`SP502`), ป้องกัน AI Route ที่ไม่มี Rate Limit (`SP501`) |
-| **FastAPI & Python** | `requirements.txt`, `pyproject.toml` | ตรวจสอบสิทธิ์ Route แอดมิน (`SP108`), ตรวจสอบ N+1 Database Query ใน Loop (`SP307`), ตรวจสอบ Limit ของ Pagination (`SP305`), ตรวจสอบ Timeout ใน Outbound Request (`SP304`) |
-| **Django** | `requirements.txt`, `pyproject.toml` | ป้องกัน Hardcoded `SECRET_KEY` (`SP404`), ตรวจสอบ Wildcard `ALLOWED_HOSTS` (`SP405`), ป้องกัน SQL Interpolation (`SP103`) |
-| **Containers & CI** | `Dockerfile`, `.github/workflows` | ตรวจสอบการระบุ Tag ตายตัวใน Container Base Image (`SP202`), ตรวจสอบการ Pin Commit SHA ใน GitHub Actions (`SP203`) |
-| **Fullstack ทั่วไป** | ทุกภาษาและไฟล์ Config | ป้องกันค่า Fallback Secret ที่ไม่ปลอดภัย (`SP004`), ป้องกัน SSRF ไปยัง Cloud Metadata (`SP109`), ป้องกัน Path Traversal (`SP110`), ป้องกันการ Log รหัสผ่านหรือ Token (`SP204`), ป้องกัน Unbounded Concurrency (`SP306`), ป้องกันการรับไฟล์ SVG โดยไม่ Sanitize (`SP112`) |
+| **Next.js, Nuxt, SvelteKit, Remix, Astro** | `package.json` (`next`, `nuxt`, `@sveltejs/kit`, `@remix-run/*`, `astro`) | ป้องกัน Secret หลุดใน `NEXT_PUBLIC_` (`SP403`), ตรวจสอบนโยบาย CSP (`SP408`), ป้องกัน Connection รั่วใน Serverless DB (`SP313`) |
+| **React, Vue, Angular, SolidJS** | `package.json` (`react`, `vue`, `@angular/core`, `solid-js`) | ป้องกัน Supabase `service_role` key หลุดฝั่ง Client (`SP503`), ป้องกันการ Log Credential ใน Client Bundle (`SP204`), ป้องกัน SVG XSS (`SP112`) |
+| **Express, Fastify, NestJS, Koa, Hono, Elysia** | `package.json` (`express`, `fastify`, `@nestjs/core`, `koa`, `hono`, `elysia`) | ตรวจสอบ Security Headers (`SP401`), ป้องกัน Raw Error Object หลุด (`SP406`), ป้องกัน Stripe Webhook ปลอม (`SP502`), ตรวจสอบ Rate Limit ใน AI Route (`SP501`) |
+| **Prisma, Drizzle, TypeORM, Mongoose, Supabase** | `package.json` (`@prisma/client`, `drizzle-orm`, `typeorm`, `mongoose`, `@supabase/*`) | ป้องกันการสร้าง DB Client ซ้ำซ้อนใน Serverless (`SP313`), ป้องกัน Supabase RLS Bypass (`SP503`), ป้องกัน Unbounded Query (`SP302`) |
+| **FastAPI, Starlette, Litestar, Sanic** | `pyproject.toml`, `requirements.txt` | ตรวจสอบสิทธิ์ Route แอดมิน (`SP108`), ตรวจสอบ N+1 Query ใน Loop (`SP307`), ตรวจสอบ Limit ของ Pagination (`SP305`), ตรวจสอบ Timeout (`SP304`) |
+| **Django & Flask** | `pyproject.toml`, `requirements.txt` | ป้องกัน Hardcoded `SECRET_KEY` (`SP404`), ตรวจสอบ Wildcard `ALLOWED_HOSTS` (`SP405`), ป้องกัน SQL Interpolation (`SP103`) |
+| **Go (Gin, Echo, Fiber, Chi)** | `go.mod` | ป้องกัน Insecure Secret Fallback (`SP004`), ตรวจสอบ Outbound Request Timeout (`SP304`), ป้องกัน Unbounded Concurrency (`SP306`) |
+| **Rust (Actix-web, Axum, Rocket)** | `Cargo.toml` | ป้องกันการปิด TLS Verification (`SP104`), ป้องกัน SSRF สู่ Cloud Metadata (`SP109`), ป้องกันการ Log ข้อมูลลับ (`SP204`) |
+| **PHP (Laravel, Symfony)** | `composer.json` | ป้องกัน Dynamic Code Execution (`SP101`), ป้องกัน SQL Injection (`SP103`), ป้องกัน Path Traversal (`SP110`) |
+| **Ruby (Rails, Sinatra)** | `Gemfile` | ป้องกัน Secret Key รั่วไหล (`SP003`), ป้องกัน Unsafe Deserialization (`SP106`), ป้องกันการเปิด Debug Mode (`SP201`) |
+| **Java / Kotlin (Spring Boot, Quarkus, Micronaut)** | `pom.xml`, `build.gradle`, `build.gradle.kts` | ป้องกัน Hardcoded Token (`SP003`), ป้องกัน Wildcard CORS พร้อม Credentials (`SP107`), ป้องกัน Path Traversal (`SP110`) |
+| **Containers, Serverless & CI/CD** | `Dockerfile`, `compose.yaml`, `serverless.yml`, `.github/workflows` | ตรวจสอบการ Pin SHA ใน GitHub Actions (`SP203`), ตรวจสอบ Container Base Image Digest (`SP202`), ป้องกัน Debug Mode ใน Prod (`SP201`) |
 
 ## การควบคุม False Positive (ความแม่นยำสูง)
 

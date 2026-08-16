@@ -397,6 +397,77 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
                 if baseline_out.exists():
                     baseline_out.unlink()
 
+    def test_detect_frameworks_across_manifests(self):
+        import tempfile
+
+        from scan_repo import detect_frameworks
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            pkg = {
+                "dependencies": {
+                    "next": "14.0.0",
+                    "nuxt": "3.0.0",
+                    "@sveltejs/kit": "2.0.0",
+                    "@remix-run/react": "2.0.0",
+                    "astro": "4.0.0",
+                    "vue": "3.0.0",
+                    "@angular/core": "17.0.0",
+                    "solid-js": "1.8.0",
+                    "express": "4.18.0",
+                    "fastify": "4.0.0",
+                    "@nestjs/core": "10.0.0",
+                    "koa": "2.0.0",
+                    "hono": "3.0.0",
+                    "elysia": "0.8.0",
+                    "@prisma/client": "5.0.0",
+                    "drizzle-orm": "0.29.0",
+                    "typeorm": "0.3.0",
+                    "mongoose": "8.0.0",
+                    "@supabase/supabase-js": "2.0.0",
+                }
+            }
+            (root / "package.json").write_text(json.dumps(pkg), encoding="utf-8")
+            (root / "pyproject.toml").write_text(
+                "dependencies = ['fastapi', 'django', 'flask', 'starlette', 'tornado', 'litestar', 'sanic', 'sqlalchemy', 'supabase']\n",
+                encoding="utf-8",
+            )
+            (root / "go.mod").write_text(
+                "module test\nrequire github.com/gin-gonic/gin v1.9.0\nrequire github.com/labstack/echo v4.0.0\nrequire github.com/gofiber/fiber v2.0.0\nrequire github.com/go-chi/chi v5.0.0\n",
+                encoding="utf-8",
+            )
+            (root / "Cargo.toml").write_text(
+                "[dependencies]\nactix-web = '4'\naxum = '0.7'\nrocket = '0.5'\n",
+                encoding="utf-8",
+            )
+            (root / "composer.json").write_text(
+                '{"require": {"laravel/framework": "^10.0", "symfony/framework-bundle": "^6.0"}}',
+                encoding="utf-8",
+            )
+            (root / "Gemfile").write_text("gem 'rails'\ngem 'sinatra'\n", encoding="utf-8")
+            (root / "pom.xml").write_text(
+                "<project><dependencies><dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot</artifactId></dependency></dependencies></project>",
+                encoding="utf-8",
+            )
+            (root / "build.gradle").write_text("plugins { id 'io.quarkus' }\n", encoding="utf-8")
+            (root / "build.gradle.kts").write_text(
+                "plugins { id('io.micronaut') }\n", encoding="utf-8"
+            )
+            (root / "Dockerfile").write_text("FROM node:20\n", encoding="utf-8")
+            (root / "serverless.yml").write_text("service: test\n", encoding="utf-8")
+            (root / ".github" / "workflows").mkdir(parents=True)
+
+            fw = detect_frameworks(root)
+            self.assertIn("nextjs", fw)
+            self.assertIn("fastapi", fw)
+            self.assertIn("gin", fw)
+            self.assertIn("actix", fw)
+            self.assertIn("laravel", fw)
+            self.assertIn("rails", fw)
+            self.assertIn("springboot", fw)
+            self.assertIn("docker", fw)
+            self.assertIn("github-actions", fw)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1407,30 +1407,67 @@ def deduplicate_and_suppress_findings(
 
 
 def detect_frameworks(root: Path) -> set[str]:
-    """Detect frameworks from manifest files in the repository root."""
+    """Detect frameworks and runtimes from manifest files in the repository root."""
     frameworks: set[str] = set()
-    # Node.js / package.json
+
+    # 1. Node.js / TypeScript (package.json)
     pkg_path = root / "package.json"
     if pkg_path.is_file():
         try:
             pkg = json.loads(pkg_path.read_text(encoding="utf-8", errors="replace"))
-            all_deps = {}
+            all_deps: dict[str, str] = {}
             for key in ("dependencies", "devDependencies", "peerDependencies"):
-                all_deps.update(pkg.get(key, {}))
-            if "express" in all_deps:
-                frameworks.add("express")
+                val = pkg.get(key)
+                if isinstance(val, dict):
+                    all_deps.update(val)
+            # Fullstack & Frontend
             if "next" in all_deps:
                 frameworks.add("nextjs")
             if "nuxt" in all_deps or "nuxt3" in all_deps:
                 frameworks.add("nuxt")
+            if "@sveltejs/kit" in all_deps:
+                frameworks.add("sveltekit")
+            if "@remix-run/react" in all_deps or "@remix-run/node" in all_deps:
+                frameworks.add("remix")
+            if "astro" in all_deps:
+                frameworks.add("astro")
+            if "vue" in all_deps:
+                frameworks.add("vue")
+            if "@angular/core" in all_deps:
+                frameworks.add("angular")
+            if "react" in all_deps and "next" not in all_deps:
+                frameworks.add("react")
+            if "solid-js" in all_deps:
+                frameworks.add("solid")
+            # Backend
+            if "express" in all_deps:
+                frameworks.add("express")
             if "fastify" in all_deps:
                 frameworks.add("fastify")
             if "@nestjs/core" in all_deps:
                 frameworks.add("nestjs")
+            if "koa" in all_deps:
+                frameworks.add("koa")
+            if "hono" in all_deps:
+                frameworks.add("hono")
+            if "elysia" in all_deps:
+                frameworks.add("elysia")
+            # ORMs & DBs
+            if "@prisma/client" in all_deps or "prisma" in all_deps:
+                frameworks.add("prisma")
+            if "drizzle-orm" in all_deps:
+                frameworks.add("drizzle")
+            if "typeorm" in all_deps:
+                frameworks.add("typeorm")
+            if "mongoose" in all_deps:
+                frameworks.add("mongoose")
+            if "@supabase/supabase-js" in all_deps:
+                frameworks.add("supabase")
         except (OSError, json.JSONDecodeError):
             pass
-    # Python / pyproject.toml or requirements.txt
-    for manifest in ("pyproject.toml", "requirements.txt", "setup.py", "Pipfile"):
+
+    # 2. Python (pyproject.toml, requirements.txt, setup.py, Pipfile, poetry.lock)
+    for manifest in ("pyproject.toml", "requirements.txt", "setup.py", "Pipfile", "poetry.lock"):
         manifest_path = root / manifest
         if manifest_path.is_file():
             try:
@@ -1441,18 +1478,102 @@ def detect_frameworks(root: Path) -> set[str]:
                     frameworks.add("fastapi")
                 if "flask" in text:
                     frameworks.add("flask")
-                if "laravel" in text:
-                    frameworks.add("laravel")
+                if "starlette" in text and "fastapi" not in text:
+                    frameworks.add("starlette")
+                if "tornado" in text:
+                    frameworks.add("tornado")
+                if "litestar" in text:
+                    frameworks.add("litestar")
+                if "sanic" in text:
+                    frameworks.add("sanic")
+                if "sqlalchemy" in text:
+                    frameworks.add("sqlalchemy")
+                if "supabase" in text:
+                    frameworks.add("supabase")
             except OSError:
                 pass
-    # Go
-    if (root / "go.mod").is_file():
+
+    # 3. Go (go.mod)
+    go_mod = root / "go.mod"
+    if go_mod.is_file():
         try:
-            text = (root / "go.mod").read_text(encoding="utf-8", errors="replace").lower()
-            if "gin-gonic" in text:
+            text = go_mod.read_text(encoding="utf-8", errors="replace").lower()
+            if "gin-gonic/gin" in text:
                 frameworks.add("gin")
+            if "labstack/echo" in text:
+                frameworks.add("echo")
+            if "gofiber/fiber" in text:
+                frameworks.add("fiber")
+            if "go-chi/chi" in text:
+                frameworks.add("chi")
         except OSError:
             pass
+
+    # 4. Rust (Cargo.toml)
+    cargo_toml = root / "Cargo.toml"
+    if cargo_toml.is_file():
+        try:
+            text = cargo_toml.read_text(encoding="utf-8", errors="replace").lower()
+            if "actix-web" in text:
+                frameworks.add("actix")
+            if "axum" in text:
+                frameworks.add("axum")
+            if "rocket" in text:
+                frameworks.add("rocket")
+        except OSError:
+            pass
+
+    # 5. PHP (composer.json)
+    composer_json = root / "composer.json"
+    if composer_json.is_file():
+        try:
+            text = composer_json.read_text(encoding="utf-8", errors="replace").lower()
+            if "laravel" in text:
+                frameworks.add("laravel")
+            if "symfony" in text:
+                frameworks.add("symfony")
+        except OSError:
+            pass
+
+    # 6. Ruby (Gemfile)
+    gemfile = root / "Gemfile"
+    if gemfile.is_file():
+        try:
+            text = gemfile.read_text(encoding="utf-8", errors="replace").lower()
+            if "rails" in text:
+                frameworks.add("rails")
+            if "sinatra" in text:
+                frameworks.add("sinatra")
+        except OSError:
+            pass
+
+    # 7. Java / Kotlin / JVM (pom.xml, build.gradle, build.gradle.kts)
+    for jvm_file in ("pom.xml", "build.gradle", "build.gradle.kts"):
+        jvm_path = root / jvm_file
+        if jvm_path.is_file():
+            try:
+                text = jvm_path.read_text(encoding="utf-8", errors="replace").lower()
+                if "spring-boot" in text or "springframework" in text:
+                    frameworks.add("springboot")
+                if "quarkus" in text:
+                    frameworks.add("quarkus")
+                if "micronaut" in text:
+                    frameworks.add("micronaut")
+            except OSError:
+                pass
+
+    # 8. Containers & Infra
+    if (
+        (root / "Dockerfile").is_file()
+        or (root / "docker-compose.yml").is_file()
+        or (root / "compose.yaml").is_file()
+    ):
+        frameworks.add("docker")
+    if (root / ".github" / "workflows").is_dir():
+        frameworks.add("github-actions")
+    if (root / "serverless.yml").is_file() or (root / "serverless.ts").is_file():
+        frameworks.add("serverless")
+
     return frameworks
 
 

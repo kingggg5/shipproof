@@ -132,16 +132,62 @@ shipproof explain SP108
 
 ## Framework-Aware Detection
 
-ShipProof automatically detects project frameworks and applies domain-specific rules:
+ShipProof automatically detects project frameworks and runtimes across multiple ecosystems to apply domain-specific guardrails:
 
-| Framework | Detection Source | Reviewed Checks |
+| Ecosystem / Framework | Detection Source | Target Production Checks |
 | :--- | :--- | :--- |
-| **Next.js & React** | `package.json` (`next`, `react`) | Secrets in `NEXT_PUBLIC_` (`SP403`), Leaked Supabase `service_role` keys (`SP503`), Non-singleton DB clients in serverless (`SP313`) |
-| **Express / Fastify** | `package.json` (`express`, `fastify`) | Missing `helmet` headers (`SP401`), Raw error object leaks (`SP406`), Insecure Stripe webhooks (`SP502`), Unmetered AI routes (`SP501`) |
-| **FastAPI & Python** | `requirements.txt`, `pyproject.toml` | Unprotected admin routes (`SP108`), N+1 queries in loops (`SP307`), Unbounded pagination (`SP305`), Missing HTTP timeouts (`SP304`) |
-| **Django** | `requirements.txt`, `pyproject.toml` | Hardcoded `SECRET_KEY` (`SP404`), Wildcard `ALLOWED_HOSTS` (`SP405`), Interpolated SQL (`SP103`) |
-| **Containers & CI** | `Dockerfile`, `.github/workflows` | Floating container base images (`SP202`), Unpinned GitHub Actions (`SP203`) |
-| **General Fullstack** | All languages & configs | Secret fallback defaults (`SP004`), SSRF to metadata (`SP109`), Path traversal (`SP110`), Credential logging (`SP204`), Unbounded concurrency (`SP306`), Unsanitized SVG uploads (`SP112`) |
+| **Next.js, Nuxt, SvelteKit, Remix, Astro** | `package.json` (`next`, `nuxt`, `@sveltejs/kit`, `@remix-run/*`, `astro`) | Secrets in `NEXT_PUBLIC_` (`SP403`), CSP header evaluation (`SP408`), Serverless DB connection leaks (`SP313`) |
+| **React, Vue, Angular, SolidJS** | `package.json` (`react`, `vue`, `@angular/core`, `solid-js`) | Exposed service role keys (`SP503`), Credential logging in client bundles (`SP204`), Unsanitized SVG uploads (`SP112`) |
+| **Express, Fastify, NestJS, Koa, Hono, Elysia** | `package.json` (`express`, `fastify`, `@nestjs/core`, `koa`, `hono`, `elysia`) | Missing security headers/helmet (`SP401`), Raw error object leaks (`SP406`), Insecure Stripe webhooks (`SP502`), Unmetered AI routes (`SP501`) |
+| **Prisma, Drizzle, TypeORM, Mongoose, Supabase** | `package.json` (`@prisma/client`, `drizzle-orm`, `typeorm`, `mongoose`, `@supabase/*`) | Non-singleton DB clients in serverless (`SP313`), Supabase RLS bypass (`SP503`), Unbounded queries (`SP302`) |
+| **FastAPI, Starlette, Litestar, Sanic** | `pyproject.toml`, `requirements.txt` | Unprotected admin routes (`SP108`), N+1 queries in loops (`SP307`), Unbounded pagination (`SP305`), Missing HTTP timeouts (`SP304`) |
+| **Django & Flask** | `pyproject.toml`, `requirements.txt` | Hardcoded `SECRET_KEY` (`SP404`), Wildcard `ALLOWED_HOSTS` (`SP405`), String-interpolated SQL (`SP103`) |
+| **Go (Gin, Echo, Fiber, Chi)** | `go.mod` | Insecure secret fallbacks (`SP004`), Outbound request timeouts (`SP304`), Unbounded concurrency (`SP306`) |
+| **Rust (Actix-web, Axum, Rocket)** | `Cargo.toml` | TLS verification bypass (`SP104`), SSRF to metadata (`SP109`), Credential logging (`SP204`) |
+| **PHP (Laravel, Symfony)** | `composer.json` | Dynamic code evaluation (`SP101`), SQL injection interpolation (`SP103`), Path traversal (`SP110`) |
+| **Ruby (Rails, Sinatra)** | `Gemfile` | Secret key leakage (`SP003`), Unsafe deserialization (`SP106`), Debug mode enabled (`SP201`) |
+| **Java / Kotlin (Spring Boot, Quarkus, Micronaut)** | `pom.xml`, `build.gradle`, `build.gradle.kts` | Hardcoded tokens (`SP003`), Insecure CORS with credentials (`SP107`), Path traversal (`SP110`) |
+| **Containers, Serverless & CI/CD** | `Dockerfile`, `compose.yaml`, `serverless.yml`, `.github/workflows` | Floating container base tags (`SP202`), Unpinned GitHub Actions (`SP203`), Debug mode (`SP201`) |
+
+## Detection Rules Reference
+
+| Rule ID | Severity | Category | Rule Title & Target Problem | Detection Method |
+| :--- | :--- | :--- | :--- | :--- |
+| **`SP001`** | CRITICAL | Security | Private key committed in source control | Regex |
+| **`SP002`** | CRITICAL | Security | AWS access key committed (`AKIA...`) | Regex |
+| **`SP003`** | HIGH | Security | Hardcoded credential-like secret or API token | Regex |
+| **`SP004`** | HIGH | Security | Insecure secret fallback default (`os.getenv("KEY", "default")`) | Regex |
+| **`SP101`** | HIGH | Security | Dynamic code execution (`eval()`, `exec()`) | AST / Regex |
+| **`SP102`** | HIGH | Security | Command injection risk via shell execution (`shell=True`) | AST / Regex |
+| **`SP103`** | HIGH | Security | Database query built with string interpolation (SQL Injection) | Python AST |
+| **`SP104`** | HIGH | Security | Outbound TLS certificate verification explicitly disabled | AST / Regex |
+| **`SP105`** | CRITICAL | Security | JWT signature verification disabled (`algorithms=['none']`) | Regex |
+| **`SP106`** | HIGH | Security | Unsafe deserialization (`pickle.loads`, `yaml.load`) | AST / Regex |
+| **`SP107`** | HIGH | Security | Credentialed wildcard CORS (`Access-Control-Allow-Origin: *`) | Regex |
+| **`SP108`** | HIGH | Security | Sensitive/admin route lacks visible authorization dependency | Python AST |
+| **`SP109`** | HIGH | Security | SSRF to cloud metadata (`169.254.169.254`) or localhost | AST / Regex |
+| **`SP110`** | HIGH | Security | Path traversal vulnerability in filesystem operations | AST / Regex |
+| **`SP112`** | MEDIUM | Security | Unsanitized SVG file upload accepted (Stored XSS risk) | Regex |
+| **`SP201`** | HIGH | Security | Application debug mode enabled in production | Regex |
+| **`SP202`** | MEDIUM | Supply Chain | Floating container base image tag without SHA256 digest | Regex |
+| **`SP203`** | HIGH | Supply Chain | Unpinned GitHub Action referenced by mutable tag | Regex |
+| **`SP204`** | MEDIUM | Security | Sensitive credential or authentication payload logging | Regex |
+| **`SP301`** | HIGH | Scale | Redis `KEYS *` full keyspace scan blocking event loop | Regex |
+| **`SP302`** | LOW | Scale | SQL `SELECT *` query without explicit `LIMIT` | Regex |
+| **`SP303`** | HIGH | Reliability | Blocking `time.sleep()` inside async coroutine | Python AST |
+| **`SP304`** | HIGH | Reliability | Outbound HTTP request without explicit timeout deadline | Python AST |
+| **`SP305`** | MEDIUM | Scale | Pagination query parameter without request-boundary maximum | Python AST |
+| **`SP306`** | MEDIUM | Scale | Unbounded concurrency over collections (`Promise.all(items.map)`) | Regex |
+| **`SP307`** | HIGH | Scale | N+1 database query inside loop construct | Python AST |
+| **`SP313`** | HIGH | Scale | Non-singleton database client in serverless route (`new PrismaClient`) | Regex |
+| **`SP401`** | MEDIUM | Security | Express app missing security headers (`helmet`) | Regex |
+| **`SP403`** | HIGH | Security | Secret in client-exposed `NEXT_PUBLIC_` environment variable | Regex |
+| **`SP404`** | CRITICAL | Security | Django `SECRET_KEY` hardcoded in settings file | Regex |
+| **`SP405`** | HIGH | Security | Django `ALLOWED_HOSTS` wildcard (`['*']`) allowing cache poisoning | Regex |
+| **`SP406`** | MEDIUM | Security | Express error handler leaking raw error object to clients | Regex |
+| **`SP501`** | HIGH | Cost & Scale | Unmetered AI/LLM API route (OpenAI, Anthropic, Gemini) | Regex |
+| **`SP502`** | CRITICAL | Security | Insecure Stripe payment webhook using parsed JSON body | Regex |
+| **`SP503`** | CRITICAL | Security | Leaked Supabase `service_role` key bypassing Row Level Security | Regex |
 
 ## False Positive Control
 
