@@ -128,11 +128,12 @@ ShipProof automatically detects project frameworks and applies domain-specific r
 
 | Framework | Detection Source | Reviewed Checks |
 | :--- | :--- | :--- |
-| **Next.js** | `package.json` (`next`) | Secrets in `NEXT_PUBLIC_` env vars (`SP403`), missing CSP headers |
-| **Express / Fastify** | `package.json` (`express`, `fastify`) | Missing `helmet` security middleware (`SP401`), raw error leaks to client (`SP406`), unthrottled endpoints |
-| **FastAPI** | `requirements.txt`, `pyproject.toml` | Unprotected admin routes (`SP108`), unpaginated queries (`SP305`), blocking async sleep (`SP303`), unbounded HTTP timeouts (`SP304`) |
-| **Django** | `requirements.txt`, `pyproject.toml` | Hardcoded `SECRET_KEY` (`SP404`), wildcard `ALLOWED_HOSTS` (`SP405`), interpolated SQL queries (`SP103`) |
-| **Containers & CI** | `Dockerfile`, `.github/workflows` | Floating container base images (`SP202`), unpinned GitHub Actions (`SP203`) |
+| **Next.js & React** | `package.json` (`next`, `react`) | Secrets in `NEXT_PUBLIC_` (`SP403`), Leaked Supabase `service_role` keys (`SP503`), Non-singleton DB clients in serverless (`SP313`) |
+| **Express / Fastify** | `package.json` (`express`, `fastify`) | Missing `helmet` headers (`SP401`), Raw error object leaks (`SP406`), Insecure Stripe webhooks (`SP502`), Unmetered AI routes (`SP501`) |
+| **FastAPI & Python** | `requirements.txt`, `pyproject.toml` | Unprotected admin routes (`SP108`), N+1 queries in loops (`SP307`), Unbounded pagination (`SP305`), Missing HTTP timeouts (`SP304`) |
+| **Django** | `requirements.txt`, `pyproject.toml` | Hardcoded `SECRET_KEY` (`SP404`), Wildcard `ALLOWED_HOSTS` (`SP405`), Interpolated SQL (`SP103`) |
+| **Containers & CI** | `Dockerfile`, `.github/workflows` | Floating container base images (`SP202`), Unpinned GitHub Actions (`SP203`) |
+| **General Fullstack** | All languages & configs | Secret fallback defaults (`SP004`), SSRF to metadata (`SP109`), Path traversal (`SP110`), Credential logging (`SP204`), Unbounded concurrency (`SP306`), Unsanitized SVG uploads (`SP112`) |
 
 ## False Positive Control
 

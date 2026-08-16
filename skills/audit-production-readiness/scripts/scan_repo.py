@@ -304,6 +304,42 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Fixed small arrays with guaranteed upper limits (e.g. max 5 items).",
         "test": "Process 10,000 items and verify execution is throttled with a semaphore or bounded worker pool.",
     },
+    "SP501": {
+        "why": "Unmetered AI/LLM API calls in public HTTP endpoints allow malicious actors or bots to run up massive cloud bills through automated requests.",
+        "attack": "Attacker loops against an unmetered chat/generation endpoint, draining the organization's LLM credits and incurring thousands of dollars in fees.",
+        "false_positive": "Internal cron scripts, offline evaluators, or administrative tasks not exposed to public web traffic.",
+        "test": "Simulate 50 rapid requests and verify the endpoint responds with 429 Too Many Requests or requires user authentication.",
+    },
+    "SP502": {
+        "why": "Processing payment webhooks without verifying the cryptographic signature lets anyone send fake success events and unlock paid features for free.",
+        "attack": "Attacker crafts and sends a counterfeit checkout.session.completed POST payload to receive premium subscription access.",
+        "false_positive": "Local test fixtures or mock payment handlers.",
+        "test": "Send a mock webhook with an invalid signature and verify the endpoint rejects it with a 400 Bad Request error.",
+    },
+    "SP503": {
+        "why": "Exposing SUPABASE_SERVICE_ROLE_KEY in frontend environment variables or client builds bypasses all Row Level Security (RLS) policies.",
+        "attack": "Attacker extracts the service role key from the browser bundle and reads, alters, or drops any table in the database.",
+        "false_positive": "Strictly server-side environment variables without frontend exposure prefixes.",
+        "test": "Inspect the client build bundle and verify that only anon public keys are present.",
+    },
+    "SP313": {
+        "why": "Instantiating database clients (e.g. new PrismaClient()) inside serverless handlers opens a new connection on every invocation, rapidly exhausting database slots.",
+        "attack": "Surges in incoming traffic spawn new serverless functions that saturate the database connection pool, causing connection refusal errors across all endpoints.",
+        "false_positive": "Long-running daemon processes or containerized singletons.",
+        "test": "Execute 50 concurrent requests and verify active database connections remain bounded by connection pooling.",
+    },
+    "SP307": {
+        "why": "Executing database queries inside iteration loops (N+1 query problem) multiplies latency and database CPU load proportionally to the collection size.",
+        "attack": "A request for a page with hundreds of items triggers hundreds of round-trip database queries, leading to severe latency degradation.",
+        "false_positive": "Loops with statically guaranteed iteration counts of 1 or 2 items.",
+        "test": "Query a list of 100 items and verify the total number of database queries remains constant (O(1)) rather than scaling linearly.",
+    },
+    "SP112": {
+        "why": "SVG files can contain embedded XML and JavaScript scripts. Serving un-sanitized user-uploaded SVGs directly in browsers leads to Stored XSS.",
+        "attack": "Attacker uploads a malicious SVG containing a script tag that executes in other users' browsers to steal authentication tokens.",
+        "false_positive": "Upload pipelines that explicitly sanitize SVGs (e.g. using DOMPurify) or serve them with Content-Disposition: attachment.",
+        "test": "Upload an SVG containing a test script and verify scripts are sanitized or the file is served as a downloadable attachment.",
+    },
 }
 
 
@@ -728,6 +764,87 @@ RULES: tuple[Rule, ...] = (
         "CWE-400",
         "Capacity",
     ),
+    Rule(
+        "SP501",
+        "Unmetered AI/LLM API route",
+        "scale",
+        "high",
+        "medium",
+        compile_pattern(
+            r"(?:openai\.(?:chat\.completions|completions|images)\.create|anthropic\.messages\.create|genai\.generate_content|google\.generativeai)\b"
+        ),
+        "An AI/LLM API call is executed in application code; ensure it is protected by authentication and rate limiting.",
+        "Add user authentication, rate limits (e.g. 5 req/min), and per-user credit quotas before calling LLM endpoints.",
+        "CWE-400",
+        "Cost & Capacity",
+    ),
+    Rule(
+        "SP502",
+        "Insecure payment webhook handler",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(r"stripe\.webhooks\.constructEvent\s*\(\s*req\.body\b"),
+        "Stripe webhook handler passes parsed JSON body instead of raw buffer, causing verification failure.",
+        "Pass the raw request buffer to stripe.webhooks.constructEvent using express.raw({ type: 'application/json' }).",
+        "CWE-345",
+        "OWASP ASVS V13",
+    ),
+    Rule(
+        "SP503",
+        "Leaked Supabase service role key",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"(?:NEXT_PUBLIC_[A-Z0-9_]*SUPABASE_SERVICE_ROLE_KEY|NEXT_PUBLIC_[A-Z0-9_]*SERVICE_ROLE|createClient\s*\([^)]*NEXT_PUBLIC_[^)]*SERVICE)"
+        ),
+        "A Supabase service_role key is exposed to client-side code, completely bypassing Row Level Security (RLS).",
+        "Move the service_role key to a server-only environment variable without any client-side prefix.",
+        "CWE-200",
+        "OWASP ASVS V14",
+        redact=True,
+    ),
+    Rule(
+        "SP313",
+        "Non-singleton database client in serverless",
+        "scale",
+        "high",
+        "medium",
+        compile_pattern(r"new\s+PrismaClient\s*\(\s*\)"),
+        "Instantiating database clients inside serverless route files can rapidly exhaust database connection limits.",
+        "Use a global singleton instance (e.g. globalThis.prisma) and connect through a connection pooler.",
+        "CWE-400",
+        "Capacity",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP307",
+        "N+1 database query in loop",
+        "scale",
+        "high",
+        "high",
+        compile_pattern("$^"),
+        "A database query is executed inside an iteration loop, multiplying query volume and latency.",
+        "Fetch required rows in a single batch query (e.g. using WHERE id IN (...)) or eager loading before the loop.",
+        "CWE-400",
+        "Capacity",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP112",
+        "Unsanitized SVG upload accepted",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(
+            r"(?:accept\s*[:=]\s*[\"'][^\"']*image/svg\+xml|\.svg[\"']\s*,\s*[\"']\.(?:png|jpe?g)|allowedExtensions\s*[:=]\s*\[[^\]]*[\"']\.?svg[\"'])"
+        ),
+        "User file upload allows SVG files without visible sanitization, exposing users to Stored XSS.",
+        "Sanitize uploaded SVGs with an XML sanitizer, serve with Content-Disposition: attachment, or convert to PNG.",
+        "CWE-79",
+        "OWASP ASVS V5",
+    ),
 )
 
 
@@ -876,7 +993,7 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
     suffix = path.suffix.lower()
     lines = source_text.splitlines()
     for rule in RULES:
-        if rule.rule_id in {"SP107", "SP108", "SP303", "SP304", "SP305", "SP401"}:
+        if rule.rule_id in {"SP107", "SP108", "SP303", "SP304", "SP305", "SP307", "SP401"}:
             continue
         if rule.rule_id == "SP202" and path.name.lower() not in {"dockerfile", "containerfile"}:
             continue
@@ -1120,6 +1237,7 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.authorized_routers = authorized_routers or set()
         self.findings: list[Finding] = []
         self.async_function_depth = 0
+        self.loop_depth = 0
 
     def add_finding(self, rule: Rule, node: ast.AST) -> None:
         line_number = getattr(node, "lineno", 1)
@@ -1152,6 +1270,16 @@ class PythonSecurityVisitor(ast.NodeVisitor):
             if argument.arg in PAGE_SIZE_PARAMETERS and not has_page_size_bound(argument, default):
                 self.add_finding(find_rule("SP305"), argument)
 
+    def visit_For(self, node: ast.For) -> None:
+        self.loop_depth += 1
+        self.generic_visit(node)
+        self.loop_depth -= 1
+
+    def visit_AsyncFor(self, node: ast.AsyncFor) -> None:
+        self.loop_depth += 1
+        self.generic_visit(node)
+        self.loop_depth -= 1
+
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         self.inspect_route(node)
         self.async_function_depth += 1
@@ -1174,6 +1302,13 @@ class PythonSecurityVisitor(ast.NodeVisitor):
             and is_interpolated_sql_value(node.args[0])
         ):
             self.add_finding(find_rule("SP103"), node.args[0])
+        if self.loop_depth > 0:
+            receiver = name.split(".", 1)[0].lower() if "." in name else ""
+            if method in {"query", "execute", "filter", "filter_by", "find_one", "fetch_one"} or (
+                receiver in {"db", "session", "cursor", "repo", "conn", "orm"}
+                and method in {"get", "find", "select"}
+            ):
+                self.add_finding(find_rule("SP307"), node)
         is_http_request = name in {
             "requests.get",
             "requests.post",

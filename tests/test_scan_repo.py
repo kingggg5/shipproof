@@ -289,6 +289,41 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         findings = lint_source_snippet("const a = 1;\n", "test.js")
         self.assertEqual(findings, [])
 
+    def test_unmetered_ai_route_is_flagged(self):
+        source = (
+            "const res = await openai.chat.completions.create({ model: 'gpt-4o', messages: [] });\n"
+        )
+        findings = self.findings("route.js", source)
+        self.assertTrue(any(item.rule_id == "SP501" for item in findings))
+
+    def test_insecure_stripe_webhook_is_flagged(self):
+        source = "const event = stripe.webhooks.constructEvent(req.body, sig, secret);\n"
+        findings = self.findings("webhook.js", source)
+        self.assertTrue(any(item.rule_id == "SP502" for item in findings))
+
+    def test_supabase_service_role_key_leak_is_flagged(self):
+        source = "const key = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;\n"
+        findings = self.findings("supabaseClient.ts", source)
+        self.assertTrue(any(item.rule_id == "SP503" for item in findings))
+
+    def test_serverless_prisma_non_singleton_is_flagged(self):
+        source = "const prisma = new PrismaClient();\n"
+        findings = self.findings("route.ts", source)
+        self.assertTrue(any(item.rule_id == "SP313" for item in findings))
+
+    def test_n_plus_one_query_in_loop_is_flagged(self):
+        source = (
+            "for user in users:\n"
+            "    profile = db.query(Profile).filter_by(user_id=user.id).first()\n"
+        )
+        findings = self.findings("service.py", source)
+        self.assertTrue(any(item.rule_id == "SP307" for item in findings))
+
+    def test_svg_upload_acceptance_is_flagged(self):
+        source = 'const uploader = multer({ allowedExtensions: [".png", ".jpg", ".svg"] });\n'
+        findings = self.findings("upload.js", source)
+        self.assertTrue(any(item.rule_id == "SP112" for item in findings))
+
 
 if __name__ == "__main__":
     unittest.main()
