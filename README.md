@@ -168,6 +168,8 @@ ShipProof automatically detects project frameworks and runtimes across multiple 
 | **`SP109`** | HIGH | Security | SSRF to cloud metadata (`169.254.169.254`) or localhost | AST / Regex |
 | **`SP110`** | HIGH | Security | Path traversal vulnerability in filesystem operations | AST / Regex |
 | **`SP112`** | MEDIUM | Security | Unsanitized SVG file upload accepted (Stored XSS risk) | Regex |
+| **`SP113`** | CRITICAL | Security | PHP object injection via `unserialize()` | Regex |
+| **`SP114`** | MEDIUM | Security | Catastrophic ReDoS exponential backtracking nested quantifier | Regex |
 | **`SP201`** | HIGH | Security | Application debug mode enabled in production | Regex |
 | **`SP202`** | MEDIUM | Supply Chain | Floating container base image tag without SHA256 digest | Regex |
 | **`SP203`** | HIGH | Supply Chain | Unpinned GitHub Action referenced by mutable tag | Regex |
@@ -180,6 +182,10 @@ ShipProof automatically detects project frameworks and runtimes across multiple 
 | **`SP306`** | MEDIUM | Scale | Unbounded concurrency over collections (`Promise.all(items.map)`) | Regex |
 | **`SP307`** | HIGH | Scale | N+1 database query inside loop construct | Python AST |
 | **`SP313`** | HIGH | Scale | Non-singleton database client in serverless route (`new PrismaClient`) | Regex |
+| **`SP314`** | HIGH | Security | Committed SQLite database file (`.sqlite`, `.db`) in git repository | File Header |
+| **`SP315`** | HIGH | Reliability | Go HTTP request missing response body close (`defer resp.Body.Close()`) | Regex |
+| **`SP316`** | HIGH | Scale | Outbound HTTP network call inside database transaction boundary | Python AST |
+| **`SP317`** | HIGH | Scale | Blocking synchronous call inside Python `async def` coroutine | Python AST |
 | **`SP401`** | MEDIUM | Security | Express app missing security headers (`helmet`) | Regex |
 | **`SP403`** | HIGH | Security | Secret in client-exposed `NEXT_PUBLIC_` environment variable | Regex |
 | **`SP404`** | CRITICAL | Security | Django `SECRET_KEY` hardcoded in settings file | Regex |

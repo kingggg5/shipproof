@@ -468,6 +468,53 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
             self.assertIn("docker", fw)
             self.assertIn("github-actions", fw)
 
+    def test_php_unserialize_is_flagged(self):
+        findings = self.findings("handler.php", "$data = " + "un" + "serialize($_POST['data']);\n")
+        self.assertEqual([f.rule_id for f in findings], ["SP113"])
+
+    def test_redos_nested_quantifier_is_flagged(self):
+        findings = self.findings("validator.js", "const regex = /(" + "a+" + ")+$/;\n")
+        self.assertEqual([f.rule_id for f in findings], ["SP114"])
+
+    def test_sqlite_database_file_is_flagged(self):
+        import tempfile
+        from scan_repo import scan_repository
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            db_path = root / "app.db"
+            db_path.write_bytes(b"SQLite format 3\x00" + b"\x00" * 100)
+            findings, stats = scan_repository(root)
+            self.assertIn("SP314", [f.rule_id for f in findings])
+
+    def test_go_http_request_missing_close_is_flagged(self):
+        findings = self.findings(
+            "client.go", "resp, err := " + "http." + "Get(\"https://example.com\")\n"
+        )
+        self.assertEqual([f.rule_id for f in findings], ["SP315"])
+
+    def test_http_call_inside_transaction_is_flagged(self):
+        code = (
+            "with "
+            + "db.trans"
+            + "action():\n"
+            + "    "
+            + "requests."
+            + "post('https://api.stripe.com', timeout=5)\n"
+        )
+        findings = self.findings("billing.py", code)
+        self.assertIn("SP316", [f.rule_id for f in findings])
+
+    def test_blocking_call_in_async_def_is_flagged(self):
+        code = (
+            "async def get_data():\n"
+            + "    return "
+            + "requests."
+            + "get('https://api.example.com', timeout=5)\n"
+        )
+        findings = self.findings("api.py", code)
+        self.assertIn("SP317", [f.rule_id for f in findings])
+
 
 if __name__ == "__main__":
     unittest.main()

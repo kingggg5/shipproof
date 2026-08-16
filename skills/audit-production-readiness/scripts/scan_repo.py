@@ -340,6 +340,42 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Upload pipelines that explicitly sanitize SVGs (e.g. using DOMPurify) or serve them with Content-Disposition: attachment.",
         "test": "Upload an SVG containing a test script and verify scripts are sanitized or the file is served as a downloadable attachment.",
     },
+    "SP113": {
+        "why": "PHP unserialize() can execute magic methods and construct arbitrary object injection chains leading to remote code execution.",
+        "attack": "Attacker sends a serialized object payload in a cookie or parameter that instantiates gadget classes to execute shell commands.",
+        "false_positive": "Strictly authenticated, signature-verified cryptographic payloads.",
+        "test": "Pass a serialized test payload and verify the application rejects it or uses json_decode instead.",
+    },
+    "SP114": {
+        "why": "Regular expressions with nested quantifiers suffer from exponential backtracking (ReDoS) that freezes the CPU and starves the event loop.",
+        "attack": "Attacker sends an input of 30 characters that forces the regex engine to test billions of permutations, pinning the CPU at 100%.",
+        "false_positive": "Non-backtracking linear-time regex engines.",
+        "test": "Pass a non-matching string of repeating characters and verify execution finishes in under 10ms.",
+    },
+    "SP314": {
+        "why": "Committing SQLite database files into git source control risks leaking production user records, passwords, and secrets in history.",
+        "attack": "Attacker clones the repository and extracts sensitive credentials directly from the tracked database file.",
+        "false_positive": "Empty test fixture schema templates.",
+        "test": "Verify .gitignore includes *.sqlite and *.db files, and that no database binaries are tracked by git.",
+    },
+    "SP315": {
+        "why": "Failing to close resp.Body in Go HTTP requests keeps underlying TCP sockets and goroutines alive indefinitely, exhausting file descriptors.",
+        "attack": "Sustained outbound requests leave thousands of orphaned goroutines until the Go process crashes with too many open files.",
+        "false_positive": "Custom HTTP client wrappers that close the response body internally.",
+        "test": "Run pprof goroutine profiler under load and verify persistConn goroutines do not accumulate.",
+    },
+    "SP316": {
+        "why": "Executing outbound HTTP requests inside database transactions holds database connections open for seconds, starving the connection pool.",
+        "attack": "Traffic surges lock all database connection slots while waiting on third-party APIs, causing total database outages.",
+        "false_positive": "In-memory test mocks or sub-millisecond local network calls.",
+        "test": "Simulate third-party latency and verify database transaction duration is not prolonged by network calls.",
+    },
+    "SP317": {
+        "why": "Synchronous blocking operations (e.g. time.sleep or requests.get) inside Python async def coroutines block the single-threaded asyncio event loop.",
+        "attack": "A single slow blocking call freezes all other concurrent user requests on the same worker process.",
+        "false_positive": "Sub-millisecond CPU operations or explicit multi-threading wrappers (asyncio.to_thread).",
+        "test": "Send concurrent requests during a slow operation and verify throughput of unaffected endpoints is maintained.",
+    },
 }
 
 
@@ -845,11 +881,95 @@ RULES: tuple[Rule, ...] = (
         "CWE-79",
         "OWASP ASVS V5",
     ),
+    Rule(
+        "SP113",
+        "PHP object injection via unserialize",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"\bunserialize\s*\(\s*(?:\$_(?:GET|POST|COOKIE|REQUEST|SERVER)|[\$a-zA-Z0-9_]+)"
+        ),
+        "unserialize() on untrusted input allows object injection and arbitrary code execution.",
+        "Replace unserialize() with json_decode() or use an allowlisted, signature-verified parser.",
+        "CWE-502",
+        "OWASP ASVS V5",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP114",
+        "Catastrophic ReDoS nested quantifier",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(r"\([a-zA-Z0-9_\.\-\^\$]+(?:\+|\*)\)(?:\+|\*)"),
+        "Nested quantifiers in regular expressions can cause exponential backtracking (ReDoS) and freeze event loops.",
+        "Rewrite the regular expression without nested quantifiers or use an atomic group / non-backtracking regex.",
+        "CWE-1333",
+        "OWASP ASVS V5",
+    ),
+    Rule(
+        "SP314",
+        "Committed SQLite database file",
+        "security",
+        "high",
+        "high",
+        compile_pattern("$^"),
+        "An SQLite database file is tracked in source control, which may expose private data or tokens.",
+        "Remove the database file from git history, add *.sqlite, *.sqlite3, *.db to .gitignore, and use migrations.",
+        "CWE-200",
+        "OWASP ASVS V14",
+    ),
+    Rule(
+        "SP315",
+        "Go HTTP request missing response body close",
+        "correctness",
+        "high",
+        "medium",
+        compile_pattern(r"(?:resp|res),\s*(?:err|_)\s*:=\s*http\.(?:Get|Post|Head)\s*\("),
+        "An HTTP response body in Go is not visibly closed, which can leak TCP connections and goroutines.",
+        "Add defer resp.Body.Close() immediately after error checking and drain the body if unread.",
+        "CWE-400",
+        "Reliability",
+        frozenset({".go"}),
+    ),
+    Rule(
+        "SP316",
+        "Outbound HTTP call inside database transaction",
+        "scale",
+        "high",
+        "medium",
+        compile_pattern("$^"),
+        "An outbound HTTP network call is executed inside a database transaction block, risking connection pool starvation.",
+        "Move external network requests outside the database transaction boundary.",
+        "CWE-400",
+        "Capacity",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP317",
+        "Blocking call in async def coroutine",
+        "scale",
+        "high",
+        "high",
+        compile_pattern("$^"),
+        "A synchronous blocking operation (e.g. time.sleep or requests.get) is called directly inside an async def coroutine.",
+        "Use non-blocking async equivalents (e.g. asyncio.sleep, httpx.AsyncClient) or wrap in asyncio.to_thread().",
+        "CWE-400",
+        "Capacity",
+        frozenset({".py"}),
+    ),
 )
 
 
+DATABASE_SUFFIXES = {".sqlite", ".sqlite3", ".db"}
+
+
 def is_text_file(path: Path) -> bool:
-    return path.suffix.lower() in TEXT_SUFFIXES or path.name.lower() in TEXT_NAMES
+    suffix = path.suffix.lower()
+    return (
+        suffix in TEXT_SUFFIXES or suffix in DATABASE_SUFFIXES or path.name.lower() in TEXT_NAMES
+    )
 
 
 def normalize_exclude_patterns(patterns: Sequence[str]) -> tuple[str, ...]:
@@ -993,7 +1113,18 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
     suffix = path.suffix.lower()
     lines = source_text.splitlines()
     for rule in RULES:
-        if rule.rule_id in {"SP107", "SP108", "SP303", "SP304", "SP305", "SP307", "SP401"}:
+        if rule.rule_id in {
+            "SP107",
+            "SP108",
+            "SP303",
+            "SP304",
+            "SP305",
+            "SP307",
+            "SP314",
+            "SP316",
+            "SP317",
+            "SP401",
+        }:
             continue
         if rule.rule_id == "SP202" and path.name.lower() not in {"dockerfile", "containerfile"}:
             continue
@@ -1238,6 +1369,7 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.findings: list[Finding] = []
         self.async_function_depth = 0
         self.loop_depth = 0
+        self.transaction_depth = 0
 
     def add_finding(self, rule: Rule, node: ast.AST) -> None:
         line_number = getattr(node, "lineno", 1)
@@ -1279,6 +1411,56 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.loop_depth += 1
         self.generic_visit(node)
         self.loop_depth -= 1
+
+    def visit_With(self, node: ast.With) -> None:
+        is_tx = any(
+            (
+                (name := resolve_dotted_name(item.context_expr).lower()).endswith(".transaction")
+                or name.endswith(".begin")
+                or name.endswith(".atomic")
+                or (
+                    isinstance(item.context_expr, ast.Call)
+                    and (
+                        (func_name := resolve_dotted_name(item.context_expr.func).lower()).endswith(
+                            ".transaction"
+                        )
+                        or func_name.endswith(".begin")
+                        or func_name.endswith(".atomic")
+                    )
+                )
+            )
+            for item in node.items
+        )
+        if is_tx:
+            self.transaction_depth += 1
+        self.generic_visit(node)
+        if is_tx:
+            self.transaction_depth -= 1
+
+    def visit_AsyncWith(self, node: ast.AsyncWith) -> None:
+        is_tx = any(
+            (
+                (name := resolve_dotted_name(item.context_expr).lower()).endswith(".transaction")
+                or name.endswith(".begin")
+                or name.endswith(".atomic")
+                or (
+                    isinstance(item.context_expr, ast.Call)
+                    and (
+                        (func_name := resolve_dotted_name(item.context_expr.func).lower()).endswith(
+                            ".transaction"
+                        )
+                        or func_name.endswith(".begin")
+                        or func_name.endswith(".atomic")
+                    )
+                )
+            )
+            for item in node.items
+        )
+        if is_tx:
+            self.transaction_depth += 1
+        self.generic_visit(node)
+        if is_tx:
+            self.transaction_depth -= 1
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         self.inspect_route(node)
@@ -1339,9 +1521,20 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         )
         if is_http_request and not any(keyword.arg == "timeout" for keyword in node.keywords):
             self.add_finding(find_rule("SP304"), node)
-        if self.async_function_depth and name == "time.sleep":
-            rule = next(item for item in RULES if item.rule_id == "SP303")
-            self.add_finding(rule, node)
+        if self.transaction_depth > 0 and is_http_request:
+            self.add_finding(find_rule("SP316"), node)
+        if self.async_function_depth > 0:
+            if name == "time.sleep":
+                self.add_finding(find_rule("SP303"), node)
+            elif name in {
+                "requests.get",
+                "requests.post",
+                "requests.put",
+                "requests.patch",
+                "requests.delete",
+                "urllib.request.urlopen",
+            }:
+                self.add_finding(find_rule("SP317"), node)
         self.generic_visit(node)
 
 
@@ -1593,6 +1786,24 @@ def scan_repository(
     for path in iter_scannable_files(repository_root, max_file_bytes, normalized_excludes):
         files_scanned += 1
         relative_path = path.relative_to(repository_root).as_posix()
+        if path.suffix.lower() in {".sqlite", ".sqlite3", ".db"}:
+            try:
+                header = path.read_bytes()[:16]
+                if header.startswith(b"SQLite format 3") or path.suffix.lower() in {
+                    ".sqlite",
+                    ".sqlite3",
+                }:
+                    findings.append(
+                        make_finding(
+                            find_rule("SP314"),
+                            relative_path,
+                            1,
+                            f"Tracked database file: {relative_path}",
+                        )
+                    )
+            except OSError:
+                pass
+            continue
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:

@@ -350,6 +350,8 @@ shipproof evidence . --adapter rust --allow-project-code --format json
 | **SP109** | เสี่ยงต่อ SSRF ไปยัง Cloud Metadata (169.254.169.254) | HIGH | AST / Regex |
 | **SP110** | เสี่ยงต่อ Path Traversal ในการเปิดหรือบันทึกไฟล์ | HIGH | AST / Regex |
 | **SP112** | การรับอัปโหลดไฟล์ SVG โดยไม่ Sanitize เสี่ยงต่อ Stored XSS | MEDIUM | Regex |
+| **SP113** | ช่องโหว่ PHP Object Injection ผ่านการใช้ `unserialize()` | CRITICAL | Regex |
+| **SP114** | ปัญหา Catastrophic ReDoS จาก Nested Quantifiers ใน Regex | MEDIUM | Regex |
 | **SP201** | การเปิด Debug Mode ค้างไว้ใน Production | HIGH | Regex |
 | **SP202** | การใช้ Container Base Image แบบไม่ระบุ Version/Digest | MEDIUM | Regex |
 | **SP203** | การใช้ GitHub Actions Tag แบบ Mutable (ไม่ Pin SHA) | MEDIUM | Regex |
@@ -362,6 +364,10 @@ shipproof evidence . --adapter rust --allow-project-code --format json
 | **SP306** | การรัน Concurrency จำนวนมากโดยไม่จำกัด Pool (`Promise.all`) | MEDIUM | Regex |
 | **SP307** | ปัญหา N+1 Database Query ภายใน Loop | MEDIUM | Python AST |
 | **SP313** | การสร้าง DB Client ซ้ำซ้อนใน Serverless Route | MEDIUM | Regex |
+| **SP314** | มีการ Commit ไฟล์ฐานข้อมูล SQLite (`.sqlite`, `.db`) ลงใน Git | HIGH | File Header |
+| **SP315** | ลืมปิด `defer resp.Body.Close()` ในการยิง HTTP Request ของ Go | HIGH | Regex |
+| **SP316** | การยิง HTTP Request ภายนอกค้างไว้ใน Database Transaction | HIGH | Python AST |
+| **SP317** | การเรียกคำสั่ง Synchronous/Blocking ใน Python `async def` | HIGH | Python AST |
 | **SP401** | Express App ที่ไม่ได้เปิดใช้งาน Helmet | MEDIUM | Regex |
 | **SP403** | มี Secret หลุดในตัวแปร `NEXT_PUBLIC_` | HIGH | Regex |
 | **SP404** | Django `SECRET_KEY` ถูก Hardcode ในการตั้งค่า | CRITICAL | Regex |
