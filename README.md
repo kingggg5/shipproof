@@ -2,6 +2,8 @@
 
 **Make AI-written code prove it is ready to ship.**
 
+[English](README.md) · [ภาษาไทย](README.th.md)
+
 Security · Correctness · Scale · Performance · Production readiness
 
 Works with **Codex**, **Claude Code**, **Cursor**, **Gemini**, **Grok**, local terminals, pre-commit, and GitHub Actions.
@@ -87,6 +89,8 @@ ShipProof formats findings as actionable review cards with source context, confi
 ## The Closed-Loop AI Workflow
 
 ShipProof turns development into a verified feedback loop: AI writes code, ShipProof finds risks, AI fixes with explicit constraints, and ShipProof re-verifies.
+
+![ShipProof verification pipeline](docs/assets/architecture-workflow.svg)
 
 ```mermaid
 flowchart LR
@@ -343,6 +347,8 @@ Create a reviewed fingerprint baseline for accepted debt:
 ```bash
 shipproof scan . --format json --baseline-out .shipproof-baseline.json --fail-on none
 ```
+
+![ShipProof capacity planning demo](docs/assets/capacity-demo.svg)
 
 Turn one million registered users into a transparent workload hypothesis, including CPU and memory assumptions:
 

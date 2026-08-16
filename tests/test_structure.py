@@ -89,7 +89,11 @@ class StructureTests(unittest.TestCase):
             self.assertIn(f"${name}", content)
 
     def test_public_markdown_links_resolve_locally(self):
-        markdown_files = [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md"))]
+        markdown_files = [
+            ROOT / "README.md",
+            ROOT / "README.th.md",
+            *sorted((ROOT / "docs").glob("*.md")),
+        ]
         for markdown_file in markdown_files:
             content = markdown_file.read_text(encoding="utf-8")
             for target in re.findall(r"\]\(([^)]+)\)", content):

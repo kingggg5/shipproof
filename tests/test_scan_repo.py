@@ -339,6 +339,64 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         findings = self.findings("upload.js", source)
         self.assertTrue(any(item.rule_id == "SP112" for item in findings))
 
+    def test_render_terminal_report_and_fix_prompts(self):
+        from scan_repo import (
+            detect_frameworks,
+            read_source_context,
+            render_explain,
+            render_fix_prompts,
+            render_terminal_report,
+        )
+
+        findings = self.findings("app.py", "eval('1')\n")
+        stats = {"files_scanned": 1, "suppressed": 0}
+        term_report = render_terminal_report(Path("."), findings, stats)
+        self.assertIn("SP101", term_report)
+        prompts = render_fix_prompts(Path("."), findings)
+        self.assertIn("Fix SP101", prompts)
+        self.assertEqual(render_fix_prompts(Path("."), []), "No findings to fix.\n")
+        explain_known = render_explain("SP108")
+        self.assertIn("What it detects", explain_known)
+        explain_unknown = render_explain("UNKNOWN")
+        self.assertIn("Unknown rule", explain_unknown)
+        frameworks = detect_frameworks(Path("."))
+        self.assertIsInstance(frameworks, set)
+        ctx = read_source_context(Path("."), "nonexistent.py", 1)
+        self.assertEqual(ctx, [])
+
+    def test_main_cli_execution_branches(self):
+        import contextlib
+        import io
+        import tempfile
+
+        from scan_repo import main
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(["--explain", "SP108"]), 0)
+            self.assertEqual(main(["--snippet", "const a = 1;", "--snippet-file", "test.js"]), 0)
+            self.assertEqual(main(["--snippet", "eval('1')", "--snippet-file", "test.js"]), 1)
+            with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+                baseline_out = Path(f.name)
+            try:
+                self.assertEqual(
+                    main(
+                        [
+                            ".",
+                            "--format",
+                            "json",
+                            "--baseline-out",
+                            str(baseline_out),
+                            "--min-confidence",
+                            "high",
+                        ]
+                    ),
+                    0,
+                )
+                self.assertTrue(baseline_out.exists())
+            finally:
+                if baseline_out.exists():
+                    baseline_out.unlink()
+
 
 if __name__ == "__main__":
     unittest.main()
