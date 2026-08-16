@@ -967,9 +967,7 @@ DATABASE_SUFFIXES = {".sqlite", ".sqlite3", ".db"}
 
 def is_text_file(path: Path) -> bool:
     suffix = path.suffix.lower()
-    return (
-        suffix in TEXT_SUFFIXES or suffix in DATABASE_SUFFIXES or path.name.lower() in TEXT_NAMES
-    )
+    return suffix in TEXT_SUFFIXES or suffix in DATABASE_SUFFIXES or path.name.lower() in TEXT_NAMES
 
 
 def normalize_exclude_patterns(patterns: Sequence[str]) -> tuple[str, ...]:
@@ -1415,18 +1413,14 @@ class PythonSecurityVisitor(ast.NodeVisitor):
     def visit_With(self, node: ast.With) -> None:
         is_tx = any(
             (
-                (name := resolve_dotted_name(item.context_expr).lower()).endswith(".transaction")
-                or name.endswith(".begin")
-                or name.endswith(".atomic")
+                resolve_dotted_name(item.context_expr)
+                .lower()
+                .endswith((".transaction", ".begin", ".atomic"))
                 or (
                     isinstance(item.context_expr, ast.Call)
-                    and (
-                        (func_name := resolve_dotted_name(item.context_expr.func).lower()).endswith(
-                            ".transaction"
-                        )
-                        or func_name.endswith(".begin")
-                        or func_name.endswith(".atomic")
-                    )
+                    and resolve_dotted_name(item.context_expr.func)
+                    .lower()
+                    .endswith((".transaction", ".begin", ".atomic"))
                 )
             )
             for item in node.items
@@ -1440,18 +1434,14 @@ class PythonSecurityVisitor(ast.NodeVisitor):
     def visit_AsyncWith(self, node: ast.AsyncWith) -> None:
         is_tx = any(
             (
-                (name := resolve_dotted_name(item.context_expr).lower()).endswith(".transaction")
-                or name.endswith(".begin")
-                or name.endswith(".atomic")
+                resolve_dotted_name(item.context_expr)
+                .lower()
+                .endswith((".transaction", ".begin", ".atomic"))
                 or (
                     isinstance(item.context_expr, ast.Call)
-                    and (
-                        (func_name := resolve_dotted_name(item.context_expr.func).lower()).endswith(
-                            ".transaction"
-                        )
-                        or func_name.endswith(".begin")
-                        or func_name.endswith(".atomic")
-                    )
+                    and resolve_dotted_name(item.context_expr.func)
+                    .lower()
+                    .endswith((".transaction", ".begin", ".atomic"))
                 )
             )
             for item in node.items

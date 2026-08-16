@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -19,6 +20,7 @@ from scan_repo import (  # noqa: E402
     iter_scannable_files,
     normalize_exclude_patterns,
     render_markdown_report,
+    scan_repository,
 )
 
 
@@ -477,19 +479,16 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertEqual([f.rule_id for f in findings], ["SP114"])
 
     def test_sqlite_database_file_is_flagged(self):
-        import tempfile
-        from scan_repo import scan_repository
-
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             db_path = root / "app.db"
             db_path.write_bytes(b"SQLite format 3\x00" + b"\x00" * 100)
-            findings, stats = scan_repository(root)
+            findings, _stats = scan_repository(root)
             self.assertIn("SP314", [f.rule_id for f in findings])
 
     def test_go_http_request_missing_close_is_flagged(self):
         findings = self.findings(
-            "client.go", "resp, err := " + "http." + "Get(\"https://example.com\")\n"
+            "client.go", "resp, err := " + "http." + 'Get("https://example.com")\n'
         )
         self.assertEqual([f.rule_id for f in findings], ["SP315"])
 
