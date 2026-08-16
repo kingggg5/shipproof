@@ -1379,50 +1379,76 @@ def make_finding(
     )
 
 
+FILE_LEVEL_RULE_IDS = frozenset(
+    {
+        "SP107",
+        "SP108",
+        "SP115",
+        "SP120",
+        "SP303",
+        "SP304",
+        "SP305",
+        "SP307",
+        "SP314",
+        "SP316",
+        "SP317",
+        "SP318",
+        "SP401",
+        "SP402",
+        "SP407",
+        "SP408",
+    }
+)
+
+APPLICABLE_RULES_CACHE: dict[tuple[str, bool, bool], tuple[tuple[Rule, bool], ...]] = {}
+
+
+def applicable_line_rules(
+    suffix: str, is_document: bool, is_manifest_name: bool
+) -> tuple[tuple[Rule, bool], ...]:
+    """Resolve the line-scanned rules once per file class instead of per file."""
+    cache_key = (suffix, is_document, is_manifest_name)
+    cached = APPLICABLE_RULES_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+    selected = [
+        (rule, rule.rule_id in SECRET_RULE_IDS)
+        for rule in RULES
+        if rule.rule_id not in FILE_LEVEL_RULE_IDS
+        and not (rule.rule_id == "SP202" and not is_manifest_name)
+        and not (is_document and rule.rule_id not in SECRET_RULE_IDS)
+        and not (rule.suffixes and suffix not in rule.suffixes)
+    ]
+    resolved = tuple(selected)
+    APPLICABLE_RULES_CACHE[cache_key] = resolved
+    return resolved
+
+
 def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[Finding]:
     findings: list[Finding] = []
     suffix = path.suffix.lower()
     lines = source_text.splitlines()
-    for rule in RULES:
-        if rule.rule_id in {
-            "SP107",
-            "SP108",
-            "SP115",
-            "SP120",
-            "SP303",
-            "SP304",
-            "SP305",
-            "SP307",
-            "SP314",
-            "SP316",
-            "SP317",
-            "SP318",
-            "SP401",
-            "SP402",
-            "SP407",
-            "SP408",
-        }:
-            continue
-        if rule.rule_id == "SP202" and path.name.lower() not in {"dockerfile", "containerfile"}:
-            continue
-        if suffix in DOCUMENT_SUFFIXES and rule.rule_id not in SECRET_RULE_IDS:
-            continue
-        if rule.suffixes and suffix not in rule.suffixes:
-            continue
-        for line_number, line in enumerate(lines, 1):
-            if rule.rule_id not in SECRET_RULE_IDS and is_pure_comment(line, path):
+    comment_flags = [is_pure_comment(line, path) for line in lines]
+    ignore_rule_ids = [
+        match.group(1) if (match := INLINE_IGNORE.search(line)) else None for line in lines
+    ]
+    applicable_rules = applicable_line_rules(
+        suffix,
+        suffix in DOCUMENT_SUFFIXES,
+        path.name.lower() in {"dockerfile", "containerfile"},
+    )
+    for rule, rule_is_secret in applicable_rules:
+        rule_id = rule.rule_id
+        pattern_search = rule.pattern.search
+        for index, line in enumerate(lines):
+            if not rule_is_secret and comment_flags[index]:
                 continue
-            ignore_match = INLINE_IGNORE.search(line)
-            if ignore_match and ignore_match.group(1) == rule.rule_id:
+            if ignore_rule_ids[index] == rule_id:
                 continue
-            prev_line = lines[line_number - 2] if line_number >= 2 else ""
-            prev_ignore = INLINE_IGNORE.search(prev_line)
-            if prev_ignore and prev_ignore.group(1) == rule.rule_id:
+            if index >= 1 and ignore_rule_ids[index - 1] == rule_id:
                 continue
-            if rule.pattern.search(line) and not (
-                rule.rule_id in SECRET_RULE_IDS and PLACEHOLDERS.search(line)
-            ):
-                findings.append(make_finding(rule, relative_path, line_number, line))
+            if pattern_search(line) and not (rule_is_secret and PLACEHOLDERS.search(line)):
+                findings.append(make_finding(rule, relative_path, index + 1, line))
 
     if (
         suffix == ".py"

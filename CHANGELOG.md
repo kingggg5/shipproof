@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Publish the failure catalog (`docs/knowledge/failure-catalog.md`): 353 researched failure modes across 14 categories (web security, auth, crypto, SQL, APIs, performance, frontend, Python, concurrency, reliability, infrastructure, CI/CD, data integrity, AI/LLM), each with impact, fix direction, detection feasibility, and references. The catalog feeds detector selection for future rules.
+- Speed up the regex engine 3.3x (1,000-file benchmark: 7.16s → 2.19s, 139.7 → 456.5 files/s) by precomputing per-line comment/ignore flags once per file instead of per rule, and caching the applicable rule set per file class; findings and fingerprints are unchanged, enforced by the golden contract.
 - Add eleven CWE-driven detectors with positive, negative, and adversarial tests each: `SP115` (XXE via unhardened lxml), `SP116` (`dangerouslySetInnerHTML` XSS), `SP117` (`new Function` eval), `SP118` (timer-string eval), `SP119` (path traversal via `path.join`), `SP120` (`node-serialize` RCE), `SP121` (open redirect), `SP122` (insecure randomness for security values), `SP123` (hardcoded cipher IV), `SP124` (JS SSRF), and `SP318` (retry policies without a stop condition). Adversarial cases document the evasions the current engine cannot see, seeding the Red Team corpus.
 - Add evidence proof levels: every finding now reports `detection` (`pattern`, `ast`, `structural`, `artifact`) and `proof_level` (`L0`/`L1`) in JSON and SARIF, with documentation that higher levels requiring data-flow or runtime evidence are deliberately not claimed.
 - Add the launch article draft (`docs/launch/ai-code-failure-modes.md`) mapping the shipped rule catalog to the failure modes of AI-written code.
