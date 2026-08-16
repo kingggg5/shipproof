@@ -111,6 +111,9 @@ jobs:
           node bin/shipproof.mjs scan . --fail-on high
       - name: Verify published file set
         run: npm pack --dry-run
+      - name: Smoke-test the packed artifact
+        if: matrix.node-version == '24'
+        run: npm run test:package
 
   coverage:
     runs-on: ubuntu-latest

@@ -63,13 +63,16 @@ Prints a versioned prompt from an allowlisted catalog. Names are `build`, `audit
 
 ## `scan`
 
+Running `shipproof` with no command at all is equivalent to `shipproof scan`.
+
 ```bash
 shipproof scan . --format markdown --fail-on high
 shipproof scan . --format sarif --output shipproof.sarif --fail-on high
 shipproof scan . --format json --baseline-out .shipproof-baseline.json --fail-on none
+shipproof scan . --changed-since origin/main
 ```
 
-The arguments after `scan` match `scan_repo.py`. `--fail-on` accepts `critical`, `high`, `medium`, `low`, or `none`. Repeat `--exclude` with repository-relative glob patterns to skip generated or vendored paths. Parent traversal and absolute patterns are rejected. Exit `0` means no finding met the threshold, `1` means the threshold failed, and `2` means evidence or input was invalid.
+The arguments after `scan` match `scan_repo.py`. `--fail-on` accepts `critical`, `high`, `medium`, `low`, or `none`. `--changed-since GIT_REF` limits the scan to files changed relative to a git ref (added, copied, modified, renamed, plus untracked files) and fails closed with exit `2` outside a git repository or on an unresolvable ref; the ref is recorded under `changed_since` in JSON output. Repeat `--exclude` with repository-relative glob patterns to skip generated or vendored paths. Parent traversal and absolute patterns are rejected. Exit `0` means no finding met the threshold, `1` means the threshold failed, and `2` means evidence or input was invalid.
 
 ## `check`
 

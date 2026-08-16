@@ -1,0 +1,65 @@
+{
+  "fixture": "fixtures/golden-contract",
+  "verdict": "BLOCK",
+  "summary": {
+    "files_scanned": 2,
+    "suppressed": 0
+  },
+  "findings": [
+    {
+      "rule_id": "SP201",
+      "path": "server.py",
+      "line": 8,
+      "severity": "high",
+      "confidence": "high",
+      "detection": "pattern",
+      "proof_level": "L0",
+      "evidence": "app = FastAPI(debug=True)",
+      "fingerprint": "0129d8765565207d5e6f53ef"
+    },
+    {
+      "rule_id": "SP304",
+      "path": "server.py",
+      "line": 13,
+      "severity": "high",
+      "confidence": "high",
+      "detection": "ast",
+      "proof_level": "L1",
+      "evidence": "return requests.get(\"https://dependency.invalid/health\").json()",
+      "fingerprint": "798f6e30ed9f49bf1cfd7095"
+    },
+    {
+      "rule_id": "SP004",
+      "path": "server.py",
+      "line": 16,
+      "severity": "high",
+      "confidence": "high",
+      "detection": "pattern",
+      "proof_level": "L0",
+      "evidence": "[REDACTED: credential-like material]",
+      "fingerprint": "24007f0d41e6441874b92b77"
+    },
+    {
+      "rule_id": "SP401",
+      "path": "server.js",
+      "line": 4,
+      "severity": "medium",
+      "confidence": "medium",
+      "detection": "structural",
+      "proof_level": "L1",
+      "evidence": "const app = express();",
+      "fingerprint": "e0b3bf8d030d155f852368a4"
+    },
+    {
+      "rule_id": "SP402",
+      "path": "server.js",
+      "line": 6,
+      "severity": "medium",
+      "confidence": "low",
+      "detection": "structural",
+      "proof_level": "L1",
+      "evidence": "app.post(\"/api/auth/login\", signIn);",
+      "fingerprint": "90c21b33cc08cd5703db87e3"
+    }
+  ]
+}

@@ -25,6 +25,10 @@ inputs:
     description: Optional repository-relative fingerprint baseline.
     required: false
     default: ""
+  changed-since:
+    description: Optional git ref (branch, tag, or commit). Scans only files changed relative to it, plus untracked files.
+    required: false
+    default: ""
   max-file-bytes:
     description: Maximum source file size inspected by the scanner.
     required: false
@@ -44,5 +48,6 @@ runs:
         SHIPPROOF_INPUT_OUTPUT: ${{ inputs.output }}
         SHIPPROOF_INPUT_FAIL_ON: ${{ inputs.fail-on }}
         SHIPPROOF_INPUT_BASELINE: ${{ inputs.baseline }}
+        SHIPPROOF_INPUT_CHANGED_SINCE: ${{ inputs.changed-since }}
         SHIPPROOF_INPUT_MAX_FILE_BYTES: ${{ inputs.max-file-bytes }}
       run: node "$GITHUB_ACTION_PATH/scripts/run-action.mjs"

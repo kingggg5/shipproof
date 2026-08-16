@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 from collections import Counter
 from collections.abc import Iterable, Sequence
@@ -352,6 +353,75 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Non-backtracking linear-time regex engines.",
         "test": "Pass a non-matching string of repeating characters and verify execution finishes in under 10ms.",
     },
+    "SP115": {
+        "why": "lxml's default parser resolves entities, so parsing untrusted XML can read local files or expand entities into a denial of service.",
+        "attack": "Attacker uploads an XML document with an external entity pointing at /etc/passwd or a billion-laughs payload.",
+        "false_positive": "Repositories that only parse trusted, internally generated XML, or that already configure a hardened parser elsewhere.",
+        "test": "Parse an XML payload containing an external entity and verify the parser rejects entity resolution.",
+    },
+    "SP116": {
+        "why": "dangerouslySetInnerHTML bypasses React's escaping, so a dynamic value rendered as raw HTML executes injected scripts.",
+        "attack": "Attacker stores <img src=x onerror=...> in a field that later reaches __html, running script in every visitor's session.",
+        "false_positive": "Static, developer-authored HTML strings that never mix with user data.",
+        "test": "Render a value containing a script tag through __html and verify it is sanitized or blocked.",
+    },
+    "SP117": {
+        "why": "new Function() compiles a string into executable code with full program access, exactly like eval.",
+        "attack": "Attacker controls part of the compiled string and appends code that exfiltrates data or alters application behavior.",
+        "false_positive": "Build-time tooling that compiles known developer-authored templates.",
+        "test": "Pass input containing }; StealData(); and verify it is not executed.",
+    },
+    "SP118": {
+        "why": "A string passed to setTimeout or setInterval is compiled and executed like eval, so interpolated input becomes code.",
+        "attack": "Attacker controls part of the timer string and appends a payload that runs with the page's privileges.",
+        "false_positive": "Static developer-authored strings that never mix with user data are still better replaced by functions.",
+        "test": "Pass user input inside the timer string and verify it is not executed.",
+    },
+    "SP119": {
+        "why": "Joining request-controlled segments into a filesystem path lets ../ sequences escape the intended directory.",
+        "attack": "Attacker passes ../../../../etc/passwd as a filename and reads arbitrary server files.",
+        "false_positive": "Values validated against a strict allowlist before the join.",
+        "test": "Submit traversal sequences and verify the resolved path stays inside the base directory.",
+    },
+    "SP120": {
+        "why": "node-serialize's unserialize() executes functions embedded in the payload, giving direct remote code execution.",
+        "attack": "Attacker sends a serialized object containing an IIFE that runs a reverse shell on deserialize.",
+        "false_positive": "None: this library cannot be used safely on untrusted input.",
+        "test": "Send a payload containing an embedded function and verify it is rejected before deserialization.",
+    },
+    "SP121": {
+        "why": "Redirecting to a request-supplied URL lets attackers craft convincing phishing links on your domain.",
+        "attack": "Attacker emails https://your-app/logout?next=https://evil.test/login and harvests credentials.",
+        "false_positive": "Redirect targets validated against a strict allowlist or built from server-side constants only.",
+        "test": "Submit an absolute external URL and verify the application refuses to redirect.",
+    },
+    "SP122": {
+        "why": "Math.random and the random module are predictable PRNGs, so tokens built from them can be guessed.",
+        "attack": "Attacker reconstructs the PRNG state from a few observed values and predicts the next session token.",
+        "false_positive": "Non-security uses such as UI shuffling, dice rolls, or test fixtures.",
+        "test": "Verify generated tokens use the Web Crypto API or the secrets module and have sufficient entropy.",
+    },
+    "SP123": {
+        "why": "Reusing a hardcoded IV with CBC/CTR leaks equality patterns across ciphertexts and enables block-reordering attacks.",
+        "attack": "Attacker observes repeated IV/ciphertext prefixes, infers plaintext structure, and replays reordered blocks.",
+        "false_positive": "Cipher modes that do not use an IV.",
+        "test": "Encrypt the same message twice and verify the IVs and ciphertexts differ.",
+    },
+    "SP124": {
+        "why": "Fetching a URL taken from request input lets attackers reach internal services and cloud metadata endpoints.",
+        "attack": "Attacker supplies a metadata-service address (link-local 169"
+        + ".254."
+        + "169"
+        + ".254) and extracts cloud credentials from the response.",
+        "false_positive": "URLs assembled entirely from server-side configuration with validated user-selected path segments.",
+        "test": "Submit internal and metadata URLs and verify the request is refused before it leaves the service.",
+    },
+    "SP318": {
+        "why": "Retries without a stop condition amplify load precisely when a dependency is already failing, turning a slowdown into an outage.",
+        "attack": "An upstream blip causes every caller to retry indefinitely, multiplying traffic until workers and connections are exhausted.",
+        "false_positive": "Retry wrappers that already pass an explicit stop condition or attempt bound.",
+        "test": "Force the dependency to fail and verify retry attempts stop at the configured bound with backoff.",
+    },
     "SP314": {
         "why": "Committing SQLite database files into git source control risks leaking production user records, passwords, and secrets in history.",
         "attack": "Attacker clones the repository and extracts sensitive credentials directly from the tracked database file.",
@@ -410,6 +480,16 @@ class Finding:
     cwe: str
     owasp: str
     fingerprint: str
+    detection: str = "pattern"
+    proof_level: str = "L0"
+
+
+PROOF_LEVELS = {
+    "pattern": "L0",
+    "ast": "L1",
+    "structural": "L1",
+    "artifact": "L1",
+}
 
 
 def compile_pattern(value: str) -> re.Pattern[str]:
@@ -678,6 +758,19 @@ RULES: tuple[Rule, ...] = (
         frozenset({".js", ".mjs", ".cjs", ".ts"}),
     ),
     Rule(
+        "SP402",
+        "Express auth route without rate limiting",
+        "security",
+        "medium",
+        "low",
+        compile_pattern("$^"),
+        "An authentication-sensitive Express route is registered without visible rate-limiting middleware.",
+        "Add rate-limiting middleware (e.g. express-rate-limit) or verify the gateway throttles these routes.",
+        "CWE-307",
+        "OWASP ASVS V2",
+        frozenset({".js", ".mjs", ".cjs", ".ts"}),
+    ),
+    Rule(
         "SP403",
         "Secret in NEXT_PUBLIC_ env var",
         "security",
@@ -727,6 +820,32 @@ RULES: tuple[Rule, ...] = (
         "Return a generic error message and status code. Log the full error server-side.",
         "CWE-209",
         "OWASP ASVS V7",
+        frozenset({".js", ".mjs", ".cjs", ".ts"}),
+    ),
+    Rule(
+        "SP407",
+        "Cookie session routes without CSRF protection",
+        "security",
+        "medium",
+        "low",
+        compile_pattern("$^"),
+        "State-changing routes rely on cookie sessions without visible CSRF middleware.",
+        "Add CSRF middleware (e.g. csurf) for cookie-authenticated routes or switch to token authentication.",
+        "CWE-352",
+        "OWASP ASVS V3",
+        frozenset({".js", ".mjs", ".cjs", ".ts"}),
+    ),
+    Rule(
+        "SP408",
+        "Meta-framework config without CSP header",
+        "security",
+        "medium",
+        "low",
+        compile_pattern("$^"),
+        "A Next.js or Nuxt configuration file does not set a Content-Security-Policy header.",
+        "Add a Content-Security-Policy header in the framework config or verify the proxy sets one.",
+        "CWE-693",
+        "OWASP ASVS V14",
         frozenset({".js", ".mjs", ".cjs", ".ts"}),
     ),
     Rule(
@@ -909,6 +1028,140 @@ RULES: tuple[Rule, ...] = (
         "OWASP ASVS V5",
     ),
     Rule(
+        "SP115",
+        "XXE-capable lxml parser without entity hardening",
+        "security",
+        "medium",
+        "low",
+        compile_pattern("$^"),
+        "lxml parsing is used without a parser that disables entity resolution, enabling XML external entity attacks.",
+        "Construct an etree.XMLParser with resolve_entities=False (and no_network=True) or validate input before parsing.",
+        "CWE-611",
+        "OWASP ASVS V5",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP116",
+        "React dangerouslySetInnerHTML with dynamic value",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"dangerouslySetInnerHTML\s*:\s*\{\s*__html\s*:\s*[^\"'\s}]"),
+        "dangerouslySetInnerHTML renders a dynamic value as raw HTML, which becomes XSS when the value carries user input.",
+        "Render text normally, or sanitize the HTML with DOMPurify before assigning it to __html.",
+        "CWE-79",
+        "OWASP ASVS V5",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP117",
+        "Dynamic code via new Function",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"\bnew\s+Function\s*\("),
+        "new Function() compiles a string into executable code, turning untrusted input into arbitrary code execution.",
+        "Replace dynamic compilation with explicit logic or a safe parser (e.g. JSON.parse).",
+        "CWE-95",
+        "OWASP ASVS V5",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP118",
+        "Implicit eval via timer string",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"\b(?:setTimeout|setInterval)\s*\(\s*[\"'`]"),
+        "A string passed to setTimeout/setInterval is compiled and executed as code, allowing injection.",
+        "Pass a function reference instead of a string of code.",
+        "CWE-95",
+        "OWASP ASVS V5",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP119",
+        "Filesystem path joined from request input",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"path\s*\.\s*join(?:Sync)?\s*\([^)]*\breq\s*\.\s*(?:params|query|body)"),
+        "A filesystem path is joined directly from request data, allowing path traversal outside the intended directory.",
+        "Validate the request value against an allowlist and resolve the final path inside a fixed base directory.",
+        "CWE-22",
+        "OWASP ASVS V5",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP120",
+        "Unsafe JS deserialization via node-serialize",
+        "security",
+        "critical",
+        "high",
+        compile_pattern("$^"),
+        "node-serialize unserialize() executes arbitrary code embedded in the serialized payload.",
+        "Exchange JSON instead of serialized JavaScript objects and reject serialized input entirely.",
+        "CWE-502",
+        "OWASP ASVS V5",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP121",
+        "Open redirect from request value",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(r"redirect\s*\(\s*(?:req|request)\s*\."),
+        "A redirect target is taken directly from request input, enabling open-redirect phishing attacks.",
+        "Redirect only to validated allowlisted paths or relative URLs.",
+        "CWE-601",
+        "OWASP ASVS V5",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".py"}),
+    ),
+    Rule(
+        "SP122",
+        "Security value from insecure randomness",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"(?:token|secret|api[_-]?key|password|session\w*|otp|nonce|salt|csrf\w*)\s*[:=]\s*[^;#\n]*(?:Math\.random\s*\(|\brandom\.(?:random|randint|choice|randrange|uniform)\s*\()"
+        ),
+        "A security-sensitive value is generated from a predictable PRNG instead of a cryptographic source.",
+        "Generate tokens and secrets with the Web Crypto API or the Python secrets module.",
+        "CWE-338",
+        "OWASP ASVS V6",
+    ),
+    Rule(
+        "SP123",
+        "Hardcoded initialization vector",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"createCipheriv\s*\([^()]*,[^()]*,\s*[\"'][A-Za-z0-9+/=]{8,}[\"']|AES\.new\s*\([^()]*,\s*[^(),]+,\s*iv\s*=\s*b?[\"'][A-Za-z0-9+/=]{8,}[\"']"
+        ),
+        "A cipher is used with a hardcoded initialization vector, which defeats CBC/CTR semantic security.",
+        "Generate a random IV per message with a cryptographic source and transmit it alongside the ciphertext.",
+        "CWE-329",
+        "OWASP ASVS V8",
+    ),
+    Rule(
+        "SP124",
+        "SSRF via user-controlled request URL",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"(?:\bfetch\s*\(|\baxios\s*\.\s*(?:get|post|put|delete|request)\s*\()\s*[^)]*\breq\s*\.\s*(?:query|params|body)"
+        ),
+        "An outbound HTTP call uses a URL taken from request input, allowing SSRF against internal networks and cloud metadata.",
+        "Validate target URLs against an explicit host allowlist and reject private IP ranges.",
+        "CWE-918",
+        "OWASP ASVS V5",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
         "SP314",
         "Committed SQLite database file",
         "security",
@@ -958,6 +1211,18 @@ RULES: tuple[Rule, ...] = (
         "CWE-400",
         "Capacity",
         frozenset({".py"}),
+    ),
+    Rule(
+        "SP318",
+        "Retry policy without a stop condition",
+        "reliability",
+        "medium",
+        "medium",
+        compile_pattern("$^"),
+        "A retry loop is configured without a bound, so a failing dependency amplifies load into a retry storm.",
+        "Add an explicit stop condition (tenacity stop_after_attempt, bounded retries) and backoff with jitter.",
+        "CWE-770",
+        "OWASP ASVS V14",
     ),
 )
 
@@ -1081,7 +1346,13 @@ def is_pure_comment(line: str, path: Path) -> bool:
     return False
 
 
-def make_finding(rule: Rule, relative_path: str, line_number: int, evidence: str) -> Finding:
+def make_finding(
+    rule: Rule,
+    relative_path: str,
+    line_number: int,
+    evidence: str,
+    detection: str = "pattern",
+) -> Finding:
     safe_evidence = clean_evidence(evidence, rule.redact)
     if rule.redact:
         content_hash = hashlib.sha256(evidence.strip().encode("utf-8", "replace")).hexdigest()[:12]
@@ -1103,6 +1374,8 @@ def make_finding(rule: Rule, relative_path: str, line_number: int, evidence: str
         rule.cwe,
         rule.owasp,
         fingerprint,
+        detection,
+        PROOF_LEVELS[detection],
     )
 
 
@@ -1114,6 +1387,8 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
         if rule.rule_id in {
             "SP107",
             "SP108",
+            "SP115",
+            "SP120",
             "SP303",
             "SP304",
             "SP305",
@@ -1121,7 +1396,11 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
             "SP314",
             "SP316",
             "SP317",
+            "SP318",
             "SP401",
+            "SP402",
+            "SP407",
+            "SP408",
         }:
             continue
         if rule.rule_id == "SP202" and path.name.lower() not in {"dockerfile", "containerfile"}:
@@ -1163,7 +1442,9 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
             "CWE-942",
             "OWASP ASVS V3",
         )
-        findings.append(make_finding(rule, relative_path, line, lines[line - 1] if lines else ""))
+        findings.append(
+            make_finding(rule, relative_path, line, lines[line - 1] if lines else "", "structural")
+        )
 
     if (
         suffix in {".js", ".mjs", ".cjs", ".ts"}
@@ -1183,7 +1464,9 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
             "CWE-942",
             "OWASP ASVS V3",
         )
-        findings.append(make_finding(rule, relative_path, line, lines[line - 1] if lines else ""))
+        findings.append(
+            make_finding(rule, relative_path, line, lines[line - 1] if lines else "", "structural")
+        )
 
     # Framework-specific: Express without helmet
     if (
@@ -1209,7 +1492,78 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
                 or (ignore_prev and ignore_prev.group(1) == "SP401")
             ):
                 rule = find_rule("SP401")
-                findings.append(make_finding(rule, relative_path, express_line, line_str))
+                findings.append(
+                    make_finding(rule, relative_path, express_line, line_str, "structural")
+                )
+
+    # Framework-specific: Express auth route without rate limiting
+    if (
+        suffix in {".js", ".mjs", ".cjs", ".ts"}
+        and "express()" in source_text.lower().replace(" ", "")
+        and not RATE_LIMIT_MARKERS.search(source_text)
+    ):
+        route_line = next(
+            (i for i, value in enumerate(lines, 1) if AUTH_SENSITIVE_ROUTE.search(value)),
+            None,
+        )
+        if route_line:
+            append_file_level_finding(findings, "SP402", relative_path, lines, route_line)
+
+    # Framework-specific: cookie-session routes without CSRF protection
+    if (
+        suffix in {".js", ".mjs", ".cjs", ".ts"}
+        and "express()" in source_text.lower().replace(" ", "")
+        and COOKIE_SESSION_MARKERS.search(source_text)
+        and not CSRF_MARKERS.search(source_text)
+    ):
+        route_line = next(
+            (i for i, value in enumerate(lines, 1) if STATE_CHANGING_ROUTE.search(value)),
+            None,
+        )
+        if route_line:
+            append_file_level_finding(findings, "SP407", relative_path, lines, route_line)
+
+    # Framework-specific: Next.js/Nuxt config without a CSP header
+    if META_FRAMEWORK_CONFIG_NAME.match(path.name.lower()) and not CSP_MARKERS.search(source_text):
+        append_file_level_finding(findings, "SP408", relative_path, lines, 1)
+
+    # XXE: lxml parsing without entity hardening
+    if suffix == ".py" and "lxml" in source_text and "resolve_entities" not in source_text:
+        lxml_line = next(
+            (i for i, value in enumerate(lines, 1) if LXML_PARSE_CALL.search(value)),
+            None,
+        )
+        if lxml_line:
+            append_file_level_finding(findings, "SP115", relative_path, lines, lxml_line)
+
+    # Unsafe JS deserialization: node-serialize
+    if NODE_SERIALIZE_REQUIRE.search(source_text) and UNSERIALIZE_CALL.search(source_text):
+        unserialize_line = next(
+            (i for i, value in enumerate(lines, 1) if UNSERIALIZE_CALL.search(value)),
+            None,
+        )
+        if unserialize_line:
+            append_file_level_finding(findings, "SP120", relative_path, lines, unserialize_line)
+
+    # Reliability: retry policy without a stop condition
+    if (
+        suffix == ".py"
+        and TENACITY_RETRY.search(source_text)
+        and not STOP_CONDITION_HINT.search(source_text)
+    ):
+        retry_line = next(
+            (i for i, value in enumerate(lines, 1) if TENACITY_RETRY.search(value)),
+            None,
+        )
+        if retry_line:
+            append_file_level_finding(findings, "SP318", relative_path, lines, retry_line)
+    if UNBOUNDED_JS_RETRIES.search(source_text):
+        retry_line = next(
+            (i for i, value in enumerate(lines, 1) if UNBOUNDED_JS_RETRIES.search(value)),
+            None,
+        )
+        if retry_line:
+            append_file_level_finding(findings, "SP318", relative_path, lines, retry_line)
 
     return findings
 
@@ -1228,10 +1582,48 @@ ROUTE_METHODS = frozenset({"get", "post", "put", "patch", "delete", "options", "
 SENSITIVE_ROUTE_SEGMENTS = frozenset({"admin", "internal", "management"})
 AUTHORIZATION_DEPENDENCY_HINTS = ("auth", "admin", "permission", "policy", "role", "scope")
 PAGE_SIZE_PARAMETERS = frozenset({"limit", "page_size", "per_page"})
+RATE_LIMIT_MARKERS = re.compile(r"rate[-_]?limit|limiter|throttle", re.IGNORECASE)
+AUTH_SENSITIVE_ROUTE = re.compile(
+    r"\.\s*(?:post|use|all)\s*\(\s*[\"'][^\"']*(?:login|sign-?in|auth|session|token|password)",
+    re.IGNORECASE,
+)
+COOKIE_SESSION_MARKERS = re.compile(
+    r"cookie[-_]?parser|express-session|req\.cookies|req\.session", re.IGNORECASE
+)
+CSRF_MARKERS = re.compile(r"csurf|csrf", re.IGNORECASE)
+STATE_CHANGING_ROUTE = re.compile(r"\.\s*(?:post|put|patch|delete)\s*\(", re.IGNORECASE)
+CSP_MARKERS = re.compile(r"content[-_]?security[-_]?policy|\bcsp\b", re.IGNORECASE)
+META_FRAMEWORK_CONFIG_NAME = re.compile(r"(?:next|nuxt)\.config\.(?:js|mjs|cjs|ts)$")
+LXML_PARSE_CALL = re.compile(r"\betree\s*\.\s*(?:parse|fromstring|XML|frombuffer)\s*\(")
+NODE_SERIALIZE_REQUIRE = re.compile(r"require\s*\(\s*[\"']node-serialize[\"']\s*\)")
+UNSERIALIZE_CALL = re.compile(r"\.\s*unserialize\s*\(")
+TENACITY_RETRY = re.compile(r"@retry\s*\(")
+STOP_CONDITION_HINT = re.compile(r"\bstop")
+UNBOUNDED_JS_RETRIES = re.compile(r"retries\s*:\s*Infinity\b", re.IGNORECASE)
 
 
 def find_rule(rule_id: str) -> Rule:
     return next(rule for rule in RULES if rule.rule_id == rule_id)
+
+
+def append_file_level_finding(
+    findings: list[Finding],
+    rule_id: str,
+    relative_path: str,
+    lines: Sequence[str],
+    line_number: int,
+) -> None:
+    line_str = lines[line_number - 1] if 1 <= line_number <= len(lines) else ""
+    prev_line_str = lines[line_number - 2] if line_number >= 2 else ""
+    ignore_curr = INLINE_IGNORE.search(line_str)
+    ignore_prev = INLINE_IGNORE.search(prev_line_str)
+    if (ignore_curr and ignore_curr.group(1) == rule_id) or (
+        ignore_prev and ignore_prev.group(1) == rule_id
+    ):
+        return
+    findings.append(
+        make_finding(find_rule(rule_id), relative_path, line_number, line_str, "structural")
+    )
 
 
 def route_decorator_calls(
@@ -1374,7 +1766,7 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         evidence = (
             self.source_lines[line_number - 1] if 0 < line_number <= len(self.source_lines) else ""
         )
-        self.findings.append(make_finding(rule, self.relative_path, line_number, evidence))
+        self.findings.append(make_finding(rule, self.relative_path, line_number, evidence, "ast"))
 
     def inspect_route(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         route_calls = route_decorator_calls(node)
@@ -1760,12 +2152,43 @@ def detect_frameworks(root: Path) -> set[str]:
     return frameworks
 
 
+GIT_REF_PATTERN = re.compile(r"^[A-Za-z0-9._/@][A-Za-z0-9._/@~-]*$")
+
+
+def changed_files(root: Path, git_ref: str) -> frozenset[str]:
+    """Resolve repository-relative paths changed relative to a git ref, failing closed."""
+    if not GIT_REF_PATTERN.match(git_ref):
+        raise ValueError(f"invalid git ref: {git_ref!r}")
+    repository_root = root.resolve()
+    commands = (
+        ["git", "-C", str(repository_root), "diff", "--name-only", "--diff-filter=ACMR", git_ref],
+        ["git", "-C", str(repository_root), "ls-files", "--others", "--exclude-standard"],
+    )
+    changed: set[str] = set()
+    for command in commands:
+        completed = subprocess.run(  # noqa: S603 (git ref is validated against GIT_REF_PATTERN above)
+            command,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if completed.returncode != 0:
+            details = (completed.stderr or completed.stdout or "").strip().splitlines()
+            hint = details[0] if details else "git failed"
+            raise ValueError(f"cannot resolve git ref {git_ref!r}: {hint}")
+        changed.update(line.strip() for line in completed.stdout.splitlines() if line.strip())
+    return frozenset(path.removeprefix("./") for path in changed)
+
+
 def scan_repository(
     root: Path,
     max_file_bytes: int = 1_000_000,
     baseline: set[str] | None = None,
     exclude_patterns: Sequence[str] = (),
-) -> tuple[list[Finding], dict[str, int]]:
+    include_paths: frozenset[str] | None = None,
+) -> tuple[list[Finding], dict[str, object]]:
     repository_root = root.resolve()
     if not repository_root.is_dir():
         raise ValueError(f"not a directory: {repository_root}")
@@ -1774,8 +2197,10 @@ def scan_repository(
     frameworks = detect_frameworks(repository_root)
     normalized_excludes = normalize_exclude_patterns(exclude_patterns)
     for path in iter_scannable_files(repository_root, max_file_bytes, normalized_excludes):
-        files_scanned += 1
         relative_path = path.relative_to(repository_root).as_posix()
+        if include_paths is not None and relative_path not in include_paths:
+            continue
+        files_scanned += 1
         if path.suffix.lower() in {".sqlite", ".sqlite3", ".db"}:
             try:
                 header = path.read_bytes()[:16]
@@ -1789,6 +2214,7 @@ def scan_repository(
                             relative_path,
                             1,
                             f"Tracked database file: {relative_path}",
+                            "artifact",
                         )
                     )
             except OSError:
@@ -2082,7 +2508,12 @@ def build_sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
                             }
                         ],
                         "partialFingerprints": {"shipproof/v1": item.fingerprint},
-                        "properties": {"severity": item.severity, "confidence": item.confidence},
+                        "properties": {
+                            "severity": item.severity,
+                            "confidence": item.confidence,
+                            "detection": item.detection,
+                            "proof_level": item.proof_level,
+                        },
                     }
                     for item in findings
                 ],
@@ -2144,6 +2575,12 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default="snippet.py",
         help="Virtual filename for the snippet to guide language detection",
     )
+    parser.add_argument(
+        "--changed-since",
+        metavar="GIT_REF",
+        default=None,
+        help="Scan only files changed relative to a git ref (also includes untracked files)",
+    )
     return parser.parse_args(argv)
 
 
@@ -2168,12 +2605,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if arguments.max_file_bytes <= 0:
             raise ValueError("max-file-bytes must be positive")
+        include_paths = (
+            changed_files(arguments.root, arguments.changed_since)
+            if arguments.changed_since
+            else None
+        )
         findings, stats = scan_repository(
             arguments.root,
             max_file_bytes=arguments.max_file_bytes,
             baseline=load_baseline_fingerprints(arguments.baseline),
             exclude_patterns=arguments.exclude,
+            include_paths=include_paths,
         )
+        if arguments.changed_since:
+            stats["changed_since"] = arguments.changed_since
 
         # Filter by confidence if requested
         if arguments.min_confidence:

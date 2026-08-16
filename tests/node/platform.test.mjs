@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { buildPythonInvocation, resolveRepositoryPath } from "../../lib/mcp-server.mjs";
-import { discoverEvidenceAdapters, runEvidenceAdapter } from "../../lib/evidence.mjs";
+import { buildPythonInvocation, internals as mcpInternals, resolveRepositoryPath } from "../../lib/mcp-server.mjs";
+import { discoverEvidenceAdapters, internals as evidenceInternals, runEvidenceAdapter } from "../../lib/evidence.mjs";
 import { buildScannerArguments, validateActionInputs } from "../../scripts/run-action.mjs";
 
 test("composite action validates values and repository path boundaries", () => {
@@ -20,9 +20,16 @@ test("composite action validates values and repository path boundaries", () => {
       SHIPPROOF_INPUT_FORMAT: "sarif",
       SHIPPROOF_INPUT_FAIL_ON: "high",
       SHIPPROOF_INPUT_MAX_FILE_BYTES: "1000000",
+      SHIPPROOF_INPUT_CHANGED_SINCE: "origin/main",
     });
     assert.equal(inputs.format, "sarif");
-    assert.ok(buildScannerArguments(inputs).includes("--max-file-bytes"));
+    assert.equal(inputs.changedSince, "origin/main");
+    assert.ok(buildScannerArguments(inputs).includes("--changed-since"));
+    assert.throws(() => validateActionInputs({
+      GITHUB_WORKSPACE: root,
+      SHIPPROOF_INPUT_PATH: "src",
+      SHIPPROOF_INPUT_CHANGED_SINCE: "--upload-pack=malicious",
+    }), /plain git ref/);
     assert.throws(() => validateActionInputs({
       GITHUB_WORKSPACE: root,
       SHIPPROOF_INPUT_PATH: "..",
@@ -53,6 +60,20 @@ test("MCP repository paths reject traversal and symlink-independent outside path
 test("MCP command construction is allowlisted", () => {
   assert.match(buildPythonInvocation("scan", [".", "--format", "json"])[0], /scan_repo\.py$/);
   assert.throws(() => buildPythonInvocation("shell", ["whoami"]), /unsupported/);
+  assert.throws(() => buildPythonInvocation("scan", [42]), /must be strings/);
+});
+
+test("MCP python bridge returns evidence envelopes and rejects cancelled calls", async () => {
+  const report = await mcpInternals.runPythonJson("capacity", ["--users", "100", "--format", "json"]);
+  assert.equal(report.schema_version, "1.0");
+  assert.equal(report.tool.name, "ShipProof");
+  assert.ok(Array.isArray(report.limitations));
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(
+    mcpInternals.runPythonJson("capacity", ["--users", "100", "--format", "json"], controller.signal),
+    /cancelled/,
+  );
 });
 
 test("evidence adapters are marker-driven and fixed", () => {
@@ -66,6 +87,21 @@ test("evidence adapters are marker-driven and fixed", () => {
     assert.equal(adapters.find((adapter) => adapter.name === "typescript").available, true);
     assert.throws(() => runEvidenceAdapter(root, "rust"), /allow-project-code/);
     assert.throws(() => runEvidenceAdapter(root, "shell"), /unsupported/);
+    assert.throws(() => runEvidenceAdapter(root, "go"), /did not find go\.mod/);
+    assert.deepEqual(evidenceInternals.ADAPTERS.go.environment, { GOPROXY: "off", GOTOOLCHAIN: "local" });
+    assert.deepEqual(evidenceInternals.ADAPTERS.go.build(".").argumentsList, ["vet", "./..."]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("evidence adapters report nothing detected without markers", () => {
+  const root = mkdtempSync(join(tmpdir(), "shipproof-empty-"));
+  try {
+    const adapters = discoverEvidenceAdapters(root);
+    assert.equal(adapters.length, 3);
+    assert.ok(adapters.every((adapter) => adapter.detected === false));
+    assert.ok(adapters.every((adapter) => adapter.available === false));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

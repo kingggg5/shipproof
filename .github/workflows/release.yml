@@ -65,3 +65,11 @@ jobs:
             release_flags+=(--prerelease --latest=false)
           fi
           gh release create "${GITHUB_REF_NAME}" "release-artifacts/kingggg5-shipproof-${SHIPPROOF_VERSION}.tgz" "${release_flags[@]}" || echo "Release already exists"
+      - name: Maintain moving major tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          SHIPPROOF_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          major_version="v${SHIPPROOF_VERSION%%.*}"
+          git tag -fa "${major_version}" -m "Moving ${major_version} tag: tracks the latest reviewed ${major_version}.x release. Pin the exact version tag or commit SHA for immutable references." "${GITHUB_REF_NAME}"
+          git push -f origin "${major_version}"

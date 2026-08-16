@@ -44,8 +44,10 @@ shipproof scan examples/demo-api/fixtures/after --fail-on high
 สามารถรันคำสั่งตรวจสอบในโปรเจกต์ใดก็ได้ทันที:
 
 ```bash
-npx @kingggg5/shipproof check
+npx github:kingggg5/shipproof check
 ```
+
+รูปแบบ git นี้ใช้ได้โดยไม่ต้องมีบัญชีหรือ Token ใด ๆ (GitHub Packages บังคับให้ authenticate แม้จะเป็นแพ็กเกจสาธารณะ จึงไม่ใช้รูปแบบ `npx @kingggg5/shipproof` ไว้ตอนนี้ — เมื่อประกาศบน npm registry สาธารณะแล้วคำสั่งสั้นดังกล่าวจะใช้ได้ทันที)
 
 หรือติดตั้งแบบ Global ลงในเครื่อง:
 
@@ -137,8 +139,8 @@ ShipProof จะตรวจสอบไฟล์โครงสร้างข�
 | กลุ่มเทคโนโลยี / Framework | การตรวจจับ | รายการที่ตรวจสอบเจาะจง |
 | :--- | :--- | :--- |
 | **Next.js, Nuxt, SvelteKit, Remix, Astro** | `package.json` (`next`, `nuxt`, `@sveltejs/kit`, `@remix-run/*`, `astro`) | ป้องกัน Secret หลุดใน `NEXT_PUBLIC_` (`SP403`), ตรวจสอบนโยบาย CSP (`SP408`), ป้องกัน Connection รั่วใน Serverless DB (`SP313`) |
-| **React, Vue, Angular, SolidJS** | `package.json` (`react`, `vue`, `@angular/core`, `solid-js`) | ป้องกัน Supabase `service_role` key หลุดฝั่ง Client (`SP503`), ป้องกันการ Log Credential ใน Client Bundle (`SP204`), ป้องกัน SVG XSS (`SP112`) |
-| **Express, Fastify, NestJS, Koa, Hono, Elysia** | `package.json` (`express`, `fastify`, `@nestjs/core`, `koa`, `hono`, `elysia`) | ตรวจสอบ Security Headers (`SP401`), ป้องกัน Raw Error Object หลุด (`SP406`), ป้องกัน Stripe Webhook ปลอม (`SP502`), ตรวจสอบ Rate Limit ใน AI Route (`SP501`) |
+| **React, Vue, Angular, SolidJS** | `package.json` (`react`, `vue`, `@angular/core`, `solid-js`) | ป้องกัน Supabase `service_role` key หลุดฝั่ง Client (`SP503`), ป้องกันการ Log Credential ใน Client Bundle (`SP204`), ป้องกัน SVG XSS (`SP112`), ป้องกัน Raw HTML Injection (`SP116`) |
+| **Express, Fastify, NestJS, Koa, Hono, Elysia** | `package.json` (`express`, `fastify`, `@nestjs/core`, `koa`, `hono`, `elysia`) | ตรวจสอบ Security Headers (`SP401`), ตรวจสอบ Rate Limit ใน Auth Route (`SP402`), ตรวจสอบ CSRF ใน Cookie Session (`SP407`), ป้องกัน Open Redirect (`SP121`), ป้องกัน SSRF จาก URL ของ Request (`SP124`), ป้องกัน Raw Error Object หลุด (`SP406`), ป้องกัน Stripe Webhook ปลอม (`SP502`), ตรวจสอบ Rate Limit ใน AI Route (`SP501`) |
 | **Prisma, Drizzle, TypeORM, Mongoose, Supabase** | `package.json` (`@prisma/client`, `drizzle-orm`, `typeorm`, `mongoose`, `@supabase/*`) | ป้องกันการสร้าง DB Client ซ้ำซ้อนใน Serverless (`SP313`), ป้องกัน Supabase RLS Bypass (`SP503`), ป้องกัน Unbounded Query (`SP302`) |
 | **FastAPI, Starlette, Litestar, Sanic** | `pyproject.toml`, `requirements.txt` | ตรวจสอบสิทธิ์ Route แอดมิน (`SP108`), ตรวจสอบ N+1 Query ใน Loop (`SP307`), ตรวจสอบ Limit ของ Pagination (`SP305`), ตรวจสอบ Timeout (`SP304`) |
 | **Django & Flask** | `pyproject.toml`, `requirements.txt` | ป้องกัน Hardcoded `SECRET_KEY` (`SP404`), ตรวจสอบ Wildcard `ALLOWED_HOSTS` (`SP405`), ป้องกัน SQL Interpolation (`SP103`) |
@@ -177,6 +179,17 @@ jobs:
 ```
 
 Action จะสร้างการ์ดสรุปสถานะแบบ Markdown สวยงามลงใน GitHub Step Summary อัตโนมัติ
+
+สำหรับ Pull Request ใน Repository ขนาดใหญ่ สามารถสแกนเฉพาะไฟล์ที่เปลี่ยนแปลงเทียบกับ Branch หลักได้:
+
+```yaml
+      - uses: kingggg5/shipproof@v0.5.1
+        with:
+          fail-on: high
+          changed-since: origin/main
+```
+
+Scanner จะหาไฟล์จาก git diff (ไฟล์ที่เพิ่ม/คัดลอก/แก้ไข/เปลี่ยนชื่อ รวมถึงไฟล์ใหม่ที่ยังไม่ track) และระบุ ref ไว้ใน `changed_since` ของ JSON output การสแกนรอบนั้นจะไม่รายงาน findings นอก diff — ควรคง scheduled full scan ไว้เป็น Safety Net
 
 ## นโยบายเดียว คำสั่งเดียว
 
@@ -333,6 +346,10 @@ shipproof evidence . --adapter rust --allow-project-code --format json
 
 ## ตารางกฎการตรวจสอบ (Detection Rules Reference)
 
+รหัส `SP111` และ `SP308`–`SP312` เป็นรหัสสงวนไว้สำหรับกฎในอนาคต (ยังไม่ถูกใช้งาน)
+
+ทุก finding มี `proof_level` ระบุระดับหลักฐาน: `L0` คือการ match ด้วย pattern, `L1` คือหลักฐานเชิงโครงสร้าง (Python AST, การวิเคราะห์ทั้งไฟล์ หรือการตรวจ artifact เช่น header ของไฟล์ SQLite) — ทั้งสองระดับนี้คือสิ่งที่ ShipProof พิสูจน์ได้จริงในวันนี้ ระดับที่สูงกว่าที่ต้องใช้ data-flow ข้ามไฟล์ หรือ runtime evidence จะไม่ถูกอ้างจนกว่า engine จะรองรับจริง
+
 | รหัส Rule | คำอธิบายปัญหา | ระดับความรุนแรง | การตรวจจับ |
 | :--- | :--- | :--- | :--- |
 | **SP001** | ตรวจพบ Private Key ฝังในโค้ด | CRITICAL | Regex |
@@ -343,7 +360,7 @@ shipproof evidence . --adapter rust --allow-project-code --format json
 | **SP102** | การเปิดใช้งานคำสั่ง Shell (`shell=True`) | HIGH | AST / Regex |
 | **SP103** | การต่อ String ใน SQL Query โดยตรง | HIGH | Python AST |
 | **SP104** | การปิดระบบตรวจสอบ TLS Certificate (`verify=False`) | HIGH | AST / Regex |
-| **SP105** | การใช้งาน JWT โดยปิดการตรวจ Signature | HIGH | Regex |
+| **SP105** | การใช้งาน JWT โดยปิดการตรวจ Signature | CRITICAL | Regex |
 | **SP106** | การ Deserialization ข้อมูลที่ไม่ปลอดภัย (`pickle`, `yaml.load`) | HIGH | AST / Regex |
 | **SP107** | การเปิด Wildcard CORS พร้อมกับ Credential | HIGH | Regex |
 | **SP108** | Route สำคัญ/แอดมินไม่มีการตรวจสิทธิ์ | HIGH | Python AST |
@@ -352,29 +369,43 @@ shipproof evidence . --adapter rust --allow-project-code --format json
 | **SP112** | การรับอัปโหลดไฟล์ SVG โดยไม่ Sanitize เสี่ยงต่อ Stored XSS | MEDIUM | Regex |
 | **SP113** | ช่องโหว่ PHP Object Injection ผ่านการใช้ `unserialize()` | CRITICAL | Regex |
 | **SP114** | ปัญหา Catastrophic ReDoS จาก Nested Quantifiers ใน Regex | MEDIUM | Regex |
+| **SP115** | ใช้ lxml แบบที่ยังเปิด Entity Resolution (เสี่ยง XXE) | MEDIUM | Regex |
+| **SP116** | React `dangerouslySetInnerHTML` รับค่าแบบ Dynamic (XSS) | HIGH | Regex |
+| **SP117** | สร้างโค้ดแบบ Dynamic ด้วย `new Function()` | HIGH | Regex |
+| **SP118** | Implicit eval ผ่านสตริงใน Timer (`setTimeout("...")`) | MEDIUM | Regex |
+| **SP119** | สร้าง Filesystem Path จากค่า Request (Path Traversal) | HIGH | Regex |
+| **SP120** | RCE ผ่าน `unserialize()` ของ `node-serialize` | CRITICAL | Regex |
+| **SP121** | Open Redirect ไปยัง URL ที่มาจาก Request | MEDIUM | Regex |
+| **SP122** | สร้างค่าทางความปลอดภัยด้วย Randomness ที่ไม่ปลอดภัย | HIGH | Regex |
+| **SP123** | Hardcode Initialization Vector ของ Cipher | HIGH | Regex |
+| **SP124** | SSRF ผ่าน URL ที่ผู้ใช้ควบคุมใน fetch | HIGH | Regex |
 | **SP201** | การเปิด Debug Mode ค้างไว้ใน Production | HIGH | Regex |
 | **SP202** | การใช้ Container Base Image แบบไม่ระบุ Version/Digest | MEDIUM | Regex |
-| **SP203** | การใช้ GitHub Actions Tag แบบ Mutable (ไม่ Pin SHA) | MEDIUM | Regex |
+| **SP203** | การใช้ GitHub Actions Tag แบบ Mutable (ไม่ Pin SHA) | HIGH | Regex |
 | **SP204** | การบันทึก Log รหัสผ่าน, Token หรือข้อมูลสำคัญ | MEDIUM | Regex |
-| **SP301** | การใช้คำสั่ง Redis `KEYS *` แทน `SCAN` | MEDIUM | Regex |
-| **SP302** | คำสั่ง SQL `SELECT` ที่ไม่มี `LIMIT` | LOW | Regex |
-| **SP303** | การเรียก `time.sleep()` ใน Async Function | MEDIUM | Python AST |
+| **SP301** | การใช้คำสั่ง Redis `KEYS *` แทน `SCAN` | HIGH | Regex |
+| **SP302** | คำสั่ง SQL `SELECT` ที่ไม่มี `LIMIT` | MEDIUM | Regex |
+| **SP303** | การเรียก `time.sleep()` ใน Async Function | HIGH | Python AST |
 | **SP304** | การยิง Outbound HTTP Request โดยไม่มี Timeout | HIGH | Python AST |
 | **SP305** | Parameter การแบ่งหน้า (Pagination) ไม่จำกัดค่าสูงสุด | MEDIUM | Python AST |
 | **SP306** | การรัน Concurrency จำนวนมากโดยไม่จำกัด Pool (`Promise.all`) | MEDIUM | Regex |
-| **SP307** | ปัญหา N+1 Database Query ภายใน Loop | MEDIUM | Python AST |
-| **SP313** | การสร้าง DB Client ซ้ำซ้อนใน Serverless Route | MEDIUM | Regex |
+| **SP307** | ปัญหา N+1 Database Query ภายใน Loop | HIGH | Python AST |
+| **SP313** | การสร้าง DB Client ซ้ำซ้อนใน Serverless Route | HIGH | Regex |
 | **SP314** | มีการ Commit ไฟล์ฐานข้อมูล SQLite (`.sqlite`, `.db`) ลงใน Git | HIGH | File Header |
 | **SP315** | ลืมปิด `defer resp.Body.Close()` ในการยิง HTTP Request ของ Go | HIGH | Regex |
 | **SP316** | การยิง HTTP Request ภายนอกค้างไว้ใน Database Transaction | HIGH | Python AST |
 | **SP317** | การเรียกคำสั่ง Synchronous/Blocking ใน Python `async def` | HIGH | Python AST |
+| **SP318** | Retry Policy ที่ไม่มีเงื่อนไขหยุด (Retry Storm) | MEDIUM | Regex |
 | **SP401** | Express App ที่ไม่ได้เปิดใช้งาน Helmet | MEDIUM | Regex |
+| **SP402** | Auth Route ของ Express ที่ไม่มี Rate Limiting | MEDIUM | Regex |
 | **SP403** | มี Secret หลุดในตัวแปร `NEXT_PUBLIC_` | HIGH | Regex |
 | **SP404** | Django `SECRET_KEY` ถูก Hardcode ในการตั้งค่า | CRITICAL | Regex |
 | **SP405** | Django `ALLOWED_HOSTS` เปิดรับทุก Host (`*`) | HIGH | Regex |
 | **SP406** | การส่ง Raw Error Object ออกไปที่ Response | MEDIUM | Regex |
+| **SP407** | Route ที่ใช้ Cookie Session โดยไม่มีการป้องกัน CSRF | MEDIUM | Regex |
+| **SP408** | ไฟล์ Config ของ Next.js/Nuxt ที่ไม่มี Header `Content-Security-Policy` | MEDIUM | Regex |
 | **SP501** | เส้นทางเรียกใช้ AI/LLM API โดยไม่มี Auth / Rate Limit | HIGH | Regex |
-| **SP502** | Stripe Webhook ที่ใช้ JSON Body แทน Raw Buffer | HIGH | Regex |
+| **SP502** | Stripe Webhook ที่ใช้ JSON Body แทน Raw Buffer | CRITICAL | Regex |
 | **SP503** | Supabase `service_role` Key หลุดไปฝั่ง Frontend | CRITICAL | Regex |
 
 ## การทำงานร่วมกับเครื่องมือมาตรฐาน

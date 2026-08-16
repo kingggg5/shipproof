@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills" / "audit-production-readiness" / "scripts"))
 
 from capacity_model import VERSION as CAPACITY_VERSION  # noqa: E402
+from scan_repo import RULES  # noqa: E402
 from scan_repo import VERSION as SCAN_VERSION  # noqa: E402
 
 sys.path.insert(0, str(ROOT / "skills" / "engineer-production-systems" / "scripts"))
@@ -107,6 +108,31 @@ class StructureTests(unittest.TestCase):
         for markdown_file in sorted((ROOT / "skills").glob("**/*.md")):
             content = markdown_file.read_text(encoding="utf-8")
             self.assertNotRegex(content, r"https?://", str(markdown_file))
+
+    def test_readme_rule_tables_match_scanner_rules(self):
+        code_severities = {rule.rule_id: rule.severity.upper() for rule in RULES}
+        english_row = re.compile(
+            r"^\|\s*\*\*`(SP\d+)`\*\*\s*\|\s*(CRITICAL|HIGH|MEDIUM|LOW)\s*\|",
+            re.MULTILINE,
+        )
+        thai_row = re.compile(
+            r"^\|\s*\*\*(SP\d+)\*\*\s*\|[^|]+\|\s*(CRITICAL|HIGH|MEDIUM|LOW)\s*\|",
+            re.MULTILINE,
+        )
+        for readme_name, row_pattern in (("README.md", english_row), ("README.th.md", thai_row)):
+            content = (ROOT / readme_name).read_text(encoding="utf-8")
+            documented = {match.group(1): match.group(2) for match in row_pattern.finditer(content)}
+            self.assertEqual(
+                sorted(documented),
+                sorted(code_severities),
+                f"{readme_name} rule table must list exactly the scanner rules",
+            )
+            for rule_id, code_severity in code_severities.items():
+                self.assertEqual(
+                    documented[rule_id],
+                    code_severity,
+                    f"{readme_name} severity drift for {rule_id}",
+                )
 
 
 if __name__ == "__main__":

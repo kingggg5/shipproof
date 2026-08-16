@@ -9,3 +9,7 @@ shipproof budget --baseline fixtures/performance-regression/baseline.json --curr
 ```
 
 The repository self-scan skips directories named `fixtures` so intentional vulnerabilities do not create misleading failures. Selecting a fixture directory as the scan root still analyzes it.
+
+`golden-contract/` plus `expected-golden-scan.json` form the compatibility contract: the same fixture must produce identical findings and fingerprints through direct Python, the Node CLI, and the SARIF builder. Update the expectation deliberately whenever a detection change is intended.
+
+The repository self-scan skips directories named `fixtures` so intentional vulnerabilities do not create misleading failures. Selecting a fixture directory as the scan root still analyzes it.

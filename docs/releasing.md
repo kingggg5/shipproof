@@ -2,7 +2,13 @@
 
 Publishing is intentionally human-gated. CI validates the exact package contents, but the repository does not publish merely because a branch changed.
 
-Pushing a protected tag that exactly matches `package.json` (for example `v0.4.0`) runs the GitHub Release workflow. It repeats the complete verification suite, validates the matching checked-in release-note file, builds the npm tarball, and creates a prerelease for every `0.x` version. `gh release create --verify-tag` prevents the workflow from inventing a missing remote tag. Registry publication remains a separate, explicitly approved step.
+Pushing a protected tag that exactly matches `package.json` (for example `v0.4.0`) runs the GitHub Release workflow. It repeats the complete verification suite, validates the matching checked-in release-note file, builds the npm tarball, smoke-tests the packed artifact end to end, and creates a prerelease for every `0.x` version. `gh release create --verify-tag` prevents the workflow from inventing a missing remote tag. Registry publication remains a separate, explicitly approved step.
+
+## Tag discipline
+
+- Exact version tags (`v0.5.1`) are immutable once pushed; never force-push them.
+- The Release workflow also maintains a moving major tag (`v0` today) that is force-updated to the latest reviewed release of that major. It is a convenience alias, not a stability contract; consumers who need immutability must pin the exact version tag or a full commit SHA.
+- A moving `v1` tag ships only with the stable v1 compatibility contract described in the roadmap.
 
 ## Pre-release
 

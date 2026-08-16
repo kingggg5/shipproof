@@ -44,8 +44,10 @@ The test suite verifies the exact before/after contract. Additional [Node.js, Py
 Run directly in any repository without creating a configuration file first:
 
 ```bash
-npx @kingggg5/shipproof check
+npx github:kingggg5/shipproof check
 ```
+
+The git form works without any registry credentials. Once the package is published to the public npm registry, the shorter `npx @kingggg5/shipproof check` will also work; GitHub Packages requires authentication even for public packages, so it is not used for the one-liner.
 
 Or install globally:
 
@@ -137,8 +139,8 @@ ShipProof automatically detects project frameworks and runtimes across multiple 
 | Ecosystem / Framework | Detection Source | Target Production Checks |
 | :--- | :--- | :--- |
 | **Next.js, Nuxt, SvelteKit, Remix, Astro** | `package.json` (`next`, `nuxt`, `@sveltejs/kit`, `@remix-run/*`, `astro`) | Secrets in `NEXT_PUBLIC_` (`SP403`), CSP header evaluation (`SP408`), Serverless DB connection leaks (`SP313`) |
-| **React, Vue, Angular, SolidJS** | `package.json` (`react`, `vue`, `@angular/core`, `solid-js`) | Exposed service role keys (`SP503`), Credential logging in client bundles (`SP204`), Unsanitized SVG uploads (`SP112`) |
-| **Express, Fastify, NestJS, Koa, Hono, Elysia** | `package.json` (`express`, `fastify`, `@nestjs/core`, `koa`, `hono`, `elysia`) | Missing security headers/helmet (`SP401`), Raw error object leaks (`SP406`), Insecure Stripe webhooks (`SP502`), Unmetered AI routes (`SP501`) |
+| **React, Vue, Angular, SolidJS** | `package.json` (`react`, `vue`, `@angular/core`, `solid-js`) | Exposed service role keys (`SP503`), Credential logging in client bundles (`SP204`), Unsanitized SVG uploads (`SP112`), Raw HTML injection (`SP116`) |
+| **Express, Fastify, NestJS, Koa, Hono, Elysia** | `package.json` (`express`, `fastify`, `@nestjs/core`, `koa`, `hono`, `elysia`) | Missing security headers/helmet (`SP401`), Rate-limited auth routes (`SP402`), CSRF on cookie sessions (`SP407`), Open redirects (`SP121`), SSRF via request URLs (`SP124`), Raw error object leaks (`SP406`), Insecure Stripe webhooks (`SP502`), Unmetered AI routes (`SP501`) |
 | **Prisma, Drizzle, TypeORM, Mongoose, Supabase** | `package.json` (`@prisma/client`, `drizzle-orm`, `typeorm`, `mongoose`, `@supabase/*`) | Non-singleton DB clients in serverless (`SP313`), Supabase RLS bypass (`SP503`), Unbounded queries (`SP302`) |
 | **FastAPI, Starlette, Litestar, Sanic** | `pyproject.toml`, `requirements.txt` | Unprotected admin routes (`SP108`), N+1 queries in loops (`SP307`), Unbounded pagination (`SP305`), Missing HTTP timeouts (`SP304`) |
 | **Django & Flask** | `pyproject.toml`, `requirements.txt` | Hardcoded `SECRET_KEY` (`SP404`), Wildcard `ALLOWED_HOSTS` (`SP405`), String-interpolated SQL (`SP103`) |
@@ -150,6 +152,10 @@ ShipProof automatically detects project frameworks and runtimes across multiple 
 | **Containers, Serverless & CI/CD** | `Dockerfile`, `compose.yaml`, `serverless.yml`, `.github/workflows` | Floating container base tags (`SP202`), Unpinned GitHub Actions (`SP203`), Debug mode (`SP201`) |
 
 ## Detection Rules Reference
+
+Rule IDs `SP111` and `SP308`–`SP312` are reserved for future detectors and intentionally unassigned.
+
+Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected file artifact such as a SQLite header). These are the only levels ShipProof claims today; higher levels that would require data-flow, cross-file, or runtime evidence are deliberately not asserted.
 
 | Rule ID | Severity | Category | Rule Title & Target Problem | Detection Method |
 | :--- | :--- | :--- | :--- | :--- |
@@ -170,12 +176,22 @@ ShipProof automatically detects project frameworks and runtimes across multiple 
 | **`SP112`** | MEDIUM | Security | Unsanitized SVG file upload accepted (Stored XSS risk) | Regex |
 | **`SP113`** | CRITICAL | Security | PHP object injection via `unserialize()` | Regex |
 | **`SP114`** | MEDIUM | Security | Catastrophic ReDoS exponential backtracking nested quantifier | Regex |
+| **`SP115`** | MEDIUM | Security | XXE-capable `lxml` parser without entity hardening | Regex |
+| **`SP116`** | HIGH | Security | React `dangerouslySetInnerHTML` rendering a dynamic value (XSS) | Regex |
+| **`SP117`** | HIGH | Security | Dynamic code execution via `new Function()` | Regex |
+| **`SP118`** | MEDIUM | Security | Implicit eval via timer string (`setTimeout("...")`) | Regex |
+| **`SP119`** | HIGH | Security | Filesystem path joined from request input (path traversal) | Regex |
+| **`SP120`** | CRITICAL | Security | Remote code execution via `node-serialize` `unserialize()` | Regex |
+| **`SP121`** | MEDIUM | Security | Open redirect to a request-supplied URL | Regex |
+| **`SP122`** | HIGH | Security | Security-sensitive value from insecure randomness | Regex |
+| **`SP123`** | HIGH | Security | Hardcoded cipher initialization vector | Regex |
+| **`SP124`** | HIGH | Security | SSRF via user-controlled fetch URL | Regex |
 | **`SP201`** | HIGH | Security | Application debug mode enabled in production | Regex |
 | **`SP202`** | MEDIUM | Supply Chain | Floating container base image tag without SHA256 digest | Regex |
 | **`SP203`** | HIGH | Supply Chain | Unpinned GitHub Action referenced by mutable tag | Regex |
 | **`SP204`** | MEDIUM | Security | Sensitive credential or authentication payload logging | Regex |
 | **`SP301`** | HIGH | Scale | Redis `KEYS *` full keyspace scan blocking event loop | Regex |
-| **`SP302`** | LOW | Scale | SQL `SELECT *` query without explicit `LIMIT` | Regex |
+| **`SP302`** | MEDIUM | Scale | SQL `SELECT *` query without explicit `LIMIT` | Regex |
 | **`SP303`** | HIGH | Reliability | Blocking `time.sleep()` inside async coroutine | Python AST |
 | **`SP304`** | HIGH | Reliability | Outbound HTTP request without explicit timeout deadline | Python AST |
 | **`SP305`** | MEDIUM | Scale | Pagination query parameter without request-boundary maximum | Python AST |
@@ -186,11 +202,15 @@ ShipProof automatically detects project frameworks and runtimes across multiple 
 | **`SP315`** | HIGH | Reliability | Go HTTP request missing response body close (`defer resp.Body.Close()`) | Regex |
 | **`SP316`** | HIGH | Scale | Outbound HTTP network call inside database transaction boundary | Python AST |
 | **`SP317`** | HIGH | Scale | Blocking synchronous call inside Python `async def` coroutine | Python AST |
+| **`SP318`** | MEDIUM | Reliability | Retry policy without a stop condition (retry storms) | Regex |
 | **`SP401`** | MEDIUM | Security | Express app missing security headers (`helmet`) | Regex |
+| **`SP402`** | MEDIUM | Security | Authentication-sensitive Express route missing rate limiting | Regex |
 | **`SP403`** | HIGH | Security | Secret in client-exposed `NEXT_PUBLIC_` environment variable | Regex |
 | **`SP404`** | CRITICAL | Security | Django `SECRET_KEY` hardcoded in settings file | Regex |
 | **`SP405`** | HIGH | Security | Django `ALLOWED_HOSTS` wildcard (`['*']`) allowing cache poisoning | Regex |
 | **`SP406`** | MEDIUM | Security | Express error handler leaking raw error object to clients | Regex |
+| **`SP407`** | MEDIUM | Security | Cookie-session routes missing CSRF protection (Express) | Regex |
+| **`SP408`** | MEDIUM | Security | Next.js/Nuxt config missing `Content-Security-Policy` header | Regex |
 | **`SP501`** | HIGH | Cost & Scale | Unmetered AI/LLM API route (OpenAI, Anthropic, Gemini) | Regex |
 | **`SP502`** | CRITICAL | Security | Insecure Stripe payment webhook using parsed JSON body | Regex |
 | **`SP503`** | CRITICAL | Security | Leaked Supabase `service_role` key bypassing Row Level Security | Regex |
@@ -223,6 +243,17 @@ jobs:
 ```
 
 The action automatically writes a structured Markdown status card to the GitHub Step Summary. `v0.5.1` is the public-beta contract. Pin ShipProof to the release commit SHA when immutable supply-chain references are required.
+
+For pull requests that touch a large repository, scan only what changed relative to the base branch:
+
+```yaml
+      - uses: kingggg5/shipproof@v0.5.1
+        with:
+          fail-on: high
+          changed-since: origin/main
+```
+
+The scanner resolves the git diff (added, copied, modified, and renamed files, plus untracked files) and reports the ref under `changed_since` in JSON output. Findings outside the diff are not reported for that run; keep a scheduled full scan as the safety net.
 
 ## One Policy, One Command
 

@@ -10,6 +10,8 @@ node_modules/
 .venv/
 venv/
 tests/tmp*/
+.tmp-*/
+tmp[0-9a-z]*/
 benchmarks/.work/*
 !benchmarks/.work/.gitkeep
 shipproof-report.*

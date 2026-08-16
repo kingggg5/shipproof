@@ -6,10 +6,10 @@ This roadmap turns ShipProof from a local evidence toolkit into a reusable execu
 
 | Area | Shipped | Still required before stable 1.0 |
 | --- | --- | --- |
-| Contracts | Published config/evidence JSON Schemas; scan, budget, and capacity share version/tool/verdict/limitations fields | Golden compatibility fixtures, source revision/timing policy, and broader config coverage |
-| Distribution | Root composite action and pre-commit hook with closed inputs and workspace path checks | Immutable release SHA/major tags and cross-platform consumer fixtures |
-| Load testing | Deterministic `--export-k6`, environment-only target/token, checks, thresholds, weighted routes, overwrite protection | k6 parse fixture in CI and additional reviewed scenario templates |
-| MCP | Optional official-SDK stdio adapter; three read-only tools; canonical paths, cancellation, timeout, and output cap | Live client handshake matrix, concurrency soak, and structured error-code schema |
+| Contracts | Published config/evidence JSON Schemas; scan, budget, and capacity share version/tool/verdict/limitations fields; golden scan fixture proving identical findings and fingerprints across direct Python, the Node CLI, and SARIF | Golden compatibility fixtures for the budget and capacity envelopes, source revision/timing policy, and broader config coverage |
+| Distribution | Root composite action and pre-commit hook with closed inputs, workspace path checks, maintained moving major tag (`v0`), and a packed-artifact smoke test that installs the tarball and runs the CLI end to end | Cross-platform consumer fixtures and the stable `v1` moving-tag compatibility contract |
+| Load testing | Deterministic `--export-k6`, environment-only target/token, checks, thresholds, weighted routes, overwrite protection, and a determinism/parse gate over the generated script | k6 binary parse fixture in CI and additional reviewed scenario templates |
+| MCP | Optional official-SDK stdio adapter; five read-only tools (`shipproof_scan`, `shipproof_budget`, `shipproof_capacity`, `shipproof_explain`, `shipproof_lint_snippet`); canonical paths, cancellation, timeout, and output cap | Live client handshake matrix, concurrency soak, and structured error-code schema |
 | Polyglot evidence | Allowlisted TypeScript, Go, and Rust adapters; offline dependency policy; Rust project-code consent | Parsed analyzer fingerprints/SARIF, version capture, and language fixture corpus |
 
 “Shipped” means the code and local contract tests exist. It does not mean every acceptance gate below has passed on every supported client or operating system.

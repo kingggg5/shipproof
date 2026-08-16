@@ -75,7 +75,11 @@ export function validateActionInputs(environment = process.env) {
   if (baseline && !isInside(realWorkspace, baseline)) {
     throw new Error("baseline resolves outside the workspace");
   }
-  return { target, format, output, failOn, baseline, maxFileBytes };
+  const changedSince = environment.SHIPPROOF_INPUT_CHANGED_SINCE || "";
+  if (changedSince && !/^[A-Za-z0-9._/@][A-Za-z0-9._/@~-]*$/.test(changedSince)) {
+    throw new Error("changed-since must be a plain git ref (branch, tag, or commit)");
+  }
+  return { target, format, output, failOn, baseline, maxFileBytes, changedSince };
 }
 
 export function buildScannerArguments(inputs) {
@@ -92,6 +96,7 @@ export function buildScannerArguments(inputs) {
     String(inputs.maxFileBytes),
   ];
   if (inputs.baseline) argumentsList.push("--baseline", inputs.baseline);
+  if (inputs.changedSince) argumentsList.push("--changed-since", inputs.changedSince);
   return argumentsList;
 }
 

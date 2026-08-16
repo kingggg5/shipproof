@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -13,11 +14,13 @@ sys.path.insert(0, str(SCRIPTS))
 from scan_repo import (  # noqa: E402
     VERSION,
     build_sarif_report,
+    changed_files,
     deduplicate_and_suppress_findings,
     find_python_ast_issues,
     find_regex_issues,
     is_excluded,
     iter_scannable_files,
+    main,
     normalize_exclude_patterns,
     render_markdown_report,
     scan_repository,
@@ -216,6 +219,71 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         findings = self.findings("server.js", source)
         self.assertFalse(any(item.rule_id == "SP401" for item in findings))
 
+    def test_express_auth_route_without_rate_limiting_is_flagged(self):
+        source = "const app = express();\napp.post('/api/auth/login', signIn);\n"
+        findings = self.findings("server.js", source)
+        rate_limit = next(item for item in findings if item.rule_id == "SP402")
+        self.assertEqual(rate_limit.line, 2)
+
+    def test_express_auth_route_with_rate_limiting_is_not_flagged(self):
+        source = (
+            "const app = express();\n"
+            "const limiter = require('express-rate-limit');\n"
+            "app.use('/api/auth/login', limiter);\n"
+            "app.post('/api/auth/login', signIn);\n"
+        )
+        findings = self.findings("server.js", source)
+        self.assertFalse(any(item.rule_id == "SP402" for item in findings))
+
+    def test_express_non_auth_route_is_not_flagged_for_rate_limiting(self):
+        source = "const app = express();\napp.post('/items', createItem);\n"
+        findings = self.findings("server.js", source)
+        self.assertFalse(any(item.rule_id == "SP402" for item in findings))
+
+    def test_cookie_session_routes_without_csrf_are_flagged(self):
+        source = "const app = express();\napp.use(cookieParser());\napp.post('/profile', updateProfile);\n"
+        findings = self.findings("server.js", source)
+        csrf = next(item for item in findings if item.rule_id == "SP407")
+        self.assertEqual(csrf.line, 3)
+
+    def test_cookie_session_routes_with_csrf_are_not_flagged(self):
+        source = (
+            "const app = express();\n"
+            "app.use(cookieParser());\n"
+            "app.use(require('csurf')({ cookie: true }));\n"
+            "app.post('/profile', updateProfile);\n"
+        )
+        findings = self.findings("server.js", source)
+        self.assertFalse(any(item.rule_id == "SP407" for item in findings))
+
+    def test_token_routes_without_cookies_are_not_flagged_for_csrf(self):
+        source = "const app = express();\napp.post('/profile', updateProfile);\n"
+        findings = self.findings("server.js", source)
+        self.assertFalse(any(item.rule_id == "SP407" for item in findings))
+
+    def test_next_config_without_csp_is_flagged(self):
+        source = "const nextConfig = { reactStrictMode: true };\nmodule.exports = nextConfig;\n"
+        findings = self.findings("next.config.js", source)
+        csp = next(item for item in findings if item.rule_id == "SP408")
+        self.assertEqual(csp.line, 1)
+
+    def test_next_config_with_csp_is_not_flagged(self):
+        source = (
+            "const nextConfig = {\n"
+            "  async headers() {\n"
+            "    return [{ key: 'Content-Security-Policy', value: 'default-src self' }];\n"
+            "  },\n"
+            "};\n"
+            "module.exports = nextConfig;\n"
+        )
+        findings = self.findings("next.config.js", source)
+        self.assertFalse(any(item.rule_id == "SP408" for item in findings))
+
+    def test_unrelated_config_without_csp_is_not_flagged(self):
+        source = "export default {};\n"
+        findings = self.findings("vite.config.js", source)
+        self.assertFalse(any(item.rule_id == "SP408" for item in findings))
+
     def test_next_public_secret_is_flagged(self):
         source = "NEXT_PUBLIC_" + "STRIPE_" + "SECRET_" + 'KEY="sk_live_1234567890123456"\n'
         findings = self.findings(".env.local", source)
@@ -237,6 +305,11 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         source = "const app = express(); // shipproof-ignore SP401\n"
         findings = self.findings("server.js", source)
         self.assertFalse(any(item.rule_id == "SP401" for item in findings))
+
+    def test_inline_ignore_suppresses_file_level_rule(self):
+        source = "// shipproof-ignore SP408\nconst nextConfig = {};\nmodule.exports = nextConfig;\n"
+        findings = self.findings("next.config.js", source)
+        self.assertFalse(any(item.rule_id == "SP408" for item in findings))
 
     def test_insecure_secret_fallback_default_is_flagged(self):
         source = (
@@ -513,6 +586,284 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         )
         findings = self.findings("api.py", code)
         self.assertIn("SP317", [f.rule_id for f in findings])
+
+    def run_git(self, root: Path, *arguments: str) -> None:
+        completed = subprocess.run(  # noqa: S603 (fixed argv, PATH lookup is intended)
+            ["git", "-C", str(root), *arguments],  # noqa: S607 (git resolved from PATH by design)
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(
+            completed.returncode,
+            0,
+            f"git {' '.join(arguments)} failed: {completed.stderr}",
+        )
+
+    def test_changed_since_limits_scan_to_changed_and_untracked_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "committed.py").write_text("app = FastAPI(de" + "bug=True)\n", encoding="utf-8")
+            self.run_git(root, "init", "-q")
+            self.run_git(root, "config", "user.email", "shipproof@example.test")
+            self.run_git(root, "config", "user.name", "ShipProof Test")
+            self.run_git(root, "add", "-A")
+            self.run_git(root, "commit", "-q", "-m", "base")
+            (root / "modified.py").write_text(
+                'import requests\nrequests.get("https://api.invalid")\n',
+                encoding="utf-8",
+            )
+            include_paths = changed_files(root, "HEAD")
+            self.assertEqual(include_paths, frozenset({"modified.py"}))
+            findings, stats = scan_repository(root, include_paths=include_paths)
+            self.assertEqual(stats["files_scanned"], 1)
+            self.assertTrue(any(item.rule_id == "SP304" for item in findings))
+            self.assertFalse(any(item.rule_id == "SP201" for item in findings))
+
+    def test_changed_since_reports_the_ref_in_stats(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "app.py").write_text("value = 1\n", encoding="utf-8")
+            self.run_git(root, "init", "-q")
+            self.run_git(root, "config", "user.email", "shipproof@example.test")
+            self.run_git(root, "config", "user.name", "ShipProof Test")
+            self.run_git(root, "add", "-A")
+            self.run_git(root, "commit", "-q", "-m", "base")
+            with (
+                patch(
+                    "sys.argv",
+                    ["scan_repo.py", str(root), "--changed-since", "HEAD", "--format", "json"],
+                ),
+                patch("sys.stdout") as mock_stdout,
+            ):
+                self.assertEqual(main(), 0)
+            printed = "".join(call.args[0] for call in mock_stdout.write.call_args_list)
+            self.assertIn('"changed_since": "HEAD"', printed.replace("'", '"'))
+
+    def test_changed_since_fails_closed_outside_git_repository(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch("sys.argv", ["scan_repo.py", directory, "--changed-since", "HEAD"]),
+            patch("sys.stderr"),
+        ):
+            self.assertEqual(main(), 2)
+
+    def test_changed_since_rejects_option_shaped_refs(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            self.assertRaisesRegex(ValueError, "invalid git ref"),
+        ):
+            changed_files(Path(directory), "--upload-pack=malicious")
+
+    # --- Rule Factory corpus: each detector ships positive, negative, and
+    # --- adversarial cases. Adversarial cases record the evasions the current
+    # --- engine cannot see yet, so future engine work has a fixed target.
+
+    def test_lxml_without_hardened_parser_is_flagged(self):
+        source = (
+            "from lxml import " + "etree\n" + "root = " + "etree.from" + "string(xml_payload)\n"
+        )
+        findings = self.findings("parser.py", source)
+        self.assertIn("SP115", [f.rule_id for f in findings])
+
+    def test_lxml_with_hardened_parser_is_not_flagged(self):
+        source = (
+            "from lxml import etree\n"
+            "parser = etree.XMLParser(resolve_entities=False)\n"
+            "root = etree.fromstring(xml_payload, parser)\n"
+        )
+        findings = self.findings("parser.py", source)
+        self.assertNotIn("SP115", [f.rule_id for f in findings])
+
+    def test_lxml_alias_import_evades_detection(self):
+        # Known limitation: resolving `import ... as` aliases needs import tracking.
+        source = "from lxml import etree as ET\nroot = ET.fromstring(xml_payload)\n"
+        findings = self.findings("parser.py", source)
+        self.assertNotIn("SP115", [f.rule_id for f in findings])
+
+    def test_dynamic_dangerously_set_inner_html_is_flagged(self):
+        source = "const el = { dangerously" + "SetInnerHTML: { __html: userBio } };\n"
+        findings = self.findings("profile.jsx", source)
+        self.assertIn("SP116", [f.rule_id for f in findings])
+
+    def test_static_dangerously_set_inner_html_is_not_flagged(self):
+        source = 'const el = { dangerouslySetInnerHTML: { __html: "<b>ok</b>" } };\n'
+        findings = self.findings("profile.jsx", source)
+        self.assertNotIn("SP116", [f.rule_id for f in findings])
+
+    def test_sanitized_wrapper_still_flagged_for_review(self):
+        source = "const el = { dangerouslySetInnerHTML: { __html: sanitize(userBio) } };\n"
+        findings = self.findings("profile.jsx", source)
+        self.assertIn("SP116", [f.rule_id for f in findings])
+
+    def test_new_function_is_flagged(self):
+        source = "const fn = new " + "Function('return 1')\n"
+        findings = self.findings("plugin.js", source)
+        self.assertIn("SP117", [f.rule_id for f in findings])
+
+    def test_new_function_alias_evades_detection(self):
+        # Known limitation: `const F = Function; F(...)` needs call-graph analysis.
+        source = "const F = Function;\nconst fn = F('return 1');\n"
+        findings = self.findings("plugin.js", source)
+        self.assertNotIn("SP117", [f.rule_id for f in findings])
+
+    def test_timer_string_is_flagged(self):
+        source = "set" + 'Timeout("refresh()", 500);\n'
+        findings = self.findings("widget.js", source)
+        self.assertIn("SP118", [f.rule_id for f in findings])
+
+    def test_timer_function_callback_is_not_flagged(self):
+        source = "setTimeout(refresh, 500);\n"
+        findings = self.findings("widget.js", source)
+        self.assertNotIn("SP118", [f.rule_id for f in findings])
+
+    def test_path_join_from_request_is_flagged(self):
+        source = "const full = path" + ".join(uploadDir, re" + "q.params.filename);\n"
+        findings = self.findings("files.js", source)
+        self.assertIn("SP119", [f.rule_id for f in findings])
+
+    def test_path_join_from_config_is_not_flagged(self):
+        source = "const full = path.join(uploadDir, config.defaultName);\n"
+        findings = self.findings("files.js", source)
+        self.assertNotIn("SP119", [f.rule_id for f in findings])
+
+    def test_multiline_path_join_evades_detection(self):
+        # Known limitation: request data flows in on the next line; needs data flow.
+        source = (
+            "const parts = req.params.name.split('/');\n"
+            "const full = path.join(uploadDir,\n"
+            "  ...parts);\n"
+        )
+        findings = self.findings("files.js", source)
+        self.assertNotIn("SP119", [f.rule_id for f in findings])
+
+    def test_node_serialize_unserialize_is_flagged(self):
+        source = (
+            "const ser = require('node-"
+            + "serialize');\n"
+            + "const obj = ser.unseri"
+            + "alize(payload);\n"
+        )
+        findings = self.findings("legacy.js", source)
+        self.assertIn("SP120", [f.rule_id for f in findings])
+
+    def test_json_parse_is_not_flagged_as_deserialization(self):
+        source = "const obj = JSON.parse(payload);\n"
+        findings = self.findings("legacy.js", source)
+        self.assertNotIn("SP120", [f.rule_id for f in findings])
+
+    def test_dynamic_require_of_node_serialize_evades_detection(self):
+        # Known limitation: computed require expressions need constant analysis.
+        source = "const ser = require('node-' + 'serialize');\n"
+        findings = self.findings("legacy.js", source)
+        self.assertNotIn("SP120", [f.rule_id for f in findings])
+
+    def test_redirect_from_request_is_flagged(self):
+        js = "res.redi" + "rect(re" + "q.query.next);\n"
+        py = "return redi" + "rect(request.args.get('next'))\n"
+        self.assertIn("SP121", [f.rule_id for f in self.findings("auth.js", js)])
+        self.assertIn("SP121", [f.rule_id for f in self.findings("auth.py", py)])
+
+    def test_static_redirect_is_not_flagged(self):
+        source = 'res.redirect("/dashboard");\n'
+        findings = self.findings("auth.js", source)
+        self.assertNotIn("SP121", [f.rule_id for f in findings])
+
+    def test_indirect_redirect_target_evades_detection(self):
+        # Known limitation: the request value is assigned on an earlier line.
+        source = "const target = req.query.next;\nres.redirect(target);\n"
+        findings = self.findings("auth.js", source)
+        self.assertNotIn("SP121", [f.rule_id for f in findings])
+
+    def test_security_value_from_insecure_randomness_is_flagged(self):
+        js = "const apiToken = Math" + ".random().toString(36);\n"
+        py = "session_token = random" + ".random()\n"
+        self.assertIn("SP122", [f.rule_id for f in self.findings("token.js", js)])
+        self.assertIn("SP122", [f.rule_id for f in self.findings("token.py", py)])
+
+    def test_security_value_from_secrets_module_is_not_flagged(self):
+        source = "session_token = secrets.token_hex(32)\n"
+        findings = self.findings("token.py", source)
+        self.assertNotIn("SP122", [f.rule_id for f in findings])
+
+    def test_randomness_behind_helper_evades_detection(self):
+        # Known limitation: the security-named variable never shares a line with
+        # the PRNG call; needs data flow.
+        source = (
+            "const t = makeToken();\nfunction makeToken() { return Math.random().toString(36); }\n"
+        )
+        findings = self.findings("token.js", source)
+        self.assertNotIn("SP122", [f.rule_id for f in findings])
+
+    def test_hardcoded_cipher_iv_is_flagged(self):
+        js = "const cipher = crypto.createCipher" + "iv('aes-256-cbc', key, '1234567890123456');\n"
+        py = "cipher = AES" + ".new(key, AES.MODE_CBC, iv=b'1234567890123456')\n"
+        self.assertIn("SP123", [f.rule_id for f in self.findings("vault.js", js)])
+        self.assertIn("SP123", [f.rule_id for f in self.findings("vault.py", py)])
+
+    def test_random_cipher_iv_is_not_flagged(self):
+        source = (
+            "const iv = crypto.randomBytes(16);\n"
+            "const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);\n"
+        )
+        findings = self.findings("vault.js", source)
+        self.assertNotIn("SP123", [f.rule_id for f in findings])
+
+    def test_iv_from_constant_evades_detection(self):
+        # Known limitation: the literal moved into a constant; needs constant tracking.
+        source = (
+            "const FIXED_IV = '1234567890123456';\n"
+            "const cipher = crypto.createCipheriv('aes-256-cbc', key, FIXED_IV);\n"
+        )
+        findings = self.findings("vault.js", source)
+        self.assertNotIn("SP123", [f.rule_id for f in findings])
+
+    def test_fetch_of_request_url_is_flagged(self):
+        source = "const response = await fe" + "tch(`https://${re" + "q.query.host}/api`);\n"
+        findings = self.findings("proxy.js", source)
+        self.assertIn("SP124", [f.rule_id for f in findings])
+
+    def test_fetch_of_configured_url_is_not_flagged(self):
+        source = 'const response = await fetch(config.apiUrl + "/health");\n'
+        findings = self.findings("proxy.js", source)
+        self.assertNotIn("SP124", [f.rule_id for f in findings])
+
+    def test_indirect_fetch_url_evades_detection(self):
+        # Known limitation: the URL is assigned on an earlier line.
+        source = "const target = req.query.url;\nconst response = await fetch(target);\n"
+        findings = self.findings("proxy.js", source)
+        self.assertNotIn("SP124", [f.rule_id for f in findings])
+
+    def test_unbounded_tenacity_retry_is_flagged(self):
+        source = (
+            "from tenacity import retry, wait_fixed\n"
+            "\n"
+            "@retry(wait=wait_fixed(1))\n"
+            "def call_upstream(): ...\n"
+        )
+        findings = self.findings("client.py", source)
+        self.assertIn("SP318", [f.rule_id for f in findings])
+
+    def test_bounded_tenacity_retry_is_not_flagged(self):
+        source = (
+            "from tenacity import retry, stop_after_attempt\n"
+            "\n"
+            "@retry(stop=stop_after_attempt(3))\n"
+            "def call_upstream(): ...\n"
+        )
+        findings = self.findings("client.py", source)
+        self.assertNotIn("SP318", [f.rule_id for f in findings])
+
+    def test_infinite_js_retries_are_flagged(self):
+        source = "axiosRetry(axios, { retries: " + "Infinity });\n"
+        findings = self.findings("client.js", source)
+        self.assertIn("SP318", [f.rule_id for f in findings])
+
+    def test_manual_infinite_retry_loop_evades_detection(self):
+        # Known limitation: hand-rolled while-true retry needs loop analysis.
+        source = "while (true) {\n  try { return doCall(); } catch (e) { await sleep(10); }\n}\n"
+        findings = self.findings("client.js", source)
+        self.assertNotIn("SP318", [f.rule_id for f in findings])
 
 
 if __name__ == "__main__":

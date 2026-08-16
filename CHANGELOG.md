@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+- Add eleven CWE-driven detectors with positive, negative, and adversarial tests each: `SP115` (XXE via unhardened lxml), `SP116` (`dangerouslySetInnerHTML` XSS), `SP117` (`new Function` eval), `SP118` (timer-string eval), `SP119` (path traversal via `path.join`), `SP120` (`node-serialize` RCE), `SP121` (open redirect), `SP122` (insecure randomness for security values), `SP123` (hardcoded cipher IV), `SP124` (JS SSRF), and `SP318` (retry policies without a stop condition). Adversarial cases document the evasions the current engine cannot see, seeding the Red Team corpus.
+- Add evidence proof levels: every finding now reports `detection` (`pattern`, `ast`, `structural`, `artifact`) and `proof_level` (`L0`/`L1`) in JSON and SARIF, with documentation that higher levels requiring data-flow or runtime evidence are deliberately not claimed.
+- Add the launch article draft (`docs/launch/ai-code-failure-modes.md`) mapping the shipped rule catalog to the failure modes of AI-written code.
+- Add diff-aware scanning: `shipproof scan . --changed-since <git-ref>` limits the scan to files changed relative to a git ref (added, copied, modified, renamed, plus untracked files), fails closed outside a git repository or on unsafe/unresolvable refs, and records the ref under `changed_since` in JSON output. The GitHub Action exposes it as a `changed-since` input for pull-request runs.
+- Make the bare `shipproof` invocation equivalent to `shipproof scan` so the core workflow is a single word.
+- Add `AGENTS.md` and `llms.txt` so coding agents and LLM clients can discover and use ShipProof correctly.
+- Fix `shipproof hook install` crashing on a missing `writeFileSync` import; the command now writes a marked, idempotent pre-commit hook, refuses to overwrite foreign hooks, and `hook remove` deletes only shipproof-managed hooks.
+- Implement detector rules `SP402` (authentication-sensitive Express route without rate limiting), `SP407` (cookie-session routes without CSRF protection), and `SP408` (Next.js/Nuxt config without a `Content-Security-Policy` header), each with positive and negative tests; `shipproof explain` now resolves all three.
+- Add the golden compatibility contract: `fixtures/golden-contract` must produce identical findings and fingerprints through direct Python, the Node CLI, and the SARIF builder, with SARIF result content (level, location, fingerprint) now asserted.
+- Add a k6 generation determinism gate: identical inputs must produce byte-identical scripts that pass a syntax check and contain no embedded host or credential.
+- Add a packed-artifact smoke test (`npm run test:package`) that installs the real npm tarball into a clean consumer project and runs version, scan, explain, and skill checks from the installed tree; CI runs it on Node 24 and the release workflow runs it before publishing.
+- Maintain a moving major tag (`v0`) on every release with an annotation that it is an alias, not a stability contract, and document the tag discipline.
+- Expand the Node coverage gate to `lib/cli.mjs` (85%) and `lib/evidence.mjs` (71%), with new MCP bridge tests covering evidence envelopes and cancelled tool calls.
+- Sync the README rule tables with scanner severities (including `SP302` and seven Thai-table drifts) and add a structure test that fails when either README drifts from the code rules again.
+- Fix the zero-config quickstart: `npx @kingggg5/shipproof` cannot run anonymously because GitHub Packages requires authentication for public packages; the documented one-liner is now `npx github:kingggg5/shipproof check`.
+- Document reserved rule IDs (`SP111`, `SP308`–`SP312`) in both READMEs and correct the roadmap MCP tool count from three to five.
+
 ## 0.5.1 - 2026-08-16
 
 - Release `kingggg5/shipproof@v0.5.1` GitHub Action with immutable runner references.

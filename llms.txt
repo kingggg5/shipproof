@@ -1,0 +1,36 @@
+# ShipProof
+
+> ShipProof is a free, MIT-licensed production gate for AI-written code. It statically scans repositories for security, correctness, and scale defects common in AI-generated code, checks measured CPU/RAM/latency budgets, models capacity assumptions, and generates deterministic k6 load tests. Zero runtime dependencies; local and offline by default.
+
+## Quickstart
+
+- Quickstart (zero-config): `npx github:kingggg5/shipproof check` — works without registry credentials.
+- Install globally: `npm install --global github:kingggg5/shipproof`
+- Scan a repository: `shipproof scan . --fail-on high` — exit 0 pass, 1 blocked, 2 invalid evidence.
+- Scan only changed files: `shipproof scan . --changed-since origin/main`
+- Explain a finding: `shipproof explain SP108` — threat scenario, false positives, regression test guidance.
+
+## What it detects
+
+- 55 deterministic rules (SP001–SP503) across secrets, injection, authorization, SSRF, path traversal, XXE, XSS, ReDoS, unsafe deserialization, open redirect, insecure randomness, hardcoded IVs, retry storms, supply chain, unbounded queries/pagination/concurrency, missing timeouts, blocking async calls, framework misconfiguration (Express, Next.js, Django, Supabase), and unmetered AI/LLM routes. Every finding carries a proof level (L0 pattern, L1 structural/AST).
+- Full rule table with severities: [README.md](README.md) (English) or [README.th.md](README.th.md) (Thai).
+
+## Outputs and integrations
+
+- Terminal, Markdown, JSON, and SARIF 2.1.0 output with stable fingerprints and reviewed baselines.
+- GitHub Action (`kingggg5/shipproof`), pre-commit hook, optional read-only MCP server (`shipproof mcp`), Codex/Claude skills (`shipproof init .`).
+
+## Key facts for agents
+
+- The scan never executes project code. Capacity arithmetic is a hypothesis model, not a load test; replace sample values with measured data.
+- Layer with mature tools instead of replacing them: CodeQL/Semgrep for data flow, OSV-Scanner/Trivy for dependencies, Gitleaks for secret history, k6 for load.
+- Development guide for coding agents: [AGENTS.md](AGENTS.md). Contribution rules: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Docs
+
+- [README.md](README.md): full product documentation (English)
+- [README.th.md](README.th.md): full product documentation (Thai)
+- [docs/commands.md](docs/commands.md): CLI commands and exit codes
+- [docs/production-playbook.md](docs/production-playbook.md): first-party operating model
+- [docs/roadmap.md](docs/roadmap.md): delivery roadmap and acceptance gates
+- [docs/releasing.md](docs/releasing.md): release and tag discipline
