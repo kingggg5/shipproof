@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1 - 2026-08-16
+
+- Release `kingggg5/shipproof@v0.5.1` GitHub Action with immutable runner references.
+- Configure official `@kingggg5/shipproof` npm package distribution on GitHub Packages.
+
 ## 0.5.0 - 2026-08-16
 
 - Expand framework-aware detection across 30+ ecosystems spanning JS/TS, Python, Go, Rust, PHP, Ruby, JVM, and Containers.

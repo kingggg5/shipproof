@@ -13,7 +13,7 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
-VERSION = "0.5.0"
+VERSION = "0.5.1"
 K6_METHODS = frozenset({"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"})
 ENVIRONMENT_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
 ROUTE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
