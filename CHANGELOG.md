@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 - 2026-08-16
+
+- Expand framework-aware detection across 30+ ecosystems spanning JS/TS, Python, Go, Rust, PHP, Ruby, JVM, and Containers.
+- Add deep-dive production defense rules: `SP113` (PHP unserialize), `SP114` (ReDoS nested quantifiers), `SP314` (Committed SQLite file), `SP315` (Go HTTP request body close leak), `SP316` (Outbound HTTP inside database transaction), `SP317` (Blocking calls inside async def).
+- Add full Detection Rules Reference table with zero emoji formatting.
+- Add GitHub Packages registry publishing support for `@kingggg5/shipproof`.
+- Update all GitHub Action workflows with verified immutable commit SHAs.
+
 ## 0.4.0 - 2026-08-14
 
 - Prepare version 0.4.0 with versioned config/evidence schemas and aligned scan, budget, and capacity envelopes.

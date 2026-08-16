@@ -4,9 +4,11 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
 
 permissions:
   contents: write
+  packages: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -17,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout the tagged source
+      - name: Checkout the source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
@@ -31,6 +33,8 @@ jobs:
         with:
           node-version: "24"
           cache: npm
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@kingggg5"
       - name: Install development tools
         run: |
           python -m pip install --disable-pip-version-check -r requirements-dev.txt
@@ -44,7 +48,12 @@ jobs:
         run: |
           mkdir release-artifacts
           npm pack --pack-destination release-artifacts
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish
       - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
           SHIPPROOF_PRERELEASE: ${{ steps.release.outputs.prerelease }}

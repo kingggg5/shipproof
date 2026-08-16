@@ -16,7 +16,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 
 SEVERITY = {"none": 99, "critical": 0, "high": 1, "medium": 2, "low": 3}
 CONFIDENCE = {"high": 0, "medium": 1, "low": 2}

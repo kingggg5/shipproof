@@ -10,7 +10,7 @@ Works with **Codex**, **Claude Code**, **Cursor**, **Gemini**, **Grok**, local t
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Public beta](https://img.shields.io/badge/public_beta-v0.4.0-2563eb)](CHANGELOG.md)
+[![Public beta](https://img.shields.io/badge/public_beta-v0.5.0-2563eb)](CHANGELOG.md)
 [![Coverage gates](https://img.shields.io/badge/coverage-Python_80%25_%7C_Node_core_70%25-0f766e)](.github/workflows/ci.yml)
 [![Codex](https://img.shields.io/badge/Codex-skill%20%2B%20plugin-111827)](https://learn.chatgpt.com/docs/build-skills)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20%2B%20plugin-D97757)](https://code.claude.com/docs/en/skills)
@@ -217,12 +217,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.4.0
+      - uses: kingggg5/shipproof@v0.5.0
         with:
           fail-on: high
 ```
 
-The action automatically writes a structured Markdown status card to the GitHub Step Summary. `v0.4.0` is the public-beta contract. Pin ShipProof to the release commit SHA when immutable supply-chain references are required.
+The action automatically writes a structured Markdown status card to the GitHub Step Summary. `v0.5.0` is the public-beta contract. Pin ShipProof to the release commit SHA when immutable supply-chain references are required.
 
 ## One Policy, One Command
 
