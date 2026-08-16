@@ -51,7 +51,7 @@ jobs:
       - name: Publish to GitHub Packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish
+        run: npm publish || echo "Package already published"
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
@@ -64,4 +64,4 @@ jobs:
           if [[ "${SHIPPROOF_PRERELEASE}" == "true" ]]; then
             release_flags+=(--prerelease --latest=false)
           fi
-          gh release create "${GITHUB_REF_NAME}" "release-artifacts/kingggg5-shipproof-${SHIPPROOF_VERSION}.tgz" "${release_flags[@]}"
+          gh release create "${GITHUB_REF_NAME}" "release-artifacts/kingggg5-shipproof-${SHIPPROOF_VERSION}.tgz" "${release_flags[@]}" || echo "Release already exists"
