@@ -4,7 +4,7 @@
 
 Security · Correctness · Scale · Performance · Production readiness
 
-Works with **Codex**, **Claude Code**, local terminals, pre-commit, and GitHub Actions.
+Works with **Codex**, **Claude Code**, **Cursor**, **Gemini**, **Grok**, local terminals, pre-commit, and GitHub Actions.
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
@@ -14,9 +14,9 @@ Works with **Codex**, **Claude Code**, local terminals, pre-commit, and GitHub A
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20%2B%20plugin-D97757)](https://code.claude.com/docs/en/skills)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-ShipProof is a small production gate for AI-assisted repositories. It scans code without executing it, checks measured CPU/RAM/latency budgets, models reviewed capacity assumptions, and gives coding agents focused engineering instructions. Results are available as terminal output, JSON, SARIF, pre-commit, GitHub Actions, or an optional read-only MCP adapter.
+ShipProof is a production gate for AI-assisted repositories. It scans code without executing it, checks measured CPU/RAM/latency budgets, models reviewed capacity assumptions, and gives coding agents focused engineering instructions. Results are available as terminal output, JSON, SARIF, pre-commit, GitHub Actions, or an optional read-only MCP adapter.
 
-It does **not** promise “perfect,” “unhackable,” “maximum performance,” or “one million users” from a static scan. It makes assumptions visible, verifies what can be verified, and preserves human authority for consequential actions and releases.
+It does **not** promise "perfect," "unhackable," "maximum performance," or "one million users" from a static scan. It makes assumptions visible, verifies what can be verified, and preserves human authority for consequential actions and releases.
 
 ![ShipProof terminal demo](docs/assets/terminal-demo.svg)
 
@@ -35,7 +35,15 @@ shipproof scan examples/demo-api/fixtures/after --fail-on high
 
 The test suite verifies the exact before/after contract. Additional [Node.js, Python, secure, and performance fixtures](fixtures/README.md) guard against missed findings and obvious false positives.
 
-## Start in one minute
+## Quickstart (Zero-Config)
+
+Run directly in any repository without creating a configuration file first:
+
+```bash
+npx @kingggg5/shipproof check
+```
+
+Or install globally:
 
 ```bash
 npm install --global github:kingggg5/shipproof
@@ -48,7 +56,95 @@ shipproof check .
 
 Node.js 20+ runs the front-door CLI. Python 3.10+ is needed for `scan`, `check`, `budget`, `capacity`, and the MCP tools. The core has no runtime npm or Python package dependencies.
 
+## Code-Review Terminal Output
+
+ShipProof formats findings as actionable review cards with source context, confidence levels, why the risk matters, and recommended fixes:
+
+```text
+  [BLOCK] ShipProof: BLOCK
+  Scanned 24 files | 1 blocking issue | 0 suppressed
+  HIGH: 1
+
+  [HIGH] Sensitive route lacks visible authorization (SP108)
+     src/routes/admin.py:42  |  confidence: LIKELY
+
+     Evidence:
+       40   
+       41   @app.post("/admin/users/{user_id}/ban")
+       42 > def ban_user(user_id: str):
+       43       return db.ban(user_id)
+
+     Why: An admin or internal route has no visible authorization dependency.
+     Fix: Require an explicit authorization dependency or verify application-wide control.
+     Ref: CWE-862 | OWASP ASVS V4
+
+  ----------------------------------------------------------------------
+
+  -> Run `shipproof scan --fix-prompt` to generate AI-ready fix instructions
+  -> Run `shipproof explain SP108` for attack scenarios and testing guidance
+```
+
+## The Closed-Loop AI Workflow
+
+ShipProof turns development into a verified feedback loop: AI writes code, ShipProof finds risks, AI fixes with explicit constraints, and ShipProof re-verifies.
+
+```mermaid
+flowchart LR
+    A["AI writes code"] --> B["ShipProof finds risks"]
+    B --> C["shipproof scan --fix-prompt"]
+    C --> D["AI fixes code + regression tests"]
+    D --> E["ShipProof verifies evidence"]
+```
+
+### Generate Prompts for AI Handoff
+
+```bash
+shipproof scan --fix-prompt
+```
+
+Outputs structured instructions with code context, constraints, and test requirements ready for **Codex**, **Claude Code**, **Cursor**, **Gemini**, **Grok**, or **Copilot**:
+
+```text
+Fix SP108 in src/routes/admin.py (line 42).
+Problem: An admin route has no visible authorization dependency.
+Required fix: Add Depends(require_admin) to route dependencies.
+Constraints:
+- Do not change the public API contract
+- Add a regression test verifying non-admin returns 403
+- Reference: CWE-862, OWASP ASVS V4
+```
+
+### Interactive Rule Explanations
+
+Inspect why a rule exists, the threat scenario, common false positives, and how to write a regression test:
+
+```bash
+shipproof explain SP108
+```
+
+## Framework-Aware Detection
+
+ShipProof automatically detects project frameworks and applies domain-specific rules:
+
+| Framework | Detection Source | Reviewed Checks |
+| :--- | :--- | :--- |
+| **Next.js** | `package.json` (`next`) | Secrets in `NEXT_PUBLIC_` env vars (`SP403`), missing CSP headers |
+| **Express / Fastify** | `package.json` (`express`, `fastify`) | Missing `helmet` security middleware (`SP401`), raw error leaks to client (`SP406`), unthrottled endpoints |
+| **FastAPI** | `requirements.txt`, `pyproject.toml` | Unprotected admin routes (`SP108`), unpaginated queries (`SP305`), blocking async sleep (`SP303`), unbounded HTTP timeouts (`SP304`) |
+| **Django** | `requirements.txt`, `pyproject.toml` | Hardcoded `SECRET_KEY` (`SP404`), wildcard `ALLOWED_HOSTS` (`SP405`), interpolated SQL queries (`SP103`) |
+| **Containers & CI** | `Dockerfile`, `.github/workflows` | Floating container base images (`SP202`), unpinned GitHub Actions (`SP203`) |
+
+## False Positive Control
+
+ShipProof prioritizes high precision over noisy alerts:
+
+- **Inline suppression:** Add `# shipproof-ignore SP101` or `// shipproof-ignore SP101` directly on the line or on the line immediately preceding it.
+- **Confidence filtering:** Run with `--min-confidence high` to surface only confirmed, high-confidence issues.
+- **Reviewed baselines:** Record existing technical debt into `.shipproof-baseline.json` using `shipproof scan --baseline-out .shipproof-baseline.json`.
+
 ## Add the GitHub Action
+
+Add a deterministic gate to pull requests:
 
 ```yaml
 name: ShipProof
@@ -59,15 +155,15 @@ jobs:
   production-gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
       - uses: kingggg5/shipproof@v0.4.0
         with:
           fail-on: high
 ```
 
-`v0.4.0` is the public-beta contract. Pin ShipProof to the release commit SHA when immutable supply-chain references are required. The project will not publish a misleading `@v1` alias until the stable CLI compatibility guarantee exists.
+The action automatically writes a structured Markdown status card to the GitHub Step Summary. `v0.4.0` is the public-beta contract. Pin ShipProof to the release commit SHA when immutable supply-chain references are required.
 
-## One policy, one command
+## One Policy, One Command
 
 Commit a bounded [`.shipproof.yml`](.shipproof.yml), then run every declared repository gate:
 
@@ -93,10 +189,10 @@ shipproof check .
 
 The dependency-free YAML subset rejects executable tags, anchors, duplicate keys, unknown fields, path traversal, and arbitrary commands. The full shape is documented by the [policy schema](schemas/shipproof-policy.schema.json).
 
-## Two modes, one workflow
+## Two Modes, One Workflow
 
 | Skill | Use it for | Outcome |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | `engineer-production-systems` | Design, implementation, refactoring, hardening, performance, data, AI/MCP, and authorized defensive systems work | Small, bounded, testable production code with explicit assumptions |
 | `audit-production-readiness` | Deep review, vulnerability triage, incidents, release gates, and 10k-to-1M-user planning | Independent Security, Correctness, Data & Privacy, Scale, Operability, and Supply Chain gates |
 
@@ -113,7 +209,7 @@ flowchart LR
     G -->|"verified"| J["Release"]
 ```
 
-## What it tells the AI to do
+## What It Tells the AI to Do
 
 - Read the real architecture and trace the affected path before changing code.
 - Define authorization, tenancy, correctness, workload, latency, CPU, memory, and recovery constraints.
@@ -123,24 +219,24 @@ flowchart LR
 - Treat static and AI findings as leads until a path, reproducer, sanitizer failure, or focused test confirms them.
 - Keep dangerous actions human-approved and never upload private code or run active tests without authorization.
 
-Progressive references cover production architecture, full-stack boundaries, database invariants and migrations, AI/RAG/MCP security, software supply chains, operability and incident response, performance, low-level systems, and authorized defensive reverse engineering. The agent loads only the relevant discipline instead of carrying one giant prompt.
+Progressive references cover production architecture, full-stack boundaries, database invariants and migrations, AI/RAG/MCP security, software supply chains, operability and incident response, performance, low-level systems, and authorized defensive reverse engineering.
 
-The [ShipProof production engineering playbook](docs/production-playbook.md) is the owner-authored map across those disciplines: eight control planes, one decision doctrine, and a compact release record. It keeps ShipProof's reasoning in the foreground while the focused references provide execution detail.
+The [ShipProof production engineering playbook](docs/production-playbook.md) is the owner-authored map across those disciplines: eight control planes, one decision doctrine, and a compact release record.
 
-## Systems coverage
+## Systems Coverage
 
 ShipProof routes high-risk code to a stricter evidence ladder:
 
 | Target | Review focus | Recommended evidence when authorized |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | Kernel and drivers | User/kernel boundaries, lifetime/refcounts, copy-to/from-user, ioctl/netlink, locks/RCU, teardown races | KASAN, KMSAN, KCSAN, UBSAN, syzkaller, minimized reproducers |
 | Browser engines | GC/refcount boundaries, parsers/codecs, JIT, IPC, sandbox/origin identity, re-entrancy | ASan, UBSan, MSan, coverage-guided fuzzing, regression corpora |
 | Network protocols | Framing, integer/length checks, explicit state machines, negotiation, replay, fragmentation, amplification | Structure-aware fuzzing, protocol corpora/dictionaries, fault and sequence tests |
 | Services and apps | Authn/authz, tenancy, transactions, retries, idempotency, timeouts, queues, dependency budgets | Unit/integration tests, SAST/SCA, load/soak tests, traces and resource profiles |
 
-The bundled scanner stays deliberately conservative. Deep memory-safety and protocol findings need compiler instrumentation, sanitizers, fuzzers, and target-specific reasoning—not misleading regex matches.
+The bundled scanner stays deliberately conservative. Deep memory-safety and protocol findings need compiler instrumentation, sanitizers, fuzzers, and target-specific reasoning rather than misleading regex matches.
 
-## Codex and Claude compatibility
+## Codex and Claude Compatibility
 
 Both hosts use the open `SKILL.md` structure, so ShipProof keeps one source of truth.
 
@@ -149,34 +245,27 @@ Both hosts use the open `SKILL.md` structure, so ShipProof keeps one source of t
 | Codex | `skills/*/SKILL.md` + optional `agents/openai.yaml` | `.codex-plugin/plugin.json` | `~/.agents/skills` or `<repo>/.agents/skills` |
 | Claude Code | `skills/*/SKILL.md` | `.claude-plugin/plugin.json` | `~/.claude/skills` |
 
-## One front door
+## Command Reference
 
 ```text
-shipproof doctor [path] [--json]
-shipproof init [path] [--target codex|claude|both] [--force]
-shipproof install [--target codex|claude|both] [--force]
-shipproof prompt <build|audit|threat-model|database|performance|systems|incident|ai-agent|loop>
-shipproof scan [path] [--format markdown|json|sarif] [--fail-on high]
-shipproof check [path] [--config .shipproof.yml] [--format markdown|json]
-shipproof budget --baseline baseline.json --current current.json --budget budget.json
-shipproof capacity --users 1000000 [workload assumptions]
-shipproof capacity --config shipproof.config.json --export-k6 load-test.js
-shipproof evidence . --list --format json
-shipproof mcp
+shipproof check [path] [--config <file>]     Run every gate (works without config)
+shipproof scan [path] [options]              Scan repository (--format terminal|json|sarif)
+shipproof explain <rule-id>                  Explain a rule in detail (e.g. explain SP108)
+shipproof doctor [path] [--json]             Inspect local runtime and integration health
+shipproof init [path] [--target <host>]      Add project skills (.agents/.claude)
+shipproof install [--target <host>]          Add personal skills for Codex/Claude
+shipproof prompt <name|list>                 Print a focused production engineering prompt
+shipproof budget [budget options]            Enforce CPU/RAM/latency regression budgets
+shipproof capacity [capacity options]        Model capacity and export to k6 load tests
+shipproof evidence [path] [options]          Run allowlisted TypeScript, Go, or Rust analyzers
+shipproof mcp                                Start the read-only stdio MCP server
+shipproof help                               Show command help
+shipproof version                            Print current version
 ```
 
-- `doctor` is read-only and checks runtimes, source control, CI, lockfiles, security policy, and skill integration.
-- `init` installs project skills; `install` installs personal skills.
-- `prompt` prints a focused versioned prompt without network calls.
-- `scan`, `check`, `budget`, and `capacity` safely route to fixed Python implementations with shell interpretation disabled.
-- `evidence` runs only fixed TypeScript, Go, or Rust analyzer commands; Rust requires explicit project-code approval because Cargo build scripts can execute.
-- `mcp` exposes only read-only scan, budget, and capacity tools over local stdio.
+See [docs/commands.md](docs/commands.md) for full argument options and exit codes.
 
-See [the command reference](docs/commands.md) for options and exit codes.
-
-## Install from a clone
-
-Install from a clone:
+## Install from a Clone
 
 ```bash
 git clone https://github.com/kingggg5/shipproof.git
@@ -205,9 +294,9 @@ claude --plugin-dir .
 
 Plugin-installed Claude skills use the namespaced commands `/shipproof:engineer-production-systems` and `/shipproof:audit-production-readiness`.
 
-## Reproducible resource budgets
+## Reproducible Resource Budgets
 
-Benchmarks remain owned by your project. ShipProof only evaluates their numeric outputs, which keeps CI local, fast, and provider-independent.
+Benchmarks remain owned by your project. ShipProof evaluates numeric outputs to keep CI local, fast, and provider-independent.
 
 `perf-baseline.json`:
 
@@ -231,7 +320,7 @@ Benchmarks remain owned by your project. ShipProof only evaluates their numeric 
 Run the gate:
 
 ```bash
-python skills/engineer-production-systems/scripts/check_budget.py \
+shipproof budget \
   --baseline perf-baseline.json --current perf-current.json \
   --budget perf-budget.json --format markdown
 ```
@@ -240,34 +329,32 @@ Runnable sample files live in [`examples/performance`](examples/performance).
 
 Exit codes are `0` for pass, `1` for a measured budget failure, and `2` for missing or invalid evidence.
 
-## Audit and capacity tools
+## Audit and Capacity Tools
 
-Fast local scan with Markdown, JSON, or SARIF 2.1.0 output:
+Fast local scan with Terminal, Markdown, JSON, or SARIF 2.1.0 output:
 
 ```bash
-python skills/audit-production-readiness/scripts/scan_repo.py . \
-  --format sarif --output shipproof.sarif --fail-on high
+shipproof scan . --format sarif --output shipproof.sarif --fail-on high
 ```
 
 Create a reviewed fingerprint baseline for accepted debt:
 
 ```bash
-python skills/audit-production-readiness/scripts/scan_repo.py . \
-  --format json --baseline-out .shipproof-baseline.json --fail-on none
+shipproof scan . --format json --baseline-out .shipproof-baseline.json --fail-on none
 ```
 
 Turn one million registered users into a transparent workload hypothesis, including CPU and memory assumptions:
 
 ```bash
-python skills/audit-production-readiness/scripts/capacity_model.py \
+shipproof capacity \
   --users 1000000 --dau-ratio 0.25 --peak-hour-ratio 0.20 \
   --actions-per-session 12 --requests-per-action 2 --instance-rps 250 \
   --cpu-ms-per-request 5 --memory-mb-per-instance 512 --format markdown
 ```
 
-Replace every sample value with analytics and a production-shaped benchmark. Registered users are not concurrent users, and capacity arithmetic is not a load test.
+Replace sample values with analytics and production-shaped benchmarks. Registered users are not concurrent users, and capacity arithmetic is not a load test.
 
-Generate a deterministic k6 starting point from the reviewed config:
+Generate a deterministic k6 starting point from reviewed config:
 
 ```bash
 shipproof capacity --config examples/capacity/shipproof.config.json \
@@ -277,30 +364,9 @@ BASE_URL=https://staging.example.test LOAD_TEST_TOKEN=replace-me k6 run load-tes
 
 The generated file contains no hostname or credential. Running it is a separate, authorized action; review the rate, routes, target environment, and thresholds first.
 
-## Pull-request and pre-commit gates
+## Local MCP and Language Evidence
 
-Use the composite action from the checked-out repository while developing this release:
-
-```yaml
-permissions:
-  contents: read
-steps:
-  - uses: actions/checkout@v4
-  - uses: ./
-    with:
-      path: .
-      format: sarif
-      output: shipproof.sarif
-      fail-on: high
-```
-
-The action writes a report but does not upload it or request `security-events: write`; the caller owns that permission and upload step. External users should pin a published full commit SHA or reviewed major tag, not a moving branch.
-
-For local commits, add this repository to `.pre-commit-config.yaml` and select the `shipproof-scan` hook. Pin `rev` to a reviewed commit SHA.
-
-## Local MCP and language evidence
-
-Install the optional MCP peers beside ShipProof, then point an MCP client at `shipproof mcp`:
+Install optional MCP peers beside ShipProof, then point an MCP client at `shipproof mcp`:
 
 ```bash
 npm install --save-dev github:kingggg5/shipproof @modelcontextprotocol/sdk@1.29.0 zod@3.25.76
@@ -320,7 +386,7 @@ shipproof evidence . --adapter rust --allow-project-code --format json
 
 Dependency downloads are disabled for Go and Rust adapters. TypeScript must exist in the repository. The Rust opt-in is deliberate because `cargo clippy` can execute project-controlled `build.rs` code.
 
-## Layer with mature tools
+## Layer with Mature Tools
 
 ShipProof routes the agent to tools already present in the environment and never silently installs them:
 
@@ -332,9 +398,9 @@ ShipProof routes the agent to tools already present in the environment and never
 - LLVM libFuzzer, OSS-Fuzz, or syzkaller for authorized target-specific fuzzing.
 - Grafana k6 or the project's existing harness for SLO-driven load testing.
 
-## ShipProof design and research trail
+## ShipProof Design and Research Trail
 
-ShipProof is independently implemented. Its public guidance is written as ShipProof decisions—each tied to an invariant, evidence, and a limitation—not as a collage of external checklists.
+ShipProof is independently implemented. Its guidance is written as ShipProof decisions—each tied to an invariant, evidence, and a limitation—not as a collage of external checklists.
 
 - Read the [production playbook](docs/production-playbook.md) for the first-party operating model.
 - Read the [research notebook](docs/research.md) only when you need to trace which primary pages were opened, what question they answered, what ShipProof retained, and what it deliberately did not claim.
@@ -343,9 +409,9 @@ External links are concentrated in the notebook so the README and skill instruct
 
 ShipProof deliberately avoids a single readiness score because one critical defect must not be averaged away by many clean files.
 
-## AWE TraceGate engineering loop and roadmap
+## AWE TraceGate Engineering Loop and Roadmap
 
-AWE TraceGate should orchestrate the loop; ShipProof should remain the reusable evidence engine. This keeps loop state, budgets, approvals, and user experience in AWE TraceGate while one ShipProof contract serves local CLI, pre-commit, GitHub Actions, generated k6 tests, and MCP clients.
+AWE TraceGate orchestrates the loop; ShipProof remains the reusable evidence engine. This keeps loop state, budgets, approvals, and user experience in AWE TraceGate while one ShipProof contract serves local CLI, pre-commit, GitHub Actions, generated k6 tests, and MCP clients.
 
 ```text
 Observe -> Contract -> Change -> Verify -> Audit -> Decide -> Learn
@@ -353,7 +419,7 @@ Observe -> Contract -> Change -> Verify -> Audit -> Decide -> Learn
    +--------------------- bounded next iteration -----------+
 ```
 
-Run `shipproof prompt loop` to load the bounded workflow. See the [delivery roadmap](docs/roadmap.md) for what shipped in 0.4.0 and which acceptance evidence still belongs before a stable 1.0 release.
+Run `shipproof prompt loop` to load the bounded workflow. See the [delivery roadmap](docs/roadmap.md) for what shipped in 0.4.0 and which acceptance evidence belongs before a stable 1.0 release.
 
 ## Development
 
@@ -371,6 +437,6 @@ The core runtime uses only Node and the Python standard library; Ruff is develop
 
 The scoped npm manifest is ready for a future registry release. Until the owner configures npm trusted publishing, use the GitHub npm install shown above; this project does not claim an unpublished registry release. See [docs/releasing.md](docs/releasing.md).
 
-## License and security
+## License and Security
 
 [MIT](LICENSE). Report vulnerabilities privately according to [SECURITY.md](SECURITY.md).

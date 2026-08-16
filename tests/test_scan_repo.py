@@ -141,6 +141,12 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertIn("**Fix:**", report)
         self.assertIn("## Limitations", report)
 
+    def test_container_base_rule_only_applies_to_dockerfiles(self):
+        sql_findings = self.findings("query.sql", "SELECT * FROM audit_events;\n")
+        docker_findings = self.findings("Dockerfile", "FROM node:20\n")
+        self.assertFalse(any(item.rule_id == "SP202" for item in sql_findings))
+        self.assertEqual([item.rule_id for item in docker_findings], ["SP202"])
+
     def test_identical_text_multiple_lines_reported(self):
         source = (
             "def a():\n    result = ev" + "al(value)\n\n\ndef b():\n    result = ev" + "al(value)\n"
@@ -196,6 +202,92 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
     def test_exclude_patterns_reject_parent_traversal(self):
         with self.assertRaisesRegex(ValueError, "unsafe exclude pattern"):
             normalize_exclude_patterns(["../secrets/**"])
+
+    def test_express_without_helmet_is_flagged(self):
+        source = "const express = require('express');\nconst app = express();\napp.listen(3000);\n"
+        findings = self.findings("server.js", source)
+        self.assertTrue(any(item.rule_id == "SP401" for item in findings))
+
+    def test_express_with_helmet_is_not_flagged(self):
+        source = "const express = require('express');\nconst helmet = require('helmet');\nconst app = express();\napp.use(helmet());\n"
+        findings = self.findings("server.js", source)
+        self.assertFalse(any(item.rule_id == "SP401" for item in findings))
+
+    def test_next_public_secret_is_flagged(self):
+        source = 'NEXT_PUBLIC_STRIPE_SECRET_KEY="sk_live_1234567890123456"\n'
+        findings = self.findings(".env.local", source)
+        self.assertTrue(any(item.rule_id == "SP403" for item in findings))
+
+    def test_django_hardcoded_secret_key_is_flagged(self):
+        source = 'SECRET_KEY = "django-insecure-abcdefghijklmnopqrstuvwxyz123456"\n'
+        findings = self.findings("settings.py", source)
+        self.assertTrue(any(item.rule_id == "SP404" for item in findings))
+
+    def test_django_wildcard_allowed_hosts_is_flagged(self):
+        source = "ALLOWED_HOSTS = ['*']\n"
+        findings = self.findings("settings.py", source)
+        self.assertTrue(any(item.rule_id == "SP405" for item in findings))
+
+    def test_inline_ignore_suppresses_specific_rule(self):
+        source = "const app = express(); // shipproof-ignore SP401\n"
+        findings = self.findings("server.js", source)
+        self.assertFalse(any(item.rule_id == "SP401" for item in findings))
+
+    def test_insecure_secret_fallback_default_is_flagged(self):
+        source = 'JWT_SECRET = os.getenv("JWT_SECRET", "dev_secret_key_12345")\n'
+        findings = self.findings("app.py", source)
+        self.assertTrue(any(item.rule_id == "SP004" for item in findings))
+
+    def test_ssrf_metadata_is_flagged(self):
+        source = 'response = requests.get("http://169.254.169.254/latest/meta-data")\n'
+        findings = self.findings("app.py", source)
+        self.assertTrue(any(item.rule_id == "SP109" for item in findings))
+
+    def test_path_traversal_is_flagged(self):
+        source = 'with open(f"/uploads/{user_filename}", "rb") as f:\n    data = f.read()\n'
+        findings = self.findings("app.py", source)
+        self.assertTrue(any(item.rule_id == "SP110" for item in findings))
+
+    def test_secret_logging_is_flagged(self):
+        source = 'logger.info(f"User login attempt: {user.password}")\n'
+        findings = self.findings("app.py", source)
+        self.assertTrue(any(item.rule_id == "SP204" for item in findings))
+
+    def test_unbounded_concurrency_is_flagged(self):
+        source = "const results = await Promise.all(items.map(async item => fetch(item.url)));\n"
+        findings = self.findings("service.js", source)
+        self.assertTrue(any(item.rule_id == "SP306" for item in findings))
+
+    def test_express_cors_wildcard_with_credentials_is_flagged(self):
+        source = "app.use(cors({ origin: true, credentials: true }));\n"
+        findings = self.findings("server.js", source)
+        self.assertTrue(any(item.rule_id == "SP107" for item in findings))
+
+    def test_authorized_router_inherits_authorization(self):
+        source = (
+            "from fastapi import APIRouter, Depends\n"
+            "def require_admin(): pass\n"
+            "admin_router = APIRouter(prefix='/admin', dependencies=[Depends(require_admin)])\n"
+            "@admin_router.get('/users')\n"
+            "def list_users(): return []\n"
+        )
+        findings = self.findings("admin.py", source)
+        self.assertFalse(any(item.rule_id == "SP108" for item in findings))
+
+    def test_session_instance_without_timeout_is_flagged(self):
+        source = (
+            "import requests\n"
+            "session = requests.Session()\n"
+            "response = session.get('https://example.test')\n"
+        )
+        findings = self.findings("client.py", source)
+        self.assertTrue(any(item.rule_id == "SP304" for item in findings))
+
+    def test_lint_source_snippet_works(self):
+        from scan_repo import lint_source_snippet
+
+        findings = lint_source_snippet("const a = 1;\n", "test.js")
+        self.assertEqual(findings, [])
 
 
 if __name__ == "__main__":

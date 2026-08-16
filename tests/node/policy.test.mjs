@@ -28,7 +28,7 @@ test("rejects unsupported YAML features, duplicate keys, and unknown policy keys
 });
 
 test("rejects paths outside the repository", () => {
-  assert.throws(() => loadPolicy(internals.PACKAGE_ROOT, "../.shipproof.yml"), /requested path/);
+  assert.throws(() => loadPolicy(internals.PACKAGE_ROOT, "../.shipproof.yml"), /policy file not found/);
   const policy = validatePolicy({ version: 1, scan: { path: ".." } });
   assert.throws(() => buildPolicyGates(internals.PACKAGE_ROOT, policy), /requested path/);
 });

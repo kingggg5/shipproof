@@ -1,4 +1,4 @@
-import { appendFileSync, existsSync, realpathSync, statSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -119,6 +119,62 @@ function findPython() {
   throw new Error("Python 3.10+ is required by the ShipProof action");
 }
 
+export function formatActionSummary(reportPath, format) {
+  try {
+    if (!existsSync(reportPath)) return "";
+    const content = readFileSync(reportPath, "utf8");
+    if (format === "markdown") {
+      return content;
+    }
+    if (format === "json") {
+      const data = JSON.parse(content);
+      const verdict = data.verdict || "UNKNOWN";
+      const icon = verdict === "PASS_WITH_EVIDENCE" ? "🟢" : "🔴";
+      const findings = data.findings || [];
+      const lines = [
+        `### 🛡️ ShipProof Gate: **${verdict}**`,
+        "",
+        `Scanned **${data.summary?.files_scanned || 0}** files • Found **${findings.length}** issues`,
+        "",
+      ];
+      if (findings.length > 0) {
+        lines.push("| Severity | Rule | Location | Description |");
+        lines.push("| :--- | :--- | :--- | :--- |");
+        for (const f of findings) {
+          const sevIcon = f.severity === "critical" || f.severity === "high" ? "🔴" : f.severity === "medium" ? "🟡" : "🟢";
+          lines.push(`| ${sevIcon} ${f.severity.toUpperCase()} | \`${f.rule_id}\` | \`${f.path}:${f.line}\` | ${f.title} |`);
+        }
+      }
+      return lines.join("\n");
+    }
+    if (format === "sarif") {
+      const sarif = JSON.parse(content);
+      const results = sarif.runs?.[0]?.results || [];
+      const verdict = results.length === 0 ? "PASSED" : "BLOCKED";
+      const lines = [
+        `### 🛡️ ShipProof Gate: **${verdict}**`,
+        "",
+        `Found **${results.length}** issue(s)`,
+        "",
+      ];
+      if (results.length > 0) {
+        lines.push("| Level | Rule | Location | Message |");
+        lines.push("| :--- | :--- | :--- | :--- |");
+        for (const r of results) {
+          const loc = r.locations?.[0]?.physicalLocation;
+          const pathStr = loc?.artifactLocation?.uri ? `${loc.artifactLocation.uri}:${loc.region?.startLine || 1}` : "unknown";
+          const levelIcon = r.level === "error" ? "🔴" : r.level === "warning" ? "🟡" : "🟢";
+          lines.push(`| ${levelIcon} ${r.level?.toUpperCase() || "NOTE"} | \`${r.ruleId}\` | \`${pathStr}\` | ${r.message?.text || ""} |`);
+        }
+      }
+      return lines.join("\n");
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
 export function main(environment = process.env) {
   try {
     const inputs = validateActionInputs(environment);
@@ -130,6 +186,12 @@ export function main(environment = process.env) {
     });
     if (environment.GITHUB_OUTPUT) {
       appendFileSync(environment.GITHUB_OUTPUT, `report-path=${inputs.output}\n`, "utf8");
+    }
+    if (environment.GITHUB_STEP_SUMMARY) {
+      const summary = formatActionSummary(inputs.output, inputs.format);
+      if (summary) {
+        appendFileSync(environment.GITHUB_STEP_SUMMARY, `${summary}\n`, "utf8");
+      }
     }
     return result.status ?? 2;
   } catch (error) {

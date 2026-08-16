@@ -20,6 +20,13 @@ VERSION = "0.4.0"
 
 SEVERITY = {"none": 99, "critical": 0, "high": 1, "medium": 2, "low": 3}
 CONFIDENCE = {"high": 0, "medium": 1, "low": 2}
+SEVERITY_ICON = {
+    "critical": "\U0001f534",
+    "high": "\U0001f534",
+    "medium": "\U0001f7e1",
+    "low": "\U0001f7e2",
+}
+CONFIDENCE_LABEL = {"high": "CONFIRMED", "medium": "LIKELY", "low": "NEEDS_REVIEW"}
 SKIP_DIRS = {
     ".git",
     ".hg",
@@ -102,6 +109,202 @@ PLACEHOLDERS = re.compile(
     r"(?i)(example|sample|placeholder|dummy|changeme|replace[_-]?me|your[_-]?|test[_-]?only|"
     r"not[_-]?a[_-]?real|fake|redacted|xxxx|<[^>]+>|\$\{|process\.env|os\.environ)"
 )
+INLINE_IGNORE = re.compile(r"shipproof-ignore(?:\s+|:)(SP\d+)")
+
+RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
+    "SP001": {
+        "why": "A private key in source control lets anyone who clones the repo impersonate the service, decrypt traffic, or sign artifacts.",
+        "attack": "Attacker clones the repo (or reads a cached CI log), extracts the key, and authenticates as the service to access internal APIs or sign malicious releases.",
+        "false_positive": "Test/example keys clearly marked as non-production (e.g. in a fixture directory with placeholder names) may be safe to suppress.",
+        "test": "Add a pre-commit hook or CI step that scans for PEM headers. Verify the key is revoked and rotated.",
+    },
+    "SP002": {
+        "why": "An AWS access key in source control can be scraped by bots within minutes of being pushed.",
+        "attack": "Automated scanners find the key on GitHub, use it to spin up crypto-mining instances or exfiltrate S3 data.",
+        "false_positive": "Keys starting with AKIA are always real key IDs. If the key is disabled/deleted, suppress via baseline.",
+        "test": "Rotate the key immediately. Check CloudTrail for unauthorized usage. Add a secrets scanner to CI.",
+    },
+    "SP003": {
+        "why": "Hardcoded credentials bypass secret rotation, audit logging, and access control provided by secret managers.",
+        "attack": "Attacker reads the credential from source, uses it directly against the target service.",
+        "false_positive": "Configuration examples, mock values, and test-only constants may trigger this. Check if the value is a real credential.",
+        "test": "Move the credential to a secret manager. Add a test that verifies the config key is loaded from the environment.",
+    },
+    "SP101": {
+        "why": "eval/exec turns untrusted input into arbitrary code execution with the application's full privileges.",
+        "attack": "Attacker sends crafted input that gets passed to eval(), executing arbitrary Python/JS in the server process.",
+        "false_positive": "Code generators, template engines, or REPL tools may use eval legitimately. Verify input is never user-controlled.",
+        "test": "Replace eval with a safe parser (e.g. ast.literal_eval, JSON.parse). Add a test with malicious input.",
+    },
+    "SP102": {
+        "why": "shell=True passes the command through a shell interpreter, enabling injection via metacharacters (;, |, $()).",
+        "attack": "Attacker injects shell metacharacters into a parameter that reaches subprocess with shell=True.",
+        "false_positive": "Commands with fully hardcoded strings (no user input) are lower risk but still bad practice.",
+        "test": "Pass an argument list without shell=True. Add a test with input containing semicolons and pipes.",
+    },
+    "SP103": {
+        "why": "String-interpolated SQL lets attackers inject arbitrary queries, bypassing authentication and extracting data.",
+        "attack": "Attacker sends ' OR 1=1 -- as input, modifying the query to return all rows or execute subqueries.",
+        "false_positive": "Dynamic table/column names (not values) may be safe if validated against an allowlist.",
+        "test": "Use parameterized queries. Add a test with SQL injection payloads to verify they are escaped.",
+    },
+    "SP104": {
+        "why": "Disabling TLS verification allows man-in-the-middle attacks on any connection.",
+        "attack": "Attacker intercepts the connection, reads credentials and data, or modifies responses.",
+        "false_positive": "Local development against self-signed certs. Should never appear in production code paths.",
+        "test": "Restore verification. Configure the correct CA bundle. Test that connections reject invalid certificates.",
+    },
+    "SP105": {
+        "why": "Without signature verification, anyone can forge JWT tokens and bypass authentication entirely.",
+        "attack": "Attacker creates a JWT with algorithm=none or a forged signature, gaining arbitrary access.",
+        "false_positive": "Very unlikely to be a false positive. This is almost always a critical vulnerability.",
+        "test": "Require a specific algorithm. Test that tokens with wrong algorithm or modified payload are rejected.",
+    },
+    "SP106": {
+        "why": "Unsafe deserialization (pickle, yaml.load) can execute arbitrary code embedded in the serialized data.",
+        "attack": "Attacker sends a crafted pickle/YAML payload that executes system commands when deserialized.",
+        "false_positive": "Internal-only data that never accepts external input. Still risky if any input path is overlooked.",
+        "test": "Use yaml.safe_load or JSON. Add a test with a malicious serialized object.",
+    },
+    "SP107": {
+        "why": "Wildcard CORS with credentials lets any website make authenticated requests to your API.",
+        "attack": "Malicious website makes cross-origin requests with the user's cookies, accessing private data.",
+        "false_positive": "Rare. If you need credentials, you must specify exact allowed origins.",
+        "test": "Allowlist specific origins. Test that requests from unauthorized origins are rejected.",
+    },
+    "SP108": {
+        "why": "An admin route without authorization lets any authenticated (or unauthenticated) user perform privileged actions.",
+        "attack": "Normal user calls the admin endpoint directly, bypassing UI restrictions to delete data or modify settings.",
+        "false_positive": "Authorization might be handled by middleware not visible in the route decorator. Verify and document.",
+        "test": "Add a Depends(require_admin) or equivalent. Test that non-admin users receive 403.",
+    },
+    "SP201": {
+        "why": "Debug mode exposes stack traces, internal state, and sometimes interactive debuggers to end users.",
+        "attack": "Attacker triggers an error to see internal paths, database schemas, or get a debug console.",
+        "false_positive": "Debug flags in test configuration or local-only settings files.",
+        "test": "Make debug mode conditional on an environment variable. Test that production mode hides error details.",
+    },
+    "SP202": {
+        "why": "A floating base image tag means builds are not reproducible and may silently include supply-chain compromises.",
+        "attack": "Attacker compromises the tag (e.g. latest) on the registry; all subsequent builds inherit the malicious image.",
+        "false_positive": "Development-only Dockerfiles that are never deployed. Pin by digest for any production image.",
+        "test": "Pin the image to a sha256 digest. Set up automated digest update with review.",
+    },
+    "SP203": {
+        "why": "A mutable GitHub Action tag can be force-pushed to inject malicious code into your CI pipeline.",
+        "attack": "Attacker compromises the action repo and pushes malicious code to the v1 tag. Your CI runs it.",
+        "false_positive": "Very unlikely. Always pin to a full 40-character commit SHA.",
+        "test": "Replace the tag with the full commit SHA. Add a comment with the original version for reference.",
+    },
+    "SP301": {
+        "why": "Redis KEYS scans the entire keyspace, blocking all other operations on a single-threaded server.",
+        "attack": "Not an attack per se, but a capacity risk: at scale, KEYS causes timeouts and cascading failures.",
+        "false_positive": "Administrative/migration scripts that run outside the request path.",
+        "test": "Replace with SCAN cursor iteration. Load-test with a realistic key count.",
+    },
+    "SP302": {
+        "why": "SELECT * without LIMIT can return millions of rows, exhausting memory and saturating the network.",
+        "attack": "Attacker or normal usage triggers a query that returns the entire table, causing an OOM crash.",
+        "false_positive": "Queries with WHERE clauses that guarantee small result sets. Still better to add an explicit LIMIT.",
+        "test": "Add LIMIT and column selection. Test with a table containing 100k+ rows.",
+    },
+    "SP303": {
+        "why": "time.sleep() in async code blocks the entire event loop, freezing all concurrent requests.",
+        "attack": "Not an attack, but a reliability issue: one slow path stalls all other connections.",
+        "false_positive": "Very unlikely in async code. Use asyncio.sleep() instead.",
+        "test": "Replace with await asyncio.sleep(). Test that concurrent requests are not blocked.",
+    },
+    "SP304": {
+        "why": "An HTTP request without a timeout can hang forever, exhausting the connection pool and worker threads.",
+        "attack": "Dependency becomes slow or unresponsive; your service accumulates hanging connections until it crashes.",
+        "false_positive": "Unlikely. Always set both connect and read timeouts.",
+        "test": "Add timeout=N to the request. Test behavior when the dependency is slow (mock a delay).",
+    },
+    "SP305": {
+        "why": "Without a maximum page size, a client can request limit=999999 and dump the entire dataset.",
+        "attack": "Attacker sets limit=1000000 to exfiltrate data or cause an OOM on the server.",
+        "false_positive": "Routes with server-enforced maximums not visible in the parameter declaration.",
+        "test": "Add le=100 (or similar) to the Query() validator. Test that values above the max are rejected.",
+    },
+    "SP401": {
+        "why": "Express without helmet leaves default headers that leak server info and miss security headers.",
+        "attack": "Attacker fingerprints the server (X-Powered-By: Express) and exploits missing CSP/HSTS.",
+        "false_positive": "Projects using a reverse proxy that sets all security headers.",
+        "test": "Add app.use(helmet()) or set headers manually. Verify with a response header audit.",
+    },
+    "SP402": {
+        "why": "Express without rate limiting allows brute force and credential stuffing attacks.",
+        "attack": "Attacker sends thousands of login attempts per second without being throttled.",
+        "false_positive": "Rate limiting handled by a reverse proxy, API gateway, or CDN in front of Express.",
+        "test": "Add express-rate-limit or similar middleware. Test that excessive requests return 429.",
+    },
+    "SP403": {
+        "why": "NEXT_PUBLIC_ env vars are inlined into client-side JavaScript and visible to all users.",
+        "attack": "Developer puts a secret API key in NEXT_PUBLIC_API_KEY; anyone can read it from the JS bundle.",
+        "false_positive": "Values that are intentionally public (e.g., analytics IDs, public API endpoints).",
+        "test": "Move secrets to server-only env vars. Audit NEXT_PUBLIC_ vars for sensitive values.",
+    },
+    "SP404": {
+        "why": "Django SECRET_KEY hardcoded in settings.py can be extracted from source to forge sessions and CSRF tokens.",
+        "attack": "Attacker reads SECRET_KEY from source, forges session cookies, and impersonates any user.",
+        "false_positive": "Development-only settings files with non-production keys.",
+        "test": "Load SECRET_KEY from an environment variable. Test that the app fails to start without it.",
+    },
+    "SP405": {
+        "why": "Django ALLOWED_HOSTS = ['*'] disables host header validation, enabling cache poisoning and SSRF.",
+        "attack": "Attacker sends a request with a malicious Host header; Django accepts it and generates URLs with the attacker's domain.",
+        "false_positive": "Local development settings. Should never appear in production.",
+        "test": "Set ALLOWED_HOSTS to explicit domains. Test that requests with unknown Host headers return 400.",
+    },
+    "SP406": {
+        "why": "Express error handler that sends the raw error object to clients leaks stack traces and internal details.",
+        "attack": "Attacker triggers an error to see file paths, database connection strings, or internal logic in the response.",
+        "false_positive": "Custom error serializers that explicitly filter what is sent.",
+        "test": "Return only a status code and generic message. Log the full error server-side.",
+    },
+    "SP407": {
+        "why": "Missing CSRF protection on state-changing routes allows cross-site request forgery.",
+        "attack": "Malicious website submits a form to your app using the victim's session cookies.",
+        "false_positive": "API-only services using token auth (not cookies). SPA apps with CORS + token auth.",
+        "test": "Enable csurf or csrf middleware. Test that POST requests without a valid token are rejected.",
+    },
+    "SP408": {
+        "why": "Serving a Next.js or Nuxt app without CSP headers allows XSS payloads to execute freely.",
+        "attack": "Attacker injects a script tag; without CSP, the browser executes it with full page access.",
+        "false_positive": "CSP set at the reverse proxy or CDN level rather than in the app config.",
+        "test": "Add Content-Security-Policy header in next.config.js or middleware. Test with a CSP evaluator.",
+    },
+    "SP004": {
+        "why": "Providing a hardcoded default value when an environment secret is missing lets the app run with known, vulnerable keys in production.",
+        "attack": "Attacker relies on production omitting the env var, then uses the known default secret to sign JWTs or decrypt data.",
+        "false_positive": "Mock secrets in dedicated test suites or local documentation.",
+        "test": "Remove the default fallback string; ensure the application fails closed at startup if required secrets are absent.",
+    },
+    "SP109": {
+        "why": "Unvalidated outbound HTTP requests allow Server-Side Request Forgery (SSRF) to private networks and cloud metadata.",
+        "attack": "Attacker supplies http://169.254.169.254/latest/meta-data to extract IAM cloud credentials.",
+        "false_positive": "Fixed, allowlisted external service URLs not controlled by user input.",
+        "test": "Validate target URLs against an explicit domain allowlist and reject requests resolving to private IP ranges.",
+    },
+    "SP110": {
+        "why": "Constructing filesystem paths directly from user input allows path traversal to read or overwrite arbitrary files.",
+        "attack": "Attacker supplies ../../../etc/shadow or ..\\..\\windows\\system32 to access sensitive host files.",
+        "false_positive": "Paths verified with realpath/resolve and confirmed to stay inside an authorized base directory.",
+        "test": "Pass traversal sequences (../, ..\\) and verify that the application returns 400 or rejects the path.",
+    },
+    "SP204": {
+        "why": "Logging raw credentials, tokens, or request payloads writes sensitive data to persistent log stores.",
+        "attack": "Attacker with log read access (or third-party log provider compromise) extracts user credentials and tokens.",
+        "false_positive": "Sanitized or masked debug messages where secrets have been stripped.",
+        "test": "Audit logger output during login/auth flows and verify sensitive keys are masked or omitted.",
+    },
+    "SP306": {
+        "why": "Unbounded concurrent iterations (Promise.all or asyncio.gather over large arrays) cause sudden CPU, memory, and connection pool exhaustion.",
+        "attack": "Attacker submits a large payload or triggers batch actions that spawn thousands of concurrent tasks, crashing the server.",
+        "false_positive": "Fixed small arrays with guaranteed upper limits (e.g. max 5 items).",
+        "test": "Process 10,000 items and verify execution is throttled with a semaphore or bounded worker pool.",
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -262,6 +465,18 @@ RULES: tuple[Rule, ...] = (
         frozenset({".py", ".pyi"}),
     ),
     Rule(
+        "SP107",
+        "Credentialed wildcard CORS",
+        "security",
+        "high",
+        "high",
+        compile_pattern("$^"),
+        "Wildcard origins and credentials create an unsafe cross-origin policy.",
+        "Allowlist exact trusted origins and test preflight behavior.",
+        "CWE-942",
+        "OWASP ASVS V3",
+    ),
+    Rule(
         "SP108",
         "Sensitive route lacks visible authorization",
         "security",
@@ -292,7 +507,9 @@ RULES: tuple[Rule, ...] = (
         "supply-chain",
         "medium",
         "high",
-        compile_pattern(r"^\s*FROM\s+[^\s:@]+(?::latest)?\s*$"),
+        compile_pattern(
+            r"^\s*FROM\s+(?:(?:--platform=\S+)\s+)?(?!\S+@sha256:[0-9a-f]{64}\b)(?!scratch(?:\s|$))\S+(?:\s+AS\s+\S+)?\s*$"
+        ),
         "The container base image is not pinned to an immutable digest.",
         "Pin the reviewed image by digest and update it through an automated, reviewed process.",
         "CWE-1104",
@@ -350,6 +567,18 @@ RULES: tuple[Rule, ...] = (
         frozenset({".py"}),
     ),
     Rule(
+        "SP304",
+        "Outbound request without timeout",
+        "correctness",
+        "high",
+        "high",
+        compile_pattern("$^"),
+        "An outbound request has no explicit deadline and can exhaust workers or connections.",
+        "Set connect and read deadlines, bound retries, and test dependency failure.",
+        "CWE-400",
+        "Reliability",
+    ),
+    Rule(
         "SP305",
         "Unbounded pagination input",
         "scale",
@@ -361,6 +590,143 @@ RULES: tuple[Rule, ...] = (
         "CWE-400",
         "Capacity",
         frozenset({".py"}),
+    ),
+    # --- Framework-specific rules ---
+    Rule(
+        "SP401",
+        "Express app without helmet",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern("$^"),
+        "Express app is created without security middleware (helmet).",
+        "Add app.use(helmet()) to set security headers (CSP, HSTS, X-Frame-Options, etc.).",
+        "CWE-693",
+        "OWASP ASVS V14",
+        frozenset({".js", ".mjs", ".cjs", ".ts"}),
+    ),
+    Rule(
+        "SP403",
+        "Secret in NEXT_PUBLIC_ env var",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"NEXT_PUBLIC_[A-Z_]*(?:SECRET|KEY|TOKEN|PASSWORD|PRIVATE)[A-Z_]*\s*[:=]"),
+        "A NEXT_PUBLIC_ environment variable name suggests a secret that will be exposed to all users in the client bundle.",
+        "Move secret values to server-only environment variables (without the NEXT_PUBLIC_ prefix).",
+        "CWE-200",
+        "OWASP ASVS V14",
+    ),
+    Rule(
+        "SP404",
+        "Django SECRET_KEY hardcoded",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(r"SECRET_KEY\s*=\s*[\"'][^\"']{20,}[\"']"),
+        "Django SECRET_KEY is hardcoded in a settings file.",
+        "Load SECRET_KEY from an environment variable or a secrets manager.",
+        "CWE-798",
+        "OWASP ASVS V14",
+        frozenset({".py"}),
+        redact=True,
+    ),
+    Rule(
+        "SP405",
+        "Django ALLOWED_HOSTS accepts all",
+        "security",
+        "high",
+        "high",
+        compile_pattern(r"ALLOWED_HOSTS\s*=\s*\[[\"']\*[\"']\]"),
+        "Django ALLOWED_HOSTS accepts any hostname, disabling host header validation.",
+        "Set ALLOWED_HOSTS to explicit trusted domains.",
+        "CWE-20",
+        "OWASP ASVS V13",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP406",
+        "Express error sent to client",
+        "security",
+        "medium",
+        "low",
+        compile_pattern(r"res\.(?:json|send)\s*\(\s*(?:err|error)\b"),
+        "An Express error handler appears to send the raw error object to the client.",
+        "Return a generic error message and status code. Log the full error server-side.",
+        "CWE-209",
+        "OWASP ASVS V7",
+        frozenset({".js", ".mjs", ".cjs", ".ts"}),
+    ),
+    Rule(
+        "SP004",
+        "Insecure secret fallback default",
+        "security",
+        "high",
+        "high",
+        compile_pattern(
+            r"(?:os\.(?:environ\.)?get|getenv|process\.env\.[A-Z0-9_]+)\s*(?:\(\s*[\"'][A-Za-z0-9_]*(?:SECRET|KEY|TOKEN|PASSWORD|AUTH|PRIVATE)[A-Za-z0-9_]*[\"']\s*,\s*[\"'][^\"'\s]+[\"']|\|\|\s*[\"'][^\"'\s]+[\"'])"
+        ),
+        "A hardcoded fallback default is provided for an environment secret.",
+        "Remove the hardcoded fallback string; require explicit environment configuration.",
+        "CWE-798",
+        "OWASP ASVS V14",
+        redact=True,
+    ),
+    Rule(
+        "SP109",
+        "SSRF to internal network or metadata",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"(?:https?://(?:169\.254\.169\.254|metadata\.google\.internal|127\.0\.0\.1|localhost)|(?:requests|httpx|fetch|axios|http)\.(?:get|post|put|delete|request)\s*\(\s*(?:url|target_url|req\.query|request\.args|req\.body|user_url)\b)"
+        ),
+        "An outbound HTTP request may target internal endpoints, localhost, or cloud metadata.",
+        "Validate destination URLs against an allowlist and block private IP ranges.",
+        "CWE-918",
+        "OWASP ASVS V5",
+    ),
+    Rule(
+        "SP110",
+        "Path traversal in file path",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"(?:open|readFile|readFileSync|createReadStream|unlink|rmSync)\s*\(\s*(?:f[\"'][^\"']*\{|\`[^\`]*\$\{|(?:path\.)?join\s*\([^)]*(?:req\.|params|query|user_input))"
+        ),
+        "A filesystem operation constructs paths directly from variables without visible normalization.",
+        "Normalize with realpath/resolve and verify the path remains inside the base directory.",
+        "CWE-22",
+        "OWASP ASVS V5",
+    ),
+    Rule(
+        "SP204",
+        "Sensitive data or credential logging",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(
+            r"(?:console\.log|logger\.(?:info|debug|warn|error)|logging\.(?:info|debug|warn|error)|print)\s*\(\s*.*(?:password|user\.password|client_secret|private_key|auth_token)\b"
+        ),
+        "Sensitive credentials or authentication payloads appear to be logged directly.",
+        "Mask or redact sensitive fields before writing messages to logs.",
+        "CWE-532",
+        "OWASP ASVS V7",
+    ),
+    Rule(
+        "SP306",
+        "Unbounded concurrency in collection",
+        "scale",
+        "medium",
+        "medium",
+        compile_pattern(
+            r"(?:Promise\.all\s*\(\s*(?:[A-Za-z0-9_]+\.map|items\.map)|asyncio\.gather\s*\(\s*\*\s*\[)"
+        ),
+        "Unbounded concurrent tasks over a collection may exhaust memory or connection pools.",
+        "Throttle concurrent execution using a semaphore, p-limit, or batch queue.",
+        "CWE-400",
+        "Capacity",
     ),
 )
 
@@ -510,7 +876,9 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
     suffix = path.suffix.lower()
     lines = source_text.splitlines()
     for rule in RULES:
-        if rule.rule_id in {"SP108", "SP303", "SP305"}:
+        if rule.rule_id in {"SP107", "SP108", "SP303", "SP304", "SP305", "SP401"}:
+            continue
+        if rule.rule_id == "SP202" and path.name.lower() not in {"dockerfile", "containerfile"}:
             continue
         if suffix in DOCUMENT_SUFFIXES and rule.rule_id not in SECRET_RULE_IDS:
             continue
@@ -518,6 +886,13 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
             continue
         for line_number, line in enumerate(lines, 1):
             if rule.rule_id not in SECRET_RULE_IDS and is_pure_comment(line, path):
+                continue
+            ignore_match = INLINE_IGNORE.search(line)
+            if ignore_match and ignore_match.group(1) == rule.rule_id:
+                continue
+            prev_line = lines[line_number - 2] if line_number >= 2 else ""
+            prev_ignore = INLINE_IGNORE.search(prev_line)
+            if prev_ignore and prev_ignore.group(1) == rule.rule_id:
                 continue
             if rule.pattern.search(line) and not (
                 rule.rule_id in SECRET_RULE_IDS and PLACEHOLDERS.search(line)
@@ -543,6 +918,53 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
             "OWASP ASVS V3",
         )
         findings.append(make_finding(rule, relative_path, line, lines[line - 1] if lines else ""))
+
+    if (
+        suffix in {".js", ".mjs", ".cjs", ".ts"}
+        and re.search(r"origin\s*:\s*(?:true|[\"']\*[\"'])", source_text)
+        and re.search(r"credentials\s*:\s*true", source_text)
+    ):
+        line = next((i for i, value in enumerate(lines, 1) if "origin" in value), 1)
+        rule = Rule(
+            "SP107",
+            "Credentialed wildcard CORS",
+            "security",
+            "high",
+            "high",
+            compile_pattern("$^"),
+            "Wildcard origins and credentials create an unsafe cross-origin policy.",
+            "Allowlist exact trusted origins and test preflight behavior.",
+            "CWE-942",
+            "OWASP ASVS V3",
+        )
+        findings.append(make_finding(rule, relative_path, line, lines[line - 1] if lines else ""))
+
+    # Framework-specific: Express without helmet
+    if (
+        suffix in {".js", ".mjs", ".cjs", ".ts"}
+        and "express()" in source_text.lower().replace(" ", "")
+        and "helmet" not in source_text.lower()
+    ):
+        express_line = next(
+            (
+                i
+                for i, v in enumerate(lines, 1)
+                if re.search(r"express\s*\(\s*\)", v, re.IGNORECASE)
+            ),
+            None,
+        )
+        if express_line:
+            line_str = lines[express_line - 1]
+            prev_line_str = lines[express_line - 2] if express_line >= 2 else ""
+            ignore_curr = INLINE_IGNORE.search(line_str)
+            ignore_prev = INLINE_IGNORE.search(prev_line_str)
+            if not (
+                (ignore_curr and ignore_curr.group(1) == "SP401")
+                or (ignore_prev and ignore_prev.group(1) == "SP401")
+            ):
+                rule = find_rule("SP401")
+                findings.append(make_finding(rule, relative_path, express_line, line_str))
+
     return findings
 
 
@@ -584,6 +1006,30 @@ def route_path(route_call: ast.Call) -> str | None:
         return None
     value = route_call.args[0]
     return value.value if isinstance(value, ast.Constant) and isinstance(value.value, str) else None
+
+
+def find_authorized_routers(tree: ast.AST) -> set[str]:
+    authorized_routers: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
+            func_name = resolve_dotted_name(node.value.func).rsplit(".", 1)[-1]
+            if func_name in {"APIRouter", "FastAPI"}:
+                for kw in node.value.keywords:
+                    if kw.arg == "dependencies":
+                        for child in ast.walk(kw.value):
+                            if (
+                                isinstance(child, ast.Call)
+                                and resolve_dotted_name(child.func).rsplit(".", 1)[-1] == "Depends"
+                                and child.args
+                                and any(
+                                    hint in resolve_dotted_name(child.args[0]).lower()
+                                    for hint in AUTHORIZATION_DEPENDENCY_HINTS
+                                )
+                            ):
+                                for target in node.targets:
+                                    if isinstance(target, ast.Name):
+                                        authorized_routers.add(target.id)
+    return authorized_routers
 
 
 def has_visible_authorization_dependency(
@@ -663,9 +1109,15 @@ def is_interpolated_sql_value(node: ast.AST) -> bool:
 
 
 class PythonSecurityVisitor(ast.NodeVisitor):
-    def __init__(self, relative_path: str, source_lines: Sequence[str]) -> None:
+    def __init__(
+        self,
+        relative_path: str,
+        source_lines: Sequence[str],
+        authorized_routers: set[str] | None = None,
+    ) -> None:
         self.relative_path = relative_path
         self.source_lines = source_lines
+        self.authorized_routers = authorized_routers or set()
         self.findings: list[Finding] = []
         self.async_function_depth = 0
 
@@ -689,8 +1141,13 @@ class PythonSecurityVisitor(ast.NodeVisitor):
             ),
             None,
         )
-        if sensitive_route and not has_visible_authorization_dependency(node, route_calls):
-            self.add_finding(find_rule("SP108"), sensitive_route)
+        if sensitive_route:
+            caller_name = resolve_dotted_name(sensitive_route.func).split(".", 1)[0]
+            is_router_authorized = caller_name in self.authorized_routers
+            if not is_router_authorized and not has_visible_authorization_dependency(
+                node, route_calls
+            ):
+                self.add_finding(find_rule("SP108"), sensitive_route)
         for argument, default in parameter_defaults(node):
             if argument.arg in PAGE_SIZE_PARAMETERS and not has_page_size_bound(argument, default):
                 self.add_finding(find_rule("SP305"), argument)
@@ -717,7 +1174,7 @@ class PythonSecurityVisitor(ast.NodeVisitor):
             and is_interpolated_sql_value(node.args[0])
         ):
             self.add_finding(find_rule("SP103"), node.args[0])
-        if name in {
+        is_http_request = name in {
             "requests.get",
             "requests.post",
             "requests.put",
@@ -725,20 +1182,28 @@ class PythonSecurityVisitor(ast.NodeVisitor):
             "requests.delete",
             "httpx.get",
             "httpx.post",
-        } and not any(keyword.arg == "timeout" for keyword in node.keywords):
-            rule = Rule(
-                "SP304",
-                "Outbound request without timeout",
-                "correctness",
-                "high",
-                "high",
-                compile_pattern("$^"),
-                "An outbound request has no explicit deadline and can exhaust workers or connections.",
-                "Set connect and read deadlines, bound retries, and test dependency failure.",
-                "CWE-400",
-                "Reliability",
-            )
-            self.add_finding(rule, node)
+            "httpx.put",
+            "httpx.patch",
+            "httpx.delete",
+            "client.get",
+            "client.post",
+            "client.put",
+            "client.delete",
+            "session.get",
+            "session.post",
+            "session.put",
+            "session.delete",
+            "http_client.get",
+            "http_client.post",
+        } or (
+            method in {"get", "post", "put", "patch", "delete"}
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id.lower()
+            in {"client", "session", "http", "http_client", "api_client", "s"}
+        )
+        if is_http_request and not any(keyword.arg == "timeout" for keyword in node.keywords):
+            self.add_finding(find_rule("SP304"), node)
         if self.async_function_depth and name == "time.sleep":
             rule = next(item for item in RULES if item.rule_id == "SP303")
             self.add_finding(rule, node)
@@ -750,9 +1215,22 @@ def find_python_ast_issues(relative_path: str, source_text: str) -> list[Finding
         tree = ast.parse(source_text)
     except (SyntaxError, ValueError):
         return []
-    visitor = PythonSecurityVisitor(relative_path, source_text.splitlines())
+    authorized_routers = find_authorized_routers(tree)
+    visitor = PythonSecurityVisitor(
+        relative_path, source_lines=source_text.splitlines(), authorized_routers=authorized_routers
+    )
     visitor.visit(tree)
     return visitor.findings
+
+
+def lint_source_snippet(source_text: str, filename: str = "snippet.py") -> list[Finding]:
+    """Lint an in-memory code snippet without reading from disk."""
+    path = Path(filename)
+    findings = find_regex_issues(path, filename, source_text)
+    if path.suffix.lower() == ".py":
+        findings.extend(find_python_ast_issues(filename, source_text))
+    active, _ = deduplicate_and_suppress_findings(findings)
+    return active
 
 
 def load_baseline_fingerprints(path: Path | None) -> set[str]:
@@ -793,6 +1271,56 @@ def deduplicate_and_suppress_findings(
     return active, suppressed_count
 
 
+def detect_frameworks(root: Path) -> set[str]:
+    """Detect frameworks from manifest files in the repository root."""
+    frameworks: set[str] = set()
+    # Node.js / package.json
+    pkg_path = root / "package.json"
+    if pkg_path.is_file():
+        try:
+            pkg = json.loads(pkg_path.read_text(encoding="utf-8", errors="replace"))
+            all_deps = {}
+            for key in ("dependencies", "devDependencies", "peerDependencies"):
+                all_deps.update(pkg.get(key, {}))
+            if "express" in all_deps:
+                frameworks.add("express")
+            if "next" in all_deps:
+                frameworks.add("nextjs")
+            if "nuxt" in all_deps or "nuxt3" in all_deps:
+                frameworks.add("nuxt")
+            if "fastify" in all_deps:
+                frameworks.add("fastify")
+            if "@nestjs/core" in all_deps:
+                frameworks.add("nestjs")
+        except (OSError, json.JSONDecodeError):
+            pass
+    # Python / pyproject.toml or requirements.txt
+    for manifest in ("pyproject.toml", "requirements.txt", "setup.py", "Pipfile"):
+        manifest_path = root / manifest
+        if manifest_path.is_file():
+            try:
+                text = manifest_path.read_text(encoding="utf-8", errors="replace").lower()
+                if "django" in text:
+                    frameworks.add("django")
+                if "fastapi" in text:
+                    frameworks.add("fastapi")
+                if "flask" in text:
+                    frameworks.add("flask")
+                if "laravel" in text:
+                    frameworks.add("laravel")
+            except OSError:
+                pass
+    # Go
+    if (root / "go.mod").is_file():
+        try:
+            text = (root / "go.mod").read_text(encoding="utf-8", errors="replace").lower()
+            if "gin-gonic" in text:
+                frameworks.add("gin")
+        except OSError:
+            pass
+    return frameworks
+
+
 def scan_repository(
     root: Path,
     max_file_bytes: int = 1_000_000,
@@ -804,6 +1332,7 @@ def scan_repository(
         raise ValueError(f"not a directory: {repository_root}")
     findings: list[Finding] = []
     files_scanned = 0
+    frameworks = detect_frameworks(repository_root)
     normalized_excludes = normalize_exclude_patterns(exclude_patterns)
     for path in iter_scannable_files(repository_root, max_file_bytes, normalized_excludes):
         files_scanned += 1
@@ -817,7 +1346,13 @@ def scan_repository(
             findings.extend(find_python_ast_issues(relative_path, text))
 
     active, suppressed = deduplicate_and_suppress_findings(findings, baseline)
-    return active, {"files_scanned": files_scanned, "suppressed": suppressed}
+    stats = {
+        "files_scanned": files_scanned,
+        "suppressed": suppressed,
+    }
+    if frameworks:
+        stats["frameworks"] = sorted(frameworks)
+    return active, stats
 
 
 def determine_verdict(findings: Sequence[Finding]) -> str:
@@ -892,6 +1427,164 @@ def render_markdown_report(root: Path, findings: Sequence[Finding], stats: dict[
     return "\n".join(lines)
 
 
+def read_source_context(
+    root: Path,
+    relative_path: str,
+    target_line: int,
+    context: int = 2,
+) -> list[tuple[int, str]]:
+    """Read surrounding lines from source for terminal display."""
+    try:
+        source_path = root / relative_path
+        text = source_path.read_text(encoding="utf-8", errors="replace")
+        source_lines = text.splitlines()
+        start = max(0, target_line - 1 - context)
+        end = min(len(source_lines), target_line + context)
+        return [(i + 1, source_lines[i]) for i in range(start, end)]
+    except OSError:
+        return []
+
+
+def render_terminal_report(
+    root: Path,
+    findings: Sequence[Finding],
+    stats: dict[str, int],
+) -> str:
+    """Render a code-review style terminal report with emoji, context, and evidence."""
+    verdict = determine_verdict(findings)
+    counts = Counter(item.severity for item in findings)
+    lines: list[str] = []
+
+    # Header
+    icon = "\u2705" if verdict == "PASS_WITH_EVIDENCE" else "\u274c"
+    lines.append(f"\n  {icon} ShipProof: {verdict}")
+    lines.append(
+        f"  Scanned {stats['files_scanned']} files \u2022 {len(findings)} findings \u2022 {stats['suppressed']} suppressed"
+    )
+    if counts:
+        parts = []
+        for sev in ("critical", "high", "medium", "low"):
+            if counts.get(sev, 0) > 0:
+                parts.append(f"{SEVERITY_ICON.get(sev, '')} {counts[sev]} {sev}")
+        bullet = " \u2022 "
+        lines.append(f"  {bullet.join(parts)}")
+    lines.append("")
+
+    # Findings
+    for item in findings:
+        icon = SEVERITY_ICON.get(item.severity, "")
+        conf_label = CONFIDENCE_LABEL.get(item.confidence, item.confidence)
+        lines.append(f"  {icon} {item.severity.upper()} \u2014 {item.title} ({item.rule_id})")
+        lines.append(f"     {item.path}:{item.line}  \u2022  confidence: {conf_label}")
+        lines.append("")
+
+        # Source context
+        context_lines = read_source_context(root, item.path, item.line)
+        if context_lines:
+            lines.append("     Evidence:")
+            for line_num, line_text in context_lines:
+                marker = " >" if line_num == item.line else "  "
+                lines.append(f"     {line_num:4d}{marker} {line_text}")
+            lines.append("")
+
+        # Why + Fix
+        lines.append(f"     Why: {item.message}")
+        lines.append(f"     Fix: {item.remediation}")
+        lines.append(f"     Ref: {item.cwe} \u2022 {item.owasp}")
+        lines.append("")
+        lines.append("  " + "\u2500" * 70)
+        lines.append("")
+
+    if findings:
+        lines.append(
+            "  \u2192 Run `shipproof scan --fix-prompt` to generate AI-ready fix instructions"
+        )
+        lines.append("  \u2192 Run `shipproof scan --format json` for machine-readable output")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def render_fix_prompts(
+    root: Path,
+    findings: Sequence[Finding],
+) -> str:
+    """Generate AI-ready fix prompts for each finding."""
+    if not findings:
+        return "No findings to fix.\n"
+
+    lines: list[str] = [
+        "# ShipProof Fix Prompts",
+        "",
+        "Copy any prompt below into your AI coding assistant (Codex, Claude Code, Cursor, etc.)",
+        "",
+    ]
+    for i, item in enumerate(findings, 1):
+        lines.append(f"## [{i}] {item.rule_id}: {item.title}")
+        lines.append("")
+        lines.append("```")
+        lines.append(f"Fix {item.rule_id} in {item.path} (line {item.line}).")
+        lines.append("")
+        lines.append(f"Problem: {item.message}")
+        lines.append("")
+
+        # Include source context
+        context_lines = read_source_context(root, item.path, item.line)
+        if context_lines:
+            lines.append("Current code:")
+            for line_num, line_text in context_lines:
+                marker = ">>>" if line_num == item.line else "   "
+                lines.append(f"  {line_num}: {marker} {line_text}")
+            lines.append("")
+
+        lines.append(f"Required fix: {item.remediation}")
+        lines.append("")
+        lines.append("Constraints:")
+        lines.append("- Do not change the public API contract")
+        lines.append("- Add a regression test that verifies the fix")
+        lines.append(f"- Reference: {item.cwe}, {item.owasp}")
+        lines.append("```")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def render_explain(rule_id: str) -> str:
+    """Render a detailed explanation for a single rule."""
+    rule = None
+    for r in RULES:
+        if r.rule_id == rule_id:
+            rule = r
+            break
+    if rule is None:
+        return f"Unknown rule: {rule_id}. Valid rules: {', '.join(r.rule_id for r in RULES)}\n"
+
+    explanation = RULE_EXPLANATIONS.get(rule_id, {})
+    conf_label = CONFIDENCE_LABEL.get(rule.confidence, rule.confidence)
+    lines = [
+        "",
+        f"  {SEVERITY_ICON.get(rule.severity, '')} {rule.rule_id}: {rule.title}",
+        f"  Severity: {rule.severity.upper()} \u2022 Confidence: {conf_label} \u2022 Category: {rule.category}",
+        f"  {rule.cwe} \u2022 {rule.owasp}",
+        "",
+        "  What it detects:",
+        f"    {rule.message}",
+        "",
+    ]
+    if explanation.get("why"):
+        lines.extend(["  Why this matters:", f"    {explanation['why']}", ""])
+    if explanation.get("attack"):
+        lines.extend(["  Attack scenario:", f"    {explanation['attack']}", ""])
+    if explanation.get("false_positive"):
+        lines.extend(
+            ["  False-positive possibilities:", f"    {explanation['false_positive']}", ""]
+        )
+    lines.extend(["  Recommended fix:", f"    {rule.remediation}", ""])
+    if explanation.get("test"):
+        lines.extend(["  Regression test:", f"    {explanation['test']}", ""])
+    return "\n".join(lines)
+
+
 def build_sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
     rules: dict[str, Finding] = {item.rule_id: item for item in findings}
     level = {"critical": "error", "high": "error", "medium": "warning", "low": "note"}
@@ -944,7 +1637,11 @@ def build_sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
 def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", nargs="?", default=".", type=Path)
-    parser.add_argument("--format", choices=("json", "markdown", "sarif"), default="markdown")
+    parser.add_argument(
+        "--format",
+        choices=("json", "markdown", "sarif", "terminal"),
+        default=None,
+    )
     parser.add_argument("--output", type=Path, help="Write report to a file instead of stdout")
     parser.add_argument(
         "--baseline", type=Path, help="Suppress reviewed fingerprints from this JSON baseline"
@@ -955,10 +1652,40 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--fail-on", choices=tuple(SEVERITY), default="high")
     parser.add_argument("--max-file-bytes", type=int, default=1_000_000)
     parser.add_argument(
+        "--min-confidence",
+        choices=("high", "medium", "low"),
+        default=None,
+        help="Only report findings at or above this confidence level",
+    )
+    parser.add_argument(
         "--exclude",
         action="append",
         default=[],
         help="Exclude a repository-relative glob; repeat for multiple patterns",
+    )
+    parser.add_argument(
+        "--fix-prompt",
+        action="store_true",
+        default=False,
+        help="Generate AI-ready fix prompts for each finding",
+    )
+    parser.add_argument(
+        "--explain",
+        metavar="RULE_ID",
+        default=None,
+        help="Print a detailed explanation for a rule (e.g. --explain SP108)",
+    )
+    parser.add_argument(
+        "--snippet",
+        metavar="CODE",
+        default=None,
+        help="Lint an in-memory code snippet directly without scanning a repository",
+    )
+    parser.add_argument(
+        "--snippet-file",
+        metavar="FILENAME",
+        default="snippet.py",
+        help="Virtual filename for the snippet to guide language detection",
     )
     return parser.parse_args(argv)
 
@@ -968,6 +1695,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     arguments = parse_arguments(argv)
+
+    # Handle --explain mode (no scan needed)
+    if arguments.explain:
+        print(render_explain(arguments.explain))
+        return 0
+
+    # Handle --snippet mode (in-memory linting)
+    if arguments.snippet is not None:
+        findings = lint_source_snippet(arguments.snippet, arguments.snippet_file)
+        payload = build_json_report(Path("."), findings, {"files_scanned": 1, "suppressed": 0})
+        print(json.dumps(payload, indent=2))
+        return 0 if not findings else 1
+
     try:
         if arguments.max_file_bytes <= 0:
             raise ValueError("max-file-bytes must be positive")
@@ -977,6 +1717,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             baseline=load_baseline_fingerprints(arguments.baseline),
             exclude_patterns=arguments.exclude,
         )
+
+        # Filter by confidence if requested
+        if arguments.min_confidence:
+            min_conf = CONFIDENCE[arguments.min_confidence]
+            findings = [f for f in findings if CONFIDENCE[f.confidence] <= min_conf]
+
         payload = build_json_report(arguments.root, findings, stats)
         if arguments.baseline_out:
             arguments.baseline_out.write_text(
@@ -987,12 +1733,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                 + "\n",
                 encoding="utf-8",
             )
-        if arguments.format == "markdown":
-            output = render_markdown_report(arguments.root, findings, stats)
-        elif arguments.format == "sarif":
-            output = json.dumps(build_sarif_report(findings), indent=2)
+
+        # Handle --fix-prompt mode
+        if arguments.fix_prompt:
+            output = render_fix_prompts(arguments.root, findings)
         else:
-            output = json.dumps(payload, indent=2)
+            # Determine format: default to terminal if TTY, else markdown
+            fmt = arguments.format
+            if fmt is None:
+                fmt = "terminal" if (sys.stdout.isatty() and not arguments.output) else "markdown"
+
+            if fmt == "terminal":
+                output = render_terminal_report(arguments.root, findings, stats)
+            elif fmt == "markdown":
+                output = render_markdown_report(arguments.root, findings, stats)
+            elif fmt == "sarif":
+                output = json.dumps(build_sarif_report(findings), indent=2)
+            else:
+                output = json.dumps(payload, indent=2)
+
         if arguments.output:
             arguments.output.write_text(
                 output + ("" if output.endswith("\n") else "\n"), encoding="utf-8"
