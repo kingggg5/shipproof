@@ -374,9 +374,7 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main(["--explain", "SP108"]), 0)
             self.assertEqual(main(["--snippet", "const a = 1;", "--snippet-file", "test.js"]), 0)
-            self.assertEqual(
-                main(["--snippet", "ev" + "al('1')", "--snippet-file", "test.js"]), 1
-            )
+            self.assertEqual(main(["--snippet", "ev" + "al('1')", "--snippet-file", "test.js"]), 1)
             with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
                 baseline_out = Path(f.name)
             try:

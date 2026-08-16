@@ -20,7 +20,9 @@ ShipProof คือเกตตรวจสอบความพร้อม (Pr
 
 ShipProof ไม่ได้สัญญาคำว่า "สมบูรณ์แบบ 100%" หรือ "ไม่มีวันถูกแฮก" จากการสแกนโค้ดเพียงอย่างเดียว แต่ช่วยให้เรามองเห็นสมมติฐานและจุดบกพร่องที่ซ่อนอยู่ นำหลักฐานจริงมาพิสูจน์ และคงอำนาจการตัดสินใจขั้นสุดท้ายไว้ที่นักพัฒนาและทีมงาน
 
-![ShipProof terminal demo](docs/assets/terminal-demo.svg)
+<p align="center">
+  <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
+</p>
 
 ## ทำความเข้าใจใน 30 วินาที
 
@@ -90,7 +92,9 @@ ShipProof ออกแบบการรายงานผลให้เข้�
 
 ShipProof เปลี่ยนการเขียนโค้ดร่วมกับ AI ให้เป็นวงรอบที่มีการตรวจสอบหลักฐานอย่างรัดกุม: AI เขียนโค้ด -> ShipProof ตรวจพบความเสี่ยง -> สร้างคำสั่งแก้ไขพร้อมเงื่อนไข -> AI แก้โค้ดและเพิ่ม Regression Test -> ShipProof ตรวจสอบซ้ำจนกว่าจะผ่านเกณฑ์
 
-![ShipProof verification pipeline](docs/assets/architecture-workflow.svg)
+<p align="center">
+  <img src="docs/assets/architecture-workflow.svg" width="100%" alt="ShipProof verification pipeline" />
+</p>
 
 ```mermaid
 flowchart LR
@@ -283,7 +287,9 @@ shipproof budget \
 shipproof scan . --format sarif --output shipproof.sarif --fail-on high
 ```
 
-![ShipProof capacity planning demo](docs/assets/capacity-demo.svg)
+<p align="center">
+  <img src="docs/assets/capacity-demo.svg" width="100%" alt="ShipProof capacity planning demo" />
+</p>
 
 จำลองความต้องการของระบบเมื่อมีผู้ใช้ลงทะเบียน 100,000 ถึง 1,000,000 คน พร้อมคำนวณการใช้ CPU, Memory และ Database Connection Pool:
 

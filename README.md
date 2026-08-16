@@ -20,7 +20,9 @@ ShipProof is a production gate for AI-assisted repositories. It scans code witho
 
 It does **not** promise "perfect," "unhackable," "maximum performance," or "one million users" from a static scan. It makes assumptions visible, verifies what can be verified, and preserves human authority for consequential actions and releases.
 
-![ShipProof terminal demo](docs/assets/terminal-demo.svg)
+<p align="center">
+  <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
+</p>
 
 ## Understand it in 30 seconds
 
@@ -90,7 +92,9 @@ ShipProof formats findings as actionable review cards with source context, confi
 
 ShipProof turns development into a verified feedback loop: AI writes code, ShipProof finds risks, AI fixes with explicit constraints, and ShipProof re-verifies.
 
-![ShipProof verification pipeline](docs/assets/architecture-workflow.svg)
+<p align="center">
+  <img src="docs/assets/architecture-workflow.svg" width="100%" alt="ShipProof verification pipeline" />
+</p>
 
 ```mermaid
 flowchart LR
@@ -348,7 +352,9 @@ Create a reviewed fingerprint baseline for accepted debt:
 shipproof scan . --format json --baseline-out .shipproof-baseline.json --fail-on none
 ```
 
-![ShipProof capacity planning demo](docs/assets/capacity-demo.svg)
+<p align="center">
+  <img src="docs/assets/capacity-demo.svg" width="100%" alt="ShipProof capacity planning demo" />
+</p>
 
 Turn one million registered users into a transparent workload hypothesis, including CPU and memory assumptions:
 

@@ -1,113 +1,121 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-labelledby="workflow-title workflow-desc">
-  <title id="workflow-title">ShipProof Verification Pipeline</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 480" width="100%" role="img" aria-labelledby="workflow-title workflow-desc">
+  <title id="workflow-title">ShipProof Verification Pipeline Architecture</title>
   <description id="workflow-desc">Architecture of how ShipProof audits code from AI and developers before deployment.</description>
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0b1020"/>
-      <stop offset="100%" stop-color="#111827"/>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
     </linearGradient>
     <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0f172a"/>
+      <stop offset="0%" stop-color="#1c2128"/>
+      <stop offset="100%" stop-color="#161b22"/>
     </linearGradient>
   </defs>
 
-  <rect width="1200" height="480" rx="20" fill="url(#bgGrad)" stroke="#334155" stroke-width="1.5"/>
+  <rect width="920" height="480" rx="16" fill="url(#bgGrad)" stroke="#30363d" stroke-width="1.5"/>
 
   <!-- Header -->
-  <rect width="1200" height="50" rx="20" fill="#1e293b"/>
-  <rect y="30" width="1200" height="20" fill="#1e293b"/>
-  <circle cx="28" cy="25" r="7" fill="#ef4444"/>
-  <circle cx="50" cy="25" r="7" fill="#f59e0b"/>
-  <circle cx="72" cy="25" r="7" fill="#10b981"/>
-  <text x="600" y="31" text-anchor="middle" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="14" font-weight="600">ShipProof Verification Pipeline Architecture</text>
+  <rect width="920" height="44" rx="16" fill="#161b22"/>
+  <rect y="24" width="920" height="20" fill="#161b22"/>
+  <line x1="0" y1="44" x2="920" y2="44" stroke="#30363d" stroke-width="1"/>
+  <circle cx="24" cy="22" r="6.5" fill="#ff5f56"/>
+  <circle cx="46" cy="22" r="6.5" fill="#ffbd2e"/>
+  <circle cx="68" cy="22" r="6.5" fill="#27c93f"/>
+  <text x="460" y="28" text-anchor="middle" fill="#8b949e" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="600">ShipProof Verification Pipeline</text>
 
-  <!-- Step 1: Input Code / AI Generator -->
-  <g transform="translate(40, 80)">
-    <rect width="240" height="340" rx="14" fill="url(#cardGrad)" stroke="#38bdf8" stroke-width="1.5"/>
-    <rect width="240" height="42" rx="14" fill="#0284c7"/>
-    <rect y="28" width="240" height="14" fill="#0284c7"/>
-    <text x="120" y="27" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700">1. Code Ingestion</text>
-    <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="13" fill="#cbd5e1">
-      <text x="20" y="75" fill="#38bdf8">[Sources]</text>
-      <text x="20" y="105">• Human Developers</text>
-      <text x="20" y="130">• AI / LLM Generation</text>
-      <text x="20" y="155">• Pull Requests / Git</text>
-      <text x="20" y="195" fill="#38bdf8">[Frameworks]</text>
-      <text x="20" y="225">• Next.js / Express</text>
-      <text x="20" y="250">• FastAPI / Python</text>
-      <text x="20" y="275">• Django / Supabase</text>
-      <text x="20" y="310" fill="#94a3b8">Zero-config discovery</text>
+  <!-- Step 1: Input Code -->
+  <g transform="translate(24, 68)">
+    <rect width="192" height="385" rx="12" fill="url(#cardGrad)" stroke="#388bfd" stroke-width="1.5"/>
+    <rect width="192" height="38" rx="12" fill="#1f6feb"/>
+    <rect y="24" width="192" height="14" fill="#1f6feb"/>
+    <text x="96" y="25" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700">1. Code Ingestion</text>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13.5" fill="#c9d1d9">
+      <text x="14" y="68" fill="#58a6ff" font-weight="700">[Sources]</text>
+      <text x="14" y="96">• Human Coders</text>
+      <text x="14" y="122">• AI / Vibe Coding</text>
+      <text x="14" y="148">• Pull Requests</text>
+      <text x="14" y="190" fill="#58a6ff" font-weight="700">[Frameworks]</text>
+      <text x="14" y="218">• Next.js / React</text>
+      <text x="14" y="244">• Express / Node</text>
+      <text x="14" y="270">• FastAPI / Django</text>
+      <text x="14" y="296">• Supabase / SQL</text>
+      <line x1="14" y1="324" x2="178" y2="324" stroke="#30363d" stroke-width="1"/>
+      <text x="14" y="352" fill="#8b949e">Zero-config run</text>
     </g>
   </g>
 
   <!-- Connector 1 -->
-  <path d="M 280 250 L 325 250" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="6,4"/>
-  <polygon points="325,245 335,250 325,255" fill="#38bdf8"/>
+  <path d="M 216 260 L 244 260" stroke="#388bfd" stroke-width="2.5" stroke-dasharray="5,3"/>
+  <polygon points="244,255 252,260 244,265" fill="#388bfd"/>
 
-  <!-- Step 2: Static Heuristic & AST Engine -->
-  <g transform="translate(335, 80)">
-    <rect width="250" height="340" rx="14" fill="url(#cardGrad)" stroke="#818cf8" stroke-width="1.5"/>
-    <rect width="250" height="42" rx="14" fill="#4f46e5"/>
-    <rect y="28" width="250" height="14" fill="#4f46e5"/>
-    <text x="125" y="27" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700">2. AST &amp; Pattern Audit</text>
-    <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="13" fill="#cbd5e1">
-      <text x="20" y="75" fill="#a5b4fc">[Defense Rules]</text>
-      <text x="20" y="105">• SP108: Missing Auth</text>
-      <text x="20" y="130">• SP501: Unmetered AI</text>
-      <text x="20" y="155">• SP502: Stripe Webhooks</text>
-      <text x="20" y="180">• SP503: Supabase Keys</text>
-      <text x="20" y="205">• SP307: N+1 DB Queries</text>
-      <text x="20" y="230">• SP313: Serverless DBs</text>
-      <text x="20" y="270" fill="#a5b4fc">[AST Intelligence]</text>
-      <text x="20" y="300">• Router Dependency Tree</text>
-      <text x="20" y="325">• Session Timeout Trace</text>
+  <!-- Step 2: AST & Defense Rules -->
+  <g transform="translate(252, 68)">
+    <rect width="202" height="385" rx="12" fill="url(#cardGrad)" stroke="#8957e5" stroke-width="1.5"/>
+    <rect width="202" height="38" rx="12" fill="#8957e5"/>
+    <rect y="24" width="202" height="14" fill="#8957e5"/>
+    <text x="101" y="25" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700">2. AST &amp; Rules</text>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#c9d1d9">
+      <text x="14" y="68" fill="#d2a8ff" font-weight="700">[Security &amp; Traps]</text>
+      <text x="14" y="96">• SP108: Missing Auth</text>
+      <text x="14" y="122">• SP501: Unmetered AI</text>
+      <text x="14" y="148">• SP502: Stripe Hooks</text>
+      <text x="14" y="174">• SP503: Supabase Keys</text>
+      <text x="14" y="200">• SP307: N+1 DB Loops</text>
+      <text x="14" y="226">• SP313: Serverless DB</text>
+      <text x="14" y="266" fill="#d2a8ff" font-weight="700">[Deep AST Analysis]</text>
+      <text x="14" y="294">• Router Trees</text>
+      <text x="14" y="320">• Session Timeouts</text>
+      <text x="14" y="352" fill="#8b949e">Fast heuristic scan</text>
     </g>
   </g>
 
   <!-- Connector 2 -->
-  <path d="M 585 250 L 630 250" stroke="#818cf8" stroke-width="2.5" stroke-dasharray="6,4"/>
-  <polygon points="630,245 640,250 630,255" fill="#818cf8"/>
+  <path d="M 454 260 L 482 260" stroke="#8957e5" stroke-width="2.5" stroke-dasharray="5,3"/>
+  <polygon points="482,255 490,260 482,265" fill="#8957e5"/>
 
-  <!-- Step 3: Capacity & Evidence Gate -->
-  <g transform="translate(640, 80)">
-    <rect width="240" height="340" rx="14" fill="url(#cardGrad)" stroke="#f59e0b" stroke-width="1.5"/>
-    <rect width="240" height="42" rx="14" fill="#d97706"/>
-    <rect y="28" width="240" height="14" fill="#d97706"/>
-    <text x="120" y="27" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700">3. Capacity &amp; Proof</text>
-    <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="13" fill="#cbd5e1">
-      <text x="20" y="75" fill="#fbbf24">[Scale Modeling]</text>
-      <text x="20" y="105">• 10k to 1M scale math</text>
-      <text x="20" y="130">• DB connection pools</text>
-      <text x="20" y="155">• Memory &amp; CPU budgets</text>
-      <text x="20" y="195" fill="#fbbf24">[Load Test Scenarios]</text>
-      <text x="20" y="225">• Smoke &amp; steady-state</text>
-      <text x="20" y="250">• Stress &amp; spike tests</text>
-      <text x="20" y="275">• k6 script generator</text>
-      <text x="20" y="310" fill="#94a3b8">Mathematical proof</text>
+  <!-- Step 3: Capacity & Scale -->
+  <g transform="translate(490, 68)">
+    <rect width="190" height="385" rx="12" fill="url(#cardGrad)" stroke="#d29922" stroke-width="1.5"/>
+    <rect width="190" height="38" rx="12" fill="#b08800"/>
+    <rect y="24" width="190" height="14" fill="#b08800"/>
+    <text x="95" y="25" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700">3. Scale &amp; Capacity</text>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#c9d1d9">
+      <text x="14" y="68" fill="#e3b341" font-weight="700">[Capacity Modeling]</text>
+      <text x="14" y="96">• 10k to 1M scale</text>
+      <text x="14" y="122">• DB connection pool</text>
+      <text x="14" y="148">• CPU &amp; RAM sizing</text>
+      <text x="14" y="190" fill="#e3b341" font-weight="700">[Load Testing]</text>
+      <text x="14" y="218">• Steady &amp; peak load</text>
+      <text x="14" y="244">• Stress &amp; spike tests</text>
+      <text x="14" y="270">• Export k6 scripts</text>
+      <line x1="14" y1="300" x2="176" y2="300" stroke="#30363d" stroke-width="1"/>
+      <text x="14" y="328" fill="#8b949e">Resource budget</text>
+      <text x="14" y="352" fill="#8b949e">regression proof</text>
     </g>
   </g>
 
   <!-- Connector 3 -->
-  <path d="M 880 250 L 925 250" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="6,4"/>
-  <polygon points="925,245 935,250 925,255" fill="#f59e0b"/>
+  <path d="M 680 260 L 708 260" stroke="#d29922" stroke-width="2.5" stroke-dasharray="5,3"/>
+  <polygon points="708,255 716,260 708,265" fill="#d29922"/>
 
-  <!-- Step 4: Gate Output -->
-  <g transform="translate(935, 80)">
-    <rect width="225" height="340" rx="14" fill="url(#cardGrad)" stroke="#10b981" stroke-width="1.5"/>
-    <rect width="225" height="42" rx="14" fill="#059669"/>
-    <rect y="28" width="225" height="14" fill="#059669"/>
-    <text x="112" y="27" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700">4. Decision Gate</text>
-    <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="13" fill="#cbd5e1">
-      <text x="20" y="75" fill="#34d399">[Output Modes]</text>
-      <text x="20" y="105">• CLI Terminal Review</text>
-      <text x="20" y="130">• AI Fix Prompts</text>
-      <text x="20" y="155">• GitHub Step Summary</text>
-      <text x="20" y="180">• SARIF Code Scanning</text>
-      <text x="20" y="205">• MCP Server Bridge</text>
-      <text x="20" y="245" fill="#34d399">[CI/CD Status]</text>
-      <text x="20" y="275" fill="#86efac" font-weight="700">PASS_WITH_EVIDENCE</text>
-      <text x="20" y="300" fill="#fca5a5" font-weight="700">BLOCK (if unverified)</text>
+  <!-- Step 4: Decision Gate -->
+  <g transform="translate(716, 68)">
+    <rect width="180" height="385" rx="12" fill="url(#cardGrad)" stroke="#2ea043" stroke-width="1.5"/>
+    <rect width="180" height="38" rx="12" fill="#238636"/>
+    <rect y="24" width="180" height="14" fill="#238636"/>
+    <text x="90" y="25" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700">4. Decision Gate</text>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#c9d1d9">
+      <text x="14" y="68" fill="#3fb950" font-weight="700">[Output Modes]</text>
+      <text x="14" y="96">• Terminal Cards</text>
+      <text x="14" y="122">• AI Fix Prompts</text>
+      <text x="14" y="148">• Step Summaries</text>
+      <text x="14" y="174">• SARIF Output</text>
+      <text x="14" y="200">• MCP Tools</text>
+      <text x="14" y="238" fill="#3fb950" font-weight="700">[Final Verdict]</text>
+      <rect x="14" y="250" width="152" height="30" rx="6" fill="#13231b" stroke="#2ea043"/>
+      <text x="22" y="270" fill="#3fb950" font-weight="700" font-size="12">PASS_WITH_EVIDENCE</text>
+      <rect x="14" y="290" width="152" height="30" rx="6" fill="#3c1e1e" stroke="#f85149"/>
+      <text x="22" y="310" fill="#ff7b72" font-weight="700" font-size="12">BLOCK (if broken)</text>
     </g>
   </g>
 </svg>

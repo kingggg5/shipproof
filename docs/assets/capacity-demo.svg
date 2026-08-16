@@ -1,32 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="cap-title cap-desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 480" width="100%" role="img" aria-labelledby="cap-title cap-desc">
   <title id="cap-title">ShipProof Capacity and Scale Modeling Demo</title>
   <description id="cap-desc">Interactive capacity planning from 10k to 1M users with bottleneck analysis.</description>
-  <rect width="1200" height="520" rx="20" fill="#0b1020" stroke="#334155" stroke-width="1.5"/>
-  <rect width="1200" height="50" rx="20" fill="#161d31"/>
-  <rect y="30" width="1200" height="20" fill="#161d31"/>
-  <circle cx="28" cy="25" r="7" fill="#ef4444"/>
-  <circle cx="50" cy="25" r="7" fill="#f59e0b"/>
-  <circle cx="72" cy="25" r="7" fill="#10b981"/>
-  <text x="600" y="31" text-anchor="middle" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="14" font-weight="600">shipproof capacity --users 100000 --export-k6 loadtest.js</text>
+  
+  <defs>
+    <linearGradient id="capBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+  </defs>
 
-  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">
-    <text x="36" y="88" fill="#7dd3fc">$ shipproof capacity --users 100000 --dau-ratio 0.25 --burst 2.5</text>
-    <text x="36" y="125" fill="#f8fafc" font-weight="700">ShipProof Capacity Engineering Model (100,000 Registered Users)</text>
-    <text x="36" y="155" fill="#38bdf8">Derived Workload Assumptions:</text>
-    <text x="56" y="182" fill="#cbd5e1">• Daily Active Users (DAU): <tspan fill="#f1f5f9" font-weight="700">25,000 users</tspan> (25.0%)</text>
-    <text x="56" y="206" fill="#cbd5e1">• Peak Hour Concurrency: <tspan fill="#f1f5f9" font-weight="700">3,750 users/hr</tspan> (15.0% of DAU)</text>
-    <text x="56" y="230" fill="#cbd5e1">• Design Peak Throughput: <tspan fill="#34d399" font-weight="700">52.1 RPS</tspan> (with 2.5x burst allowance)</text>
-    <text x="56" y="254" fill="#cbd5e1">• Database Query Load: <tspan fill="#fbbf24" font-weight="700">35.6 QPS</tspan> (after 70% cache hit ratio)</text>
+  <rect width="920" height="480" rx="16" fill="url(#capBg)" stroke="#30363d" stroke-width="1.5"/>
+  
+  <!-- Header -->
+  <rect width="920" height="44" rx="16" fill="#161b22"/>
+  <rect y="24" width="920" height="20" fill="#161b22"/>
+  <line x1="0" y1="44" x2="920" y2="44" stroke="#30363d" stroke-width="1"/>
+  <circle cx="24" cy="22" r="6.5" fill="#ff5f56"/>
+  <circle cx="46" cy="22" r="6.5" fill="#ffbd2e"/>
+  <circle cx="68" cy="22" r="6.5" fill="#27c93f"/>
+  <text x="460" y="27" text-anchor="middle" fill="#8b949e" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="600">shipproof capacity --users 100000 --export-k6 loadtest.js</text>
 
-    <line x1="36" y1="280" x2="1164" y2="280" stroke="#1e293b" stroke-width="1.5"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">
+    <!-- Command -->
+    <text x="28" y="78" fill="#58a6ff" font-weight="600">$ shipproof capacity --users 100000 --dau-ratio 0.25 --burst 2.5</text>
+    
+    <!-- Title banner -->
+    <rect x="28" y="96" width="864" height="34" rx="6" fill="#1f242c" stroke="#388bfd" stroke-width="1"/>
+    <text x="44" y="119" fill="#f0f6fc" font-weight="700">Capacity Engineering Model — 100,000 Registered Users</text>
 
-    <text x="36" y="312" fill="#38bdf8">Infrastructure Sizing &amp; Headroom (1.5x Safety Factor):</text>
-    <text x="56" y="338" fill="#cbd5e1">• Compute Requirements: <tspan fill="#f1f5f9" font-weight="700">2 App Instances</tspan> (minimum) | <tspan fill="#f1f5f9" font-weight="700">0.85 CPU Cores</tspan></text>
-    <text x="56" y="362" fill="#cbd5e1">• Memory Footprint: <tspan fill="#f1f5f9" font-weight="700">1,024 MB RAM</tspan> estimated baseline</text>
-    <text x="56" y="386" fill="#cbd5e1">• Database Connection Pool: <tspan fill="#f87171" font-weight="700">18 Connections</tspan> (prevent pool exhaustion)</text>
+    <!-- Workload Metrics Card -->
+    <rect x="28" y="142" width="422" height="180" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+    <text x="44" y="170" fill="#58a6ff" font-weight="700">Derived Workload Assumptions:</text>
+    <g font-size="14.5" fill="#c9d1d9">
+      <text x="44" y="200">• Daily Active Users (DAU): <tspan fill="#7ee787" font-weight="700">25,000</tspan> (25%)</text>
+      <text x="44" y="228">• Peak Hour Users: <tspan fill="#7ee787" font-weight="700">3,750 users/hr</tspan></text>
+      <text x="44" y="256">• Design Peak Throughput: <tspan fill="#79c0ff" font-weight="700">52.1 RPS</tspan></text>
+      <text x="44" y="284">• DB Query Load: <tspan fill="#e3b341" font-weight="700">35.6 QPS</tspan> (70% cache hit)</text>
+      <text x="44" y="308" fill="#8b949e" font-size="12">Burst safety multiplier: 2.5x</text>
+    </g>
 
-    <rect x="36" y="415" width="1128" height="70" rx="12" fill="#0f172a" stroke="#334155"/>
-    <text x="56" y="445" fill="#86efac" font-weight="700">Generated Load Ladder (k6 script exported to loadtest.js):</text>
-    <text x="56" y="468" fill="#94a3b8">Stage 1: Smoke (10 RPS) → Stage 2: Average (21 RPS) → Stage 3: Peak (52 RPS) → Stage 4: Stress (104 RPS)</text>
+    <!-- Infrastructure Sizing Card -->
+    <rect x="470" y="142" width="422" height="180" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+    <text x="486" y="170" fill="#58a6ff" font-weight="700">Infrastructure Sizing (1.5x Headroom):</text>
+    <g font-size="14.5" fill="#c9d1d9">
+      <text x="486" y="200">• App Instances: <tspan fill="#7ee787" font-weight="700">2 Instances</tspan> (minimum)</text>
+      <text x="486" y="228">• Compute Cores: <tspan fill="#7ee787" font-weight="700">0.85 Cores</tspan> required</text>
+      <text x="486" y="256">• RAM Footprint: <tspan fill="#7ee787" font-weight="700">1,024 MB</tspan> baseline</text>
+      <text x="486" y="284">• DB Pool Size: <tspan fill="#ff7b72" font-weight="700">18 Connections</tspan></text>
+      <text x="486" y="308" fill="#8b949e" font-size="12">Prevents connection starvation</text>
+    </g>
+
+    <!-- k6 script export box -->
+    <rect x="28" y="338" width="864" height="114" rx="10" fill="#13231b" stroke="#2ea043" stroke-width="1.2"/>
+    <text x="44" y="368" fill="#3fb950" font-weight="700">Generated Load Ladder (k6 script exported to loadtest.js):</text>
+    <g font-size="14" fill="#e6edf3">
+      <text x="44" y="396">Stage 1: Smoke (10 RPS) → Stage 2: Average (21 RPS) → Stage 3: Peak (52 RPS)</text>
+      <text x="44" y="420">Stage 4: Stress (104 RPS) → Stage 5: Spike (130 RPS) → Stage 6: Soak (52 RPS)</text>
+      <text x="44" y="442" fill="#7ee787" font-size="12.5">Proof before production: Replace assumptions with measured staging telemetry</text>
+    </g>
   </g>
 </svg>

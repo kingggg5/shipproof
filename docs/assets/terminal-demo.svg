@@ -1,35 +1,76 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690" role="img" aria-labelledby="title description">
-  <title id="title">ShipProof before and after terminal demo</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620" width="100%" role="img" aria-labelledby="title description">
+  <title id="title">ShipProof Before and After Terminal Demo</title>
   <description id="description">A vulnerable API scan finds five issues. After fixes and tests, the scan passes with zero findings.</description>
-  <rect width="1200" height="690" rx="24" fill="#0b1020"/>
-  <rect width="1200" height="56" rx="24" fill="#161d31"/>
-  <rect y="32" width="1200" height="24" fill="#161d31"/>
-  <circle cx="30" cy="28" r="8" fill="#ff6b6b"/>
-  <circle cx="56" cy="28" r="8" fill="#ffd166"/>
-  <circle cx="82" cy="28" r="8" fill="#52d273"/>
-  <text x="600" y="35" text-anchor="middle" fill="#a9b3c9" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">ShipProof · evidence before claims</text>
-  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18">
-    <text x="38" y="100" fill="#7dd3fc">$ shipproof scan examples/demo-api/fixtures/before --fail-on high</text>
-    <text x="38" y="142" fill="#f8fafc">ShipProof Production Readiness</text>
-    <text x="38" y="180" fill="#f87171">BLOCK</text>
-    <text x="190" y="180" fill="#cbd5e1">5 findings · 4 high · 1 medium</text>
-    <text x="64" y="220" fill="#fca5a5">SP108 HIGH</text>
-    <text x="250" y="220" fill="#cbd5e1">admin route has no visible authorization</text>
-    <text x="64" y="254" fill="#fca5a5">SP103 HIGH</text>
-    <text x="250" y="254" fill="#cbd5e1">SQL built with interpolation</text>
-    <text x="64" y="288" fill="#fca5a5">SP304 HIGH</text>
-    <text x="250" y="288" fill="#cbd5e1">outbound request has no timeout</text>
-    <text x="64" y="322" fill="#fca5a5">SP201 HIGH</text>
-    <text x="250" y="322" fill="#cbd5e1">debug mode enabled</text>
-    <text x="64" y="356" fill="#facc15">SP305 MEDIUM</text>
-    <text x="250" y="356" fill="#cbd5e1">pagination input has no upper bound</text>
-    <line x1="38" y1="390" x2="1162" y2="390" stroke="#2f3a55"/>
-    <text x="38" y="432" fill="#7dd3fc">$ python -m unittest discover -s examples/demo-api/fixtures/after/tests</text>
-    <text x="38" y="470" fill="#86efac">Ran 2 tests · OK</text>
-    <text x="38" y="518" fill="#7dd3fc">$ shipproof scan examples/demo-api/fixtures/after --fail-on high</text>
-    <text x="38" y="560" fill="#86efac">PASS_WITH_EVIDENCE</text>
-    <text x="300" y="560" fill="#cbd5e1">0 findings · 3 files scanned</text>
-    <rect x="38" y="600" width="1124" height="54" rx="12" fill="#12251d" stroke="#245d42"/>
-    <text x="64" y="634" fill="#86efac">Before → scan → findings → fix → tests → PASS</text>
+  
+  <defs>
+    <linearGradient id="termBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="920" height="620" rx="16" fill="url(#termBg)" stroke="#30363d" stroke-width="1.5"/>
+  
+  <!-- Window Header -->
+  <rect width="920" height="44" rx="16" fill="#161b22"/>
+  <rect y="24" width="920" height="20" fill="#161b22"/>
+  <line x1="0" y1="44" x2="920" y2="44" stroke="#30363d" stroke-width="1"/>
+  <circle cx="24" cy="22" r="6.5" fill="#ff5f56"/>
+  <circle cx="46" cy="22" r="6.5" fill="#ffbd2e"/>
+  <circle cx="68" cy="22" r="6.5" fill="#27c93f"/>
+  <text x="460" y="27" text-anchor="middle" fill="#8b949e" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="600">shipproof scan demo — bash</text>
+
+  <!-- Terminal Content -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16">
+    <!-- Command 1 -->
+    <text x="28" y="82" fill="#58a6ff" font-weight="600">$ shipproof scan examples/demo-api/fixtures/before --fail-on high</text>
+    
+    <!-- Verdict 1 -->
+    <rect x="28" y="102" width="864" height="42" rx="8" fill="#3c1e1e" stroke="#f85149" stroke-width="1.2"/>
+    <text x="44" y="129" fill="#ff7b72" font-weight="700">BLOCK</text>
+    <text x="125" y="129" fill="#c9d1d9">5 findings found  (4 high, 1 medium)</text>
+
+    <!-- Findings list -->
+    <g font-size="15">
+      <rect x="28" y="156" width="105" height="26" rx="6" fill="#490202"/>
+      <text x="36" y="174" fill="#ff7b72" font-weight="700">SP108 HIGH</text>
+      <text x="145" y="174" fill="#e6edf3">Admin route has no visible authorization</text>
+
+      <rect x="28" y="190" width="105" height="26" rx="6" fill="#490202"/>
+      <text x="36" y="208" fill="#ff7b72" font-weight="700">SP103 HIGH</text>
+      <text x="145" y="208" fill="#e6edf3">SQL built with string interpolation</text>
+
+      <rect x="28" y="224" width="105" height="26" rx="6" fill="#490202"/>
+      <text x="36" y="242" fill="#ff7b72" font-weight="700">SP304 HIGH</text>
+      <text x="145" y="242" fill="#e6edf3">Outbound HTTP request missing timeout</text>
+
+      <rect x="28" y="258" width="105" height="26" rx="6" fill="#490202"/>
+      <text x="36" y="276" fill="#ff7b72" font-weight="700">SP201 HIGH</text>
+      <text x="145" y="276" fill="#e6edf3">Production debug mode enabled</text>
+
+      <rect x="28" y="292" width="105" height="26" rx="6" fill="#3b2e04"/>
+      <text x="36" y="310" fill="#e3b341" font-weight="700">SP305 MED</text>
+      <text x="145" y="310" fill="#e6edf3">Pagination limit parameter has no upper bound</text>
+    </g>
+
+    <!-- Separator -->
+    <line x1="28" y1="338" x2="892" y2="338" stroke="#30363d" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+    <!-- Command 2 -->
+    <text x="28" y="372" fill="#58a6ff" font-weight="600">$ python -m unittest discover -s examples/demo-api/fixtures/after/tests</text>
+    <text x="28" y="402" fill="#7ee787">Ran 2 tests in 0.002s  •  OK</text>
+
+    <!-- Command 3 -->
+    <text x="28" y="446" fill="#58a6ff" font-weight="600">$ shipproof scan examples/demo-api/fixtures/after --fail-on high</text>
+
+    <!-- Verdict 2 -->
+    <rect x="28" y="466" width="864" height="42" rx="8" fill="#13231b" stroke="#2ea043" stroke-width="1.2"/>
+    <text x="44" y="493" fill="#3fb950" font-weight="700">PASS_WITH_EVIDENCE</text>
+    <text x="235" y="493" fill="#c9d1d9">0 findings  •  3 files scanned  •  Gate passed</text>
+
+    <!-- Summary Box -->
+    <rect x="28" y="530" width="864" height="60" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+    <text x="48" y="566" fill="#58a6ff" font-weight="700">Evidence Workflow:</text>
+    <text x="215" y="566" fill="#e6edf3">Scan failure → AI fix prompt → Regression test → PASS</text>
   </g>
 </svg>
