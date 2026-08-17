@@ -21,9 +21,17 @@ function runProcess(command, argumentsList, options = {}) {
 }
 
 function npmCliPath() {
-  const candidate = join(dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js");
-  if (!existsSync(candidate)) throw new Error(`npm CLI not found next to Node at ${candidate}`);
-  return candidate;
+  const base = dirname(process.execPath);
+  const candidates = [
+    join(base, "node_modules", "npm", "bin", "npm-cli.js"),
+    join(base, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+    join(base, "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+    join(base, "..", "node_modules", "npm", "bin", "npm-cli.js"),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  throw new Error(`npm CLI not found next to Node at ${candidates.join(" or ")}`);
 }
 
 function main() {
