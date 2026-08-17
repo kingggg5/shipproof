@@ -82,6 +82,16 @@ Read [reporting.md](references/reporting.md) and report separate gates for Secur
 
 List findings first, ordered by severity then confidence. Separate confirmed findings, hypotheses to test, and residual unknowns. End with the smallest prioritized verification plan.
 
+## Closed-Loop AI Agent Workflow Protocol
+
+When an AI coding assistant (Codex, Claude, Cursor) remediates issues found by ShipProof, follow this 5-step closed loop:
+
+1. **Scan**: Run `shipproof scan . --format json` (or `python scripts/scan_repo.py . --format json`) to extract machine-readable findings with `fingerprint`, `scope`, and `proof_level`.
+2. **Triage & Explain**: Run `shipproof explain <rule_id> --format json` to review the attack scenario, false-positive analysis, and required invariant checks.
+3. **Generate Fix Prompts**: Run `shipproof scan --fix-prompt --format json` to obtain ready-to-use task prompts containing target source context and constraints.
+4. **Apply Fix & Regression Test**: Implement the minimal safe fix without altering public API contracts, and write an explicit regression test covering the invariant.
+5. **Re-scan & Gate**: Run `shipproof scan . --fail-on high` to prove that all blocking findings are resolved before declaring the task complete.
+
 ## Baselines
 
 Create a reviewed baseline after triage:

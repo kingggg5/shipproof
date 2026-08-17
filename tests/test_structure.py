@@ -134,6 +134,23 @@ class StructureTests(unittest.TestCase):
                     f"{readme_name} severity drift for {rule_id}",
                 )
 
+    def test_framework_table_rules_exist_in_scanner(self):
+        scanner_rule_ids = {rule.rule_id for rule in RULES}
+        for readme_name in ("README.md", "README.th.md"):
+            content = (ROOT / readme_name).read_text(encoding="utf-8")
+            heading = (
+                "## Framework-Aware Detection"
+                if "## Framework-Aware Detection" in content
+                else "## การตรวจจับที่ปรับตาม Framework อัตโนมัติ"
+            )
+            framework_section = content.split(heading, 1)[1]
+            framework_table = framework_section.split("## ", 1)[0]
+            mentioned_rules = set(re.findall(r"\b(SP\d{3})\b", framework_table))
+            self.assertTrue(
+                mentioned_rules.issubset(scanner_rule_ids),
+                f"Rules in {readme_name} framework table not in scanner: {mentioned_rules - scanner_rule_ids}",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

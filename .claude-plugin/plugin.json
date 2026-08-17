@@ -1,7 +1,7 @@
 {
   "name": "shipproof",
   "displayName": "ShipProof",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Evidence-first engineering and production audits for secure, efficient, scalable systems.",
   "author": {
     "name": "Jesadakorn Pipitakun",

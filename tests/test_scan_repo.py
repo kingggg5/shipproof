@@ -22,6 +22,9 @@ from scan_repo import (  # noqa: E402
     iter_scannable_files,
     main,
     normalize_exclude_patterns,
+    render_explain,
+    render_fix_prompts,
+    render_github_annotations,
     render_markdown_report,
     scan_repository,
 )
@@ -1009,6 +1012,50 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         source = "result, err := doThing()\nif err != nil {\n    return err\n}\n"
         findings = self.findings("store.go", source)
         self.assertNotIn("SP136", [f.rule_id for f in findings])
+
+    def test_scope_determination_and_downranking_for_test_paths(self):
+        source = "app = FastAPI(de" + "bug=True)\n"
+        test_finding = self.findings("tests/test_api.py", source)[0]
+        self.assertEqual(test_finding.scope, "test")
+        self.assertEqual(test_finding.confidence, "medium")
+
+        app_finding = self.findings("src/api.py", source)[0]
+        self.assertEqual(app_finding.scope, "app")
+        self.assertEqual(app_finding.confidence, "high")
+
+    def test_ruby_deserialization_is_flagged(self):
+        marshal_source = "data = Marshal." + "load(user_input)\n"
+        yaml_source = "config = YAML." + "unsafe_load(raw_yaml)\n"
+        self.assertIn("SP106", [f.rule_id for f in self.findings("app.rb", marshal_source)])
+        self.assertIn("SP106", [f.rule_id for f in self.findings("app.rb", yaml_source)])
+
+    def test_intraprocedural_python_taint_is_flagged_with_l2(self):
+        code = (
+            "def handle_query(user_id):\n"
+            '    sql = f"SELECT * FROM users WHERE id = {user_id}"\n'
+            "    cursor.execute(sql)\n"
+        )
+        findings = self.findings("service.py", code)
+        sp103 = next(f for f in findings if f.rule_id == "SP103")
+        self.assertEqual(sp103.detection, "taint")
+        self.assertEqual(sp103.proof_level, "L2")
+
+    def test_github_annotations_formatting(self):
+        finding = self.findings("server.py", "app = FastAPI(de" + "bug=True)\n")[0]
+        annotations = render_github_annotations([finding])
+        self.assertIn("::error file=server.py,line=1,title=SP201", annotations)
+
+    def test_explain_and_fix_prompt_json_formats(self):
+        explain_json = json.loads(render_explain("SP106", as_json=True))
+        self.assertEqual(explain_json["rule_id"], "SP106")
+        self.assertIn("why", explain_json)
+        self.assertIn("attack", explain_json)
+
+        finding = self.findings("server.py", "app = FastAPI(de" + "bug=True)\n")[0]
+        fix_prompts_json = json.loads(render_fix_prompts(Path("."), [finding], as_json=True))
+        self.assertEqual(len(fix_prompts_json), 1)
+        self.assertEqual(fix_prompts_json[0]["rule_id"], "SP201")
+        self.assertIn("Fix SP201 in server.py", fix_prompts_json[0]["prompt"])
 
 
 if __name__ == "__main__":

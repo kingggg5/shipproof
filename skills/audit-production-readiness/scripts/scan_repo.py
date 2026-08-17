@@ -17,7 +17,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.5.1"
+VERSION = "0.5.2"
 
 SEVERITY = {"none": 99, "critical": 0, "high": 1, "medium": 2, "low": 3}
 CONFIDENCE = {"high": 0, "medium": 1, "low": 2}
@@ -561,6 +561,8 @@ class Finding:
     fingerprint: str
     detection: str = "pattern"
     proof_level: str = "L0"
+    scope: str = "app"
+    verification_status: str = "unverified"
 
 
 PROOF_LEVELS = {
@@ -568,6 +570,7 @@ PROOF_LEVELS = {
     "ast": "L1",
     "structural": "L1",
     "artifact": "L1",
+    "taint": "L2",
 }
 
 
@@ -688,12 +691,14 @@ RULES: tuple[Rule, ...] = (
         "security",
         "high",
         "medium",
-        compile_pattern(r"\b(?:pickle\.loads?|yaml\.load)\s*\("),
+        compile_pattern(
+            r"\b(?:pickle\.loads?|yaml\.load|Marshal\.(?:load|restore)|YAML\.(?:unsafe_load|load_stream))\s*\("
+        ),
         "Unsafe deserialization can execute attacker-controlled behavior.",
         "Use a safe data format; for YAML use safe_load and constrain accepted types.",
         "CWE-502",
         "OWASP ASVS V5",
-        frozenset({".py", ".pyi"}),
+        frozenset({".py", ".pyi", ".rb"}),
     ),
     Rule(
         "SP107",
@@ -1587,12 +1592,58 @@ def is_pure_comment(line: str, path: Path) -> bool:
     return False
 
 
+TEST_PATH_SEGMENTS = frozenset(
+    {
+        "test",
+        "tests",
+        "testing",
+        "spec",
+        "specs",
+        "__tests__",
+        "docs",
+        "doc",
+        "documentation",
+        "examples",
+        "example",
+        "samples",
+        "sample",
+        "benchmarks",
+        "benchmark",
+    }
+)
+
+DOWNRANK_CONFIDENCE = {
+    "high": "medium",
+    "medium": "low",
+    "low": "low",
+}
+
+
+def determine_scope(relative_path: str) -> str:
+    normalized = relative_path.replace("\\", "/").removeprefix("./").lower()
+    parts = normalized.split("/")
+    if any(part in TEST_PATH_SEGMENTS for part in parts[:-1]):
+        return "test"
+    filename = parts[-1]
+    stem = Path(filename).stem
+    if (
+        filename.startswith("test_")
+        or stem.startswith("test_")
+        or stem.endswith(("_test", ".test", ".spec", "_spec"))
+    ):
+        return "test"
+    return "app"
+
+
 def make_finding(
     rule: Rule,
     relative_path: str,
     line_number: int,
     evidence: str,
     detection: str = "pattern",
+    scope: str | None = None,
+    confidence: str | None = None,
+    verification_status: str = "unverified",
 ) -> Finding:
     safe_evidence = clean_evidence(evidence, rule.redact)
     if rule.redact:
@@ -1601,12 +1652,19 @@ def make_finding(
     else:
         identity = f"{rule.rule_id}:{relative_path}:{safe_evidence}"
     fingerprint = hashlib.sha256(identity.encode("utf-8", "replace")).hexdigest()[:24]
+    finding_scope = scope if scope is not None else determine_scope(relative_path)
+    base_confidence = confidence if confidence is not None else rule.confidence
+    finding_confidence = (
+        DOWNRANK_CONFIDENCE.get(base_confidence, base_confidence)
+        if finding_scope == "test" and confidence is None
+        else base_confidence
+    )
     return Finding(
         rule.rule_id,
         rule.title,
         rule.category,
         rule.severity,
-        rule.confidence,
+        finding_confidence,
         relative_path,
         line_number,
         safe_evidence,
@@ -1616,7 +1674,9 @@ def make_finding(
         rule.owasp,
         fingerprint,
         detection,
-        PROOF_LEVELS[detection],
+        PROOF_LEVELS.get(detection, "L0"),
+        finding_scope,
+        verification_status,
     )
 
 
@@ -2042,13 +2102,29 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.async_function_depth = 0
         self.loop_depth = 0
         self.transaction_depth = 0
+        self.local_assignments: dict[str, ast.AST] = {}
 
-    def add_finding(self, rule: Rule, node: ast.AST) -> None:
+    def add_finding(
+        self,
+        rule: Rule,
+        node: ast.AST,
+        detection: str = "ast",
+        confidence: str | None = None,
+    ) -> None:
         line_number = getattr(node, "lineno", 1)
         evidence = (
             self.source_lines[line_number - 1] if 0 < line_number <= len(self.source_lines) else ""
         )
-        self.findings.append(make_finding(rule, self.relative_path, line_number, evidence, "ast"))
+        self.findings.append(
+            make_finding(
+                rule,
+                self.relative_path,
+                line_number,
+                evidence,
+                detection=detection,
+                confidence=confidence,
+            )
+        )
 
     def inspect_route(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         route_calls = route_decorator_calls(node)
@@ -2073,6 +2149,12 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         for argument, default in parameter_defaults(node):
             if argument.arg in PAGE_SIZE_PARAMETERS and not has_page_size_bound(argument, default):
                 self.add_finding(find_rule("SP305"), argument)
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                self.local_assignments[target.id] = node.value
+        self.generic_visit(node)
 
     def visit_For(self, node: ast.For) -> None:
         self.loop_depth += 1
@@ -2128,26 +2210,43 @@ class PythonSecurityVisitor(ast.NodeVisitor):
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         self.inspect_route(node)
+        prev_assignments = self.local_assignments.copy()
+        self.local_assignments.clear()
         self.async_function_depth += 1
         self.generic_visit(node)
         self.async_function_depth -= 1
+        self.local_assignments = prev_assignments
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self.inspect_route(node)
+        prev_assignments = self.local_assignments.copy()
+        self.local_assignments.clear()
         previous_depth = self.async_function_depth
         self.async_function_depth = 0
         self.generic_visit(node)
         self.async_function_depth = previous_depth
+        self.local_assignments = prev_assignments
 
     def visit_Call(self, node: ast.Call) -> None:
         name = resolve_dotted_name(node.func)
         method = name.rsplit(".", 1)[-1]
-        if (
-            method in {"execute", "query", "raw"}
-            and node.args
-            and is_interpolated_sql_value(node.args[0])
-        ):
-            self.add_finding(find_rule("SP103"), node.args[0])
+        if method in {"execute", "query", "raw"} and node.args:
+            first_arg = node.args[0]
+            if is_interpolated_sql_value(first_arg):
+                self.add_finding(find_rule("SP103"), first_arg)
+            elif isinstance(first_arg, ast.Name) and first_arg.id in self.local_assignments:
+                assigned_val = self.local_assignments[first_arg.id]
+                if is_interpolated_sql_value(assigned_val):
+                    self.add_finding(find_rule("SP103"), first_arg, detection="taint")
+        if name in {"eval", "exec"} and node.args:
+            first_arg = node.args[0]
+            if isinstance(first_arg, ast.Name) and first_arg.id in self.local_assignments:
+                assigned_val = self.local_assignments[first_arg.id]
+                if not (
+                    isinstance(assigned_val, ast.Constant)
+                    and isinstance(assigned_val.value, (int, float, bool))
+                ):
+                    self.add_finding(find_rule("SP101"), first_arg, detection="taint")
         if self.loop_depth > 0:
             receiver = name.split(".", 1)[0].lower() if "." in name else ""
             if method in {"query", "execute", "filter", "filter_by", "find_one", "fetch_one"} or (
@@ -2520,8 +2619,9 @@ def scan_repository(
     return active, stats
 
 
-def determine_verdict(findings: Sequence[Finding]) -> str:
-    severities = {item.severity for item in findings}
+def determine_verdict(findings: Sequence[Finding], include_tests: bool = False) -> str:
+    evaluated = findings if include_tests else [item for item in findings if item.scope == "app"]
+    severities = {item.severity for item in evaluated}
     if severities & {"critical", "high"}:
         return "BLOCK"
     if severities & {"medium", "low"}:
@@ -2530,15 +2630,22 @@ def determine_verdict(findings: Sequence[Finding]) -> str:
 
 
 def build_json_report(
-    root: Path, findings: Sequence[Finding], stats: dict[str, int]
+    root: Path,
+    findings: Sequence[Finding],
+    stats: dict[str, int],
+    include_tests: bool = False,
 ) -> dict[str, object]:
+    app_findings = [f for f in findings if f.scope == "app"]
+    test_findings = [f for f in findings if f.scope == "test"]
     return {
         "schema_version": "1.0",
         "tool": {"name": "ShipProof", "version": VERSION, "command": "scan"},
         "root": str(root.resolve()),
-        "verdict": determine_verdict(findings),
+        "verdict": determine_verdict(findings, include_tests),
         "summary": {
             "findings": len(findings),
+            "app_findings": len(app_findings),
+            "test_findings": len(test_findings),
             **stats,
             "by_severity": dict(Counter(item.severity for item in findings)),
         },
@@ -2569,7 +2676,7 @@ def render_markdown_report(root: Path, findings: Sequence[Finding], stats: dict[
             [
                 f"## {item.severity.upper()} · {item.rule_id} · {item.title}",
                 "",
-                f"`{item.path}:{item.line}` · confidence: `{item.confidence}` · {item.category}",
+                f"`{item.path}:{item.line}` · confidence: `{item.confidence}` · scope: `{item.scope}` · {item.category}",
                 "",
                 f"> {item.evidence}",
                 "",
@@ -2639,8 +2746,11 @@ def render_terminal_report(
     for item in findings:
         icon = SEVERITY_ICON.get(item.severity, "")
         conf_label = CONFIDENCE_LABEL.get(item.confidence, item.confidence)
+        scope_suffix = f" \u2022 scope: {item.scope}" if item.scope != "app" else ""
         lines.append(f"  {icon} {item.severity.upper()} \u2014 {item.title} ({item.rule_id})")
-        lines.append(f"     {item.path}:{item.line}  \u2022  confidence: {conf_label}")
+        lines.append(
+            f"     {item.path}:{item.line}  \u2022  confidence: {conf_label}{scope_suffix}"
+        )
         lines.append("")
 
         # Source context
@@ -2670,13 +2780,63 @@ def render_terminal_report(
     return "\n".join(lines)
 
 
+def render_github_annotations(findings: Sequence[Finding]) -> str:
+    """Render GitHub Actions workflow annotations for inline PR notices."""
+    lines: list[str] = []
+    for item in findings:
+        level = "error" if item.severity in ("critical", "high") else "warning"
+        lines.append(
+            f"::{level} file={item.path},line={item.line},title={item.rule_id} {item.title}::{item.message} Fix: {item.remediation}"
+        )
+    return "\n".join(lines)
+
+
 def render_fix_prompts(
     root: Path,
     findings: Sequence[Finding],
+    as_json: bool = False,
 ) -> str:
     """Generate AI-ready fix prompts for each finding."""
     if not findings:
+        if as_json:
+            return json.dumps([], indent=2)
         return "No findings to fix.\n"
+
+    if as_json:
+        prompts: list[dict[str, object]] = []
+        for item in findings:
+            context_lines = read_source_context(root, item.path, item.line)
+            code_context = [
+                {"line": num, "text": text, "is_target": num == item.line}
+                for num, text in context_lines
+            ]
+            prompts.append(
+                {
+                    "rule_id": item.rule_id,
+                    "title": item.title,
+                    "path": item.path,
+                    "line": item.line,
+                    "severity": item.severity,
+                    "confidence": item.confidence,
+                    "scope": item.scope,
+                    "problem": item.message,
+                    "remediation": item.remediation,
+                    "cwe": item.cwe,
+                    "owasp": item.owasp,
+                    "evidence": item.evidence,
+                    "context": code_context,
+                    "prompt": (
+                        f"Fix {item.rule_id} in {item.path} (line {item.line}).\n"
+                        f"Problem: {item.message}\n"
+                        f"Required fix: {item.remediation}\n"
+                        "Constraints:\n"
+                        "- Do not change the public API contract\n"
+                        "- Add a regression test that verifies the fix\n"
+                        f"- Reference: {item.cwe}, {item.owasp}"
+                    ),
+                }
+            )
+        return json.dumps(prompts, indent=2)
 
     lines: list[str] = [
         "# ShipProof Fix Prompts",
@@ -2714,7 +2874,7 @@ def render_fix_prompts(
     return "\n".join(lines)
 
 
-def render_explain(rule_id: str) -> str:
+def render_explain(rule_id: str, as_json: bool = False) -> str:
     """Render a detailed explanation for a single rule."""
     rule = None
     for r in RULES:
@@ -2722,10 +2882,39 @@ def render_explain(rule_id: str) -> str:
             rule = r
             break
     if rule is None:
+        if as_json:
+            return json.dumps(
+                {
+                    "error": f"Unknown rule: {rule_id}",
+                    "valid_rules": [r.rule_id for r in RULES],
+                },
+                indent=2,
+            )
         return f"Unknown rule: {rule_id}. Valid rules: {', '.join(r.rule_id for r in RULES)}\n"
 
     explanation = RULE_EXPLANATIONS.get(rule_id, {})
     conf_label = CONFIDENCE_LABEL.get(rule.confidence, rule.confidence)
+
+    if as_json:
+        return json.dumps(
+            {
+                "rule_id": rule.rule_id,
+                "title": rule.title,
+                "category": rule.category,
+                "severity": rule.severity,
+                "confidence": conf_label,
+                "cwe": rule.cwe,
+                "owasp": rule.owasp,
+                "message": rule.message,
+                "remediation": rule.remediation,
+                "why": explanation.get("why", ""),
+                "attack": explanation.get("attack", ""),
+                "false_positive": explanation.get("false_positive", ""),
+                "test": explanation.get("test", ""),
+            },
+            indent=2,
+        )
+
     lines = [
         "",
         f"  {SEVERITY_ICON.get(rule.severity, '')} {rule.rule_id}: {rule.title}",
@@ -2795,6 +2984,8 @@ def build_sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
                             "confidence": item.confidence,
                             "detection": item.detection,
                             "proof_level": item.proof_level,
+                            "scope": item.scope,
+                            "verification_status": item.verification_status,
                         },
                     }
                     for item in findings
@@ -2809,7 +3000,7 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("root", nargs="?", default=".", type=Path)
     parser.add_argument(
         "--format",
-        choices=("json", "markdown", "sarif", "terminal"),
+        choices=("json", "markdown", "sarif", "terminal", "github"),
         default=None,
     )
     parser.add_argument("--output", type=Path, help="Write report to a file instead of stdout")
@@ -2820,6 +3011,12 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--baseline-out", type=Path, help="Write active fingerprints as a reviewable baseline"
     )
     parser.add_argument("--fail-on", choices=tuple(SEVERITY), default="high")
+    parser.add_argument(
+        "--include-tests",
+        action="store_true",
+        default=False,
+        help="Include test-scoped findings in gate failure evaluation",
+    )
     parser.add_argument("--max-file-bytes", type=int, default=1_000_000)
     parser.add_argument(
         "--min-confidence",
@@ -2874,7 +3071,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # Handle --explain mode (no scan needed)
     if arguments.explain:
-        print(render_explain(arguments.explain))
+        as_json = arguments.format == "json"
+        print(render_explain(arguments.explain, as_json=as_json))
         return 0
 
     # Handle --snippet mode (in-memory linting)
@@ -2907,7 +3105,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             min_conf = CONFIDENCE[arguments.min_confidence]
             findings = [f for f in findings if CONFIDENCE[f.confidence] <= min_conf]
 
-        payload = build_json_report(arguments.root, findings, stats)
+        payload = build_json_report(
+            arguments.root, findings, stats, include_tests=arguments.include_tests
+        )
         if arguments.baseline_out:
             arguments.baseline_out.write_text(
                 json.dumps(
@@ -2920,7 +3120,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         # Handle --fix-prompt mode
         if arguments.fix_prompt:
-            output = render_fix_prompts(arguments.root, findings)
+            as_json = arguments.format == "json"
+            output = render_fix_prompts(arguments.root, findings, as_json=as_json)
         else:
             # Determine format: default to terminal if TTY, else markdown
             fmt = arguments.format
@@ -2933,6 +3134,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output = render_markdown_report(arguments.root, findings, stats)
             elif fmt == "sarif":
                 output = json.dumps(build_sarif_report(findings), indent=2)
+            elif fmt == "github":
+                output = render_github_annotations(findings)
             else:
                 output = json.dumps(payload, indent=2)
 
@@ -2946,8 +3149,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"shipproof: {exc}", file=sys.stderr)
         return 2
 
+    # Gating: default evaluates app scope findings only unless --include-tests is set
+    evaluated_findings = (
+        findings if arguments.include_tests else [item for item in findings if item.scope == "app"]
+    )
     if arguments.fail_on != "none" and any(
-        SEVERITY[item.severity] <= SEVERITY[arguments.fail_on] for item in findings
+        SEVERITY[item.severity] <= SEVERITY[arguments.fail_on] for item in evaluated_findings
     ):
         return 1
     return 0
