@@ -35,6 +35,8 @@ SKIP_DIRS = {
     ".idea",
     ".vscode",
     ".venv",
+    ".work",
+    "benchmarks",
     "venv",
     "env",
     "node_modules",
@@ -70,6 +72,10 @@ TEXT_SUFFIXES = {
     ".rb",
     ".php",
     ".cs",
+    ".c",
+    ".h",
+    ".cpp",
+    ".hpp",
     ".sh",
     ".bash",
     ".ps1",
@@ -83,6 +89,7 @@ TEXT_SUFFIXES = {
     ".ini",
     ".cfg",
     ".conf",
+    ".config",
     ".properties",
     ".env",
     ".xml",
@@ -415,6 +422,78 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         + ".254) and extracts cloud credentials from the response.",
         "false_positive": "URLs assembled entirely from server-side configuration with validated user-selected path segments.",
         "test": "Submit internal and metadata URLs and verify the request is refused before it leaves the service.",
+    },
+    "SP125": {
+        "why": "DomSanitizer bypass methods mark content as trusted, skipping the escaping Angular would otherwise apply.",
+        "attack": "Attacker stores a payload that reaches a bypassed binding and executes as script in other users' sessions.",
+        "false_positive": "Static, developer-authored markup never mixed with user data.",
+        "test": "Render user HTML through the bypass and verify a script tag is neutralized.",
+    },
+    "SP126": {
+        "why": "Web storage is readable by any script on the page, so stored tokens are stolen by the first XSS.",
+        "attack": "One injected script reads localStorage and exfiltrates every session token it finds.",
+        "false_positive": "Non-sensitive UI preferences such as theme or layout flags.",
+        "test": "Verify after login that no token appears in localStorage or sessionStorage.",
+    },
+    "SP127": {
+        "why": "PHP type juggling makes loose comparisons match unexpected values ('abc' == 0 was true before PHP 8).",
+        "attack": "Attacker crafts a magic hash or array input that satisfies a loose password comparison.",
+        "false_positive": "Comparisons on validated, non-security values.",
+        "test": "Fuzz credential comparisons with edge-type inputs and verify only exact matches pass.",
+    },
+    "SP128": {
+        "why": "Interpolating variables into SQL text hands attackers control of query structure.",
+        "attack": "A crafted username closes the string and appends OR 1=1 or a UNION.",
+        "false_positive": "Query fragments assembled from server-side constants only.",
+        "test": "Submit quotes and comment markers and verify they are bound as data.",
+    },
+    "SP129": {
+        "why": "Echoing request data without htmlspecialchars reflects attacker HTML back to victims.",
+        "attack": "A crafted link renders a session-stealing script in the victim's browser.",
+        "false_positive": "Values already escaped upstream.",
+        "test": "Submit an HTML fragment and verify it renders as text.",
+    },
+    "SP130": {
+        "why": "A redirect target from request input lends your domain to phishing pages.",
+        "attack": "Attacker distributes your-domain/login?next=https://evil.test to harvest credentials.",
+        "false_positive": "Targets validated against a strict allowlist.",
+        "test": "Submit an absolute external URL and verify the redirect is refused.",
+    },
+    "SP131": {
+        "why": "An http.Server without timeouts holds connections open indefinitely, letting slow clients exhaust file descriptors.",
+        "attack": "Slowloris-style clients open many connections and never finish requests, starving real traffic.",
+        "false_positive": "Servers behind proxies that enforce their own timeouts.",
+        "test": "Open partial requests and verify the server closes them within the configured timeout.",
+    },
+    "SP132": {
+        "why": "Blocking on a Task while its continuation needs the same context deadlocks or burns threads.",
+        "attack": "Under load, thread pools fill with blocked waiters and the service stops responding.",
+        "false_positive": "Console tools and startup paths without a synchronization context.",
+        "test": "Call the path concurrently and verify no deadlock or thread starvation.",
+    },
+    "SP133": {
+        "why": "Debug compilation ships verbose errors, stack traces, and debugging behavior to production users.",
+        "attack": "Attackers trigger errors to read connection strings and internal paths.",
+        "false_positive": "Developer-machine configs never used for deployment.",
+        "test": "Deploy with release transforms and verify error pages are generic.",
+    },
+    "SP134": {
+        "why": "assert statements vanish under python -O, silently deleting the authorization check in optimized deployments.",
+        "attack": "The production image runs with -O, so the admin route no longer checks the flag at all.",
+        "false_positive": "Test-suite assertions, which are the intended use of assert.",
+        "test": "Run with python -O and verify unauthorized requests still receive 403.",
+    },
+    "SP135": {
+        "why": "strcpy and friends copy without bounds, overflowing the destination buffer.",
+        "attack": "Oversized input overwrites adjacent memory and hijacks control flow.",
+        "false_positive": "Fixed-size, compile-time-constant inputs; even then bounded APIs are safer.",
+        "test": "Fuzz with oversized inputs under ASan and verify no overflow.",
+    },
+    "SP136": {
+        "why": "Discarding Go return values hides errors until they corrupt state or crash a request far from the cause.",
+        "attack": "A failed write is ignored; the request reports success while data was never persisted.",
+        "false_positive": "Deliberate discards of non-error values with a comment explaining why.",
+        "test": "Force the dependency to fail and verify the error surfaces in logs and responses.",
     },
     "SP318": {
         "why": "Retries without a stop condition amplify load precisely when a dependency is already failing, turning a slowdown into an outage.",
@@ -1162,6 +1241,168 @@ RULES: tuple[Rule, ...] = (
         frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
     ),
     Rule(
+        "SP125",
+        "Angular sanitizer bypass",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"bypassSecurityTrust(?:Html|Style|Url|ResourceUrl|Script)"),
+        "A DomSanitizer bypass method trusts user-influenced content that Angular would otherwise escape.",
+        "Remove the bypass or sanitize the value first; never trust raw user content with these methods.",
+        "CWE-79",
+        "OWASP ASVS V5",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP126",
+        "Auth token stored in web storage",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(
+            r"(?:localStorage|sessionStorage)\s*\.\s*setItem\s*\(\s*[\"'][^\"']*(?:token|auth|jwt|secret|session)"
+        ),
+        "An authentication token is stored in web storage, readable by any injected script.",
+        "Keep tokens in httpOnly cookies or in-memory stores; web storage is script-accessible.",
+        "CWE-922",
+        "OWASP ASVS V3",
+        frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP127",
+        "PHP loose comparison on credential",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"\$(?:password|passwd|secret|token|api[_-]?key)\w*\s*==(?!=)"),
+        "PHP type juggling can make loose comparisons behave unexpectedly when validating credentials.",
+        "Use === or password_verify for credential checks.",
+        "CWE-480",
+        "OWASP ASVS V2",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP128",
+        "PHP SQL with interpolated variables",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"(?:mysqli?_query|->query|->exec|->prepare)\s*\([^)]*\$_(?:GET|POST|REQUEST)|[\"'](?:SELECT|INSERT|UPDATE|DELETE)\b[^\"']*\$[a-zA-Z_]"
+        ),
+        "A PHP database call interpolates variables or superglobals into the SQL text.",
+        "Use prepared statements with bound parameters.",
+        "CWE-89",
+        "OWASP ASVS V5",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP129",
+        "PHP reflected XSS via echoed superglobal",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"(?:echo|print)\s+\$_(?:GET|POST|REQUEST)\s*\["),
+        "Request data is echoed without htmlspecialchars, reflecting attacker-controlled HTML.",
+        "Escape output with htmlspecialchars or render through a template engine.",
+        "CWE-79",
+        "OWASP ASVS V5",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP130",
+        "PHP open redirect via Location header",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(r"header\s*\(\s*[\"']Location\s*:[^)]*\$_(?:GET|POST|REQUEST)"),
+        "The redirect target is built from request input, enabling phishing redirects.",
+        "Redirect only to allowlisted absolute paths.",
+        "CWE-601",
+        "OWASP ASVS V5",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP131",
+        "Go HTTP server without timeouts",
+        "reliability",
+        "medium",
+        "low",
+        compile_pattern("$^"),
+        "An http.Server is configured without read/write timeouts, exposing the service to slow-client resource exhaustion.",
+        "Set ReadTimeout, WriteTimeout, ReadHeaderTimeout, and IdleTimeout on every http.Server.",
+        "CWE-1088",
+        "OWASP ASVS V12",
+        frozenset({".go"}),
+    ),
+    Rule(
+        "SP132",
+        ".NET sync-over-async blocking",
+        "reliability",
+        "medium",
+        "low",
+        compile_pattern(r"GetAwaiter\s*\(\s*\)\s*\.\s*GetResult\s*\(|\.Wait\s*\(\s*\)"),
+        "Blocking on a Task in a context with a synchronization context deadlocks or starves threads.",
+        "Go async all the way; use await instead of blocking on tasks.",
+        "CWE-667",
+        "OWASP ASVS V12",
+        frozenset({".cs"}),
+    ),
+    Rule(
+        "SP133",
+        "ASP.NET debug compilation enabled",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"debug\s*=\s*[\"']true[\"']"),
+        "ASP.NET debug mode ships verbose errors and debugging behavior to production.",
+        "Set debug to false and use release configuration transforms.",
+        "CWE-489",
+        "OWASP ASVS V14",
+        frozenset({".config"}),
+    ),
+    Rule(
+        "SP134",
+        "Assertion used as authorization",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"assert\s+[^#\n]*(?:is_admin|is_superuser|has_role|has_permission|authorized|is_owner)"
+        ),
+        "assert statements are stripped under python -O, silently removing the authorization check in production.",
+        "Raise an explicit 403 through application logic instead of asserting access.",
+        "CWE-863",
+        "OWASP ASVS V4",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP135",
+        "Unbounded C string function",
+        "security",
+        "high",
+        "high",
+        compile_pattern(r"\b(?:strcpy|strcat|sprintf|gets|stpcpy)\s*\("),
+        "A C string function with no bound check allows buffer overflow when input length is uncontrolled.",
+        "Use bounded equivalents (strncpy/snprintf/strlcpy) or explicit length-checked copies.",
+        "CWE-120",
+        "OWASP ASVS V5",
+        frozenset({".c", ".h", ".cpp", ".hpp"}),
+    ),
+    Rule(
+        "SP136",
+        "Go error explicitly discarded",
+        "reliability",
+        "medium",
+        "low",
+        compile_pattern(r"_, _\s*:?=|\b_\s*=\s*err\b"),
+        "Return values including errors are discarded, hiding failures until they surface as corruption downstream.",
+        "Handle the error or annotate the discard with an explicit reason comment.",
+        "CWE-754",
+        "OWASP ASVS V7",
+        frozenset({".go"}),
+    ),
+    Rule(
         "SP314",
         "Committed SQLite database file",
         "security",
@@ -1382,6 +1623,7 @@ def make_finding(
 FILE_LEVEL_RULE_IDS = frozenset(
     {
         "SP107",
+        "SP131",
         "SP108",
         "SP115",
         "SP120",
@@ -1591,6 +1833,19 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
         if retry_line:
             append_file_level_finding(findings, "SP318", relative_path, lines, retry_line)
 
+    # Reliability: Go http.Server without timeouts
+    if (
+        suffix == ".go"
+        and GO_HTTP_SERVER_INIT.search(source_text)
+        and "ReadTimeout" not in source_text
+    ):
+        server_line = next(
+            (i for i, value in enumerate(lines, 1) if GO_HTTP_SERVER_INIT.search(value)),
+            None,
+        )
+        if server_line:
+            append_file_level_finding(findings, "SP131", relative_path, lines, server_line)
+
     return findings
 
 
@@ -1626,6 +1881,7 @@ UNSERIALIZE_CALL = re.compile(r"\.\s*unserialize\s*\(")
 TENACITY_RETRY = re.compile(r"@retry\s*\(")
 STOP_CONDITION_HINT = re.compile(r"\bstop")
 UNBOUNDED_JS_RETRIES = re.compile(r"retries\s*:\s*Infinity\b", re.IGNORECASE)
+GO_HTTP_SERVER_INIT = re.compile(r"http\.Server\s*\{")
 
 
 def find_rule(rule_id: str) -> Rule:

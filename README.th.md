@@ -62,6 +62,10 @@ shipproof check .
 
 ความต้องการของระบบ: Node.js 20+ สำหรับการเรียกใช้งาน CLI และ Python 3.10+ สำหรับคำสั่ง `scan`, `check`, `budget`, `capacity` และระบบ MCP ตัวระบบหลักไม่มี Runtime Dependency ภายนอก ทำให้ติดตั้งและทำงานได้อย่างรวดเร็ว
 
+## สร้างมาเพื่อยุค Vibe Coding
+
+งานวิจัยสนามจริงปี 2025–2026 ชี้ตรงกันว่าเกิดอะไรเมื่อโค้ดถูก ship เร็วกว่าที่จะตรวจสอบ: การสแกนแอป vibe-coded 5,600 ตัว เจอช่องโหว่กว่า 2,000 จุดและ secrets หลุดกว่า 400 รายการ ราว 20% ของแอป vibe-coded มีข้อบกพร่องร้ายแรง และ 62% ของโซลูชันที่ AI สร้างมีข้อบกพร่องเชิงดีไซน์หรือความปลอดภัย โดยมี 74 AI-linked CVEs ที่ถูกบันทึกไว้แล้ว ShipProof เกิดมาเพื่อช่องว่างนี้: เป็น "ดวงตาคู่ที่สอง" แบบออฟไลน์และ deterministic ที่รันในไม่กี่วินาทีหลัง agent ทำงานแต่ละรอบ ด้วย 67 detectors ที่เล็งไปที่กลุ่มความล้มเหลวที่ AI เขียนบ่อยที่สุด (ลืม authorization, SQL แบบต่อ string, secrets หลุด, AI endpoint ไม่จำกัด, retry storm, debug ติดค้าง) พร้อม proof levels ที่ซื่อสัตย์ — ไม่อ้างหลักฐานมากกว่าที่ engine ตรวจได้จริง
+
 ## รูปแบบการรายงานผลใน Terminal
 
 ShipProof ออกแบบการรายงานผลให้เข้าใจง่ายเหมือนได้รับการตรวจโค้ด (Code Review) จาก Senior Engineer โดยระบุบรรทัดที่พบปัญหา, ระดับความมั่นใจ, เหตุผลว่าทำไมจุดนี้จึงอันตราย และแนวทางการแก้ไขที่ถูกต้อง:
@@ -379,6 +383,18 @@ shipproof evidence . --adapter rust --allow-project-code --format json
 | **SP122** | สร้างค่าทางความปลอดภัยด้วย Randomness ที่ไม่ปลอดภัย | HIGH | Regex |
 | **SP123** | Hardcode Initialization Vector ของ Cipher | HIGH | Regex |
 | **SP124** | SSRF ผ่าน URL ที่ผู้ใช้ควบคุมใน fetch | HIGH | Regex |
+| **SP125** | Angular `DomSanitizer` bypass (`bypassSecurityTrust*`) | HIGH | Regex |
+| **SP126** | เก็บ Auth Token ใน `localStorage`/`sessionStorage` | MEDIUM | Regex |
+| **SP127** | PHP เปรียบเทียบ Credential ด้วย `==` แบบหลวม | HIGH | Regex |
+| **SP128** | PHP สร้าง SQL ด้วยการแทรกตัวแปร/Superglobal | HIGH | Regex |
+| **SP129** | PHP Reflected XSS ผ่านการ echo Superglobal | HIGH | Regex |
+| **SP130** | PHP Open Redirect ผ่าน Header `Location` | MEDIUM | Regex |
+| **SP131** | Go `http.Server` ที่ไม่ตั้ง Read/Write Timeout | MEDIUM | Regex |
+| **SP132** | .NET บล็อกบน Task แบบ Sync-over-Async (`GetResult`/`Wait`) | MEDIUM | Regex |
+| **SP133** | ASP.NET ส่ง `debug="true"` ขึ้น Production | MEDIUM | Regex |
+| **SP134** | ใช้ `assert` เป็นการตรวจสิทธิ์ (ถูกตัดทิ้งใต้ `-O`) | HIGH | Regex |
+| **SP135** | ฟังก์ชัน C ไร้ขอบเขต (`strcpy`, `gets`) | HIGH | Regex |
+| **SP136** | Go ทิ้งค่าที่คืนกลับมารวมถึง error (`_, _ =`) | MEDIUM | Regex |
 | **SP201** | การเปิด Debug Mode ค้างไว้ใน Production | HIGH | Regex |
 | **SP202** | การใช้ Container Base Image แบบไม่ระบุ Version/Digest | MEDIUM | Regex |
 | **SP203** | การใช้ GitHub Actions Tag แบบ Mutable (ไม่ Pin SHA) | HIGH | Regex |

@@ -9,7 +9,7 @@
 > `DEP` (dependency/SCA tooling), or `MANUAL` (process/human review).
 > This catalog feeds the Rule Factory: high-value L0/L1 items become detector candidates.
 
-Status: v1 — 463 items across 21 sections (failure-mode categories, language supplements, and dataset guide).
+Status: v1 — 527 items across 27 sections (failure-mode categories, language supplements, and dataset guide).
 
 ## 1. Web security — injection & input handling
 
@@ -200,7 +200,6 @@ Status: v1 — 463 items across 21 sections (failure-mode categories, language s
 | PRF-020 | Templates/layouts re-rendered per request | CPU → precompile/cache | L1 | perf |
 | PRF-021 | O(n²) dedup/check inside loop | CPU blowup on growth → set/map | L1 | algorithms |
 | PRF-022 | List `.index()`/`in` scans in hot loop | Hidden O(n²) → dict/set | L1 | Python |
-| PRF-023 | String concatenation in long loops | Quadratic copying → join/buffer | L1 | Python |
 | PRF-024 | Whole file read when streaming suffices | Memory spikes → streams | L1 | IO |
 | PRF-025 | Deep-copy of large objects per request | CPU+GC → structural sharing | L1 | JS |
 | PRF-026 | `structuredClone` of entire collections for filters | Clone only returned slice | L1 | JS |
@@ -231,11 +230,9 @@ Status: v1 — 463 items across 21 sections (failure-mode categories, language s
 | UI-006 | Fetch in effect without abort | Race conditions/out-of-order responses → AbortController | L1 | React |
 | UI-007 | Infinite re-render from object deps | Frozen page → memoize/primitives | L1 | React |
 | UI-008 | Unhandled promise rejections in effects | Silent failures → error boundaries | L1 | JS |
-| UI-009 | Secrets in `VITE_`/`NEXT_PUBLIC_` env | Bundled to public → server-only | SHIPPED SP403 | CWE-200 |
 | UI-010 | `dangerouslySetInnerHTML` with data | XSS → sanitize | SHIPPED SP116 | CWE-79 |
 | UI-011 | `target="_blank"` without `rel="noopener"` | Tab-nabbing → add rel | L0 | HTML |
 | UI-012 | postMessage handler without origin check | Cross-origin data theft → validate origin | L1 | CWE-346 |
-| UI-013 | Client-side-only input validation | Bypass → server validation | MANUAL | CWE-602 |
 | UI-014 | Tokens in localStorage | XSS exfiltration → httpOnly cookies | L1 | OWASP |
 | UI-015 | Whole-store subscription causing global re-renders | Jank → selectors | RUNTIME | Redux |
 | UI-016 | Large lists without virtualization | DOM blowup → windowing | L1 | perf |
@@ -287,7 +284,6 @@ Status: v1 — 463 items across 21 sections (failure-mode categories, language s
 | PY-027 | Global DB connection without pool checks | Exhaustion under concurrency → pool | L1 | DB |
 | PY-028 | `threading` for IO-bound scaling | Memory per thread → asyncio | L1 | py docs |
 | PY-029 | `requirements.txt` unpinned | Irreproducible builds → lock | DEP | packaging |
-| PY-030 | `python:latest` base image | Silent breaking upgrades → pin | SHIPPED SP202 | supply chain |
 
 ## 9. Concurrency & distributed systems
 
@@ -295,7 +291,6 @@ Status: v1 — 463 items across 21 sections (failure-mode categories, language s
 | --- | --- | --- | --- | --- |
 | ASY-001 | Check-then-act on shared state without lock | Lost updates/races → atomic ops | L1 | CWE-362 |
 | ASY-002 | Read-modify-write on cache/counter non-atomically | Undercounting → INCR/atomic | L1 | Redis |
-| ASY-003 | Double-checked locking without volatile/memory barrier | Torn state → correct sync | L1 | JVM-classic |
 | ASY-004 | Shared module-level client mutated per request | Cross-request contamination → immutable/instantiate | L1 | Node/Py |
 | ASY-005 | TOCTOU on file existence checks | Race on create → atomic open/lock | L1 | CWE-367 |
 | ASY-006 | Distributed job without idempotent handler | Redelivery duplicates work → idempotency | L1 | queues |
@@ -304,7 +299,6 @@ Status: v1 — 463 items across 21 sections (failure-mode categories, language s
 | ASY-009 | Optimistic locking absent on shared entities | Concurrent edits overwrite → version column | L1 | CWE-362 |
 | ASY-010 | Lock ordering inconsistent across code paths | Deadlocks → global ordering | DATAFLOW | concurrency |
 | ASY-011 | `asyncio.gather` without `return_exceptions` decision | One failure cancels/misses others → explicit policy | L1 | asyncio |
-| ASY-012 | Unbounded coroutine fan-out per request | Resource exhaustion → semaphores | SHIPPED SP306 | asyncio |
 | ASY-013 | Awaiting inside lock scope unnecessarily | Serializes throughput → shrink critical section | L1 | perf |
 | ASY-014 | Background task capturing request-scoped state | Stale references/leaks → copy needed data | DATAFLOW | frameworks |
 | ASY-015 | Clock-based ordering across machines | Skew breaks logic → logical clocks/DB time | MANUAL | distributed |
@@ -500,7 +494,6 @@ Grounding: an Escape.tech scan of 5,600 vibe-coded apps found 2,000+ vulnerabili
 | GO-009 | `err == nil` checked but typed nil interface returned | "nil but not nil" → return error explicitly | L1 | Go FAQ |
 | GO-010 | Mutex copied by value (struct with sync fields passed around) | Broken locking → pointer/mutex guard | L1 | go vet |
 | GO-011 | `time.After` in hot loop | Timer leak per iteration → Ticker/NewTimer+Stop | L1 | perf |
-| GO-012 | Unbounded goroutine fan-out | Resource exhaustion → worker pool | SHIPPED SP306 | Go patterns |
 | GO-013 | `context.Background()` used in request path | No cancellation/trace → derive from request ctx | L1 | Go blogs |
 | GO-014 | Slice aliasing after append capacity growth | Hidden shared buffers → copy when sharing | L1 | spec |
 | GO-015 | String concatenation in hot loop | Quadratic → strings.Builder | L1 | perf |
@@ -597,3 +590,104 @@ For building evaluation corpora aligned with the catalog categories. Always re-l
 | OWASP Benchmark | Java SAST ground-truth suite | Java-adapter evaluation only |
 | NIST SARD / Juliet | Multi-language synthetic weaknesses | Coverage smoke tests (language-filtered) |
 | OSV.dev + GitHub GHSA feeds (API) | Live advisories per ecosystem | Continuous regression ingestion |
+
+## 22. JavaScript / TypeScript — deep cuts
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| JST-001 | `JSON.parse` without try/catch on external payloads | Crash on malformed input → guard | L1 | MDN |
+| JST-002 | Optional chaining hiding missing error handling | Silent undefined propagation → validate | L1 | TS docs |
+| JST-003 | `Number()`/`parseInt` without radix on user input | Wrong bases for `08`-style strings → radix/Number | L0 | MDN |
+| JST-004 | `Array.prototype.sort` default string ordering on numbers | 10 < 9 silently → comparator | L0 | MDN |
+| JST-005 | Mutating props/arguments shared across modules | Surprise state coupling → clone/freeze | L1 | style |
+| JST-006 | `Promise` constructor anti-pattern (executor returns value) | Unhandled rejection paths → async/await | L1 | bluebird wiki |
+| JST-007 | `forEach` with await expecting sequence | Parallel surprise → for..of | L1 | classic |
+| JST-008 | Top-level await blocking module graph | Boot waterfall → lazy import | L1 | ESM |
+| JST-009 | `catch {}` discarding error object entirely | Debugging blindness → log or rethrow | L0 | practice |
+| JST-010 | `setInterval` drift used for time math | Accumulating drift → timestamps | L1 | timers |
+| JST-011 | Unhandled `'unhandledRejection'`/`uncaughtException` handlers | Process dies silently → handlers + exit policy | L1 | Node |
+| JST-012 | `Buffer` concatenation with strings in crypto paths | Encoding ambiguity → explicit encodings | L1 | Node |
+| JST-013 | `Object.assign` merging user JSON into config | Prototype-pollution-shaped merges → schema merge | L1 | CWE-1321 |
+| JST-014 | Deep-merge utilities without `__proto__` guards | Prototype pollution → safe merge | L1 | CWE-1321 |
+| JST-015 | `npm install` of typo'd package (slopsquatting) | Malware install → verify existence/spelling | DEP | CSA note |
+| JST-016 | Barrel files re-exporting entire libs | Bundle bloat → direct imports | RUNTIME | bundlers |
+| JST-017 | `export default` anonymous functions/classes | Rename-hostile imports → named exports | L1 | style |
+| JST-018 | Enum/string-union drift across API boundary | Silent contract break → codegen types | MANUAL | API |
+
+## 23. React — deep cuts
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| RCT-002 | Derived state duplicated into useState | Desync over time → derive during render | L1 | React docs |
+| RCT-003 | Context value recreated per render | Whole-tree re-renders → memo value | L1 | React |
+| RCT-005 | State stored in refs for rendering data | Invisible staleness → state | L1 | React |
+| RCT-006 | Direct `fetch` in component without loading/error states | White screens → explicit states | L1 | UX |
+| RCT-007 | Unmemoized heavy children in hot lists | Jank → memo/windowing | RUNTIME | perf |
+| RCT-008 | `useEffect` doing subscriptions without deps discipline | Leaks or stale handlers → exhaustive-deps | L1 | eslint-plugin |
+| RCT-009 | Forms uncontrolled↔controlled switching | Input flicker/loss → pick one | L1 | React |
+| RCT-010 | Stale closures in setInterval callbacks | Counter/state frozen → functional updates | L1 | React |
+| RCT-011 | Hydration mismatches from Date.now/random SSR | React hydration errors → client-only render | L1 | Next.js |
+| RCT-012 | Error swallowed in error boundaries reset loops | Crash loops → reset keys | L1 | React |
+
+## 24. Angular
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| NG-001 | `bypassSecurityTrustHtml/Url/ResourceUrl` on user data | XSS via sanitizer bypass | SHIPPED SP125 | Angular docs |
+| NG-002 | `{ sanitize: false }`-style pipe bypasses | Raw rendering → sanitize | L1 | Angular |
+| NG-003 | Templates binding `innerHTML` to expressions | XSS surface → text binding | L0 | Angular |
+| NG-004 | Services holding request state as singleton without reset | Cross-user bleed in SSR → per-request scoping | L1 | Angular SSR |
+| NG-005 | Observables subscribed without unsubscribe in components | Memory leaks → takeUntil/async pipe | L1 | RxJS |
+| NG-006 | `async` pipe combined with manual subscribe duplication | Double execution → single source | L1 | RxJS |
+| NG-007 | Route guards returning boolean from async calls incorrectly | Guard bypass/timing bugs → observable guards | L1 | Router |
+| NG-008 | HttpClient calls without error handling in resolvers | Stuck navigation → error paths | L1 | HttpClient |
+| NG-009 | NgModel two-way on shared service state | Surprising write-back → local state | L1 | forms |
+| NG-010 | Zone-dependent change detection with OnyingDefault pitfalls | Missed updates → explicit CD/signals | RUNTIME | Angular |
+| NG-011 | Lazy modules importing eagerly from shared barrels | Bundle bloat → path discipline | RUNTIME | ng |
+| NG-012 | Guards used as the only authorization (component-level missing) | Route-param IDOR → server checks | MANUAL | CWE-862 |
+| NG-013 | Production build with `ng serve`-era proxy configs shipped | Internal URLs leaked → build config | CONFIG | CLI |
+| NG-014 | `trackBy` missing on large ngFor lists | Re-render storms → trackBy | L1 | Angular |
+
+## 25. PHP — expanded
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| PHP-007 | Loose `==` on passwords/tokens | Type-juggling auth bypass | SHIPPED SP127 | PHP docs |
+| PHP-008 | SQL with interpolated `$var` in query string | SQLi | SHIPPED SP128 | OWASP PHP |
+| PHP-009 | `echo $_GET[...]` without htmlspecialchars | Reflected XSS | SHIPPED SP129 | OWASP |
+| PHP-010 | `header('Location: ' . $_GET[...])` | Open redirect | SHIPPED SP130 | CWE-601 |
+| PHP-011 | `move_uploaded_file` trusting client name | Traversal/overwrite → generated names | L1 | PHP docs |
+| PHP-012 | `mail()` with user-supplied headers | Email header injection → sanitize | L0 | OWASP |
+| PHP-013 | `include`/`require` with user path | LFI/RFI → fixed paths | L0 | CWE-98 |
+| PHP-014 | `chmod 777` in deployment scripts | Weak perms → least privilege | L0 | hardening |
+| PHP-015 | `display_errors=On` in production configs | Info disclosure → off + logs | L0 | php.ini |
+| PHP-016 | Composer deps `dev` sections shipped to prod | Tooling/DB creds in image → require-check | CONFIG | composer |
+| PHP-017 | `password_hash` result re-hashed or compared loosely | Broken verification → password_verify | L1 | PHP docs |
+| PHP-018 | Sessions without regeneration after login | Fixation → session_regenerate_id | RUNTIME | OWASP |
+| PHP-019 | Superglobals serialized into cache keys | Cache poisoning surface → key hygiene | DATAFLOW | practice |
+| PHP-020 | Long-running CLI scripts never releasing DB locks | Lock pile-up → transactions scope | L1 | ops |
+
+## 26. .NET — expanded
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| CS-013 | `GetAwaiter().GetResult()` / `.Wait()` in request paths | Sync-over-async deadlock | SHIPPED SP132 | Stephen Cleary |
+| CS-014 | `<compilation debug="true">` shipped | Verbose errors + perf | SHIPPED SP133 | ASP.NET |
+| CS-015 | Connection strings with credentials in web.config committed | Secret exposure → env/KeyVault | SHIPPED SP003-class | CWE-798 |
+| CS-016 | `[Authorize]` absent on admin controllers | Missing authz | L1 | ASP.NET |
+| CS-017 | Antiforgery token skipped on POST forms | CSRF | L1 | ASP.NET |
+| CS-018 | `DbContext` registered as transient per request storm | Pool exhaustion → pooling | L1 | EF Core |
+| CS-019 | IQueryable enumerated multiple times | Duplicate queries → materialize once | L1 | LINQ |
+| CS-020 | `async` controller actions returning `void` | Unobserved failures → Task | L1 | ASP.NET |
+
+## 27. Go — expanded
+
+| ID | Failure mode | Why it matters → fix | Detection | Refs |
+| --- | --- | --- | --- | --- |
+| GO-019 | `http.Server{}` without Read/Write timeouts | Slowloris exhaustion | SHIPPED SP131 | net/http |
+| GO-020 | `http.ListenAndServe(":8080", ...)` ad-hoc servers bypassing shared config | Inconsistent TLS/timeouts → central server | L0 | net/http |
+| GO-021 | `defer rows.Close()` missing on sql.Rows | Connection leak | L1 | database/sql |
+| GO-022 | `Prepare` in hot loop instead of once | CPU + plan churn → prepare once | L1 | database/sql |
+| GO-023 | `context.TODO()` in request paths | No propagation → request ctx | L1 | Go blog |
+| GO-024 | Shared `sql.DB` with untested MaxOpenConns under load | Pool surprises → configure + load test | CONFIG | database/sql |
+| GO-025 | `panic` recovered at top-level but response already written | Half responses → recover early | RUNTIME | net/http |

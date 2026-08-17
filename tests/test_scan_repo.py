@@ -865,6 +865,151 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         findings = self.findings("client.js", source)
         self.assertNotIn("SP318", [f.rule_id for f in findings])
 
+    # --- Wave 3: language-focused detectors (SP125-SP136) ---
+
+    def test_angular_sanitizer_bypass_is_flagged(self):
+        source = "this.trusted = sanitizer.by" + "passSecurityTrustHtml(userBio);\n"
+        findings = self.findings("profile.component.ts", source)
+        self.assertIn("SP125", [f.rule_id for f in findings])
+
+    def test_angular_sanitized_rendering_is_not_flagged(self):
+        source = "this.safe = sanitizer.sanitize(SecurityContext.HTML, userBio);\n"
+        findings = self.findings("profile.component.ts", source)
+        self.assertNotIn("SP125", [f.rule_id for f in findings])
+
+    def test_angular_method_alias_evades_detection(self):
+        # Known limitation: computed member access needs constant folding; a
+        # direct reference to the bypass method is always caught by name.
+        source = 'const kind = "Html";\nthis.trusted = sanitizer["bypassSecurityTrust" + kind](userBio);\n'
+        findings = self.findings("profile.component.ts", source)
+        self.assertNotIn("SP125", [f.rule_id for f in findings])
+
+    def test_token_in_web_storage_is_flagged(self):
+        source = "local" + "Storage.setItem('authToken', jwt);\n"
+        findings = self.findings("auth.ts", source)
+        self.assertIn("SP126", [f.rule_id for f in findings])
+
+    def test_ui_preference_in_web_storage_is_not_flagged(self):
+        source = "localStorage.setItem('theme', mode);\n"
+        findings = self.findings("prefs.ts", source)
+        self.assertNotIn("SP126", [f.rule_id for f in findings])
+
+    def test_dynamic_storage_key_evades_detection(self):
+        # Known limitation: key computed at runtime needs data flow.
+        source = "storage.setItem(keyName, value);\n"
+        findings = self.findings("prefs.ts", source)
+        self.assertNotIn("SP126", [f.rule_id for f in findings])
+
+    def test_php_loose_credential_comparison_is_flagged(self):
+        source = "<?php\nif ($password " + "== $input) { }\n"
+        findings = self.findings("login.php", source)
+        self.assertIn("SP127", [f.rule_id for f in findings])
+
+    def test_php_strict_credential_comparison_is_not_flagged(self):
+        source = "<?php\nif ($password === $hash) { }\n"
+        findings = self.findings("login.php", source)
+        self.assertNotIn("SP127", [f.rule_id for f in findings])
+
+    def test_php_interpolated_sql_is_flagged(self):
+        source = '<?php\nmysqli_query($db, "SEL' + "ECT * FROM users WHERE id = " + '$user_id");\n'
+        findings = self.findings("users.php", source)
+        self.assertIn("SP128", [f.rule_id for f in findings])
+
+    def test_php_prepared_statement_is_not_flagged(self):
+        source = "<?php\n$stmt = $db->prepare('SELECT * FROM users WHERE id = ?');\n"
+        findings = self.findings("users.php", source)
+        self.assertNotIn("SP128", [f.rule_id for f in findings])
+
+    def test_php_indirect_query_build_evades_detection(self):
+        # Known limitation: SQL assembled into a variable first needs data flow.
+        source = (
+            "<?php\n$q = 'SEL"
+            + "ECT * FROM t WHERE x=' . $_G"
+            + "ET['x'];\nmysqli_query($db, $q);\n"
+        )
+        findings = self.findings("users.php", source)
+        self.assertNotIn("SP128", [f.rule_id for f in findings])
+
+    def test_php_echoed_superglobal_is_flagged(self):
+        source = "<?php\necho $_G" + "ET['name'];\n"
+        findings = self.findings("greet.php", source)
+        self.assertIn("SP129", [f.rule_id for f in findings])
+
+    def test_php_escaped_output_is_not_flagged(self):
+        source = "<?php\necho htmlspecialchars($_GET['name']);\n"
+        findings = self.findings("greet.php", source)
+        self.assertNotIn("SP129", [f.rule_id for f in findings])
+
+    def test_php_location_redirect_from_request_is_flagged(self):
+        source = "<?php\nheader('Location: ' . $_G" + "ET['next']);\n"
+        findings = self.findings("redirect.php", source)
+        self.assertIn("SP130", [f.rule_id for f in findings])
+
+    def test_php_static_location_header_is_not_flagged(self):
+        source = "<?php\nheader('Location: /dashboard');\n"
+        findings = self.findings("redirect.php", source)
+        self.assertNotIn("SP130", [f.rule_id for f in findings])
+
+    def test_go_http_server_without_timeouts_is_flagged(self):
+        source = "srv := &http.Ser" + "ver{Addr: ':8080'}\n"
+        findings = self.findings("server.go", source)
+        self.assertIn("SP131", [f.rule_id for f in findings])
+
+    def test_go_http_server_with_timeouts_is_not_flagged(self):
+        source = "srv := &http.Server{Addr: ':8080', ReadTimeout: 5 * time.Second}\n"
+        findings = self.findings("server.go", source)
+        self.assertNotIn("SP131", [f.rule_id for f in findings])
+
+    def test_dotnet_sync_over_async_is_flagged(self):
+        source = "var result = GetDataAsync().GetA" + "waiter().GetResult();\n"
+        findings = self.findings("api.cs", source)
+        self.assertIn("SP132", [f.rule_id for f in findings])
+
+    def test_dotnet_await_is_not_flagged(self):
+        source = "var result = await GetDataAsync();\n"
+        findings = self.findings("api.cs", source)
+        self.assertNotIn("SP132", [f.rule_id for f in findings])
+
+    def test_aspnet_debug_true_is_flagged(self):
+        source = "<compilation debug=" + '"true" />\n'
+        findings = self.findings("web.config", source)
+        self.assertIn("SP133", [f.rule_id for f in findings])
+
+    def test_aspnet_debug_false_is_not_flagged(self):
+        source = '<compilation debug="false" />\n'
+        findings = self.findings("web.config", source)
+        self.assertNotIn("SP133", [f.rule_id for f in findings])
+
+    def test_assert_as_authorization_is_flagged(self):
+        source = "assert user.is_ad" + "min\n"
+        findings = self.findings("admin.py", source)
+        self.assertIn("SP134", [f.rule_id for f in findings])
+
+    def test_explicit_authorization_check_is_not_flagged(self):
+        source = "if not user.is_admin:\n    raise HTTPException(403)\n"
+        findings = self.findings("admin.py", source)
+        self.assertNotIn("SP134", [f.rule_id for f in findings])
+
+    def test_unbounded_c_string_function_is_flagged(self):
+        source = "str" + "cpy(dst, user_input);\n"
+        findings = self.findings("legacy.c", source)
+        self.assertIn("SP135", [f.rule_id for f in findings])
+
+    def test_bounded_c_string_function_is_not_flagged(self):
+        source = 'snprintf(dst, sizeof(dst), "%s", user_input);\n'
+        findings = self.findings("legacy.c", source)
+        self.assertNotIn("SP135", [f.rule_id for f in findings])
+
+    def test_go_discarded_error_is_flagged(self):
+        source = "result, err := doThing()\n" + "_, _ " + "= result, err\n"
+        findings = self.findings("store.go", source)
+        self.assertIn("SP136", [f.rule_id for f in findings])
+
+    def test_go_handled_error_is_not_flagged(self):
+        source = "result, err := doThing()\nif err != nil {\n    return err\n}\n"
+        findings = self.findings("store.go", source)
+        self.assertNotIn("SP136", [f.rule_id for f in findings])
+
 
 if __name__ == "__main__":
     unittest.main()

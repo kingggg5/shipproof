@@ -12,7 +12,7 @@
 
 ## What it detects
 
-- 55 deterministic rules (SP001–SP503) across secrets, injection, authorization, SSRF, path traversal, XXE, XSS, ReDoS, unsafe deserialization, open redirect, insecure randomness, hardcoded IVs, retry storms, supply chain, unbounded queries/pagination/concurrency, missing timeouts, blocking async calls, framework misconfiguration (Express, Next.js, Django, Supabase), and unmetered AI/LLM routes. Every finding carries a proof level (L0 pattern, L1 structural/AST).
+- 67 deterministic rules (SP001–SP503) across secrets, injection, authorization, SSRF, path traversal, XXE, XSS, ReDoS, unsafe deserialization, open redirect, insecure randomness, hardcoded IVs, retry storms, supply chain, unbounded queries/pagination/concurrency, missing timeouts, blocking async calls, framework misconfiguration (Express, Next.js, Angular, Django, Supabase, PHP, Go, .NET), and unmetered AI/LLM routes. Every finding carries a proof level (L0 pattern, L1 structural/AST).
 - Full rule table with severities: [README.md](README.md) (English) or [README.th.md](README.th.md) (Thai).
 
 ## Outputs and integrations

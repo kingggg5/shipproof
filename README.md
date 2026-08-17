@@ -62,6 +62,10 @@ shipproof check .
 
 Node.js 20+ runs the front-door CLI. Python 3.10+ is needed for `scan`, `check`, `budget`, `capacity`, and the MCP tools. The core has no runtime npm or Python package dependencies.
 
+## Built for the vibe-coding era
+
+Independent 2025–2026 field studies agree on what happens when code ships faster than it is verified: a scan of 5,600 vibe-coded applications found more than 2,000 vulnerabilities and over 400 exposed secrets, roughly 20% of vibe-coded apps carry a serious flaw, and 62% of AI-generated solutions contain design or security weaknesses — with 74 confirmed AI-linked CVEs already catalogued. ShipProof exists for exactly this gap: it is the offline, deterministic second pair of eyes that runs in seconds after every agent iteration, with 67 detectors aimed at the failure classes AI assistants write most often (missing authorization, interpolated SQL, exposed secrets, unmetered AI endpoints, retry storms, debug defaults) and honest proof levels that never claim more evidence than the engine actually produced.
+
 ## Code-Review Terminal Output
 
 ShipProof formats findings as actionable review cards with source context, confidence levels, why the risk matters, and recommended fixes:
@@ -186,6 +190,18 @@ Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1
 | **`SP122`** | HIGH | Security | Security-sensitive value from insecure randomness | Regex |
 | **`SP123`** | HIGH | Security | Hardcoded cipher initialization vector | Regex |
 | **`SP124`** | HIGH | Security | SSRF via user-controlled fetch URL | Regex |
+| **`SP125`** | HIGH | Security | Angular `DomSanitizer` bypass (`bypassSecurityTrust*`) | Regex |
+| **`SP126`** | MEDIUM | Security | Auth token stored in `localStorage`/`sessionStorage` | Regex |
+| **`SP127`** | HIGH | Security | PHP loose `==` comparison on credentials | Regex |
+| **`SP128`** | HIGH | Security | PHP SQL with interpolated variables/superglobals | Regex |
+| **`SP129`** | HIGH | Security | PHP reflected XSS via echoed superglobal | Regex |
+| **`SP130`** | MEDIUM | Security | PHP open redirect via `Location` header | Regex |
+| **`SP131`** | MEDIUM | Reliability | Go `http.Server` without read/write timeouts | Regex |
+| **`SP132`** | MEDIUM | Reliability | .NET sync-over-async blocking (`GetResult`/`Wait`) | Regex |
+| **`SP133`** | MEDIUM | Security | ASP.NET `debug="true"` shipped in configuration | Regex |
+| **`SP134`** | HIGH | Security | `assert` used as authorization (stripped under `-O`) | Regex |
+| **`SP135`** | HIGH | Security | Unbounded C string functions (`strcpy`, `gets`) | Regex |
+| **`SP136`** | MEDIUM | Reliability | Go return values including errors discarded (`_, _ =`) | Regex |
 | **`SP201`** | HIGH | Security | Application debug mode enabled in production | Regex |
 | **`SP202`** | MEDIUM | Supply Chain | Floating container base image tag without SHA256 digest | Regex |
 | **`SP203`** | HIGH | Supply Chain | Unpinned GitHub Action referenced by mutable tag | Regex |
