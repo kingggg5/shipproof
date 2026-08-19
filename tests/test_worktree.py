@@ -82,22 +82,22 @@ class WorktreeTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
-            subprocess.run([git_bin, "init", str(root)], check=True, capture_output=True)
-            subprocess.run(
+            subprocess.run([git_bin, "init", str(root)], check=True, capture_output=True)  # noqa: S603
+            subprocess.run(  # noqa: S603
                 [git_bin, "config", "user.email", "test@example.com"],
                 cwd=str(root),
                 check=True,
                 capture_output=True,
             )
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 [git_bin, "config", "user.name", "Test User"],
                 cwd=str(root),
                 check=True,
                 capture_output=True,
             )
             (root / "README.md").write_text("# Test\n", encoding="utf-8")
-            subprocess.run([git_bin, "add", "."], cwd=str(root), check=True, capture_output=True)
-            subprocess.run(
+            subprocess.run([git_bin, "add", "."], cwd=str(root), check=True, capture_output=True)  # noqa: S603
+            subprocess.run(  # noqa: S603
                 [git_bin, "commit", "-m", "init"],
                 cwd=str(root),
                 check=True,
