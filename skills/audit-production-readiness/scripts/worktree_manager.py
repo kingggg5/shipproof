@@ -217,7 +217,8 @@ def main(argv: list[str] | None = None) -> int:
     create_p = subparsers.add_parser("create", help="Create a new isolated agent worktree")
     create_p.add_argument("task", help="Name of the task / sandbox (e.g. fix-auth)")
 
-    subparsers.add_parser("list", help="List active agent worktrees")
+    list_p = subparsers.add_parser("list", help="List active agent worktrees")
+    list_p.add_argument("--json", action="store_true", help="Output list in JSON format")
 
     check_p = subparsers.add_parser("check", help="Run production gate in worktree")
     check_p.add_argument("task", help="Name of the task / sandbox")

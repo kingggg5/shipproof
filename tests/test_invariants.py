@@ -93,6 +93,21 @@ class InvariantsTests(unittest.TestCase):
             md = render_invariants_markdown(violations)
             self.assertIn("PASS", md)
 
+    def test_cli_invariants_markdown_and_json(self):
+        from invariants import main
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "safe.py").write_text("def ping(): return 'pong'\n", encoding="utf-8")
+            self.assertEqual(main([str(root), "--format", "markdown"]), 0)
+            self.assertEqual(main([str(root), "--format", "json"]), 0)
+
+            # Violations return exit 1
+            bad_file = root / "admin.py"
+            bad_file.write_text("@app.get('/admin/test')\ndef f(): pass\n", encoding="utf-8")
+            self.assertEqual(main([str(root), "--format", "json"]), 1)
+            self.assertEqual(main([str(root), "--format", "markdown"]), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -95,6 +95,32 @@ class CostModelTests(unittest.TestCase):
             )
             self.assertGreater(est.estimated_cost_usd_single_run, 0.0)
 
+    def test_rendering_and_cadence_options(self):
+        from cost_model import estimate_codebase_tokens, format_markdown, format_terminal
+
+        tokens = estimate_codebase_tokens(ROOT)
+        self.assertGreater(tokens, 0)
+
+        for cadence in ["once", "per-pr", "hourly", "daily", "weekly", "monthly"]:
+            est = calculate_cost(
+                model="claude-3-5-sonnet",
+                context_tokens=10_000,
+                iterations=2,
+                cadence=cadence,
+                budget_usd=10.0,
+            )
+            self.assertGreater(est.monthly_estimated_cost_usd, 0.0)
+            table_out = format_terminal(est)
+            self.assertIn("ShipProof AI Cost", table_out)
+            md_out = format_markdown(est)
+            self.assertIn("ShipProof AI Cost & Token Budget Report", md_out)
+
+    def test_cli_formats(self):
+        code_md = main(["--context-tokens", "1000", "--format", "markdown"])
+        self.assertEqual(code_md, 0)
+        code_term = main(["--context-tokens", "1000", "--format", "terminal"])
+        self.assertEqual(code_term, 0)
+
 
 if __name__ == "__main__":
     unittest.main()
