@@ -151,6 +151,29 @@ class StructureTests(unittest.TestCase):
                 f"Rules in {readme_name} framework table not in scanner: {mentioned_rules - scanner_rule_ids}",
             )
 
+    def test_catalog_shipped_claims_exist_in_scanner(self):
+        """Dogfood the evidence-first contract: every rule the failure catalog
+        marks SHIPPED must exist in the scanner (reserved IDs never count)."""
+        catalog_path = ROOT / "docs" / "knowledge" / "failure-catalog.md"
+        if not catalog_path.is_file():
+            self.skipTest("failure catalog not present")
+        scanner_rule_ids = {rule.rule_id for rule in RULES}
+        reserved_ids = {"SP111", "SP308", "SP309", "SP310", "SP311", "SP312"}
+        content = catalog_path.read_text(encoding="utf-8")
+        shipped_claims = set()
+        for claim in re.findall(r"SHIPPED\s+((?:SP\d{3})(?:\s*/\s*SP\d{3})*)", content):
+            shipped_claims.update(re.findall(r"SP\d{3}", claim))
+        self.assertTrue(
+            shipped_claims,
+            "failure catalog no longer marks any rule as SHIPPED; drop this test",
+        )
+        ghost_claims = shipped_claims - scanner_rule_ids - reserved_ids
+        self.assertEqual(
+            ghost_claims,
+            set(),
+            f"Catalog claims these rules are shipped but they do not exist: {sorted(ghost_claims)}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

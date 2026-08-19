@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.0 - 2026-08-19
+
+- Expand rule catalog to **150+ rules** across Multi-Language ecosystems with detectors `SP591` – `SP650`.
+- Add AI Agent Token & Financial Cost Budget Engine (`shipproof cost`): computes context footprint, prompt caching discount calculations across frontier AI models (Claude 3.7/3.5, GPT-4o, Gemini 2.0/1.5, DeepSeek-V3/R1), and multi-iteration financial budget gates (`--budget-usd`).
+- Add Git Worktree Isolation Sandbox (`shipproof worktree`): enables AI coding agents to create, test, and merge isolated workspace sandboxes safely without touching working branches.
+- Add Production Readiness Status Badge (`shipproof badge`): outputs shields.io Markdown or JSON status badges for `README.md`.
+- Add Next.js 15 App Router & TypeScript Enterprise Gate (`SP591` – `SP600`): Server-only ORM leakage in `"use client"` bundles, unawaited route segment params, mutating actions missing revalidation, and IDOR protection.
+- Add Multi-Language Enterprise Production Gate (`SP601` – `SP625`): OWASP Top 10 for LLMs, Kubernetes container hardening, GraphQL/gRPC resilience, OAuth2/PKCE security, PostgreSQL table lock protection, and language failure modes in Rust, Go, Java, Python, C#.
+- Add Cloud & Infrastructure-as-Code detectors (`SP626` – `SP630`): AWS S3 public access, unencrypted EBS/RDS storage, open security group SSH/RDP ports, IAM wildcard policies, CloudFront HTTPS enforcement.
+- Add Edge Runtimes & Serverless Isolation rules (`SP631` – `SP634`): Cloudflare Workers / Deno / Vercel Edge Node.js module check, unbounded KV loops, unbuffered response accumulation, authenticated CDN cache leaks.
+- Add Real-Time & Streaming Concurrency rules (`SP635` – `SP638`): WebSocket missing heartbeat keepalive, Server-Sent Events missing disconnect listeners, WebSocket unauthenticated handshake, BroadcastChannel unmount leaks.
+- Add Cryptographic Primitives & Key Management rules (`SP639` – `SP643`): Insecure symmetric ciphers, weak RSA key length, static/hardcoded IV reuse, legacy MD5/SHA1 hashing, timing-unsafe HMAC comparisons.
+- Add Modern Framework & Multitenancy Security rules (`SP644` – `SP650`): Svelte unescaped `{@html}`, Android WebView file access, iOS URLSession SSL trust bypass, Frontend API proxy SSRF, React useEffect WebSocket teardown, multitenant query tenant scoping, recursive JSON stack overflow bounds.
+- Expand full test suite to 284 unit tests passing 100% with 0 scanner findings.
+
 ## Unreleased
 
 - Publish the failure catalog (`docs/knowledge/failure-catalog.md`): 463 researched failure modes across 21 sections (web security, auth, crypto, SQL, APIs, performance, frontend, Python, concurrency, reliability, infrastructure, CI/CD, data integrity, AI/LLM), each with impact, fix direction, detection feasibility, and references. The catalog feeds detector selection for future rules.

@@ -85,6 +85,35 @@ Loads a version-1 repository policy and executes its fixed scan, performance-bud
 
 Exit `0` means every declared evidence gate passed, exit `1` means a declared scan or performance gate blocked, and exit `2` means the policy or required evidence was invalid or unavailable. Capacity remains explicitly `CONDITIONAL` evidence and does not block merely because the model requires production-shaped validation.
 
+## `impact`
+
+```bash
+shipproof impact src/user.py
+shipproof impact src/user.py:42 --format json
+```
+
+Performs AST-based change impact analysis. Analyzes blast radius, identifies direct and transitive callers, extracts touched database entities/tables, discovers impact-selected regression tests, traces cross-file data-flow taint chains (`Route -> Service -> Repo -> Sink`), and scores production reachability.
+
+## `invariants`
+
+```bash
+shipproof invariants .
+shipproof invariants . --format json
+```
+
+Verifies foundational architectural and security invariants using Python and JS AST parsing:
+- `INV-AUTH-01`: Administrative routes must declare visible authentication guards.
+- `INV-TENANT-01`: Multi-tenant repository queries must explicitly filter on `tenant_id` or `org_id`.
+- `INV-TX-01`: Database transactions must not execute slow outbound HTTP calls or unbounded sleeps.
+
+## `benchmark`
+
+```bash
+shipproof benchmark
+```
+
+Executes ShipProofBench: an empirical test suite measuring precision, recall, false positive rates, and throughput across synthetic CWE/OWASP test cases.
+
 ## `budget`
 
 ```bash
@@ -132,6 +161,42 @@ shipproof capacity --config shipproof.config.json --export-k6 load-test.js --for
 ```
 
 Existing files are not replaced without `--force`. One k6 iteration makes one request, so the constant-arrival-rate scenario maps the rounded design peak RPS to iterations per second. Review the generated concurrency allocation and run only against an authorized environment.
+
+## `cost`
+
+Model AI agent token consumption, prompt caching savings, and dollar costs across modern 2026 foundation models:
+
+```bash
+shipproof cost . --model claude-3-5-sonnet --iterations 3
+shipproof cost . --model gpt-4o --cadence per-pr --budget-usd 0.50
+shipproof cost --context-tokens 50000 --model deepseek-r1 --format markdown
+```
+
+Supported models: `claude-sonnet-5`, `claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`, `gpt-4.5`, `gpt-4o`, `gpt-4o-mini`, `o1`, `o3-mini`, `o4-mini`, `gemini-3-7-flash`, `gemini-2-0-flash`, `gemini-2-0-flash-lite`, `gemini-2-0-pro`, `gemini-1-5-pro`, `gemini-1-5-flash`, `deepseek-v4-flash`, `deepseek-v4-pro`, `deepseek-v3`, `deepseek-r1`, `mistral-large`, `codestral`, `llama-3.3-70b`.
+Exit `0` is under budget, `1` is budget exceeded, and `2` is invalid input.
+
+## `worktree`
+
+Create and manage isolated Git worktree sandboxes for AI agents:
+
+```bash
+shipproof worktree create fix-auth
+shipproof worktree list
+shipproof worktree check fix-auth
+shipproof worktree merge fix-auth
+shipproof worktree remove fix-auth
+```
+
+AI agents work safely in `.work/<task>` without polluting the main branch or dirty working trees. `merge` verifies zero high/critical findings before fast-forward merging.
+
+## `badge`
+
+Generate a production gate status badge for README.md:
+
+```bash
+shipproof badge .
+shipproof badge . --format json
+```
 
 ## `evidence`
 

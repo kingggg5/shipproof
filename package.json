@@ -1,7 +1,7 @@
 {
   "name": "@kingggg5/shipproof",
-  "version": "0.5.2",
-  "description": "Secure-by-design engineering skills and evidence gates for Codex and Claude Code.",
+  "version": "0.6.0",
+  "description": "Zero-dependency production gate, resource budget, and capacity model for AI-written code",
   "type": "module",
   "bin": {
     "shipproof": "bin/shipproof.mjs"
@@ -24,6 +24,7 @@
     "prompts",
     "schemas",
     "benchmarks/README.md",
+    "benchmarks/*.py",
     "scripts/benchmark-scanner.py",
     "scripts/run-action.mjs",
     "skills/audit-production-readiness/SKILL.md",

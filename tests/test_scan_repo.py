@@ -534,6 +534,14 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
             (root / "Dockerfile").write_text("FROM node:20\n", encoding="utf-8")
             (root / "serverless.yml").write_text("service: test\n", encoding="utf-8")
             (root / ".github" / "workflows").mkdir(parents=True)
+            (root / "App.csproj").write_text(
+                '<Project Sdk="Microsoft.NET.Sdk.Web"><ItemGroup><PackageReference Include="Microsoft.AspNetCore.App" /><PackageReference Include="Microsoft.EntityFrameworkCore" /></ItemGroup></Project>',
+                encoding="utf-8",
+            )
+            (root / "CMakeLists.txt").write_text(
+                "cmake_minimum_required(VERSION 3.20)\n", encoding="utf-8"
+            )
+            (root / "Makefile").write_text("all:\n\tgcc main.c\n", encoding="utf-8")
 
             fw = detect_frameworks(root)
             self.assertIn("nextjs", fw)
@@ -543,6 +551,11 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
             self.assertIn("laravel", fw)
             self.assertIn("rails", fw)
             self.assertIn("springboot", fw)
+            self.assertIn("dotnet", fw)
+            self.assertIn("aspnetcore", fw)
+            self.assertIn("entityframework", fw)
+            self.assertIn("cmake", fw)
+            self.assertIn("make", fw)
             self.assertIn("docker", fw)
             self.assertIn("github-actions", fw)
 
@@ -1056,6 +1069,556 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertEqual(len(fix_prompts_json), 1)
         self.assertEqual(fix_prompts_json[0]["rule_id"], "SP201")
         self.assertIn("Fix SP201 in server.py", fix_prompts_json[0]["prompt"])
+
+    def test_gcp_service_account_private_key_is_flagged(self):
+        source = (
+            '{"type": "service_account", "project_id": "demo", "private_key": "-----BEGIN '
+            + "PRIVATE KEY-----"
+            + '\\nMIIEvgIBADANBgk..."}'
+        )
+        findings = self.findings("gcp-key.json", source)
+        self.assertIn("SP005", [f.rule_id for f in findings])
+
+    def test_safe_json_config_is_not_flagged_as_gcp_key(self):
+        source = '{"type": "service_account", "project_id": "demo", "client_email": "sa@demo.iam.gserviceaccount.com"}'
+        findings = self.findings("config.json", source)
+        self.assertNotIn("SP005", [f.rule_id for f in findings])
+
+    def test_github_pat_token_is_flagged(self):
+        source = "token = 'gh" + "p_123456789012345678901234567890123456'\n"
+        findings = self.findings("deploy.py", source)
+        self.assertIn("SP006", [f.rule_id for f in findings])
+
+    def test_normal_github_repo_slug_is_not_flagged_as_pat(self):
+        source = "const repo = 'github/ghp_action_repo';\n"
+        findings = self.findings("deploy.js", source)
+        self.assertNotIn("SP006", [f.rule_id for f in findings])
+
+    def test_zip_slip_extractall_is_flagged(self):
+        source = (
+            "with zipfile.ZipFile('archive.zip') as zip_ref:\n    zip_ref."
+            + "extractall('/tmp/dest')\n"
+        )
+        findings = self.findings("extractor.py", source)
+        self.assertIn("SP111", [f.rule_id for f in findings])
+
+    def test_safe_archive_member_extraction_is_not_flagged(self):
+        source = "for member in zip_file.infolist():\n    if not member.filename.startswith('/'):\n        zip_file.extract(member, '/tmp/dest')\n"
+        findings = self.findings("safe_extractor.py", source)
+        self.assertNotIn("SP111", [f.rule_id for f in findings])
+
+    def test_ssti_dynamic_render_template_string_is_flagged(self):
+        source = "return render_template_" + "string(f'Hello {username}')\n"
+        findings = self.findings("views.py", source)
+        self.assertIn("SP137", [f.rule_id for f in findings])
+
+    def test_safe_template_render_with_context_is_not_flagged(self):
+        source = "return render_template('hello.html', username=username)\n"
+        findings = self.findings("views.py", source)
+        self.assertNotIn("SP137", [f.rule_id for f in findings])
+
+    def test_timing_attack_signature_comparison_is_flagged(self):
+        source = "if received_" + "signature == " + "expected_sig:\n    proceed()\n"
+        findings = self.findings("auth.py", source)
+        self.assertIn("SP138", [f.rule_id for f in findings])
+
+    def test_constant_time_signature_comparison_is_not_flagged(self):
+        source = "if hmac.compare_digest(received_signature, expected_sig):\n    proceed()\n"
+        findings = self.findings("auth.py", source)
+        self.assertNotIn("SP138", [f.rule_id for f in findings])
+
+    def test_insecure_tempfile_mktemp_is_flagged(self):
+        source = "temp_path = tempfile." + "mktemp()\n"
+        findings = self.findings("utils.py", source)
+        self.assertIn("SP139", [f.rule_id for f in findings])
+
+    def test_secure_named_temporary_file_is_not_flagged(self):
+        source = "with tempfile.NamedTemporaryFile() as tmp:\n    tmp.write(b'data')\n"
+        findings = self.findings("utils.py", source)
+        self.assertNotIn("SP139", [f.rule_id for f in findings])
+
+    def test_unbounded_global_cache_is_flagged(self):
+        source = "global " + "USER_CACHE\nUSER_CACHE = {}\n"
+        findings = self.findings("cache.py", source)
+        self.assertIn("SP308", [f.rule_id for f in findings])
+
+    def test_bounded_lru_cache_decorator_is_not_flagged(self):
+        source = "@functools.lru_cache(maxsize=128)\ndef get_user(uid):\n    return db.get(uid)\n"
+        findings = self.findings("cache.py", source)
+        self.assertNotIn("SP308", [f.rule_id for f in findings])
+
+    def test_goroutine_without_context_is_flagged(self):
+        source = "go " + "func() {\n    doBackgroundWork()\n}()\n"
+        findings = self.findings("worker.go", source)
+        self.assertIn("SP309", [f.rule_id for f in findings])
+
+    def test_goroutine_with_explicit_function_and_context_is_not_flagged(self):
+        source = "go runWorkerWithContext(ctx, jobQueue)\n"
+        findings = self.findings("worker.go", source)
+        self.assertNotIn("SP309", [f.rule_id for f in findings])
+
+    def test_busy_wait_spin_loop_is_flagged(self):
+        source = "while " + "True:\n    pass\n"
+        findings = self.findings("poller.py", source)
+        self.assertIn("SP310", [f.rule_id for f in findings])
+
+    def test_loop_with_sleep_backoff_is_not_flagged(self):
+        source = "while True:\n    time.sleep(1)\n    check_status()\n"
+        findings = self.findings("poller.py", source)
+        self.assertNotIn("SP310", [f.rule_id for f in findings])
+
+    def test_event_emitter_in_request_scope_is_flagged(self):
+        source = "app.get('/stream', (req, res) => {\n    req." + "on('data', chunk => {});\n});\n"
+        findings = self.findings("routes.js", source)
+        self.assertIn("SP311", [f.rule_id for f in findings])
+
+    def test_event_emitter_top_level_listener_is_not_flagged(self):
+        source = "process.on('SIGTERM', () => { shutdown(); });\n"
+        findings = self.findings("server.js", source)
+        self.assertNotIn("SP311", [f.rule_id for f in findings])
+
+    def test_retry_loop_without_backoff_is_flagged(self):
+        source = "try:\n    call_api()\nexcept Exception:\n    time." + "sleep(0)\n"
+        findings = self.findings("client.py", source)
+        self.assertIn("SP312", [f.rule_id for f in findings])
+
+    def test_retry_with_exponential_backoff_is_not_flagged(self):
+        source = "try:\n    call_api()\nexcept Exception:\n    time.sleep(2 ** attempt)\n"
+        findings = self.findings("client.py", source)
+        self.assertNotIn("SP312", [f.rule_id for f in findings])
+
+    def test_stripe_payment_missing_idempotency_is_flagged(self):
+        source = "charge = stripe.charges." + "create(amount=2000, currency='usd')\n"
+        findings = self.findings("billing.py", source)
+        self.assertIn("SP504", [f.rule_id for f in findings])
+
+    def test_stripe_payment_with_idempotency_key_is_not_flagged(self):
+        source = "charge = stripe.charges.create(amount=2000, currency='usd', idempotency_key='order_123')\n"
+        findings = self.findings("billing.py", source)
+        self.assertNotIn("SP504", [f.rule_id for f in findings])
+
+    def test_shannon_entropy_high_entropy_secret(self):
+        source = 'token = "xoxb-' + '987654321012-1234567890123-AbCdEfGhIjKlMnOpQrStUvWx"\n'
+        findings = self.findings("config.py", source)
+        self.assertTrue(any(f.rule_id == "SP008" and f.confidence == "high" for f in findings))
+
+    def test_shannon_entropy_low_entropy_secret_downranked(self):
+        source = "api_" + 'key = "' + "1" * 32 + '"\n'
+        findings = self.findings("config.py", source)
+        sp003_findings = [f for f in findings if f.rule_id == "SP003"]
+        if sp003_findings:
+            self.assertEqual(sp003_findings[0].confidence, "low")
+
+    def test_taint_tracking_user_input_to_sql_execute(self):
+        source = (
+            "def handle(request):\n    user_id = request.args['id']\n    cursor.execute(user_id)\n"
+        )
+        findings = self.findings("views.py", source)
+        taint_findings = [f for f in findings if f.rule_id == "SP103" and f.detection == "taint"]
+        self.assertTrue(len(taint_findings) > 0)
+
+    def test_taint_tracking_sanitized_input_not_flagged_as_taint(self):
+        source = "def handle(request):\n    user_id = int(request.args['id'])\n    cursor.execute(user_id)\n"
+        findings = self.findings("views.py", source)
+        taint_findings = [f for f in findings if f.rule_id == "SP103" and f.detection == "taint"]
+        self.assertEqual(len(taint_findings), 0)
+
+    def test_import_alias_resolution_for_eval(self):
+        source = "def run(code):\n    unsafe = eval\n    unsafe(code)\n"
+        findings = self.findings("runner.py", source)
+        self.assertTrue(any(f.rule_id == "SP101" for f in findings))
+
+    def test_taint_tracking_command_injection_to_os_system(self):
+        source = "def run_tool(request):\n    cmd = request.form['command']\n    os.system(cmd)\n"
+        findings = self.findings("service.py", source)
+        taint_findings = [f for f in findings if f.rule_id == "SP102" and f.detection == "taint"]
+        self.assertTrue(len(taint_findings) > 0)
+
+    def test_taint_tracking_shlex_quoted_command_clears_taint(self):
+        source = "def run_tool(request):\n    cmd = shlex.quote(request.form['command'])\n    os.system(cmd)\n"
+        findings = self.findings("service.py", source)
+        taint_findings = [f for f in findings if f.rule_id == "SP102" and f.detection == "taint"]
+        self.assertEqual(len(taint_findings), 0)
+
+    def test_taint_tracking_uuid_sanitized_input_clears_taint(self):
+        source = "def query_item(request):\n    item_id = uuid.UUID(request.args['id'])\n    cursor.execute(item_id)\n"
+        findings = self.findings("db.py", source)
+        taint_findings = [f for f in findings if f.rule_id == "SP103" and f.detection == "taint"]
+        self.assertEqual(len(taint_findings), 0)
+
+    def test_autofix_sp304_adds_timeout(self):
+        from scan_repo import apply_autofix_to_line
+
+        orig = 'response = requests.get("https://api.example.com/data")'
+        fixed = apply_autofix_to_line("SP304", orig)
+        self.assertIsNotNone(fixed)
+        self.assertIn("timeout=30", fixed)
+
+    def test_autofix_sp104_verify_false_to_true(self):
+        from scan_repo import apply_autofix_to_line
+
+        orig = 'requests.get("https://api.example.com", verify=' + "False)"
+        fixed = apply_autofix_to_line("SP104", orig)
+        self.assertEqual(fixed, 'requests.get("https://api.example.com", verify=True)')
+
+    def test_autofix_sp201_debug_true_to_false(self):
+        from scan_repo import apply_autofix_to_line
+
+        orig = "app = FastAPI(debug=" + "True)"
+        fixed = apply_autofix_to_line("SP201", orig)
+        self.assertEqual(fixed, "app = FastAPI(debug=False)")
+
+    def test_sp591_use_client_importing_database_client(self):
+        source = '"use client";\nimport { prisma } from "@prisma/client";\nexport function Component() { return null; }'
+        findings = self.findings("component.tsx", source)
+        self.assertTrue(any(f.rule_id == "SP591" for f in findings))
+
+    def test_sp592_route_handler_casting_body_to_any(self):
+        source = "export async function POST(req: Request) {\n  const body = (await req.json()) as any;\n  return Response.json(body);\n}"
+        findings = self.findings("route.ts", source)
+        self.assertTrue(any(f.rule_id == "SP592" for f in findings))
+
+    def test_sp593_next15_async_params_unawaited(self):
+        source = "export default async function Page({ params }: { params: { id: string } }) {\n  const id = params.id;\n  return <div>{id}</div>;\n}"
+        findings = self.findings("page.tsx", source)
+        self.assertTrue(any(f.rule_id == "SP593" for f in findings))
+
+    def test_sp594_authenticated_fetch_with_force_cache(self):
+        source = 'export async function getUser() {\n  return fetch("https://api.internal/api/me", { cache: "force-cache" });\n}'
+        findings = self.findings("api.ts", source)
+        self.assertTrue(any(f.rule_id == "SP594" for f in findings))
+
+    def test_sp595_server_action_mutation_without_revalidation(self):
+        source = '"use server";\nexport async function updateItem() {\n  await prisma.user.update({ where: { id: "1" } });\n}'
+        findings = self.findings("actions.ts", source)
+        self.assertTrue(any(f.rule_id == "SP595" for f in findings))
+
+    def test_sp596_client_hook_in_server_component(self):
+        source = "export default function ServerPage() {\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}"
+        findings = self.findings("page.tsx", source)
+        self.assertTrue(any(f.rule_id == "SP596" for f in findings))
+
+    def test_sp597_server_component_waterfall_fetch(self):
+        source = 'export default async function Page() {\n  const a = await fetch("https://a.com");\n  const b = await fetch("https://b.com");\n  return null;\n}'
+        findings = self.findings("page.tsx", source)
+        self.assertTrue(any(f.rule_id == "SP597" for f in findings))
+
+    def test_sp598_mutating_route_handler_missing_origin_check(self):
+        source = 'export async function POST(request: Request) {\n  const session = cookies().get("session");\n  return Response.json({ ok: true });\n}'
+        findings = self.findings("route.ts", source)
+        self.assertTrue(any(f.rule_id == "SP598" for f in findings))
+
+    def test_sp599_typescript_non_null_assertion_on_dynamic_json(self):
+        source = "async function getData() {\n  const res = await response.json();\n  const val = res.data!;\n  return val;\n}"
+        findings = self.findings("client.ts", source)
+        self.assertTrue(any(f.rule_id == "SP599" for f in findings))
+
+    def test_sp600_server_action_accepting_raw_userid_for_mutation(self):
+        source = '"use server";\nexport async function deleteAccount(userId: string) {\n  await prisma.user.delete({ where: { id: userId } });\n}'
+        findings = self.findings("actions.ts", source)
+        self.assertTrue(any(f.rule_id == "SP600" for f in findings))
+
+    def test_sp601_llm_output_in_eval(self):
+        source = "def run_ai(response):\n    " + "ex" + "ec(response.choices[0].message.content)\n"
+        findings = self.findings("ai_runner.py", source)
+        self.assertTrue(any(f.rule_id == "SP601" for f in findings))
+
+    def test_sp602_llm_output_in_dangerously_set_inner_html(self):
+        source = (
+            "export function Output({ response }) {\n  return <div "
+            + "dangerouslySetInnerHTML={{ __html: response.text }} />;\n}"
+        )
+        findings = self.findings("output.tsx", source)
+        self.assertTrue(any(f.rule_id == "SP602" for f in findings))
+
+    def test_sp603_unbounded_prompt_ingestion(self):
+        source = (
+            "export async function generate(req: Request) {\n  return "
+            + "openai."
+            + "chat.completions.create({ prompt: req.body });\n}"
+        )
+        findings = self.findings("generate.ts", source)
+        self.assertTrue(any(f.rule_id == "SP603" for f in findings))
+
+    def test_sp604_system_prompt_user_concatenation(self):
+        source = (
+            'const msg = { role: "system", content: "You are a helpful bot. " + ' + "req.body };"
+        )
+        findings = self.findings("prompt.ts", source)
+        self.assertTrue(any(f.rule_id == "SP604" for f in findings))
+
+    def test_sp605_destructive_ai_tool_definition(self):
+        source = (
+            'const shellTool = { name: "'
+            + "execute_"
+            + 'shell", description: "Runs shell commands" };'
+        )
+        findings = self.findings("tools.ts", source)
+        self.assertTrue(any(f.rule_id == "SP605" for f in findings))
+
+    def test_sp606_k8s_empty_resources(self):
+        source = (
+            "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n  - name: app\n    resources: {}\n"
+        )
+        findings = self.findings("pod.yaml", source)
+        self.assertTrue(any(f.rule_id == "SP606" for f in findings))
+
+    def test_sp607_k8s_privileged_true(self):
+        source = (
+            "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n  - name: app\n    securityContext:\n      "
+            + "privileged: true\n"
+        )
+        findings = self.findings("pod.yaml", source)
+        self.assertTrue(any(f.rule_id == "SP607" for f in findings))
+
+    def test_sp608_k8s_readonly_rootfs_false(self):
+        source = "securityContext:\n  " + "readOnlyRootFilesystem: false\n"
+        findings = self.findings("deploy.yaml", source)
+        self.assertTrue(any(f.rule_id == "SP608" for f in findings))
+
+    def test_sp609_k8s_deployment_missing_probes(self):
+        source = "apiVersion: apps/v1\nkind: Deployment\nspec:\n  template:\n    spec:\n      containers:\n      - name: web\n        image: nginx\n"
+        findings = self.findings("deployment.yaml", source)
+        self.assertTrue(any(f.rule_id == "SP609" for f in findings))
+
+    def test_sp610_k8s_hostpath_volume(self):
+        source = "volumes:\n- name: host-root\n  " + "hostPath:\n    path: /var/run/docker.sock\n"
+        findings = self.findings("pod.yaml", source)
+        self.assertTrue(any(f.rule_id == "SP610" for f in findings))
+
+    def test_sp611_graphql_introspection_true(self):
+        source = (
+            "const server = new ApolloServer({ typeDefs, resolvers, "
+            + "intro"
+            + "spection: true });"
+        )
+        findings = self.findings("graphql.ts", source)
+        self.assertTrue(any(f.rule_id == "SP611" for f in findings))
+
+    def test_sp612_graphql_missing_depth_limit(self):
+        source = "const server = new ApolloServer({ typeDefs, resolvers });"
+        findings = self.findings("graphql.ts", source)
+        self.assertTrue(any(f.rule_id == "SP612" for f in findings))
+
+    def test_sp613_grpc_missing_context_timeout(self):
+        source = (
+            "func CallService(client pb.ServiceClient) {\n    client.NewClient("
+            + "context.Background())\n}"
+        )
+        findings = self.findings("client.go", source)
+        self.assertTrue(any(f.rule_id == "SP613" for f in findings))
+
+    def test_sp614_grpc_insecure_credentials(self):
+        source = "server := grpc.NewServer(" + "grpc." + "insecure_server_credentials())"
+        findings = self.findings("server.py", source)
+        self.assertTrue(any(f.rule_id == "SP614" for f in findings))
+
+    def test_sp615_oauth_missing_state(self):
+        source = (
+            'const authUrl = "https://auth.provider.com/oauth/authorize?'
+            + 'client_id=123&response_type=code";'
+        )
+        findings = self.findings("oauth.ts", source)
+        self.assertTrue(any(f.rule_id == "SP615" for f in findings))
+
+    def test_sp616_oauth_wildcard_redirect_uri(self):
+        source = "if (redirect_uri.match(" + '"https://*.example.com")) { return true; }'
+        findings = self.findings("auth.ts", source)
+        self.assertTrue(any(f.rule_id == "SP616" for f in findings))
+
+    def test_sp617_oauth_spa_missing_pkce(self):
+        source = 'const url = "/oauth/authorize?' + 'response_type=code&client_id=spa123";'
+        findings = self.findings("client.ts", source)
+        self.assertTrue(any(f.rule_id == "SP617" for f in findings))
+
+    def test_sp618_redis_set_without_ttl(self):
+        source = "redisClient." + 'set("session:123", data);'
+        findings = self.findings("session.ts", source)
+        self.assertTrue(any(f.rule_id == "SP618" for f in findings))
+
+    def test_sp619_kafka_auto_commit_true(self):
+        source = 'const consumerConfig = { "' + "enable." + 'auto.commit": true };'
+        findings = self.findings("kafka.ts", source)
+        self.assertTrue(any(f.rule_id == "SP619" for f in findings))
+
+    def test_sp620_postgres_migration_not_null_default_now(self):
+        source = "ALTER TABLE users ADD COLUMN created_at TIMESTAMP NOT NULL " + "DEFAULT now();"
+        findings = self.findings("migration.sql", source)
+        self.assertTrue(any(f.rule_id == "SP620" for f in findings))
+
+    def test_sp621_rust_unwrap_in_route_handler(self):
+        source = (
+            "async fn get_user(req: HttpRequest) -> HttpResponse {\n    let id = parse_id(&req)."
+            + "unwrap();\n    HttpResponse::Ok().finish()\n}"
+        )
+        findings = self.findings("handler.rs", source)
+        self.assertTrue(any(f.rule_id == "SP621" for f in findings))
+
+    def test_sp622_go_defer_file_close_write(self):
+        source = (
+            "func SaveData(file *os.File) {\n    "
+            + "defer file.Close()\n    file.WriteString('data')\n}"
+        )
+        findings = self.findings("writer.go", source)
+        self.assertTrue(any(f.rule_id == "SP622" for f in findings))
+
+    def test_sp623_java_jndi_dynamic_lookup(self):
+        source = (
+            "public void process(HttpServletRequest request) throws Exception {\n    ctx."
+            + "lookup(request.getParameter('name'));\n}"
+        )
+        findings = self.findings("LookupService.java", source)
+        self.assertTrue(any(f.rule_id == "SP623" for f in findings))
+
+    def test_sp624_weak_prng_for_secret_token(self):
+        source = "const reset_code = " + "Math.random().toString(36);"
+        findings = self.findings("auth.ts", source)
+        self.assertTrue(any(f.rule_id == "SP624" for f in findings))
+
+    def test_sp625_csharp_unawaited_task_run(self):
+        source = (
+            "public async Task<IActionResult> PostHandler() {\n    "
+            + "_ = Task.Run(() => BackgroundWork());\n    return Ok();\n}"
+        )
+        findings = self.findings("Controller.cs", source)
+        self.assertTrue(any(f.rule_id == "SP625" for f in findings))
+
+    def test_sp626_s3_public_wildcard_principal(self):
+        source = '{"Statement": [{"Effect": "Allow", "Principal": "*", "Action": "s3:GetObject"}]}'
+        findings = self.findings("policy.json", source)
+        self.assertTrue(any(f.rule_id == "SP626" for f in findings))
+
+    def test_sp627_storage_unencrypted(self):
+        source = 'resource "aws_ebs_volume" "example" {\n  ' + "encrypted = " + "false\n}"
+        findings = self.findings("main.tf", source)
+        self.assertTrue(any(f.rule_id == "SP627" for f in findings))
+
+    def test_sp628_security_group_open_ssh(self):
+        source = (
+            'resource "aws_security_group_rule" "ssh" {\n  from_port = 22\n  cidr_blocks = ["'
+            + '0.0.0.0/0"]\n}'
+        )
+        findings = self.findings("main.tf", source)
+        self.assertTrue(any(f.rule_id == "SP628" for f in findings))
+
+    def test_sp629_iam_wildcard_action(self):
+        source = '{"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"}]}'
+        findings = self.findings("iam.json", source)
+        self.assertTrue(any(f.rule_id == "SP629" for f in findings))
+
+    def test_sp630_cloudfront_allow_all_http(self):
+        source = 'viewer_protocol_policy = "' + 'allow-all"'
+        findings = self.findings("cloudfront.tf", source)
+        self.assertTrue(any(f.rule_id == "SP630" for f in findings))
+
+    def test_sp631_edge_runtime_import_fs(self):
+        source = 'export const runtime = "edge";\nimport fs from "node:fs";'
+        findings = self.findings("route.ts", source)
+        self.assertTrue(any(f.rule_id == "SP631" for f in findings))
+
+    def test_sp632_edge_unbounded_fetch_loop(self):
+        source = "for await (const k of keys) {\n  await env.KV.get(k);\n}"
+        findings = self.findings("worker.ts", source)
+        self.assertTrue(any(f.rule_id == "SP632" for f in findings))
+
+    def test_sp633_edge_buffered_response(self):
+        source = "const data = await response.arrayBuffer();\nreturn new Response(data);"
+        findings = self.findings("worker.ts", source)
+        self.assertTrue(any(f.rule_id == "SP633" for f in findings))
+
+    def test_sp634_edge_cached_authenticated_response(self):
+        source = (
+            'headers.set("Cache-'
+            + 'Control", "public, max-age=3600");\nconst token = cookies.get("auth");'
+        )
+        findings = self.findings("worker.ts", source)
+        self.assertTrue(any(f.rule_id == "SP634" for f in findings))
+
+    def test_sp635_websocket_missing_heartbeat(self):
+        source = "const wss = new " + "WebSocketServer({ port: 8080 });"
+        findings = self.findings("server.ts", source)
+        self.assertTrue(any(f.rule_id == "SP635" for f in findings))
+
+    def test_sp636_sse_missing_close_listener(self):
+        source = (
+            'res.setHeader("Content-Type", "text/'
+            + 'event-stream");\nsetInterval(() => res.write("data: 1"), 1000);'
+        )
+        findings = self.findings("stream.ts", source)
+        self.assertTrue(any(f.rule_id == "SP636" for f in findings))
+
+    def test_sp637_websocket_upgrade_missing_auth(self):
+        source = (
+            'server.on("upgrade", (req, socket, head) => {\n  wss.'
+            + "handleUpgrade(req, socket, head, (ws) => {});\n});"
+        )
+        findings = self.findings("server.ts", source)
+        self.assertTrue(any(f.rule_id == "SP637" for f in findings))
+
+    def test_sp638_broadcast_channel_leaking(self):
+        source = "const channel = new " + 'BroadcastChannel("app_events");'
+        findings = self.findings("component.tsx", source)
+        self.assertTrue(any(f.rule_id == "SP638" for f in findings))
+
+    def test_sp639_symmetric_ecb_mode(self):
+        source = 'const cipher = crypto.createCipheriv("' + 'des", key, null);'
+        findings = self.findings("crypto.ts", source)
+        self.assertTrue(any(f.rule_id == "SP639" for f in findings))
+
+    def test_sp640_rsa_short_key(self):
+        source = 'crypto.generateKeyPairSync("rsa", { ' + "modulusLength: " + "1024 });"
+        findings = self.findings("keys.ts", source)
+        self.assertTrue(any(f.rule_id == "SP640" for f in findings))
+
+    def test_sp641_hardcoded_iv(self):
+        source = "const " + "iv = Buffer.from('" + "0123456789abcdef0123456789abcdef', 'hex');"
+        findings = self.findings("crypto.ts", source)
+        self.assertTrue(any(f.rule_id == "SP641" for f in findings))
+
+    def test_sp642_md5_hash_used(self):
+        source = "const hash = crypto." + 'createHash("' + 'md5");'
+        findings = self.findings("hash.ts", source)
+        self.assertTrue(any(f.rule_id == "SP642" for f in findings))
+
+    def test_sp643_timing_unsafe_signature_check(self):
+        source = "if (signature =" + "== clientSig) { return true; }"
+        findings = self.findings("auth.ts", source)
+        self.assertTrue(any(f.rule_id == "SP643" for f in findings))
+
+    def test_sp644_svelte_raw_html_unescaped(self):
+        source = "<div>{@" + "html user_input}</div>"
+        findings = self.findings("Component.svelte", source)
+        self.assertTrue(any(f.rule_id == "SP644" for f in findings))
+
+    def test_sp645_android_webview_file_url_access(self):
+        source = "webSettings." + "setAllowFileAccessFromFileURLs(true);"
+        findings = self.findings("MainActivity.java", source)
+        self.assertTrue(any(f.rule_id == "SP645" for f in findings))
+
+    def test_sp646_ios_urlsession_trust_all_certs(self):
+        source = "completionHandler(." + "useCredential, URLCredential(trust: serverTrust))"
+        findings = self.findings("APIClient.swift", source)
+        self.assertTrue(any(f.rule_id == "SP646" for f in findings))
+
+    def test_sp647_frontend_proxy_ssrf(self):
+        source = "export async function POST(req) {\n  const res = await fet" + "ch(body.url);\n}"
+        findings = self.findings("route.ts", source)
+        self.assertTrue(any(f.rule_id == "SP647" for f in findings))
+
+    def test_sp648_react_websocket_missing_cleanup(self):
+        source = 'useEffect(() => {\n  const ws = new WebSocket("' + 'wss://api.com");\n}, []);'
+        findings = self.findings("LiveFeed.tsx", source)
+        self.assertTrue(any(f.rule_id == "SP648" for f in findings))
+
+    def test_sp649_multitenant_missing_tenant_id(self):
+        source = "SEL" + "ECT * FROM accounts WHERE id = :id;"
+        findings = self.findings("query.sql", source)
+        self.assertTrue(any(f.rule_id == "SP649" for f in findings))
+
+    def test_sp650_recursive_json_parse(self):
+        source = "function parse" + "Recursive(node) {\n  parseRecursive(node.child);\n}"
+        findings = self.findings("parser.ts", source)
+        self.assertTrue(any(f.rule_id == "SP650" for f in findings))
 
 
 if __name__ == "__main__":

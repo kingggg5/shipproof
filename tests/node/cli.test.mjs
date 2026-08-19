@@ -123,14 +123,29 @@ test("in-process dispatch covers help, prompt, doctor, and the Python bridge", (
   assert.equal(runCli(["help"]), 0);
   assert.equal(runCli(["--version"]), 0);
   assert.equal(runCli(["prompt", "list"]), 0);
+  assert.equal(runCli(["badge"]), 0);
+  assert.equal(runCli(["badge", "--format", "json"]), 0);
   const root = mkdtempSync(join(tmpdir(), "shipproof-dispatch-"));
   try {
     assert.ok([0, 1].includes(runCli(["doctor", root, "--json"])));
     assert.equal(runCli(["explain", "SP402"]), 0);
     assert.equal(runCli(["scan", root, "--fail-on", "none"]), 0);
+    assert.equal(runCli(["cost", "--context-tokens", "1000", "--budget-usd", "10.0"]), 0);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("cost command supports latest 2026 AI models and budget gates", () => {
+  assert.equal(runCli(["cost", "--context-tokens", "5000", "--model", "claude-sonnet-5", "--budget-usd", "1.0"]), 0);
+  assert.equal(runCli(["cost", "--context-tokens", "5000", "--model", "claude-3-7-sonnet", "--budget-usd", "1.0"]), 0);
+  assert.equal(runCli(["cost", "--context-tokens", "5000", "--model", "gpt-4.5", "--format", "json"]), 0);
+  assert.equal(runCli(["cost", "--context-tokens", "5000", "--model", "o4-mini", "--iterations", "2"]), 0);
+  assert.equal(runCli(["cost", "--context-tokens", "5000", "--model", "gemini-3-7-flash"]), 0);
+  assert.equal(runCli(["cost", "--context-tokens", "5000", "--model", "deepseek-v4-pro", "--budget-usd", "0.5"]), 0);
+  assert.equal(runCli(["cost", "--context-tokens", "5000", "--model", "deepseek-r1", "--budget-usd", "0.5"]), 0);
+  assert.equal(runCli(["cost", "--context-tokens", "5000", "--model", "gemini-2-0-flash"]), 0);
+  assert.equal(runCli(["cost", "--context-tokens", "500000", "--model", "gpt-4.5", "--budget-usd", "0.0001"]), 1);
 });
 
 test("policy check passes on the repository's own reviewed policy", () => {
@@ -140,3 +155,5 @@ test("policy check passes on the repository's own reviewed policy", () => {
 test("bare shipproof invocation scans the current directory", () => {
   assert.equal(runCli([]), 0);
 });
+
+
