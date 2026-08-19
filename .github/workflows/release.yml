@@ -67,6 +67,8 @@ jobs:
         env:
           SHIPPROOF_VERSION: ${{ steps.release.outputs.version }}
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           major_version="v${SHIPPROOF_VERSION%%.*}"
           git tag -fa "${major_version}" -m "Moving ${major_version} tag: tracks the latest reviewed ${major_version}.x release. Pin the exact version tag or commit SHA for immutable references." "${GITHUB_REF_NAME}"
           git push -f origin "${major_version}"
