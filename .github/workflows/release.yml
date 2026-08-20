@@ -4,11 +4,9 @@ on:
   push:
     tags:
       - "v*.*.*"
-  workflow_dispatch:
 
 permissions:
   contents: write
-  packages: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -32,10 +30,10 @@ jobs:
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: "22"
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@kingggg5"
       - name: Install development tools
         run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+      - name: Install MCP contract-test peers
+        run: npm ci --include=dev --ignore-scripts
       - name: Verify release source
         run: npm run check
       - id: release
@@ -44,13 +42,11 @@ jobs:
       - name: Build npm tarball
         run: |
           mkdir release-artifacts
-          npm pack --pack-destination release-artifacts
-      - name: Publish to GitHub Packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish || echo "Package already published"
+          npm pack --json --pack-destination release-artifacts > release-artifacts/pack.json
+          artifact="release-artifacts/kingggg5-shipproof-${{ steps.release.outputs.version }}.tgz"
+          test -f "${artifact}"
+          sha256sum "${artifact}" > "${artifact}.sha256"
       - name: Create GitHub release
-        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
           SHIPPROOF_PRERELEASE: ${{ steps.release.outputs.prerelease }}
@@ -61,9 +57,12 @@ jobs:
           if [[ "${SHIPPROOF_PRERELEASE}" == "true" ]]; then
             release_flags+=(--prerelease --latest=false)
           fi
-          gh release create "${GITHUB_REF_NAME}" "release-artifacts/kingggg5-shipproof-${SHIPPROOF_VERSION}.tgz" "${release_flags[@]}" || echo "Release already exists"
+          gh release create "${GITHUB_REF_NAME}" \
+            "release-artifacts/kingggg5-shipproof-${SHIPPROOF_VERSION}.tgz" \
+            "release-artifacts/kingggg5-shipproof-${SHIPPROOF_VERSION}.tgz.sha256" \
+            "release-artifacts/pack.json" \
+            "${release_flags[@]}"
       - name: Maintain moving major tag
-        if: startsWith(github.ref, 'refs/tags/v')
         env:
           SHIPPROOF_VERSION: ${{ steps.release.outputs.version }}
         run: |

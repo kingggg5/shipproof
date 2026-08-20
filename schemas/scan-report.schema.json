@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/scan-report.schema.json",
+  "title": "ShipProof scan report",
+  "allOf": [
+    { "$ref": "evidence-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["root", "summary", "findings"],
+      "properties": {
+        "tool": { "properties": { "command": { "const": "scan" } } },
+        "root": { "type": "string", "minLength": 1 },
+        "summary": {
+          "type": "object",
+          "required": ["findings", "app_findings", "test_findings", "files_scanned", "suppressed", "by_severity"],
+          "properties": {
+            "findings": { "type": "integer", "minimum": 0 },
+            "app_findings": { "type": "integer", "minimum": 0 },
+            "test_findings": { "type": "integer", "minimum": 0 },
+            "files_scanned": { "type": "integer", "minimum": 0 },
+            "suppressed": { "type": "integer", "minimum": 0 },
+            "frameworks": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "changed_since": { "type": "string", "minLength": 1 },
+            "by_severity": {
+              "type": "object",
+              "propertyNames": { "enum": ["critical", "high", "medium", "low"] },
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "additionalProperties": false
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule_id", "title", "category", "severity", "confidence", "path", "line", "evidence", "message", "remediation", "cwe", "owasp", "fingerprint", "detection", "proof_level", "scope", "verification_status"],
+            "properties": {
+              "rule_id": { "type": "string", "pattern": "^SP[0-9]{3}$" },
+              "title": { "type": "string" }, "category": { "type": "string" },
+              "severity": { "enum": ["critical", "high", "medium", "low"] },
+              "confidence": { "enum": ["high", "medium", "low"] },
+              "path": { "type": "string" }, "line": { "type": "integer", "minimum": 1 },
+              "evidence": { "type": "string" }, "message": { "type": "string" },
+              "remediation": { "type": "string" }, "cwe": { "type": "string" },
+              "owasp": { "type": "string" }, "fingerprint": { "type": "string" },
+              "detection": { "type": "string" }, "proof_level": { "enum": ["L0", "L1", "L2"] },
+              "scope": { "enum": ["app", "test"] }, "verification_status": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "decision_trace": {
+          "type": "object",
+          "required": ["rule_selection", "selection", "finding_flow", "gate"],
+          "properties": {
+            "rule_selection": {
+              "type": "object",
+              "required": ["catalog_rules", "detected_frameworks"],
+              "properties": {
+                "catalog_rules": { "type": "integer", "minimum": 0 },
+                "detected_frameworks": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "uniqueItems": true
+                }
+              },
+              "additionalProperties": false
+            },
+            "selection": {
+              "type": "object",
+              "required": ["mode", "files_scanned", "max_file_bytes", "exclude_patterns", "baseline_fingerprints", "minimum_confidence"],
+              "properties": {
+                "mode": { "enum": ["repository", "changed"] },
+                "files_scanned": { "type": "integer", "minimum": 0 },
+                "max_file_bytes": { "type": "integer", "minimum": 1 },
+                "exclude_patterns": { "type": "integer", "minimum": 0 },
+                "baseline_fingerprints": { "type": "integer", "minimum": 0 },
+                "minimum_confidence": {
+                  "oneOf": [
+                    { "enum": ["high", "medium", "low"] },
+                    { "type": "null" }
+                  ]
+                },
+                "changed_candidates": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            },
+            "finding_flow": {
+              "type": "object",
+              "required": ["before_confidence_filter", "active", "suppressed_by_baseline", "evaluated_by_gate", "blocking"],
+              "properties": {
+                "before_confidence_filter": { "type": "integer", "minimum": 0 },
+                "active": { "type": "integer", "minimum": 0 },
+                "suppressed_by_baseline": { "type": "integer", "minimum": 0 },
+                "evaluated_by_gate": { "type": "integer", "minimum": 0 },
+                "blocking": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            },
+            "gate": {
+              "type": "object",
+              "required": ["threshold", "include_tests", "failed", "verdict"],
+              "properties": {
+                "threshold": { "enum": ["critical", "high", "medium", "low", "none"] },
+                "include_tests": { "type": "boolean" },
+                "failed": { "type": "boolean" },
+                "verdict": { "enum": ["PASS_WITH_EVIDENCE", "CONDITIONAL", "BLOCK"] }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

@@ -75,9 +75,34 @@
           "uniqueItems": true,
           "items": { "type": "integer", "minimum": 100, "maximum": 599 }
         },
-        "body": {}
+        "body": {
+          "$ref": "#/$defs/k6BodyValue",
+          "description": "JSON request body. Sensitive keys such as password, token, api_key, and client_secret must use an environment placeholder: {\"$env\":\"NAME\"}."
+        }
       },
       "additionalProperties": false
+    },
+    "k6EnvironmentValue": {
+      "type": "object",
+      "required": ["$env"],
+      "properties": {
+        "$env": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+      },
+      "additionalProperties": false
+    },
+    "k6BodyValue": {
+      "anyOf": [
+        { "type": ["string", "number", "boolean", "null"] },
+        { "$ref": "#/$defs/k6EnvironmentValue" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/k6BodyValue" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/k6BodyValue" }
+        }
+      ]
     }
   },
   "additionalProperties": false

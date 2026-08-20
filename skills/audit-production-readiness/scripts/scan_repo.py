@@ -18,7 +18,9 @@ from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
+MAX_SNIPPET_BYTES = 200_000
+CONTEXT_LEVELS = ("summary", "overview", "full")
 
 SEVERITY = {"none": 99, "critical": 0, "high": 1, "medium": 2, "low": 3}
 CONFIDENCE = {"high": 0, "medium": 1, "low": 2}
@@ -65,15 +67,28 @@ TEXT_SUFFIXES = {
     ".cjs",
     ".ts",
     ".tsx",
+    ".vue",
+    ".svelte",
+    ".astro",
+    ".html",
     ".java",
     ".kt",
     ".kts",
+    ".scala",
+    ".groovy",
     ".go",
     ".rs",
+    ".swift",
+    ".dart",
     ".rb",
+    ".erb",
+    ".ex",
+    ".exs",
     ".php",
     ".cs",
     ".c",
+    ".m",
+    ".mm",
     ".h",
     ".cpp",
     ".hpp",
@@ -96,6 +111,8 @@ TEXT_SUFFIXES = {
     ".xml",
     ".tf",
     ".hcl",
+    ".prisma",
+    ".service",
     ".md",
     ".rst",
     ".txt",
@@ -145,6 +162,8 @@ PLACEHOLDERS = re.compile(
     r"not[_-]?a[_-]?real|fake|redacted|xxxx|<[^>]+>|\$\{|process\.env|os\.environ)"
 )
 INLINE_IGNORE = re.compile(r"shipproof-ignore(?:\s+|:)(SP\d+)")
+MAX_MULTILINE_MATCH_CHARS = 20_000
+MAX_MULTILINE_MATCH_LINES = 120
 
 # --- Entropy scoring for secret confidence calibration ---
 SECRET_VALUE_PATTERN = re.compile(
@@ -161,14 +180,16 @@ def shannon_entropy(s: str) -> float:
     return -sum((c / length) * math.log2(c / length) for c in counts.values())
 
 
-def secret_confidence(rule: Rule, line: str) -> str | None:
+def secret_confidence(rule: Rule, matched_text: str) -> str | None:
     """Adjust secret finding confidence based on entropy of generic credential matches."""
     if rule.rule_id != "SP003":
         return None
-    match = SECRET_VALUE_PATTERN.search(line)
-    if not match:
+    matches = SECRET_VALUE_PATTERN.findall(matched_text)
+    if not matches:
         return None
-    value = match.group(1)
+    # Credential assignments may quote both the key and the value (JSON/YAML).
+    # The final quoted token is the assigned credential, not the key name.
+    value = matches[-1]
     if len(value) < 8:
         return "low"
     entropy = shannon_entropy(value)
@@ -3540,6 +3561,72 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Parsers configured with strict depth limit constraints (max_depth=20).",
         "test": "Enforce payload size and nesting depth limits before deserializing nested structures.",
     },
+    "SP651": {
+        "why": "Adding ALL or SYS_ADMIN Linux capabilities gives a container broad kernel privileges that defeat least-privilege isolation.",
+        "attack": "A compromised workload uses the granted capability set to mount filesystems, manipulate namespaces, or escape normal container restrictions.",
+        "false_positive": "A tightly controlled infrastructure workload may require one named capability; ALL and SYS_ADMIN still require an explicit, reviewed exception.",
+        "test": "Render the final Pod manifest and verify every container drops ALL and adds back only a reviewed minimal capability set.",
+    },
+    "SP652": {
+        "why": "An Unconfined seccomp profile disables syscall filtering that Kubernetes Restricted Pod Security expects.",
+        "attack": "Code execution inside the container can invoke a much larger kernel syscall surface, increasing container-escape impact.",
+        "false_positive": "Kernel-debugging or security research pods may intentionally run unconfined in isolated clusters; document and scope that exception outside production namespaces.",
+        "test": "Validate the rendered manifest and assert seccompProfile.type is RuntimeDefault or a reviewed Localhost profile.",
+    },
+    "SP653": {
+        "why": "procMount: Unmasked exposes host-style /proc paths that the container runtime normally masks for isolation.",
+        "attack": "A compromised process reads or manipulates sensitive procfs interfaces that should be hidden inside a restricted container.",
+        "false_positive": "Specialized node diagnostics may require an unmasked procfs, but should run as a separately reviewed privileged workload.",
+        "test": "Apply the manifest under the Restricted Pod Security admission policy and verify Unmasked proc mounts are rejected.",
+    },
+    "SP654": {
+        "why": "Windows HostProcess containers run directly on the host and are disallowed by the Kubernetes Restricted Pod Security standard.",
+        "attack": "Compromise of a HostProcess container grants host-level access to the Windows node rather than ordinary pod isolation.",
+        "false_positive": "Cluster administration agents can require HostProcess, but they should be isolated, signed, and admitted through a narrow exception policy.",
+        "test": "Render the workload and verify windowsOptions.hostProcess is absent or false for application namespaces.",
+    },
+    "SP655": {
+        "why": "An Unconfined AppArmor profile removes a defense-in-depth policy required by Kubernetes Restricted Pod Security.",
+        "attack": "A compromised container can perform operations that a RuntimeDefault or Localhost AppArmor profile would block.",
+        "false_positive": "Nodes without AppArmor support may use another mandatory access-control mechanism; do not declare Unconfined merely to bypass admission checks.",
+        "test": "Validate both the appArmorProfile field and legacy annotation in the rendered manifest and reject Unconfined values.",
+    },
+    "SP656": {
+        "why": "Kubernetes RBAC wildcards grant access to matching current and future API groups, resources, or verbs, defeating least privilege.",
+        "attack": "A compromised service account uses a newly added resource or powerful verb that was silently included by the wildcard grant.",
+        "false_positive": "A separately governed cluster administration role can require broad access, but application roles should enumerate their exact API groups, resources, and verbs.",
+        "test": "Render every Role and ClusterRole, reject wildcard apiGroups/resources/verbs, and exercise the workload with the smallest enumerated permission set.",
+    },
+    "SP657": {
+        "why": "Binding the built-in cluster-admin ClusterRole grants unrestricted cluster-wide control to every listed subject.",
+        "attack": "Compromise of one bound user, group, or service account becomes full control of workloads, secrets, RBAC, and cluster configuration.",
+        "false_positive": "A break-glass administrator identity may intentionally receive cluster-admin, but it should be short-lived, audited, and kept out of application manifests.",
+        "test": "Inspect rendered RoleBindings and ClusterRoleBindings and verify application identities bind only to purpose-built least-privilege roles.",
+    },
+    "SP658": {
+        "why": "Appending a forced-success shell branch to a security scanner discards its nonzero gate result and makes vulnerable builds appear successful.",
+        "attack": "A dependency or source vulnerability is reported by the scanner, but deployment continues because the workflow rewrites the failure to exit zero.",
+        "false_positive": "An explicitly informational inventory job can be non-blocking, but it must be labelled and separated from the release gate rather than silently masking status.",
+        "test": "Run the workflow against a fixture that makes the scanner exit nonzero and assert the security job and required check also fail.",
+    },
+    "SP659": {
+        "why": "GitHub Actions continue-on-error allows a security scan step to fail while the containing job still passes.",
+        "attack": "A blocking security finding is reduced to a green workflow result, allowing a protected branch or deployment gate to proceed.",
+        "false_positive": "Experimental or telemetry-only scans may be non-blocking; give them an explicit informational job and retain a separate required enforcement step.",
+        "test": "Inject a known scanner failure and verify the workflow conclusion is failure rather than success with an ignored step outcome.",
+    },
+    "SP660": {
+        "why": "secrets: inherit implicitly exposes every available caller secret to a reusable workflow instead of declaring the minimum required set.",
+        "attack": "A compromised or unexpectedly changed called workflow reads unrelated deployment, registry, or cloud credentials from the caller.",
+        "false_positive": "A tightly governed same-repository workflow may intentionally inherit secrets, but explicit named secret mappings are reviewable and safer by default.",
+        "test": "Replace inherit with named secret mappings and verify the called workflow cannot access any unrelated repository or organization secret.",
+    },
+    "SP661": {
+        "why": "Kubernetes AlwaysAllow authorizes requests that other authorizers do not explicitly deny and effectively bypasses RBAC's no-opinion decisions.",
+        "attack": "Any authenticated identity, and potentially unauthenticated traffic under other weak settings, performs unrestricted API operations on the cluster.",
+        "false_positive": "A disposable isolated test control plane can use AlwaysAllow, but production-reachable API servers must use an explicit authorization chain such as Node,RBAC.",
+        "test": "Inspect the effective kube-apiserver flags or authorization configuration and assert AlwaysAllow is absent from every production control plane.",
+    },
 }
 
 
@@ -3629,7 +3716,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""\b(?:api[_-]?key|client[_-]?secret|access[_-]?token|auth[_-]?token|password)\b\s*[:=]\s*["'][^"'\s]{16,}["']"""
+            r"""(?<![A-Za-z0-9_])["']?(?:api[_-]?key|client[_-]?secret|access[_-]?token|auth[_-]?token|password)["']?\s*[:=]\s*["'][^"'\s]{16,}["']"""
         ),
         "A credential-like value is assigned directly in a file.",
         "Confirm it is real, then rotate it and load the replacement from an approved secret store.",
@@ -5736,6 +5823,7 @@ RULES: tuple[Rule, ...] = (
         "Add a non-root user (e.g. USER appuser or USER 10001) in the final container image stage.",
         "CWE-250",
         "OWASP ASVS V14",
+        frozenset({"containerfile", "dockerfile", ".dockerfile"}),
     ),
     Rule(
         "SP206",
@@ -5748,6 +5836,7 @@ RULES: tuple[Rule, ...] = (
         "Download the installer file, verify its cryptographic checksum (SHA256), and execute it.",
         "CWE-829",
         "OWASP ASVS V14",
+        frozenset({"containerfile", "dockerfile", ".dockerfile"}),
     ),
     Rule(
         "SP207",
@@ -5760,6 +5849,7 @@ RULES: tuple[Rule, ...] = (
         "Add sensitive files to .dockerignore and inject secrets at runtime.",
         "CWE-200",
         "OWASP ASVS V14",
+        frozenset({"containerfile", "dockerfile", ".dockerfile"}),
     ),
     Rule(
         "SP208",
@@ -5772,6 +5862,7 @@ RULES: tuple[Rule, ...] = (
         "Use unprivileged high ports (>1024) such as 8080 or 8443 for container services.",
         "CWE-250",
         "OWASP ASVS V14",
+        frozenset({"containerfile", "dockerfile", ".dockerfile"}),
     ),
     Rule(
         "SP209",
@@ -5856,7 +5947,7 @@ RULES: tuple[Rule, ...] = (
         "Use pip install with pinned versions (package==1.2.3) and generate pip-tools / poetry lockfiles.",
         "CWE-829",
         "OWASP ASVS V14",
-        frozenset({".dockerfile", ".bash", ".sh"}),
+        frozenset({".dockerfile", ".bash", ".sh", "containerfile", "dockerfile"}),
     ),
     Rule(
         "SP215",
@@ -5945,7 +6036,7 @@ RULES: tuple[Rule, ...] = (
         "medium",
         "medium",
         compile_pattern(
-            r"""["'](?:git\+https?://[^#"'\n]+|git://[^#"'\n]+)(?:#(?!([0-9a-fA-F]{40}))[a-zA-Z0-9_.-]+)?["']\s*(?:,|\})"""
+            r"""(?:["'](?!url["']\s*:)(?!repository["']\s*:)[^"'\n]+["']\s*:\s*|^[A-Za-z0-9_.-]+\s*=\s*)["'](?:git\+https?://[^#"'\n]+|git://[^#"'\n]+)(?:#(?![0-9a-fA-F]{40}(?:["']|$))[a-zA-Z0-9_.-]+)?["']\s*(?:,|\})?"""
         ),
         "Package dependency references a git repository URL without an immutable 40-character commit hash.",
         "Pin git dependencies to an exact commit SHA: git+https://...#<commit-sha>.",
@@ -8255,7 +8346,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "high",
         compile_pattern(
-            r"""["']use server["'];\s*\n\s*export\s+async\s+function\s+[a-zA-Z0-9_]+\([^)]*\)\s*\{(?!.*auth\()"""
+            r"""["']use server["'];\s*\n\s*export\s+async\s+function\s+[a-zA-Z0-9_]+\([^)]*\)\s*\{(?![^}]{0,4000}\b(?:auth|getServerSession|getSession|currentUser|verifySession|requireAuth|requireUser)\s*\()"""
         ),
         "Next.js Server Action is exported without checking user authentication or permissions in the action body.",
         "Verify user session and permissions at the beginning of every Server Action.",
@@ -10465,7 +10556,8 @@ RULES: tuple[Rule, ...] = (
         "critical",
         "high",
         compile_pattern(
-            r"""@workflow\.defn[\s\S]*?global\s+[a-zA-Z0-9_]+|@WorkflowInterface[\s\S]*?static\s+[a-zA-Z0-9_]+"""
+            # shipproof-ignore SP585 -- detector fixture literal, not a workflow declaration.
+            r"""@workflow\.defn(?:(?!@workflow\.defn)[\s\S]){0,6000}?global\s+(?P<sp585_name>[a-zA-Z_]\w*)(?:(?!@workflow\.defn)[\s\S]){0,2000}?(?P=sp585_name)\s*(?:\+=|-=|\*=|/=|//=|%=|=(?!=))"""
         ),
         "Mutating static or global variables inside Temporal workflow definitions causes non-deterministic history replay bugs.",
         "Keep workflow state strictly encapsulated within workflow instance state fields.",
@@ -11370,6 +11462,165 @@ RULES: tuple[Rule, ...] = (
         "Reliability",
         frozenset({".js", ".ts", ".py"}),
     ),
+    Rule(
+        "SP651",
+        "Kubernetes container adds ALL or SYS_ADMIN Linux capabilities",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""(?<![A-Za-z0-9_])capabilities\s*:\s*\n(?:[ \t]+[^\n]*\n){0,8}?[ \t]+add\s*:\s*(?:\[[^\]\n]*(?:["']?(?:ALL|SYS_ADMIN)["']?)[^\]\n]*\]|(?:\n[ \t]+-\s*["']?(?:ALL|SYS_ADMIN)["']?\s*)+)"""
+        ),
+        "A Kubernetes container explicitly adds the ALL or SYS_ADMIN capability set.",
+        "Drop ALL capabilities and add back only individually reviewed capabilities required by the workload.",
+        "CWE-250",
+        "Kubernetes PSS Restricted",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP652",
+        "Kubernetes seccomp profile explicitly set to Unconfined",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""seccompProfile\s*:\s*\n[ \t]+type\s*:\s*["']?Unconfined["']?[ \t]*(?:#.*)?(?:\r?\n|$)"""
+        ),
+        "A Kubernetes securityContext explicitly disables seccomp syscall filtering.",
+        "Set seccompProfile.type to RuntimeDefault or a reviewed Localhost profile.",
+        "CWE-693",
+        "Kubernetes PSS Restricted",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP653",
+        "Kubernetes procMount explicitly set to Unmasked",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"""^\s*procMount\s*:\s*["']?Unmasked["']?\s*(?:#.*)?$"""),
+        "A Kubernetes container explicitly requests an unmasked proc filesystem.",
+        "Remove procMount: Unmasked and use the runtime's default procfs masking.",
+        "CWE-250",
+        "Kubernetes PSS Restricted",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP654",
+        "Kubernetes Windows container enables HostProcess",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"""^\s*hostProcess\s*:\s*true\s*(?:#.*)?$"""),
+        "A Kubernetes Windows container explicitly enables host-level process isolation.",
+        "Set windowsOptions.hostProcess to false for application workloads and isolate any reviewed node agent exception.",
+        "CWE-250",
+        "Kubernetes PSS Restricted",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP655",
+        "Kubernetes AppArmor profile explicitly set to Unconfined",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""(?:appArmorProfile\s*:\s*\n[ \t]+type\s*:\s*["']?Unconfined["']?|container\.apparmor\.security\.beta\.kubernetes\.io/[A-Za-z0-9_.-]+\s*:\s*["']?unconfined["']?)"""
+        ),
+        "A Kubernetes workload explicitly disables its AppArmor confinement profile.",
+        "Use RuntimeDefault or a reviewed Localhost AppArmor profile and remove legacy unconfined annotations.",
+        "CWE-693",
+        "Kubernetes PSS Restricted",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP656",
+        "Kubernetes RBAC role grants wildcard API groups, resources, or verbs",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""(?:\A|(?<=\n))[ \t]*apiVersion[ \t]*:[ \t]*rbac\.authorization\.k8s\.io/v1[^\n]*(?:(?!\n[ \t]*---[ \t]*(?:\n|$))[\s\S]){0,2000}?\n[ \t]*kind[ \t]*:[ \t]*(?:Role|ClusterRole)[^\n]*(?:(?!\n[ \t]*---[ \t]*(?:\n|$))[\s\S]){0,5000}?\n[ \t]*(?:-\s*)?(?:apiGroups|resources|verbs)[ \t]*:[ \t]*(?:\[[^\]\n]*["']?\*["']?[^\]\n]*\]|\n(?:[ \t]+-\s*[^\n]+\n){0,8}?[ \t]+-\s*["']?\*["']?[ \t]*(?:#.*)?(?:\n|$))"""
+        ),
+        "A Kubernetes Role or ClusterRole grants a wildcard API group, resource, or verb.",
+        "Enumerate only the API groups, resources, and verbs the workload demonstrably needs.",
+        "CWE-250",
+        "Kubernetes RBAC least privilege",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP657",
+        "Kubernetes binding grants the built-in cluster-admin role",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""(?:\A|(?<=\n))[ \t]*apiVersion[ \t]*:[ \t]*rbac\.authorization\.k8s\.io/v1[^\n]*(?:(?!\n[ \t]*---[ \t]*(?:\n|$))[\s\S]){0,2000}?\n[ \t]*kind[ \t]*:[ \t]*(?:RoleBinding|ClusterRoleBinding)[^\n]*(?:(?!\n[ \t]*---[ \t]*(?:\n|$))[\s\S]){0,5000}?\n[ \t]*roleRef[ \t]*:[ \t]*(?:\{[^\n}]*\bname[ \t]*:[ \t]*["']?cluster-admin["']?[^\n}]*\}|(?:\n[ \t]+[^\n]*){0,8}?\n[ \t]+name[ \t]*:[ \t]*["']?cluster-admin["']?[ \t]*(?:#.*)?(?:\n|$))"""
+        ),
+        "A RoleBinding or ClusterRoleBinding grants the built-in cluster-admin ClusterRole.",
+        "Bind application subjects to a purpose-built role containing only required permissions.",
+        "CWE-250",
+        "Kubernetes RBAC least privilege",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP658",
+        "GitHub Actions security scanner failure explicitly forced to success",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""^\s*(?:-\s*)?(?:run\s*:\s*)?["']?(?:(?:npm|pnpm|yarn)\s+audit\b|cargo\s+audit\b|govulncheck\b|gosec\b|pip-audit\b|bandit\b|trivy\b|shipproof\s+(?:check|scan)\b|dotnet\s+(?:(?:list\s+package)|(?:package\s+list))\b.*--vulnerable\b).*?(?:\|\|\s*(?:true|:)\s*|;\s*exit\s+0\s*)["']?\s*$"""
+        ),
+        "A GitHub Actions security scanner command masks its failure with a forced zero exit.",
+        "Remove the forced-success branch and let the scanner's nonzero exit fail the required job.",
+        "CWE-390",
+        "CI/CD integrity",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP659",
+        "GitHub Actions security scan step configured to continue on error",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""(?:\A|(?<=\n))[ \t]*-\s+(?=(?:(?!\n[ \t]*-\s+)[\s\S]){0,1200}?continue-on-error\s*:\s*true)(?:(?!\n[ \t]*-\s+)[\s\S]){0,1200}?(?:run\s*:\s*[^\n]*(?:(?:npm|pnpm|yarn)\s+audit\b|cargo\s+audit\b|govulncheck\b|gosec\b|pip-audit\b|bandit\b|trivy\b|shipproof\s+(?:check|scan)\b)|uses\s*:\s*(?:github/codeql-action|aquasecurity/trivy-action|actions/dependency-review-action|gitleaks/gitleaks-action)(?:/[^@\s]+)?@)"""
+        ),
+        "A GitHub Actions security scan step is allowed to fail without failing its job.",
+        "Remove continue-on-error from enforcement scans; isolate informational scans in a clearly non-required job.",
+        "CWE-390",
+        "CI/CD integrity",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP660",
+        "GitHub reusable workflow inherits every caller secret",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"""^\s*secrets\s*:\s*["']?inherit["']?\s*(?:#.*)?$"""),
+        "A reusable workflow call implicitly receives every secret available to the caller.",
+        "Pass only explicitly named secrets required by the called workflow.",
+        "CWE-200",
+        "CI/CD least privilege",
+        frozenset({".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP661",
+        "Kubernetes API server enables AlwaysAllow authorization",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""(?:--authorization-mode(?:=|\s+)[^\n"']*\bAlwaysAllow\b|authorization-mode\s*:\s*["']?[^\n"']*\bAlwaysAllow\b)"""
+        ),
+        "The Kubernetes API server authorization chain includes AlwaysAllow.",
+        "Remove AlwaysAllow and configure an explicit production authorization chain such as Node,RBAC.",
+        "CWE-862",
+        "Kubernetes authorization",
+        frozenset({".yaml", ".yml"}),
+    ),
 )
 
 
@@ -11379,6 +11630,14 @@ DATABASE_SUFFIXES = {".sqlite", ".sqlite3", ".db"}
 def is_text_file(path: Path) -> bool:
     suffix = path.suffix.lower()
     return suffix in TEXT_SUFFIXES or suffix in DATABASE_SUFFIXES or path.name.lower() in TEXT_NAMES
+
+
+def scanner_file_kind(path: Path) -> str:
+    """Return the selector used by suffix-scoped rules, including suffixless manifests."""
+    name = path.name.lower()
+    if name in {"dockerfile", "containerfile"}:
+        return name
+    return path.suffix.lower()
 
 
 def normalize_exclude_patterns(patterns: Sequence[str]) -> tuple[str, ...]:
@@ -11465,8 +11724,13 @@ def is_pure_comment(line: str, path: Path) -> bool:
         ".properties",
         ".env",
         ".rb",
+        ".erb",
+        ".ex",
+        ".exs",
         ".graphql",
         ".gql",
+        ".prisma",
+        ".service",
     } or name in {"dockerfile", "containerfile", "makefile", "procfile", ".env"}:
         return stripped.startswith("#")
     if suffix in {
@@ -11483,8 +11747,18 @@ def is_pure_comment(line: str, path: Path) -> bool:
         ".rs",
         ".cs",
         ".php",
+        ".vue",
+        ".svelte",
+        ".astro",
+        ".html",
+        ".swift",
+        ".dart",
+        ".scala",
+        ".groovy",
+        ".m",
+        ".mm",
     }:
-        return stripped.startswith(("//", "/*", "*"))
+        return stripped.startswith(("//", "/*", "*", "<!--"))
     if suffix == ".sql":
         return stripped.startswith(("--", "/*", "*"))
     if suffix in {".tf", ".hcl"}:
@@ -11638,19 +11912,69 @@ def applicable_line_rules(
 def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[Finding]:
     findings: list[Finding] = []
     suffix = path.suffix.lower()
+    file_kind = scanner_file_kind(path)
+    normalized_relative_path = relative_path.replace("\\", "/").lower().removeprefix("./")
+    is_github_workflow = normalized_relative_path.startswith(".github/workflows/") or (
+        "/.github/workflows/" in f"/{normalized_relative_path}"
+    )
     lines = source_text.splitlines()
     comment_flags = [is_pure_comment(line, path) for line in lines]
     ignore_rule_ids = [
         match.group(1) if (match := INLINE_IGNORE.search(line)) else None for line in lines
     ]
     applicable_rules = applicable_line_rules(
-        suffix,
+        file_kind,
         suffix in DOCUMENT_SUFFIXES,
         path.name.lower() in {"dockerfile", "containerfile"},
     )
     for rule, rule_is_secret in applicable_rules:
         rule_id = rule.rule_id
+        if rule_id in {"SP658", "SP659", "SP660"} and not is_github_workflow:
+            continue
         pattern_search = rule.pattern.search
+        if r"[\s\S]" in rule.pattern.pattern or r"\n" in rule.pattern.pattern:
+            for match in rule.pattern.finditer(source_text):
+                matched_text = match.group(0)
+                # Structural rules operate within one nearby declaration or block. A match
+                # spanning most of a file is cross-block correlation, not evidence.
+                if (
+                    len(matched_text) > MAX_MULTILINE_MATCH_CHARS
+                    or matched_text.count("\n") > MAX_MULTILINE_MATCH_LINES
+                ):
+                    continue
+                line_number = source_text.count("\n", 0, match.start()) + 1
+                index = line_number - 1
+                if index >= len(lines):
+                    continue
+                if not rule_is_secret and comment_flags[index]:
+                    continue
+                if ignore_rule_ids[index] == rule_id:
+                    continue
+                if index >= 1 and ignore_rule_ids[index - 1] == rule_id:
+                    continue
+                if rule_is_secret and PLACEHOLDERS.search(matched_text):
+                    continue
+                if rule_id == "SP518" and re.search(
+                    r"\b(?:require|request|verify|await)_?(?:human_)?approval\b|"
+                    r"\b(?:human_)?approval_(?:required|confirmed)\b|"
+                    r"\bconfirm_shell_command\b",
+                    matched_text,
+                    re.IGNORECASE,
+                ):
+                    continue
+                confidence_override = (
+                    secret_confidence(rule, matched_text) if rule_is_secret else None
+                )
+                findings.append(
+                    make_finding(
+                        rule,
+                        relative_path,
+                        line_number,
+                        lines[index],
+                        confidence=confidence_override,
+                    )
+                )
+            continue
         for index, line in enumerate(lines):
             if not rule_is_secret and comment_flags[index]:
                 continue
@@ -11658,13 +11982,16 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
                 continue
             if index >= 1 and ignore_rule_ids[index - 1] == rule_id:
                 continue
-            if pattern_search(line) and not (rule_is_secret and PLACEHOLDERS.search(line)):
-                confidence_override = secret_confidence(rule, line) if rule_is_secret else None
-                findings.append(
-                    make_finding(
-                        rule, relative_path, index + 1, line, confidence=confidence_override
-                    )
-                )
+            match = pattern_search(line)
+            if not match:
+                continue
+            matched_text = match.group(0)
+            if rule_is_secret and PLACEHOLDERS.search(matched_text):
+                continue
+            confidence_override = secret_confidence(rule, matched_text) if rule_is_secret else None
+            findings.append(
+                make_finding(rule, relative_path, index + 1, line, confidence=confidence_override)
+            )
 
     # Kubernetes: Deployment without liveness/readiness probe
     if (
@@ -12900,24 +13227,50 @@ def changed_files(root: Path, git_ref: str) -> frozenset[str]:
         raise ValueError(f"invalid git ref: {git_ref!r}")
     repository_root = root.resolve()
     commands = (
-        ["git", "-C", str(repository_root), "diff", "--name-only", "--diff-filter=ACMR", git_ref],
-        ["git", "-C", str(repository_root), "ls-files", "--others", "--exclude-standard"],
+        [
+            "git",
+            "-C",
+            str(repository_root),
+            "diff",
+            "--name-only",
+            "-z",
+            "--diff-filter=ACMR",
+            "--find-renames",
+            "--find-copies-harder",
+            "--relative",
+            git_ref,
+            "--",
+            ".",
+        ],
+        [
+            "git",
+            "-C",
+            str(repository_root),
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z",
+            "--",
+            ".",
+        ],
     )
     changed: set[str] = set()
     for command in commands:
         completed = subprocess.run(  # noqa: S603 (git ref is validated against GIT_REF_PATTERN above)
             command,
             capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
             check=False,
         )
         if completed.returncode != 0:
-            details = (completed.stderr or completed.stdout or "").strip().splitlines()
+            error_text = (completed.stderr or completed.stdout or b"").decode("utf-8", "replace")
+            details = error_text.strip().splitlines()
             hint = details[0] if details else "git failed"
             raise ValueError(f"cannot resolve git ref {git_ref!r}: {hint}")
-        changed.update(line.strip() for line in completed.stdout.splitlines() if line.strip())
+        changed.update(
+            raw_path.decode("utf-8", "surrogateescape")
+            for raw_path in completed.stdout.split(b"\0")
+            if raw_path
+        )
     return frozenset(path.removeprefix("./") for path in changed)
 
 
@@ -12987,15 +13340,78 @@ def determine_verdict(findings: Sequence[Finding], include_tests: bool = False) 
     return "PASS_WITH_EVIDENCE"
 
 
+def gate_failed(findings: Sequence[Finding], fail_on: str, include_tests: bool = False) -> bool:
+    """Evaluate the documented severity gate for a set of findings."""
+    if fail_on == "none":
+        return False
+    evaluated = findings if include_tests else [item for item in findings if item.scope == "app"]
+    return any(SEVERITY[item.severity] <= SEVERITY[fail_on] for item in evaluated)
+
+
+def build_decision_trace(
+    findings: Sequence[Finding],
+    stats: dict[str, object],
+    *,
+    fail_on: str,
+    include_tests: bool,
+    max_file_bytes: int,
+    min_confidence: str | None,
+    exclude_patterns: Sequence[str],
+    baseline_fingerprints: int,
+    changed_candidates: int | None,
+    findings_before_confidence_filter: int,
+) -> dict[str, object]:
+    """Explain a gate decision with bounded, content-free, deterministic counts."""
+    evaluated = (
+        list(findings) if include_tests else [item for item in findings if item.scope == "app"]
+    )
+    blocking = (
+        0
+        if fail_on == "none"
+        else sum(SEVERITY[item.severity] <= SEVERITY[fail_on] for item in evaluated)
+    )
+    selection: dict[str, object] = {
+        "mode": "changed" if changed_candidates is not None else "repository",
+        "files_scanned": int(stats["files_scanned"]),
+        "max_file_bytes": max_file_bytes,
+        "exclude_patterns": len(tuple(dict.fromkeys(exclude_patterns))),
+        "baseline_fingerprints": baseline_fingerprints,
+        "minimum_confidence": min_confidence,
+    }
+    if changed_candidates is not None:
+        selection["changed_candidates"] = changed_candidates
+    return {
+        "rule_selection": {
+            "catalog_rules": len(RULES),
+            "detected_frameworks": list(stats.get("frameworks", [])),
+        },
+        "selection": selection,
+        "finding_flow": {
+            "before_confidence_filter": findings_before_confidence_filter,
+            "active": len(findings),
+            "suppressed_by_baseline": int(stats["suppressed"]),
+            "evaluated_by_gate": len(evaluated),
+            "blocking": blocking,
+        },
+        "gate": {
+            "threshold": fail_on,
+            "include_tests": include_tests,
+            "failed": blocking > 0,
+            "verdict": determine_verdict(findings, include_tests),
+        },
+    }
+
+
 def build_json_report(
     root: Path,
     findings: Sequence[Finding],
-    stats: dict[str, int],
+    stats: dict[str, object],
     include_tests: bool = False,
+    decision_trace: dict[str, object] | None = None,
 ) -> dict[str, object]:
     app_findings = [f for f in findings if f.scope == "app"]
     test_findings = [f for f in findings if f.scope == "test"]
-    return {
+    report: dict[str, object] = {
         "schema_version": "1.0",
         "tool": {"name": "ShipProof", "version": VERSION, "command": "scan"},
         "root": str(root.resolve()),
@@ -13013,9 +13429,40 @@ def build_json_report(
             "No runtime reachability, dependency CVE database, or git-history scan.",
         ],
     }
+    if decision_trace is not None:
+        report["decision_trace"] = decision_trace
+    return report
 
 
-def render_markdown_report(root: Path, findings: Sequence[Finding], stats: dict[str, int]) -> str:
+def render_decision_trace(decision_trace: dict[str, object], *, markdown: bool) -> list[str]:
+    rule_selection = decision_trace["rule_selection"]
+    selection = decision_trace["selection"]
+    finding_flow = decision_trace["finding_flow"]
+    gate = decision_trace["gate"]
+    confidence = selection["minimum_confidence"] or "all"
+    changed = (
+        f"; {selection['changed_candidates']} changed candidates"
+        if "changed_candidates" in selection
+        else ""
+    )
+    values = [
+        f"Scope: {selection['mode']}{changed}; {selection['files_scanned']} files scanned",
+        f"Rules: {rule_selection['catalog_rules']} catalog rules; {len(rule_selection['detected_frameworks'])} detected frameworks",
+        f"Filters: confidence={confidence}; {selection['exclude_patterns']} excludes; {selection['baseline_fingerprints']} baseline fingerprints",
+        f"Findings: {finding_flow['before_confidence_filter']} before confidence filter; {finding_flow['active']} active; {finding_flow['suppressed_by_baseline']} suppressed",
+        f"Gate: threshold={gate['threshold']}; {finding_flow['evaluated_by_gate']} evaluated; {finding_flow['blocking']} blocking; failed={str(gate['failed']).lower()}",
+    ]
+    if markdown:
+        return ["## Decision trace", "", *[f"- {value}" for value in values], ""]
+    return ["  Decision trace:", *[f"    {value}" for value in values], ""]
+
+
+def render_markdown_report(
+    root: Path,
+    findings: Sequence[Finding],
+    stats: dict[str, object],
+    decision_trace: dict[str, object] | None = None,
+) -> str:
     counts = Counter(item.severity for item in findings)
     lines = [
         "# ShipProof report",
@@ -13046,6 +13493,8 @@ def render_markdown_report(root: Path, findings: Sequence[Finding], stats: dict[
                 "",
             ]
         )
+    if decision_trace is not None:
+        lines.extend(render_decision_trace(decision_trace, markdown=True))
     lines.extend(
         [
             "## Limitations",
@@ -13075,10 +13524,22 @@ def read_source_context(
         return []
 
 
+def read_finding_context(
+    root: Path,
+    finding: Finding,
+    context: int = 2,
+) -> list[tuple[int, str]]:
+    """Return context without re-reading credential material hidden by a finding."""
+    if finding.rule_id in SECRET_RULE_IDS:
+        return [(finding.line, finding.evidence)]
+    return read_source_context(root, finding.path, finding.line, context=context)
+
+
 def render_terminal_report(
     root: Path,
     findings: Sequence[Finding],
-    stats: dict[str, int],
+    stats: dict[str, object],
+    decision_trace: dict[str, object] | None = None,
 ) -> str:
     """Render a code-review style terminal report with emoji, context, and evidence."""
     verdict = determine_verdict(findings)
@@ -13112,7 +13573,7 @@ def render_terminal_report(
         lines.append("")
 
         # Source context
-        context_lines = read_source_context(root, item.path, item.line)
+        context_lines = read_finding_context(root, item)
         if context_lines:
             lines.append("     Evidence:")
             for line_num, line_text in context_lines:
@@ -13134,6 +13595,9 @@ def render_terminal_report(
         )
         lines.append("  \u2192 Run `shipproof scan --format json` for machine-readable output")
         lines.append("")
+
+    if decision_trace is not None:
+        lines.extend(render_decision_trace(decision_trace, markdown=False))
 
     return "\n".join(lines)
 
@@ -13284,8 +13748,11 @@ def render_fix_prompts(
     root: Path,
     findings: Sequence[Finding],
     as_json: bool = False,
+    context_level: str = "full",
 ) -> str:
-    """Generate AI-ready fix prompts with dynamic SWE reasoning contracts."""
+    """Generate progressively disclosed AI-ready fix prompts."""
+    if context_level not in CONTEXT_LEVELS:
+        raise ValueError(f"context-level must be one of: {', '.join(CONTEXT_LEVELS)}")
     if not findings:
         if as_json:
             return json.dumps([], indent=2)
@@ -13294,16 +13761,24 @@ def render_fix_prompts(
     if as_json:
         prompts: list[dict[str, object]] = []
         for item in findings:
-            context_lines = read_source_context(root, item.path, item.line)
+            context_lines = read_finding_context(root, item)
             code_context = [
                 {"line": num, "text": text, "is_target": num == item.line}
                 for num, text in context_lines
             ]
             contract = get_engineering_contract(item.rule_id, item.category, item.message)
-            prompt_text = (
+            core_prompt = (
                 f"Fix {item.rule_id} in {item.path} (line {item.line}).\n\n"
                 f"Problem:\n{item.message}\n\n"
-                f"Required fix:\n{item.remediation}\n\n"
+                f"Required fix:\n{item.remediation}"
+            )
+            constraints = (
+                "Constraints:\n"
+                "- Do not change the public API contract\n"
+                "- Add a regression test that verifies the fix\n"
+                f"- Reference: {item.cwe}, {item.owasp}"
+            )
+            full_contract = (
                 "Engineering Dimensions:\n"
                 + "\n".join(f"- [x] {d}" for d in contract["engineering_dimensions"])
                 + "\n\n"
@@ -13312,33 +13787,47 @@ def render_fix_prompts(
                 + "\n\n"
                 "Failure Scenarios to Guard Against:\n"
                 + "\n".join(f"- {s}" for s in contract["failure_scenarios"])
-                + "\n\n"
-                "Constraints:\n"
-                "- Do not change the public API contract\n"
-                "- Add a regression test that verifies the fix\n"
-                f"- Reference: {item.cwe}, {item.owasp}"
             )
-            prompts.append(
-                {
-                    "rule_id": item.rule_id,
-                    "title": item.title,
-                    "path": item.path,
-                    "line": item.line,
-                    "severity": item.severity,
-                    "confidence": item.confidence,
-                    "scope": item.scope,
-                    "problem": item.message,
-                    "remediation": item.remediation,
-                    "cwe": item.cwe,
-                    "owasp": item.owasp,
-                    "evidence": item.evidence,
-                    "context": code_context,
-                    "engineering_dimensions": contract["engineering_dimensions"],
-                    "implicit_requirements": contract["implicit_requirements"],
-                    "failure_scenarios": contract["failure_scenarios"],
-                    "prompt": prompt_text,
-                }
+            overview_contract = "Implicit Requirements:\n" + "\n".join(
+                f"- {requirement}" for requirement in contract["implicit_requirements"]
             )
+            prompt_sections = [core_prompt]
+            if context_level == "overview":
+                prompt_sections.append(overview_contract)
+            elif context_level == "full":
+                prompt_sections.append(full_contract)
+            prompt_sections.append(constraints)
+            prompt: dict[str, object] = {
+                "context_level": context_level,
+                "rule_id": item.rule_id,
+                "title": item.title,
+                "path": item.path,
+                "line": item.line,
+                "severity": item.severity,
+                "confidence": item.confidence,
+                "scope": item.scope,
+                "problem": item.message,
+                "remediation": item.remediation,
+                "cwe": item.cwe,
+                "owasp": item.owasp,
+                "prompt": "\n\n".join(prompt_sections),
+            }
+            if context_level in {"overview", "full"}:
+                prompt.update(
+                    {
+                        "evidence": item.evidence,
+                        "context": code_context,
+                        "implicit_requirements": contract["implicit_requirements"],
+                    }
+                )
+            if context_level == "full":
+                prompt.update(
+                    {
+                        "engineering_dimensions": contract["engineering_dimensions"],
+                        "failure_scenarios": contract["failure_scenarios"],
+                    }
+                )
+            prompts.append(prompt)
         return json.dumps(prompts, indent=2)
 
     lines: list[str] = [
@@ -13358,8 +13847,8 @@ def render_fix_prompts(
         lines.append("")
 
         # Include source context
-        context_lines = read_source_context(root, item.path, item.line)
-        if context_lines:
+        context_lines = read_finding_context(root, item)
+        if context_level in {"overview", "full"} and context_lines:
             lines.append("Current code:")
             for line_num, line_text in context_lines:
                 marker = ">>>" if line_num == item.line else "   "
@@ -13368,18 +13857,21 @@ def render_fix_prompts(
 
         lines.append(f"Required fix: {item.remediation}")
         lines.append("")
-        lines.append("Engineering Dimensions:")
-        for dim in contract["engineering_dimensions"]:
-            lines.append(f"- [x] {dim}")
-        lines.append("")
-        lines.append("Implicit Requirements:")
-        for req in contract["implicit_requirements"]:
-            lines.append(f"- {req}")
-        lines.append("")
-        lines.append("Failure Scenarios to Guard Against:")
-        for scenario in contract["failure_scenarios"]:
-            lines.append(f"- {scenario}")
-        lines.append("")
+        if context_level == "full":
+            lines.append("Engineering Dimensions:")
+            for dim in contract["engineering_dimensions"]:
+                lines.append(f"- [x] {dim}")
+            lines.append("")
+        if context_level in {"overview", "full"}:
+            lines.append("Implicit Requirements:")
+            for req in contract["implicit_requirements"]:
+                lines.append(f"- {req}")
+            lines.append("")
+        if context_level == "full":
+            lines.append("Failure Scenarios to Guard Against:")
+            for scenario in contract["failure_scenarios"]:
+                lines.append(f"- {scenario}")
+            lines.append("")
         lines.append("Constraints:")
         lines.append("- Do not change the public API contract")
         lines.append("- Add a regression test that verifies the fix")
@@ -13392,29 +13884,13 @@ def render_fix_prompts(
 
 def apply_autofix_to_line(rule_id: str, line: str) -> str | None:
     """Attempt deterministic remediation for a single line based on rule_id."""
-    if (
-        rule_id == "SP304"
-        and "timeout=" not in line
-        and "timeout =" not in line
-        and re.search(r"\b(?:requests|httpx)\.(?:get|post|put|patch|delete)\s*\(", line)
-    ):
-        sub_pattern = r"((?:requests|httpx)\.(?:get|post|put|patch|delete)\s*\([^)]+)(\))"
-        if re.search(sub_pattern, line):
-            return re.sub(sub_pattern, r"\1, timeout=30\2", line)
-    elif rule_id == "SP104":
+    if rule_id == "SP104":
         v_false = "verify=" + "False"
         v_space_false = "verify = " + "False"
         if v_false in line:
             return line.replace(v_false, "verify=True")
         if v_space_false in line:
             return line.replace(v_space_false, "verify = True")
-    elif rule_id == "SP122":
-        if "Math.random()" in line:
-            return line.replace("Math.random()", "crypto.randomUUID()")
-    elif rule_id == "SP139":
-        mktemp_call = "tempfile." + "mktemp("
-        if mktemp_call in line:
-            return line.replace(mktemp_call, "tempfile.NamedTemporaryFile(")
     elif rule_id == "SP201":
         dbg_true = "debug=" + "True"
         dbg_space_true = "debug = " + "True"
@@ -13451,6 +13927,8 @@ def run_autofix(
             lines = content.splitlines()
             file_modified = False
 
+            file_fixed_count = 0
+            file_messages: list[str] = []
             for item in sorted(file_findings, key=lambda x: x.line, reverse=True):
                 if 1 <= item.line <= len(lines):
                     orig_line = lines[item.line - 1]
@@ -13458,18 +13936,21 @@ def run_autofix(
                     if fixed_line is not None and fixed_line != orig_line:
                         lines[item.line - 1] = fixed_line
                         file_modified = True
-                        fixed_count += 1
+                        file_fixed_count += 1
                         prefix = "DRY-RUN" if dry_run else "FIXED"
-                        messages.append(
+                        file_messages.append(
                             f"[{prefix}] {item.rule_id} at {item.path}:{item.line}\n"
                             f"  - {orig_line.strip()}\n"
                             f"  + {fixed_line.strip()}"
                         )
 
-            if file_modified and not dry_run:
-                new_content = "\n".join(lines) + ("\n" if content.endswith("\n") else "")
-                file_path.write_text(new_content, encoding="utf-8")
-                modified_files.add(file_path)
+            if file_modified:
+                if not dry_run:
+                    new_content = "\n".join(lines) + ("\n" if content.endswith("\n") else "")
+                    file_path.write_text(new_content, encoding="utf-8")
+                    modified_files.add(file_path)
+                fixed_count += file_fixed_count
+                messages.extend(file_messages)
         except OSError as exc:
             messages.append(f"[ERROR] Failed to fix {rel_path}: {exc}")
 
@@ -13492,8 +13973,14 @@ def run_autofix(
     return fixed_count, messages
 
 
-def render_explain(rule_id: str, as_json: bool = False) -> str:
-    """Render a detailed explanation for a single rule."""
+def render_explain(
+    rule_id: str,
+    as_json: bool = False,
+    context_level: str = "full",
+) -> str:
+    """Render a progressively disclosed explanation for a single rule."""
+    if context_level not in CONTEXT_LEVELS:
+        raise ValueError(f"context-level must be one of: {', '.join(CONTEXT_LEVELS)}")
     rule = None
     for r in RULES:
         if r.rule_id == rule_id:
@@ -13503,6 +13990,7 @@ def render_explain(rule_id: str, as_json: bool = False) -> str:
         if as_json:
             return json.dumps(
                 {
+                    "context_level": context_level,
                     "error": f"Unknown rule: {rule_id}",
                     "valid_rules": [r.rule_id for r in RULES],
                 },
@@ -13515,56 +14003,65 @@ def render_explain(rule_id: str, as_json: bool = False) -> str:
     contract = get_engineering_contract(rule.rule_id, rule.category, rule.message)
 
     if as_json:
-        return json.dumps(
-            {
-                "rule_id": rule.rule_id,
-                "title": rule.title,
-                "category": rule.category,
-                "severity": rule.severity,
-                "confidence": conf_label,
-                "cwe": rule.cwe,
-                "owasp": rule.owasp,
-                "message": rule.message,
-                "remediation": rule.remediation,
-                "why": explanation.get("why", ""),
-                "attack": explanation.get("attack", ""),
-                "false_positive": explanation.get("false_positive", ""),
-                "test": explanation.get("test", ""),
-                "engineering_dimensions": contract["engineering_dimensions"],
-                "implicit_requirements": contract["implicit_requirements"],
-                "failure_scenarios": contract["failure_scenarios"],
-            },
-            indent=2,
-        )
+        details: dict[str, object] = {
+            "context_level": context_level,
+            "rule_id": rule.rule_id,
+            "title": rule.title,
+            "category": rule.category,
+            "severity": rule.severity,
+            "confidence": conf_label,
+            "message": rule.message,
+            "remediation": rule.remediation,
+        }
+        if context_level in {"overview", "full"}:
+            details.update(
+                {
+                    "cwe": rule.cwe,
+                    "owasp": rule.owasp,
+                    "why": explanation.get("why", ""),
+                    "false_positive": explanation.get("false_positive", ""),
+                    "test": explanation.get("test", ""),
+                }
+            )
+        if context_level == "full":
+            details.update(
+                {
+                    "attack": explanation.get("attack", ""),
+                    "engineering_dimensions": contract["engineering_dimensions"],
+                    "implicit_requirements": contract["implicit_requirements"],
+                    "failure_scenarios": contract["failure_scenarios"],
+                }
+            )
+        return json.dumps(details, indent=2)
 
     lines = [
         "",
         f"  {SEVERITY_ICON.get(rule.severity, '')} {rule.rule_id}: {rule.title}",
         f"  Severity: {rule.severity.upper()} \u2022 Confidence: {conf_label} \u2022 Category: {rule.category}",
-        f"  {rule.cwe} \u2022 {rule.owasp}",
-        "",
-        "  What it detects:",
-        f"    {rule.message}",
-        "",
     ]
-    if explanation.get("why"):
+    if context_level in {"overview", "full"}:
+        lines.extend([f"  {rule.cwe} \u2022 {rule.owasp}", ""])
+    else:
+        lines.append("")
+    lines.extend(["  What it detects:", f"    {rule.message}", ""])
+    if context_level in {"overview", "full"} and explanation.get("why"):
         lines.extend(["  Why this matters:", f"    {explanation['why']}", ""])
-    if explanation.get("attack"):
+    if context_level == "full" and explanation.get("attack"):
         lines.extend(["  Attack scenario:", f"    {explanation['attack']}", ""])
-    if explanation.get("false_positive"):
+    if context_level in {"overview", "full"} and explanation.get("false_positive"):
         lines.extend(
             ["  False-positive possibilities:", f"    {explanation['false_positive']}", ""]
         )
     lines.extend(["  Recommended fix:", f"    {rule.remediation}", ""])
-    if explanation.get("test"):
+    if context_level in {"overview", "full"} and explanation.get("test"):
         lines.extend(["  Regression test:", f"    {explanation['test']}", ""])
-    if contract.get("engineering_dimensions"):
+    if context_level == "full" and contract.get("engineering_dimensions"):
         lines.extend(
             ["  Engineering dimensions:"]
             + [f"    - {d}" for d in contract["engineering_dimensions"]]
             + [""]
         )
-    if contract.get("implicit_requirements"):
+    if context_level == "full" and contract.get("implicit_requirements"):
         lines.extend(
             ["  Implicit requirements:"]
             + [f"    - {r}" for r in contract["implicit_requirements"]]
@@ -13671,6 +14168,18 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Generate AI-ready fix prompts for each finding",
     )
     parser.add_argument(
+        "--context-level",
+        choices=CONTEXT_LEVELS,
+        default="full",
+        help="Detail level for --explain or --fix-prompt (default: full)",
+    )
+    parser.add_argument(
+        "--trace",
+        action="store_true",
+        default=False,
+        help="Include a bounded, content-free decision trace in scan output",
+    )
+    parser.add_argument(
         "--fix",
         action="store_true",
         default=False,
@@ -13688,11 +14197,17 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Print a detailed explanation for a rule (e.g. --explain SP108)",
     )
-    parser.add_argument(
+    snippet_group = parser.add_mutually_exclusive_group()
+    snippet_group.add_argument(
         "--snippet",
         metavar="CODE",
         default=None,
         help="Lint an in-memory code snippet directly without scanning a repository",
+    )
+    snippet_group.add_argument(
+        "--snippet-stdin",
+        action="store_true",
+        help="Read a bounded UTF-8 code snippet from stdin without scanning a repository",
     )
     parser.add_argument(
         "--snippet-file",
@@ -13715,16 +14230,60 @@ def main(argv: Sequence[str] | None = None) -> int:
             stream.reconfigure(encoding="utf-8")
     arguments = parse_arguments(argv)
 
+    if arguments.context_level != "full" and not (arguments.explain or arguments.fix_prompt):
+        print("shipproof: --context-level requires --explain or --fix-prompt", file=sys.stderr)
+        return 2
+    if arguments.trace and (
+        arguments.explain
+        or arguments.fix_prompt
+        or arguments.fix
+        or arguments.fix_dry_run
+        or arguments.snippet is not None
+        or arguments.snippet_stdin
+        or arguments.format in {"sarif", "github"}
+    ):
+        print(
+            "shipproof: --trace is supported only for repository scan output in json, markdown, or terminal format",
+            file=sys.stderr,
+        )
+        return 2
+
     # Handle --explain mode (no scan needed)
     if arguments.explain:
         as_json = arguments.format == "json"
-        print(render_explain(arguments.explain, as_json=as_json))
+        print(
+            render_explain(
+                arguments.explain,
+                as_json=as_json,
+                context_level=arguments.context_level,
+            )
+        )
         return 0
 
-    # Handle --snippet mode (in-memory linting)
-    if arguments.snippet is not None:
-        findings = lint_source_snippet(arguments.snippet, arguments.snippet_file)
-        payload = build_json_report(Path("."), findings, {"files_scanned": 1, "suppressed": 0})
+    # Handle --snippet mode (in-memory linting). Stdin avoids argv limits and
+    # keeps source code out of process listings for MCP callers.
+    snippet = arguments.snippet
+    if arguments.snippet_stdin:
+        stream = getattr(sys.stdin, "buffer", sys.stdin)
+        raw_snippet = stream.read(MAX_SNIPPET_BYTES + 1)
+        if isinstance(raw_snippet, str):
+            encoded_snippet = raw_snippet.encode("utf-8")
+        else:
+            encoded_snippet = raw_snippet
+        if len(encoded_snippet) > MAX_SNIPPET_BYTES:
+            print(
+                f"shipproof: snippet exceeds the {MAX_SNIPPET_BYTES}-byte limit",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            snippet = encoded_snippet.decode("utf-8")
+        except UnicodeDecodeError:
+            print("shipproof: snippet stdin must be valid UTF-8", file=sys.stderr)
+            return 2
+    if snippet is not None:
+        findings = lint_source_snippet(snippet, arguments.snippet_file)
+        payload = build_json_report(arguments.root, findings, {"files_scanned": 1, "suppressed": 0})
         print(json.dumps(payload, indent=2))
         return 0 if not findings else 1
 
@@ -13736,23 +14295,45 @@ def main(argv: Sequence[str] | None = None) -> int:
             if arguments.changed_since
             else None
         )
+        baseline_fingerprints = load_baseline_fingerprints(arguments.baseline)
         findings, stats = scan_repository(
             arguments.root,
             max_file_bytes=arguments.max_file_bytes,
-            baseline=load_baseline_fingerprints(arguments.baseline),
+            baseline=baseline_fingerprints,
             exclude_patterns=arguments.exclude,
             include_paths=include_paths,
         )
         if arguments.changed_since:
             stats["changed_since"] = arguments.changed_since
 
+        findings_before_confidence_filter = len(findings)
+
         # Filter by confidence if requested
         if arguments.min_confidence:
             min_conf = CONFIDENCE[arguments.min_confidence]
             findings = [f for f in findings if CONFIDENCE[f.confidence] <= min_conf]
 
+        decision_trace = None
+        if arguments.trace:
+            decision_trace = build_decision_trace(
+                findings,
+                stats,
+                fail_on=arguments.fail_on,
+                include_tests=arguments.include_tests,
+                max_file_bytes=arguments.max_file_bytes,
+                min_confidence=arguments.min_confidence,
+                exclude_patterns=arguments.exclude,
+                baseline_fingerprints=len(baseline_fingerprints),
+                changed_candidates=len(include_paths) if include_paths is not None else None,
+                findings_before_confidence_filter=findings_before_confidence_filter,
+            )
+
         payload = build_json_report(
-            arguments.root, findings, stats, include_tests=arguments.include_tests
+            arguments.root,
+            findings,
+            stats,
+            include_tests=arguments.include_tests,
+            decision_trace=decision_trace,
         )
         if arguments.baseline_out:
             arguments.baseline_out.write_text(
@@ -13773,12 +14354,39 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(msg)
             action_label = "Dry-run completed" if arguments.fix_dry_run else "Autofix completed"
             print(f"\n{action_label}: {fixed_count} findings remediated.")
-            return 0 if (fixed_count > 0 or not findings) else 1
+            verified_findings = findings
+            if fixed_count > 0 and not arguments.fix_dry_run:
+                verified_findings, _ = scan_repository(
+                    arguments.root,
+                    max_file_bytes=arguments.max_file_bytes,
+                    baseline=load_baseline_fingerprints(arguments.baseline),
+                    exclude_patterns=arguments.exclude,
+                    include_paths=include_paths,
+                )
+                if arguments.min_confidence:
+                    min_conf = CONFIDENCE[arguments.min_confidence]
+                    verified_findings = [
+                        item
+                        for item in verified_findings
+                        if CONFIDENCE[item.confidence] <= min_conf
+                    ]
+            return (
+                1
+                if gate_failed(
+                    verified_findings, arguments.fail_on, include_tests=arguments.include_tests
+                )
+                else 0
+            )
 
         # Handle --fix-prompt mode
         if arguments.fix_prompt:
             as_json = arguments.format == "json"
-            output = render_fix_prompts(arguments.root, findings, as_json=as_json)
+            output = render_fix_prompts(
+                arguments.root,
+                findings,
+                as_json=as_json,
+                context_level=arguments.context_level,
+            )
         else:
             # Determine format: default to terminal if TTY, else markdown
             fmt = arguments.format
@@ -13786,9 +14394,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                 fmt = "terminal" if (sys.stdout.isatty() and not arguments.output) else "markdown"
 
             if fmt == "terminal":
-                output = render_terminal_report(arguments.root, findings, stats)
+                output = render_terminal_report(
+                    arguments.root,
+                    findings,
+                    stats,
+                    decision_trace=decision_trace,
+                )
             elif fmt == "markdown":
-                output = render_markdown_report(arguments.root, findings, stats)
+                output = render_markdown_report(
+                    arguments.root,
+                    findings,
+                    stats,
+                    decision_trace=decision_trace,
+                )
             elif fmt == "sarif":
                 output = json.dumps(build_sarif_report(findings), indent=2)
             elif fmt == "github":
@@ -13807,12 +14425,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
 
     # Gating: default evaluates app scope findings only unless --include-tests is set
-    evaluated_findings = (
-        findings if arguments.include_tests else [item for item in findings if item.scope == "app"]
-    )
-    if arguments.fail_on != "none" and any(
-        SEVERITY[item.severity] <= SEVERITY[arguments.fail_on] for item in evaluated_findings
-    ):
+    if gate_failed(findings, arguments.fail_on, include_tests=arguments.include_tests):
         return 1
     return 0
 

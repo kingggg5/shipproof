@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use ShipProof in research or engineering work, please cite this software release."
+title: "ShipProof: a local-first production evidence gate for AI-assisted software"
+type: software
+authors:
+  - family-names: Pipitakun
+    given-names: Jesadakorn
+version: 0.7.0
+date-released: 2026-08-20
+license: MIT
+repository-code: "https://github.com/kingggg5/shipproof"
+url: "https://github.com/kingggg5/shipproof"
+abstract: >-
+  ShipProof is a deterministic, local-first production gate for security,
+  correctness, scale, performance, capacity, and release evidence in
+  repositories developed by people, coding agents, or both.
+keywords:
+  - application security
+  - AI-assisted software engineering
+  - production readiness
+  - static analysis
+  - software supply chain
+  - performance evidence

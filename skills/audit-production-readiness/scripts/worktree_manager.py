@@ -12,7 +12,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 VALID_TASK_NAME = re.compile(r"^[a-zA-Z0-9_-]{1,64}$")
 
 

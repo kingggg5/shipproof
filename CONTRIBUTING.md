@@ -7,12 +7,11 @@ Thank you for improving ShipProof. Keep contributions narrow, evidence-based, an
 ```bash
 npm ci --ignore-scripts
 python -m pip install -r requirements-dev.txt
-npm run lint
-npm run test
-python -m compileall -q skills tests
+npm run check
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
-npm pack --dry-run
 ```
+
+Use an issue or design proposal before a change that alters schemas, exit codes, rule identity, default trust boundaries, release behavior, or a large part of the CLI. Read [GOVERNANCE.md](GOVERNANCE.md) for the decision and compatibility process.
 
 ## Code style and naming
 
@@ -32,7 +31,7 @@ Name functions after the behavior they perform (`build_capacity_model`, `runDoct
 Every rule must include:
 
 - A stable `SPxxx` identifier, category, severity, confidence, CWE/control mapping, explanation, and actionable remediation.
-- One positive test and at least one negative or placeholder test.
+- At least three positive, five negative, and two adversarial cases for a newly promoted detector. Placeholders do not count as evidence.
 - A concise false-positive analysis in the pull request.
 - Redaction when evidence may contain a credential or personal data.
 - A reason this belongs in the fast heuristic layer rather than CodeQL, Semgrep, Gitleaks, Trivy, or manual review.
@@ -40,6 +39,17 @@ Every rule must include:
 Prefer structural/AST checks over broad regexes. Do not add a high-severity rule that only recognizes a keyword without a plausible failure path.
 
 Do not add broad rules claiming to detect kernel, browser-engine, parser, or protocol memory-safety defects. Route those classes to target-specific static analysis, sanitizers, fuzzing, and reproducible tests unless a deterministic low-noise rule can be demonstrated.
+
+Research candidates are not executable rules. Community discussions and model output may identify a question, but promotion requires confirmation from the owning standard, vendor/framework documentation, language specification, or a real vulnerability record. Do not copy detector implementations, tests, prose, or rule packs from license-restricted sources. Record source provenance and explain what the source does—and does not—prove.
+
+Before submitting, verify that the detector:
+
+- runs only on applicable suffixes/manifests and through the real repository walker;
+- has no duplicate semantic coverage under another rule ID;
+- handles multiline input and generated/minified/test fixtures deliberately;
+- preserves secret redaction in terminal, JSON, SARIF, and fix-prompt output;
+- does not claim reachability, exploitability, or runtime state beyond its proof level;
+- updates both README rule tables and all versioned contract fixtures.
 
 ## Changing engineering guidance or budgets
 

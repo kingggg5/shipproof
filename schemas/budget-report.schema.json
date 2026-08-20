@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/budget-report.schema.json",
+  "title": "ShipProof resource budget report",
+  "allOf": [
+    { "$ref": "evidence-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["passed", "results"],
+      "properties": {
+        "tool": { "properties": { "command": { "const": "budget" } } },
+        "passed": { "type": "boolean" },
+        "results": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["metric", "direction", "baseline", "current", "regression_percent", "status", "reasons"],
+            "properties": {
+              "metric": { "type": "string", "minLength": 1 },
+              "direction": { "enum": ["lower", "higher"] },
+              "baseline": { "type": "number" }, "current": { "type": "number" },
+              "regression_percent": { "type": ["number", "null"] },
+              "status": { "enum": ["pass", "fail"] },
+              "reasons": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          }
+        },
+        "artifacts": {
+          "type": "array", "minItems": 3, "maxItems": 3,
+          "items": {
+            "type": "object", "required": ["role", "source", "sha256"],
+            "properties": {
+              "role": { "enum": ["baseline", "current", "budget"] },
+              "source": { "type": "string", "minLength": 1 },
+              "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

@@ -13,11 +13,32 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 K6_METHODS = frozenset({"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"})
 ENVIRONMENT_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
 ROUTE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 DURATION = re.compile(r"^[1-9][0-9]*(?:ms|s|m|h)$")
+SENSITIVE_BODY_KEYS = frozenset(
+    {
+        "accesstoken",
+        "apikey",
+        "authorization",
+        "authtoken",
+        "bearertoken",
+        "clientsecret",
+        "cookie",
+        "password",
+        "passwd",
+        "passphrase",
+        "privatekey",
+        "refreshtoken",
+        "secret",
+        "sessiontoken",
+        "setcookie",
+        "token",
+    }
+)
+MAX_BODY_NESTING = 32
 
 
 @dataclass(frozen=True)
@@ -183,6 +204,44 @@ def _require_finite_number(value: object, name: str, minimum: float, maximum: fl
     return number
 
 
+def _is_environment_placeholder(value: object) -> bool:
+    return (
+        isinstance(value, dict)
+        and set(value) == {"$env"}
+        and isinstance(value["$env"], str)
+        and ENVIRONMENT_NAME.fullmatch(value["$env"]) is not None
+    )
+
+
+def _validate_k6_body(value: object, location: str = "body", depth: int = 0) -> None:
+    if depth > MAX_BODY_NESTING:
+        raise ValueError(f"{location} exceeds the maximum nesting depth of {MAX_BODY_NESTING}")
+    if isinstance(value, dict):
+        if "$env" in value:
+            if not _is_environment_placeholder(value):
+                raise ValueError(
+                    f'{location} environment placeholder must be exactly {{"$env":"NAME"}} '
+                    "with an uppercase environment variable name"
+                )
+            return
+        for key, nested_value in value.items():
+            normalized_key = re.sub(r"[^a-z0-9]", "", key.lower())
+            nested_location = f"{location}.{key}"
+            if (
+                normalized_key in SENSITIVE_BODY_KEYS
+                and nested_value is not None
+                and not _is_environment_placeholder(nested_value)
+            ):
+                raise ValueError(
+                    f"{nested_location} is sensitive and must use an environment placeholder "
+                    f'like {{"$env":"LOAD_TEST_SECRET"}}'
+                )
+            _validate_k6_body(nested_value, nested_location, depth + 1)
+    elif isinstance(value, list):
+        for index, nested_value in enumerate(value):
+            _validate_k6_body(nested_value, f"{location}[{index}]", depth + 1)
+
+
 def validate_k6_config(raw_config: object) -> dict[str, object]:
     if not isinstance(raw_config, dict):
         raise ValueError("k6 config must be a JSON object")
@@ -271,6 +330,7 @@ def validate_k6_config(raw_config: object) -> dict[str, object]:
         if normalized_statuses[0] < 100:
             raise ValueError(f"k6 route {name} statuses must be between 100 and 599")
         body = route.get("body")
+        _validate_k6_body(body, f"k6 route {name} body")
         try:
             encoded_body = json.dumps(
                 body, ensure_ascii=False, separators=(",", ":"), allow_nan=False
@@ -356,6 +416,22 @@ if (!baseUrl) throw new Error("Set the {config["base_url_env"]} environment vari
 const routes = {routes_json};
 const totalWeight = routes.reduce((sum, route) => sum + route.weight, 0);
 
+function resolveEnvironmentValues(value) {{
+  if (Array.isArray(value)) return value.map(resolveEnvironmentValues);
+  if (value !== null && typeof value === "object") {{
+    if (Object.keys(value).length === 1 && Object.prototype.hasOwnProperty.call(value, "$env")) {{
+      const environmentName = value.$env;
+      const resolved = __ENV[environmentName];
+      if (resolved === undefined) throw new Error(`Set the ${{environmentName}} environment variable`);
+      return resolved;
+    }}
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [key, resolveEnvironmentValues(nested)]),
+    );
+  }}
+  return value;
+}}
+
 export const options = {{
   discardResponseBodies: true,
   scenarios: {{
@@ -385,7 +461,7 @@ export default function () {{
     slot -= candidate.weight;
   }}
   const headers = route.body === null ? {{}} : {{ "Content-Type": "application/json" }};{auth_header}
-  const body = route.body === null ? null : JSON.stringify(route.body);
+  const body = route.body === null ? null : JSON.stringify(resolveEnvironmentValues(route.body));
   const response = http.request(route.method, `${{baseUrl}}${{route.path}}`, body, {{
     headers,
     tags: {{ route: route.name }},

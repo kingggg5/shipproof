@@ -13,6 +13,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 from scan_repo import (  # noqa: E402
     VERSION,
+    build_decision_trace,
     build_sarif_report,
     changed_files,
     deduplicate_and_suppress_findings,
@@ -48,6 +49,17 @@ class ScanRepoTests(unittest.TestCase):
     def test_placeholder_secret_is_ignored(self):
         findings = self.findings(".env", 'API_KEY="replace_me_with_your_key"\n')
         self.assertFalse(any(item.rule_id == "SP003" for item in findings))
+
+    def test_quoted_json_credential_key_is_detected(self):
+        secret = "N7vK2mQ9xR4p" + "T8wZ6cB3"
+        findings = self.findings("settings.json", f'{{"password": "{secret}"}}\n')
+        match = next(item for item in findings if item.rule_id == "SP003")
+        self.assertNotIn(secret, match.evidence)
+
+    def test_placeholder_elsewhere_on_line_does_not_hide_real_secret(self):
+        secret = "AKIA" + "D" * 16
+        findings = self.findings("settings.py", f'key = "{secret}"  # replace_me in docs\n')
+        self.assertTrue(any(item.rule_id == "SP002" for item in findings))
 
     def test_request_timeout_is_ast_checked(self):
         findings = self.findings(
@@ -154,7 +166,91 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         sql_findings = self.findings("query.sql", "SELECT * FROM audit_events;\n")
         docker_findings = self.findings("Dockerfile", "FROM node:20\n")
         self.assertFalse(any(item.rule_id == "SP202" for item in sql_findings))
-        self.assertEqual([item.rule_id for item in docker_findings], ["SP202"])
+        self.assertIn("SP202", [item.rule_id for item in docker_findings])
+        self.assertIn("SP226", [item.rule_id for item in docker_findings])
+        self.assertIn("SP227", [item.rule_id for item in docker_findings])
+
+    def test_unpinned_git_dependency_excludes_repository_metadata(self):
+        dependency = self.findings(
+            "package.json",
+            '"dependencies": {"widget": "git+https://github.com/example/widget.git#main"}\n',
+        )
+        metadata = self.findings(
+            "package.json",
+            '"repository": {"type": "git", "url": "git+https://github.com/example/app.git"}\n',
+        )
+        pinned = self.findings(
+            "package.json",
+            '"dependencies": {"widget": "git+https://github.com/example/widget.git#0123456789abcdef0123456789abcdef01234567"}\n',
+        )
+        self.assertIn("SP221", [item.rule_id for item in dependency])
+        self.assertNotIn("SP221", [item.rule_id for item in metadata])
+        self.assertNotIn("SP221", [item.rule_id for item in pinned])
+
+    def test_previously_unwalked_language_suffixes_are_scanned(self):
+        svelte = self.findings("Component.svelte", "<div>{@html user.bio}</div>\n")
+        swift = self.findings(
+            "Session.swift", "let credential = URLCredential(trust: serverTrust)\n"
+        )
+        self.assertIn("SP644", [item.rule_id for item in svelte])
+        self.assertIn("SP646", [item.rule_id for item in swift])
+
+    def test_multiline_systemd_rule_runs_against_whole_source(self):
+        findings = self.findings(
+            "shipproof.service", "[Unit]\nDescription=demo\n[Service]\nExecStart=/opt/demo\n"
+        )
+        self.assertIn("SP269", [item.rule_id for item in findings])
+
+    def test_multiline_kubernetes_privileged_rule_has_both_polarities(self):
+        unsafe = self.findings("deployment.yaml", "securityContext:\n  privileged: true\n")
+        safe = self.findings("deployment.yaml", "securityContext:\n  privileged: false\n")
+        self.assertIn("SP236", [item.rule_id for item in unsafe])
+        self.assertNotIn("SP236", [item.rule_id for item in safe])
+
+    def test_server_action_auth_guard_suppresses_multiline_false_positive(self):
+        unsafe = self.findings(
+            "actions.ts",
+            "'use server';\nexport async function removeAccount() {\n  await deleteAccount();\n}\n",
+        )
+        safe = self.findings(
+            "actions.ts",
+            "'use server';\nexport async function removeAccount() {\n  const user = await auth();\n  await deleteAccount(user.id);\n}\n",
+        )
+        self.assertIn("SP420", [item.rule_id for item in unsafe])
+        self.assertNotIn("SP420", [item.rule_id for item in safe])
+
+    def test_agent_shell_tool_requires_an_explicit_approval_gate(self):
+        unsafe = self.findings(
+            "agent.py",
+            "@tool\ndef execute_command(command):\n    return subprocess."
+            + "run(command, shell="
+            + "True)\n",
+        )
+        safe = self.findings(
+            "agent.py",
+            "@tool\ndef execute_command(command):\n    require_human_approval(command)\n"
+            + "    return subprocess."
+            + "run(command, shell="
+            + "True)\n",
+        )
+        self.assertIn("SP518", [item.rule_id for item in unsafe])
+        self.assertNotIn("SP518", [item.rule_id for item in safe])
+
+    def test_temporal_global_rule_requires_mutation_not_a_read(self):
+        unsafe = self.findings(
+            "workflow.py",
+            "counter = 0\n@workflow."
+            + "defn\nclass Job:\n    async def run(self):\n        global counter\n"
+            + "        counter += 1\n",
+        )
+        safe = self.findings(
+            "workflow.py",
+            "counter = 0\n@workflow."
+            + "defn\nclass Job:\n    async def run(self):\n        global counter\n"
+            + "        return counter\n",
+        )
+        self.assertIn("SP585", [item.rule_id for item in unsafe])
+        self.assertNotIn("SP585", [item.rule_id for item in safe])
 
     def test_identical_text_multiple_lines_reported(self):
         source = (
@@ -379,6 +475,37 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         findings = lint_source_snippet("const a = 1;\n", "test.js")
         self.assertEqual(findings, [])
 
+    def test_snippet_stdin_is_bounded_and_uses_requested_root(self):
+        import contextlib
+        import io
+        import json
+        import tempfile
+        from unittest.mock import patch
+
+        from scan_repo import MAX_SNIPPET_BYTES, main
+
+        with tempfile.TemporaryDirectory() as directory:
+            output = io.StringIO()
+            with (
+                patch("sys.stdin", io.StringIO("const value = 1;")),
+                contextlib.redirect_stdout(output),
+            ):
+                self.assertEqual(
+                    main([directory, "--snippet-stdin", "--snippet-file", "snippet.js"]),
+                    0,
+                )
+            self.assertEqual(Path(json.loads(output.getvalue())["root"]), Path(directory).resolve())
+
+            with (
+                patch("sys.stdin", io.StringIO("x" * (MAX_SNIPPET_BYTES + 1))),
+                contextlib.redirect_stderr(io.StringIO()),
+            ):
+                self.assertEqual(main([directory, "--snippet-stdin"]), 2)
+
+            with self.assertRaises(SystemExit) as invalid:
+                main([directory, "--snippet", "value", "--snippet-stdin"])
+            self.assertEqual(invalid.exception.code, 2)
+
     def test_unmetered_ai_route_is_flagged(self):
         source = (
             "const res = await openai.chat."
@@ -441,6 +568,24 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertIsInstance(frameworks, set)
         ctx = read_source_context(Path("."), "nonexistent.py", 1)
         self.assertEqual(ctx, [])
+
+    def test_secret_renderers_never_rehydrate_redacted_source(self):
+        from scan_repo import render_terminal_report
+
+        secret = "AKIA" + "E" * 16
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "settings.py").write_text(f'key = "{secret}"\n', encoding="utf-8")
+            findings, stats = scan_repository(root)
+            rendered = "\n".join(
+                (
+                    render_terminal_report(root, findings, stats),
+                    render_fix_prompts(root, findings),
+                    render_fix_prompts(root, findings, as_json=True),
+                )
+            )
+        self.assertNotIn(secret, rendered)
+        self.assertIn("REDACTED", rendered)
 
     def test_main_cli_execution_branches(self):
         import contextlib
@@ -635,6 +780,46 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
             self.assertEqual(stats["files_scanned"], 1)
             self.assertTrue(any(item.rule_id == "SP304" for item in findings))
             self.assertFalse(any(item.rule_id == "SP201" for item in findings))
+
+    def test_changed_since_handles_unicode_paths_and_subdirectory_roots(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "pkg"
+            package.mkdir()
+            unicode_file = package / "ทดสอบ.py"
+            unicode_file.write_text("value = 1\n", encoding="utf-8")
+            self.run_git(root, "init", "-q")
+            self.run_git(root, "config", "user.email", "shipproof@example.test")
+            self.run_git(root, "config", "user.name", "ShipProof Test")
+            self.run_git(root, "add", "-A")
+            self.run_git(root, "commit", "-q", "-m", "base")
+            unicode_file.write_text("app = FastAPI(debug=" + "True)\n", encoding="utf-8")
+
+            include_paths = changed_files(package, "HEAD")
+            self.assertEqual(include_paths, frozenset({"ทดสอบ.py"}))
+            findings, stats = scan_repository(package, include_paths=include_paths)
+            self.assertEqual(stats["files_scanned"], 1)
+            self.assertIn("SP201", [item.rule_id for item in findings])
+
+    def test_changed_since_reports_renamed_and_copied_destinations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rename_source = root / "rename_source.py"
+            copy_source = root / "copy_source.py"
+            rename_source.write_text("def renamed_fixture():\n    return 1\n", encoding="utf-8")
+            copy_source.write_text("def copied_fixture():\n    return 2\n", encoding="utf-8")
+            self.run_git(root, "init", "-q")
+            self.run_git(root, "config", "user.email", "shipproof@example.test")
+            self.run_git(root, "config", "user.name", "ShipProof Test")
+            self.run_git(root, "add", "-A")
+            self.run_git(root, "commit", "-q", "-m", "base")
+
+            rename_source.rename(root / "renamed.py")
+            (root / "copied.py").write_text(
+                copy_source.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+
+            self.assertEqual(changed_files(root, "HEAD"), frozenset({"renamed.py", "copied.py"}))
 
     def test_changed_since_reports_the_ref_in_stats(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1070,6 +1255,73 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertEqual(fix_prompts_json[0]["rule_id"], "SP201")
         self.assertIn("Fix SP201 in server.py", fix_prompts_json[0]["prompt"])
 
+    def test_progressive_context_is_bounded_and_monotonic(self):
+        explain = {
+            level: json.loads(render_explain("SP106", as_json=True, context_level=level))
+            for level in ("summary", "overview", "full")
+        }
+        self.assertNotIn("why", explain["summary"])
+        self.assertIn("why", explain["overview"])
+        self.assertNotIn("attack", explain["overview"])
+        self.assertIn("attack", explain["full"])
+        self.assertLess(len(json.dumps(explain["summary"])), len(json.dumps(explain["overview"])))
+        self.assertLess(len(json.dumps(explain["overview"])), len(json.dumps(explain["full"])))
+
+        finding = self.findings("server.py", "app = FastAPI(de" + "bug=True)\n")[0]
+        prompts = {
+            level: json.loads(
+                render_fix_prompts(Path("."), [finding], as_json=True, context_level=level)
+            )[0]
+            for level in ("summary", "overview", "full")
+        }
+        self.assertNotIn("evidence", prompts["summary"])
+        self.assertIn("implicit_requirements", prompts["overview"])
+        self.assertNotIn("failure_scenarios", prompts["overview"])
+        self.assertIn("failure_scenarios", prompts["full"])
+
+    def test_decision_trace_is_content_free_and_matches_gate(self):
+        finding = self.findings("server.py", "app = FastAPI(de" + "bug=True)\n")[0]
+        trace = build_decision_trace(
+            [finding],
+            {"files_scanned": 1, "suppressed": 2, "frameworks": ["fastapi"]},
+            fail_on="high",
+            include_tests=False,
+            max_file_bytes=1_000_000,
+            min_confidence="medium",
+            exclude_patterns=["vendor/**", "vendor/**"],
+            baseline_fingerprints=2,
+            changed_candidates=None,
+            findings_before_confidence_filter=1,
+        )
+        encoded = json.dumps(trace)
+        self.assertTrue(trace["gate"]["failed"])
+        self.assertEqual(trace["selection"]["exclude_patterns"], 1)
+        self.assertNotIn("server.py", encoded)
+        self.assertNotIn("SP201", encoded)
+
+    def test_trace_cli_contract_and_invalid_combinations(self):
+        import contextlib
+        import io
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "safe.js").write_text("const value = 1;\n", encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(
+                    main([str(root), "--format", "json", "--fail-on", "none", "--trace"]),
+                    0,
+                )
+            report = json.loads(output.getvalue())
+            self.assertEqual(report["decision_trace"]["selection"]["files_scanned"], 1)
+
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors):
+            self.assertEqual(main(["--context-level", "summary"]), 2)
+            self.assertEqual(main(["--trace", "--format", "sarif"]), 2)
+        self.assertIn("--context-level requires", errors.getvalue())
+        self.assertIn("--trace is supported only", errors.getvalue())
+
     def test_gcp_service_account_private_key_is_flagged(self):
         source = (
             '{"type": "service_account", "project_id": "demo", "private_key": "-----BEGIN '
@@ -1246,13 +1498,14 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         taint_findings = [f for f in findings if f.rule_id == "SP103" and f.detection == "taint"]
         self.assertEqual(len(taint_findings), 0)
 
-    def test_autofix_sp304_adds_timeout(self):
+    def test_autofix_does_not_rewrite_calls_or_change_return_types(self):
         from scan_repo import apply_autofix_to_line
 
-        orig = 'response = requests.get("https://api.example.com/data")'
-        fixed = apply_autofix_to_line("SP304", orig)
-        self.assertIsNotNone(fixed)
-        self.assertIn("timeout=30", fixed)
+        self.assertIsNone(
+            apply_autofix_to_line("SP304", "response = requests.get(build_url(user.id))")
+        )
+        self.assertIsNone(apply_autofix_to_line("SP122", "token = Math." + "random()"))
+        self.assertIsNone(apply_autofix_to_line("SP139", "path = tempfile." + "mktemp()"))
 
     def test_autofix_sp104_verify_false_to_true(self):
         from scan_repo import apply_autofix_to_line
@@ -1267,6 +1520,25 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         orig = "app = FastAPI(debug=" + "True)"
         fixed = apply_autofix_to_line("SP201", orig)
         self.assertEqual(fixed, "app = FastAPI(debug=False)")
+
+    def test_autofix_exit_code_reflects_findings_that_remain(self):
+        import contextlib
+        import io
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "app.py"
+            target.write_text(
+                "import requests\n"
+                "app = FastAPI(debug="
+                "True)\n"
+                'response = requests.get("https://api.example.invalid")\n',
+                encoding="utf-8",
+            )
+            with contextlib.redirect_stdout(io.StringIO()):
+                exit_code = main([str(root), "--fix", "--fail-on", "high"])
+            self.assertEqual(exit_code, 1)
+            self.assertIn("debug=False", target.read_text(encoding="utf-8"))
 
     def test_sp591_use_client_importing_database_client(self):
         source = '"use client";\nimport { prisma } from "@prisma/client";\nexport function Component() { return null; }'
@@ -1541,7 +1813,8 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
 
     def test_sp636_sse_missing_close_listener(self):
         source = (
-            'res.setHeader("Content-Type", "text/'
+            "res.set"
+            + 'Header("Content-Type", "text/'
             + 'event-stream");\nsetInterval(() => res.write("data: 1"), 1000);'
         )
         findings = self.findings("stream.ts", source)

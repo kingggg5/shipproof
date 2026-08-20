@@ -107,7 +107,7 @@ instances = ceil(design_peak_rps x headroom / measured_sustainable_rps_per_insta
 
 **Evidence:** versioned workload assumptions, load scripts and data shape, SLO thresholds, traces, CPU/memory profiles, database/queue/cache saturation, and recovery time.
 
-Read next: [scale guide](../skills/audit-production-readiness/references/scale.md) and use `shipproof capacity` to make assumptions reviewable.
+Read next: [scale guide](../skills/audit-production-readiness/references/scale.md) and use `shipproof labs capacity` to make assumptions reviewable.
 
 ## 5. CPU, memory, and latency
 
@@ -122,7 +122,7 @@ Read next: [scale guide](../skills/audit-production-readiness/references/scale.m
 
 **Evidence:** workload definition, profiler output, correctness tests, warmup and sample count, variance, p50/p95/p99, throughput, CPU, allocation rate, RSS/heap, I/O, errors, and cost.
 
-Read next: [performance](../skills/engineer-production-systems/references/performance.md) and use `shipproof budget` for reproducible regressions.
+Read next: [performance](../skills/engineer-production-systems/references/performance.md) and use `shipproof gate budget` for reproducible regressions.
 
 ## 6. AI, RAG, and tool execution
 

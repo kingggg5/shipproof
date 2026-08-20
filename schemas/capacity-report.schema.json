@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/capacity-report.schema.json",
+  "title": "ShipProof capacity hypothesis report",
+  "allOf": [
+    { "$ref": "evidence-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["inputs", "derived", "load_test_stages", "required_evidence", "warning"],
+      "properties": {
+        "tool": { "properties": { "command": { "const": "capacity" } } },
+        "inputs": { "type": "object", "additionalProperties": { "type": ["number", "integer"] } },
+        "derived": { "type": "object", "additionalProperties": { "type": ["number", "integer"] } },
+        "load_test_stages": {
+          "type": "array",
+          "items": {
+            "type": "object", "required": ["name", "target_rps", "purpose"],
+            "properties": { "name": { "type": "string" }, "target_rps": { "type": "number" }, "purpose": { "type": "string" } },
+            "additionalProperties": false
+          }
+        },
+        "required_evidence": { "type": "array", "items": { "type": "string" } },
+        "warning": { "type": "string", "minLength": 1 },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object", "required": ["type", "path", "sha256"],
+            "properties": { "type": { "const": "k6" }, "path": { "type": "string" }, "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" } },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

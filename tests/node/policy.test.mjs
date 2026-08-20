@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
@@ -28,9 +30,23 @@ test("rejects unsupported YAML features, duplicate keys, and unknown policy keys
 });
 
 test("rejects paths outside the repository", () => {
-  assert.throws(() => loadPolicy(internals.PACKAGE_ROOT, "../.shipproof.yml"), /policy file not found/);
+  assert.throws(() => loadPolicy(internals.PACKAGE_ROOT, "../.shipproof.yml"), /invalid policy file/);
   const policy = validatePolicy({ version: 1, scan: { path: ".." } });
   assert.throws(() => buildPolicyGates(internals.PACKAGE_ROOT, policy), /requested path/);
+});
+
+test("allowMissing permits only an absent policy, not a wrong path type", () => {
+  const root = mkdtempSync(join(tmpdir(), "shipproof-policy-"));
+  try {
+    assert.equal(loadPolicy(root, ".shipproof.yml", { allowMissing: true }), null);
+    mkdirSync(join(root, ".shipproof.yml"));
+    assert.throws(
+      () => loadPolicy(root, ".shipproof.yml", { allowMissing: true }),
+      /requested path is not a file/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("capacity accepts reviewed numeric inputs and rejects unknown fields", () => {

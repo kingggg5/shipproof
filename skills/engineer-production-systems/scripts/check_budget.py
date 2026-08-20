@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 
 
 def load_json_object(path: str | Path) -> dict[str, object]:
@@ -170,11 +171,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("shipproof: stdin ('-') may be used for only one input", file=sys.stderr)
         return 2
     try:
+        inputs = {
+            "baseline": load_json_object(arguments.baseline),
+            "current": load_json_object(arguments.current),
+            "budget": load_json_object(arguments.budget),
+        }
         report_payload = evaluate_resource_budget(
-            load_json_object(arguments.baseline),
-            load_json_object(arguments.current),
-            load_json_object(arguments.budget),
+            inputs["baseline"], inputs["current"], inputs["budget"]
         )
+        report_payload["artifacts"] = [
+            {
+                "role": role,
+                "source": "stdin" if source == "-" else str(Path(source).resolve()),
+                "sha256": hashlib.sha256(
+                    json.dumps(
+                        inputs[role], sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                    ).encode("utf-8")
+                ).hexdigest(),
+            }
+            for role, source in (
+                ("baseline", arguments.baseline),
+                ("current", arguments.current),
+                ("budget", arguments.budget),
+            )
+        ]
     except ValueError as exc:
         print(f"shipproof: {exc}", file=sys.stderr)
         return 2

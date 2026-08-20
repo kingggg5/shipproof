@@ -4,12 +4,13 @@ import { join } from "node:path";
 import { PACKAGE_ROOT, VERSION } from "../lib/package-info.mjs";
 
 const rawRef = process.env.GITHUB_REF_NAME || "";
+const refType = process.env.GITHUB_REF_TYPE || "";
 const expectedTag = `v${VERSION}`;
 
-if (
-  rawRef.startsWith("v") &&
-  (!/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(rawRef) || rawRef !== expectedTag)
-) {
+if (refType !== "tag") {
+  throw new Error(`release source must be an exact tag, received ${JSON.stringify(refType || "unknown")}`);
+}
+if (!/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(rawRef) || rawRef !== expectedTag) {
   throw new Error(
     `release tag ${JSON.stringify(rawRef)} must exactly match package version ${expectedTag}`
   );

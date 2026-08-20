@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/impact-report.schema.json",
+  "title": "ShipProof impact analysis report",
+  "allOf": [
+    { "$ref": "evidence-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["root", "target_file", "target_line", "target_symbols", "direct_callers", "transitive_callers", "tables_touched", "relevant_tests", "total_files_analyzed", "blast_radius_score", "reachability_status", "cross_file_taint_flows"],
+      "properties": {
+        "tool": { "properties": { "command": { "const": "impact" } } },
+        "root": { "type": "string", "minLength": 1 },
+        "target_file": { "type": "string" }, "target_line": { "type": ["integer", "null"], "minimum": 1 },
+        "target_symbols": { "$ref": "#/$defs/strings" }, "direct_callers": { "$ref": "#/$defs/strings" },
+        "transitive_callers": { "$ref": "#/$defs/strings" }, "tables_touched": { "$ref": "#/$defs/strings" },
+        "relevant_tests": { "$ref": "#/$defs/strings" }, "total_files_analyzed": { "type": "integer", "minimum": 1 },
+        "blast_radius_score": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+        "reachability_status": { "type": "string" },
+        "cross_file_taint_flows": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  ],
+  "$defs": { "strings": { "type": "array", "items": { "type": "string" }, "uniqueItems": true } },
+  "unevaluatedProperties": false
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/check-report.schema.json",
+  "title": "ShipProof policy check report",
+  "allOf": [
+    { "$ref": "evidence-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["root", "policy_path", "passed", "gates"],
+      "properties": {
+        "tool": { "properties": { "command": { "const": "check" } } },
+        "root": { "type": "string", "minLength": 1 }, "policy_path": { "type": "string", "minLength": 1 },
+        "passed": { "type": "boolean" },
+        "gates": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "required": ["name", "status", "verdict", "evidence"],
+            "properties": {
+              "name": { "type": "string" }, "status": { "enum": ["pass", "fail"] },
+              "verdict": { "enum": ["PASS", "PASS_WITH_EVIDENCE", "CONDITIONAL", "WARN", "BLOCK"] },
+              "evidence": { "type": "object", "required": ["schema_version", "tool", "verdict", "limitations"] }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

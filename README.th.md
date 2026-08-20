@@ -1,24 +1,23 @@
 # ShipProof
 
-**ระบบตรวจสอบและพิสูจน์ความพร้อมของโค้ดก่อนปล่อยขึ้น Production**
+**Production evidence gate แบบ local-first สำหรับซอฟต์แวร์ที่พัฒนาร่วมกับ AI**
 
 [English](README.md) · [ภาษาไทย](README.th.md)
 
-ความปลอดภัย · ความถูกต้องของโค้ด · การรองรับการสเกล · ประสิทธิภาพ · ความพร้อมสำหรับ Production
-
-รองรับการทำงานร่วมกับ **Codex**, **Claude Code**, **Cursor**, **Gemini**, **Grok**, Terminal ทั่วไป, Pre-commit และ GitHub Actions
+ความปลอดภัย · ความถูกต้อง · การรองรับการสเกล · ประสิทธิภาพ · หลักฐานการปล่อยระบบ
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Public beta](https://img.shields.io/badge/public_beta-v0.5.1-2563eb)](CHANGELOG.md)
-[![Coverage gates](https://img.shields.io/badge/coverage-Python_80%25_%7C_Node_core_70%25-0f766e)](.github/workflows/ci.yml)
-[![Codex](https://img.shields.io/badge/Codex-skill%20%2B%20plugin-111827)](https://learn.chatgpt.com/docs/build-skills)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill%20%2B%20plugin-D97757)](https://code.claude.com/docs/en/skills)
+[![Release](https://img.shields.io/badge/release-v0.7.0-2563eb)](CHANGELOG.md)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-ShipProof คือเกตตรวจสอบความพร้อม (Production Gate) สำหรับโปรเจกต์ที่เขียนโค้ดด้วยตนเองหรือใช้ AI ช่วยเขียน (Vibe Coding) เครื่องมือจะตรวจสอบโค้ดแบบ Static Analysis โดยไม่ต้องรันโค้ดจริง, วัดและเปรียบเทียบการใช้ CPU/RAM/Latency ตามงบประมาณที่กำหนด, จำลองการรองรับโหลดและคอขวดเมื่อมีผู้ใช้เพิ่มขึ้น และสร้าง Prompt คำแนะนำให้ AI นำไปแก้ไขโค้ดได้อย่างตรงจุด
+ShipProof คือ production gate ที่พัฒนาอย่างอิสระสำหรับ repository ที่เขียนโดยมนุษย์, coding agent หรือทั้งสองร่วมกัน เครื่องมือตรวจ source code โดยไม่รันโค้ดของ repository, ประเมินงบ CPU/RAM/Latency จากค่าที่วัดได้, สร้างแบบจำลอง capacity จากสมมติฐานที่ผ่านการทบทวน และส่งออกหลักฐานผ่าน Terminal, JSON, SARIF, Pre-commit, GitHub Actions หรือ MCP adapter แบบอ่านอย่างเดียว
 
-ShipProof ไม่ได้สัญญาคำว่า "สมบูรณ์แบบ 100%" หรือ "ไม่มีวันถูกแฮก" จากการสแกนโค้ดเพียงอย่างเดียว แต่ช่วยให้เรามองเห็นสมมติฐานและจุดบกพร่องที่ซ่อนอยู่ นำหลักฐานจริงมาพิสูจน์ และคงอำนาจการตัดสินใจขั้นสุดท้ายไว้ที่นักพัฒนาและทีมงาน
+ShipProof ไม่ใช่ใบรับรอง, penetration test, formal proof หรือสิ่งทดแทน threat model และ runtime test ของแต่ละผลิตภัณฑ์ เครื่องมือมีหน้าที่ทำให้สมมติฐานมองเห็นได้ แสดงระดับความแข็งแรงของหลักฐาน และคงอำนาจการตัดสินใจที่มีผลกระทบไว้กับมนุษย์
+
+**เอกสารโครงการ:** [คำสั่ง](docs/commands.md) · [การมีส่วนร่วม](CONTRIBUTING.md) · [ธรรมาภิบาล](GOVERNANCE.md) · [ความปลอดภัย](SECURITY.md) · [ระเบียบวิธีวิจัย](docs/research.md) · [Roadmap](docs/roadmap.md) · [การอ้างอิง](CITATION.cff)
 
 <p align="center">
   <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
@@ -39,7 +38,7 @@ shipproof scan examples/demo-api/fixtures/after --fail-on high
 
 ชุดทดสอบจะยืนยันความถูกต้องระหว่างก่อนและหลังการแก้โค้ด พร้อมทั้งมี [Node.js, Python และ Performance Fixtures](fixtures/README.md) เพื่อป้องกันการแจ้งเตือนที่ผิดพลาด (False Positives)
 
-## เริ่มต้นใช้งานทันที (ไม่ต้องตั้งค่าไฟล์ล่วงหน้า)
+## เริ่มต้นใช้งาน
 
 สามารถรันคำสั่งตรวจสอบในโปรเจกต์ใดก็ได้ทันที:
 
@@ -60,13 +59,35 @@ shipproof check .
 
 คำสั่ง `init` จะเพิ่มชุดคำสั่ง (Skills) ให้กับ Codex ในโฟลเดอร์ `.agents/skills` และ Claude Code ในโฟลเดอร์ `.claude/skills` โดยจะไม่เขียนทับโฟลเดอร์เดิมที่มีอยู่แล้ว เว้นแต่จะระบุตัวเลือก `--force`
 
-ความต้องการของระบบ: Node.js 20+ สำหรับการเรียกใช้งาน CLI และ Python 3.10+ สำหรับคำสั่ง `scan`, `check`, `budget`, `capacity` และระบบ MCP ตัวระบบหลักไม่มี Runtime Dependency ภายนอก ทำให้ติดตั้งและทำงานได้อย่างรวดเร็ว
+ความต้องการของระบบ: Node.js 20+ สำหรับการเรียกใช้งาน CLI และ Python 3.10+ สำหรับคำสั่ง `scan`, `check`, ทุกคำสั่งใน `gate` และ `labs` รวมถึงระบบ MCP ตัวระบบหลักไม่มี Runtime Dependency ภายนอก ทำให้ติดตั้งและทำงานได้อย่างรวดเร็ว
 
-## สร้างมาเพื่อยุค Vibe Coding
+## ขอบเขตและสถานะโครงการ
 
-งานวิจัยสนามจริงปี 2025–2026 ชี้ตรงกันว่าเกิดอะไรเมื่อโค้ดถูก ship เร็วกว่าที่จะตรวจสอบ: การสแกนแอป vibe-coded 5,200 ตัว เจอช่องโหว่กว่า 2,000 จุดและ secrets หลุดกว่า 400 รายการ ราว 20% ของแอป vibe-coded มีข้อบกพร่องร้ายแรง และ 62% ของโซลูชันที่ AI สร้างมีข้อบกพร่องเชิงดีไซน์หรือความปลอดภัย โดยมี 74 AI-linked CVEs ที่ถูกบันทึกไว้แล้ว ShipProof เกิดมาเพื่อช่องว่างนี้: เป็น "ดวงตาคู่ที่สอง" แบบออฟไลน์และ deterministic ที่รันในไม่กี่วินาทีหลัง agent ทำงานแต่ละรอบ ด้วย 200 detectors ที่เล็งไปที่กลุ่มความล้มเหลวที่ AI เขียนบ่อยที่สุด (ลืม authorization, SQL แบบต่อ string, secrets หลุด, AI endpoint ไม่จำกัด, retry storm, debug ติดค้าง) พร้อม proof levels ที่ซื่อสัตย์ — ไม่อ้างหลักฐานมากกว่าที่ engine ตรวจได้จริง
+ShipProof ใช้สัญญาการตรวจสอบเดียวกันไม่ว่าใครเป็นผู้เขียนโค้ด ปัจจุบัน scanner ที่รันได้จริงมี **571 กฎแบบ deterministic** ครอบคลุมความปลอดภัย ความถูกต้อง การสเกล ประสิทธิภาพ configuration และ software supply chain โดยเส้นทางปริยายเป็นแบบอ่านอย่างเดียว ออฟไลน์ และไม่มี package dependency นอกเหนือจาก Node.js กับ Python standard library
 
-## รูปแบบการรายงานผลใน Terminal
+| คุณสมบัติ | สัญญาปัจจุบัน |
+| :--- | :--- |
+| Current release | `v0.7.0` public beta |
+| Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่งที่ใช้ scanner |
+| กฎที่รันได้จริง | 571 กฎ (`SP001`–`SP661` โดยมีเลขที่เว้นไว้โดยตั้งใจ) |
+| ระดับหลักฐาน | `L0` pattern, `L1` structural/artifact, `L2` intraprocedural Python taint |
+| Research backlog | 8,800 candidates สำหรับวิจัยเท่านั้น ยังสร้าง finding ไม่ได้ |
+| Exit codes | `0` ผ่าน, `1` ไม่ผ่าน policy gate, `2` หลักฐานไม่ถูกต้องหรือไม่มีให้ใช้ |
+| การไหลของข้อมูลปริยาย | ใช้ filesystem/subprocess ในเครื่อง ไม่มี telemetry และไม่อัปโหลด source code |
+
+การออกแบบกฎอ้างอิงแหล่งต้นทาง เช่น [MITRE CWE](https://cwe.mitre.org/), [OWASP ASVS](https://owasp.org/www-project-application-security-verification-standard/), [OWASP API Security](https://owasp.org/API-Security/), [NIST SSDF](https://csrc.nist.gov/pubs/sp/800/218/final), เอกสารของ framework/language และ vulnerability record จริง การมีแหล่งอ้างอิงเพียงอย่างเดียวยังไม่เพียงพอที่จะสร้าง detector: ทุกกฎต้องมี invariant ที่สังเกตได้ในเครื่อง ขอบเขตการตรวจที่จำกัด fixtures ด้านบวก/ลบ/adversarial mapping แนวทางแก้ และการวิเคราะห์ false positive
+
+## Trust model
+
+| สิ่งที่ ShipProof รับประกัน | สิ่งที่ ShipProof ไม่กล่าวอ้าง |
+| :--- | :--- |
+| ผลลัพธ์ deterministic เมื่อใช้ input และเวอร์ชันเดียวกัน | ไม่พบช่องโหว่หรือจะไม่เกิด incident |
+| Rule ID, schema, fingerprint และ exit code `0/1/2` ที่มีสัญญาชัดเจน | พิสูจน์ reachability หรือ exploitability ข้ามไฟล์จาก regex |
+| Redact หลักฐานสำคัญและไม่รันโค้ด repository ใน scanner ปริยาย | ใบรับรอง compliance ของ CWE, OWASP, NIST หรือมาตรฐานอื่น |
+| รายงาน unknown/unavailable แทนการสร้างผล PASS เทียม | เป้าหมาย capacity, SLO หรือสถาปัตยกรรมแบบสากล |
+| Heuristic ที่ยังต้องใช้บริบทเริ่มแบบ review-first | ทดแทน CodeQL, dependency/SBOM tools, fuzzing หรือ human review |
+
+## รูปแบบหลักฐานใน Terminal
 
 ShipProof ออกแบบการรายงานผลให้เข้าใจง่ายเหมือนได้รับการตรวจโค้ด (Code Review) จาก Senior Engineer โดยระบุบรรทัดที่พบปัญหา, ระดับความมั่นใจ, เหตุผลว่าทำไมจุดนี้จึงอันตราย และแนวทางการแก้ไขที่ถูกต้อง:
 
@@ -94,7 +115,7 @@ ShipProof ออกแบบการรายงานผลให้เข้�
   -> รัน `shipproof explain SP108` เพื่อดูรายละเอียดและตัวอย่างการเขียน Test
 ```
 
-## กระบวนการพัฒนาแบบวงปิดร่วมกับ AI (Closed-Loop Workflow)
+## กระบวนการตรวจสอบแบบวนซ้ำ
 
 ShipProof เปลี่ยนการเขียนโค้ดร่วมกับ AI ให้เป็นวงรอบที่มีการตรวจสอบหลักฐานอย่างรัดกุม: AI เขียนโค้ด -> ShipProof ตรวจพบความเสี่ยง -> สร้างคำสั่งแก้ไขพร้อมเงื่อนไข -> AI แก้โค้ดและเพิ่ม Regression Test -> ShipProof ตรวจสอบซ้ำจนกว่าจะผ่านเกณฑ์
 
@@ -114,6 +135,7 @@ flowchart LR
 
 ```bash
 shipproof scan --fix-prompt
+shipproof scan --fix-prompt --context-level overview
 ```
 
 คำสั่งนี้จะสร้างข้อความคำสั่งที่มีบริบทของโค้ด, ข้อจำกัด และเงื่อนไขการเขียน Test เพื่อนำไปวางใน **Codex**, **Claude Code**, **Cursor**, **Gemini**, **Grok** หรือ **Copilot**:
@@ -148,20 +170,20 @@ Constraints:
 - Reference: CWE-862, OWASP ASVS V4
 ```
 
-### การวิเคราะห์ผลกระทบและการกระจายความเสี่ยง (Change Impact Analysis)
+### การวิเคราะห์ผลกระทบแบบ Experimental (Change Impact Analysis)
 
 ตรวจสอบ Callers, ฐานข้อมูล/State ที่แตะต้อง และชุด Regression Test ที่เกี่ยวข้องโดยตรงก่อนลงมือแก้โค้ด:
 
 ```bash
-shipproof impact src/routes/admin.py
+shipproof labs impact src/routes/admin.py
 ```
 
-### การตรวจสอบ System Invariants ระดับสถาปัตยกรรม
+### การวิเคราะห์ System Invariants แบบ Experimental
 
 ตรวจสอบ Invariants ของระบบ เช่น เส้นแบ่งสิทธิ์ (Auth Boundary), Tenant Isolation และ Transaction Safety:
 
 ```bash
-shipproof invariants .
+shipproof labs invariants .
 ```
 
 ### การคำนวณ Token และงบประมาณ AI Agent (Cost & Token Budgeting)
@@ -169,27 +191,26 @@ shipproof invariants .
 ประเมิน Token และค่าใช้จ่ายของ AI Agent แบบออฟไลน์ 100% พร้อมคำนวณส่วนลด Prompt Caching สำหรับโมเดลปี 2026 (Claude 3.5/3.7, GPT-4o, Gemini 2.0, DeepSeek R1):
 
 ```bash
-shipproof cost . --model claude-3-5-sonnet --iterations 3
-shipproof cost . --model deepseek-r1 --cadence per-pr --budget-usd 0.50
+shipproof labs cost . --model claude-3-5-sonnet --iterations 3
+shipproof labs cost . --model deepseek-r1 --cadence per-pr --budget-usd 0.50
 ```
 
-### การรัน Agent บน Git Worktree แยกต่างหาก (Worktree Sandbox)
+### การรัน Agent บน Git Worktree แยกต่างหาก
 
-แยกโฟลเดอร์ทำงานของ AI Agent ไว้ใน `.work/<task>` โดยไม่กระทบ Branch หลัก และตรวจสอบ Gate ก่อน Merge อัตโนมัติ:
+ใช้คำสั่งมาตรฐานของ Git เพื่อแยกพื้นที่ทำงาน แล้วรัน ShipProof gate ภายใน worktree:
 
 ```bash
-shipproof worktree create fix-auth
-# Agent ทำงานในโฟลเดอร์ .work/fix-auth อย่างปลอดภัย
-shipproof worktree check fix-auth
-shipproof worktree merge fix-auth
+git worktree add .work/fix-auth -b fix-auth
+shipproof check .work/fix-auth
+git worktree remove .work/fix-auth
 ```
 
 ### การสร้าง Status Badge สำหรับ README
 
-สร้าง Markdown Badge แสดงสถานะความพร้อมส่งมอบขึ้น Production:
+ใช้ Badge จาก CI workflow ที่รัน gate จริง คำสั่ง `shipproof badge` ถูกยกเลิกเพราะ Markdown แบบคงที่ไม่สามารถรับรองสถานะ repository ได้:
 
-```bash
-shipproof badge .
+```markdown
+[![ShipProof](https://github.com/OWNER/REPOSITORY/actions/workflows/security.yml/badge.svg)](https://github.com/OWNER/REPOSITORY/actions/workflows/security.yml)
 ```
 
 ### การดูคำอธิบาย Rule อย่างละเอียด
@@ -198,11 +219,22 @@ shipproof badge .
 
 ```bash
 shipproof explain SP108
+shipproof explain SP108 --context-level summary
 ```
 
-## การตรวจจับที่ปรับตาม Framework อัตโนมัติ
+ใช้ `summary` เมื่อต้องการคัดกรองแบบสั้น, `overview` เมื่อต้องตรวจเหตุผลและโอกาสเกิด false positive และ `full` เมื่อต้องการ attack scenario กับ engineering contract ครบชุด ค่าเริ่มต้นยังเป็น `full` เพื่อไม่ให้ integration เดิมเปลี่ยนพฤติกรรม
 
-ShipProof จะตรวจสอบไฟล์โครงสร้างของโปรเจกต์และเปิดใช้งานกฎการตรวจสอบที่เหมาะสมกับ Framework และ Runtime นั้นๆ โดยอัตโนมัติ:
+ถ้าต้องการตรวจสอบที่มาของคำตัดสิน gate ให้เพิ่ม `--trace` ในผลลัพธ์ JSON, Markdown หรือ terminal:
+
+```bash
+shipproof scan . --format json --trace --fail-on high
+```
+
+trace นี้เป็น opt-in และมีเฉพาะจำนวนไฟล์ ตัวกรอง baseline suppression และการประเมิน gate แบบ deterministic ไม่มี source code, evidence, path, secret, timestamp, timing, user identifier, telemetry หรือ network call
+
+## การตรวจจับตาม ecosystem
+
+ShipProof ใช้นามสกุลไฟล์ manifest และบริบทเชิงโครงสร้างที่มีขอบเขตเพื่อเลือกกฎที่เกี่ยวข้อง การตรวจพบ framework ช่วยจำกัดพื้นที่ที่กฎทำงาน แต่ไม่ใช่หลักฐานว่า deployment จริงมี configuration ตรงกับ repository ทุกประการ
 
 | กลุ่มเทคโนโลยี / Framework | การตรวจจับ | รายการที่ตรวจสอบเจาะจง |
 | :--- | :--- | :--- |
@@ -219,7 +251,7 @@ ShipProof จะตรวจสอบไฟล์โครงสร้างข�
 | **Java / Kotlin (Spring Boot, Quarkus, Micronaut)** | `pom.xml`, `build.gradle`, `build.gradle.kts` | ป้องกัน Secret / Token หลุด (`SP001`, `SP002`, `SP003`), ป้องกัน Wildcard CORS พร้อม Credentials (`SP107`), ป้องกัน Path Traversal (`SP110`), ป้องกัน Spring Boot Actuator หลุดสาธารณะ (`SP416`), ป้องกัน Binary ObjectInputStream Deserialization (`SP168`) |
 | **C# / .NET (ASP.NET Core, Web API)** | `*.csproj`, `packages.config` | ป้องกัน Sync-over-Async Thread Starvation (`SP132`), ป้องกัน `debug="true"` ใน Config (`SP133`), ป้องกัน Unconditional `UseDeveloperExceptionPage` (`SP418`), ป้องกัน Insecure Deserialization (`SP106`) |
 | **C / C++** | `CMakeLists.txt`, `Makefile` | ป้องกัน Unbounded String Functions `strcpy`/`gets` (`SP135`), ป้องกัน File Permission แบบ World-Writable (`SP139`, `SP169`) |
-| **Containers, Serverless & CI/CD** | `Dockerfile`, `compose.yaml`, `serverless.yml`, `.github/workflows` | ป้องกันการรันเป็น Root (`SP205`), ป้องกัน Pipe curl to shell (`SP206`), ป้องกัน Copy `.env` (`SP207`), ป้องกัน Expose Low Port (`SP208`), ป้องกัน PR Target Checkout (`SP209`), ป้องกัน CI Script Injection (`SP210`), ตรวจสอบ CI Permissions (`SP211`), ป้องกัน Secret Log ใน CI (`SP212`), ตรวจสอบการ Pin SHA ใน GitHub Actions (`SP203`), ตรวจสอบ Base Image Digest (`SP202`), ป้องกัน Docker Socket Mount (`SP222`), ตรวจสอบ Nginx TLS (`SP223`) |
+| **Containers, Kubernetes & CI/CD** | `Dockerfile`, Compose, Kubernetes YAML, `.github/workflows` | สิทธิ์ Root/container (`SP205`, `SP637`–`SP640`), dependency ที่เปลี่ยนได้ (`SP202`, `SP203`), workflow trust boundary (`SP209`, `SP210`, `SP658`–`SP660`), Kubernetes RBAC/admission posture (`SP656`, `SP657`, `SP661`) |
 
 ## การควบคุม False Positive (ความแม่นยำสูง)
 
@@ -243,17 +275,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.5.1
+      - uses: kingggg5/shipproof@v0.7.0
         with:
           fail-on: high
 ```
 
-Action จะสร้างการ์ดสรุปสถานะแบบ Markdown สวยงามลงใน GitHub Step Summary อัตโนมัติ
+Action จะสร้างการ์ดสรุปสถานะแบบ Markdown ใน GitHub Step Summary ตัวอย่างนี้ใช้ release tag `v0.7.0` หากต้องการอ้างอิง supply chain แบบ immutable ให้ pin ที่ full commit SHA ที่ผ่านการตรวจแล้ว
 
 สำหรับ Pull Request ใน Repository ขนาดใหญ่ สามารถสแกนเฉพาะไฟล์ที่เปลี่ยนแปลงเทียบกับ Branch หลักได้:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.5.1
+      - uses: kingggg5/shipproof@v0.7.0
         with:
           fail-on: high
           changed-since: origin/main
@@ -294,13 +326,14 @@ shipproof check [path] [--config <file>]     รันทุกเกตตา�
 shipproof scan [path] [options]              สแกนโค้ดในโปรเจกต์ (--format terminal|json|sarif|markdown)
 shipproof explain <rule-id>                  แสดงคำอธิบายกฎอย่างละเอียด (เช่น explain SP108)
 shipproof doctor [path] [--json]             ตรวจสอบความพร้อมของ Environment และ Runtime ในเครื่อง
-shipproof init [path] [--target <host>]      ติดตั้ง Skills สำหรับ Codex (.agents) และ Claude (.claude)
-shipproof install [--target <host>]          ติดตั้ง Skills สำหรับใช้งานส่วนตัวใน Codex/Claude
-shipproof prompt <name|list>                 แสดงข้อความ Prompt มาตรฐานสำหรับงาน Production Engineering
-shipproof budget [budget options]            ตรวจสอบการถดถอยของ CPU, RAM, Latency เทียบกับ Baseline
-shipproof capacity [capacity options]        วิเคราะห์การรองรับโหลดและส่งออกเป็นสคริปต์ทดสอบ k6
-shipproof evidence [path] [options]          รันตัววิเคราะห์ภาษาเฉพาะทาง (TypeScript, Go, Rust)
-shipproof hook <install|remove>              ติดตั้งหรือถอด Git Pre-commit Hook อัตโนมัติ
+shipproof init [path] [--scope <scope>]      ติดตั้ง Skills ระดับโปรเจกต์/ส่วนตัวและสร้าง Policy
+shipproof config validate [path]             ตรวจ Policy โดยไม่รัน Gate
+shipproof gate budget [options]              ตรวจการถดถอยของ CPU, RAM และ Latency
+shipproof gate evidence [path] [options]     รันตัววิเคราะห์ TypeScript, Go หรือ Rust
+shipproof labs impact <file>[:line]          วิเคราะห์ Blast Radius แบบ Experimental
+shipproof labs invariants [path]             วิเคราะห์ Invariants แบบ Experimental
+shipproof labs cost [path] [options]         ประเมิน Token/ค่าใช้จ่ายแบบ Experimental
+shipproof labs capacity [options]            จำลอง Capacity และส่งออก k6 แบบ Experimental
 shipproof mcp                                เริ่มต้นการทำงานของ MCP Server แบบ Read-Only
 shipproof help                               แสดงคำแนะนำการใช้งาน
 shipproof version                            แสดงเวอร์ชันปัจจุบัน
@@ -361,7 +394,7 @@ claude --plugin-dir .
 สั่งตรวจสอบเกต:
 
 ```bash
-shipproof budget \
+shipproof gate budget \
   --baseline perf-baseline.json --current perf-current.json \
   --budget perf-budget.json --format markdown
 ```
@@ -383,7 +416,7 @@ shipproof scan . --format sarif --output shipproof.sarif --fail-on high
 จำลองความต้องการของระบบเมื่อมีผู้ใช้ลงทะเบียน 100,000 ถึง 1,000,000 คน พร้อมคำนวณการใช้ CPU, Memory และ Database Connection Pool:
 
 ```bash
-shipproof capacity \
+shipproof labs capacity \
   --users 100000 --dau-ratio 0.25 --peak-hour-ratio 0.15 \
   --actions-per-session 10 --requests-per-action 2 --burst 2.5 --format markdown
 ```
@@ -391,7 +424,7 @@ shipproof capacity \
 ส่งออกเป็นสคริปต์ k6 สำหรับนำไปรัน Load Test จริง:
 
 ```bash
-shipproof capacity --config examples/capacity/shipproof.config.json \
+shipproof labs capacity --config examples/capacity/shipproof.config.json \
   --export-k6 load-test.js --format json
 BASE_URL=https://staging.example.test LOAD_TEST_TOKEN=replace-me k6 run load-test.js
 ```
@@ -408,17 +441,15 @@ npx shipproof mcp
 ตรวจสอบเครื่องมือเฉพาะภาษาที่พร้อมใช้งาน:
 
 ```bash
-shipproof evidence . --list --format json
-shipproof evidence . --adapter typescript --format json
-shipproof evidence . --adapter go --format json
-shipproof evidence . --adapter rust --allow-project-code --format json
+shipproof gate evidence . --list --format json
+shipproof gate evidence . --adapter typescript --allow-project-code --format json
+shipproof gate evidence . --adapter go --format json
+shipproof gate evidence . --adapter rust --allow-project-code --format json
 ```
 
 ## ตารางกฎการตรวจสอบ (Detection Rules Reference)
 
-รหัส `SP111` และ `SP308`–`SP312` เป็นรหัสสงวนไว้สำหรับกฎในอนาคต (ยังไม่ถูกใช้งาน)
-
-ทุก finding มี `proof_level` ระบุระดับหลักฐาน: `L0` คือการ match ด้วย pattern, `L1` คือหลักฐานเชิงโครงสร้าง (Python AST, การวิเคราะห์ทั้งไฟล์ หรือการตรวจ artifact เช่น header ของไฟล์ SQLite) — ทั้งสองระดับนี้คือสิ่งที่ ShipProof พิสูจน์ได้จริงในวันนี้ ระดับที่สูงกว่าที่ต้องใช้ data-flow ข้ามไฟล์ หรือ runtime evidence จะไม่ถูกอ้างจนกว่า engine จะรองรับจริง
+ทุก finding มี `proof_level` ระบุระดับหลักฐาน: `L0` คือการ match ด้วย pattern, `L1` คือหลักฐานเชิงโครงสร้าง (Python AST, การวิเคราะห์ทั้งไฟล์ หรือการตรวจ artifact เช่น header ของไฟล์ SQLite) และ `L2` ใช้เฉพาะ engine ติดตาม taint ภายในฟังก์ชัน Python ที่มีอยู่จริง ShipProof ยังไม่อ้างหลักฐานแบบ cross-file reachability หรือ runtime proof เฉพาะ 571 รายการในตารางนี้เท่านั้นที่เป็นกฎรันได้จริง ส่วน research catalogs ไม่สามารถสร้าง finding
 
 | รหัส Rule | คำอธิบายปัญหา | ระดับความรุนแรง | การตรวจจับ |
 | :--- | :--- | :--- | :--- |
@@ -982,26 +1013,60 @@ shipproof evidence . --adapter rust --allow-project-code --format json
 | **SP648** | React or Vue WebSocket connection opened inside effect without teardown return | MEDIUM | Regex |
 | **SP649** | Multitenant database query missing tenant scope filter | CRITICAL | Regex |
 | **SP650** | Unbounded recursive JSON parse or schema evaluation without nesting depth limits | HIGH | Regex |
+| **SP651** | Kubernetes container adds ALL or SYS_ADMIN Linux capabilities | MEDIUM | Regex |
+| **SP652** | Kubernetes seccomp profile explicitly set to Unconfined | MEDIUM | Regex |
+| **SP653** | Kubernetes procMount explicitly set to Unmasked | MEDIUM | Regex |
+| **SP654** | Kubernetes Windows container enables HostProcess | MEDIUM | Regex |
+| **SP655** | Kubernetes AppArmor profile explicitly set to Unconfined | MEDIUM | Regex |
+| **SP656** | Kubernetes RBAC role grants wildcard API groups, resources, or verbs | MEDIUM | Regex |
+| **SP657** | Kubernetes binding grants the built-in cluster-admin role | MEDIUM | Regex |
+| **SP658** | GitHub Actions security scanner failure explicitly forced to success | MEDIUM | Regex |
+| **SP659** | GitHub Actions security scan step configured to continue on error | MEDIUM | Regex |
+| **SP660** | GitHub reusable workflow inherits every caller secret | MEDIUM | Regex |
+| **SP661** | Kubernetes API server enables AlwaysAllow authorization | MEDIUM | Regex |
 
-## การทำงานร่วมกับเครื่องมือมาตรฐาน
+## การทำงานร่วมกับเครื่องมือเฉพาะทาง
 
-ShipProof ถูกออกแบบมาเพื่อทำงานเสริมร่วมกับเครื่องมือระดับ Enterprise:
+ShipProof ถูกออกแบบมาให้ทำงานเสริมกับเครื่องมือเฉพาะทาง ไม่ได้อ้างว่าแทนที่เครื่องมือเหล่านี้:
 
 ```text
-  L1: ShipProof Heuristic Gate (ตรวจสอบรวดเร็วในเครื่อง < 1 วินาที)
-  L2: Deep SAST / Secret Scanning (CodeQL, Semgrep, Trufflehog)
+  L1: ShipProof Heuristic Gate (pattern, AST และ whole-file structure)
+  L2: ShipProof Python intraprocedural taint + Deep SAST / Secret Scanning
   L3: Software Supply Chain (Dependency Audit, OSV-Scanner)
   L4: Dynamic Testing & Load Proof (k6, Playwright, Staging Validation)
 ```
+
+## ระเบียบวิธีวิจัยและ provenance
+
+ShipProof พัฒนา detector อย่างอิสระ แหล่งภายนอกใช้เพื่อกำหนดคำถาม คำศัพท์ และ safety boundary ไม่ได้นำโค้ด detector หรือ rule set ที่มีข้อจำกัดด้านใบอนุญาตมาคัดลอก [Research notebook](docs/research.md) บันทึกหน้าอ้างอิง คำถาม การตัดสินใจที่นำมาใช้ และข้อสรุปที่จงใจไม่กล่าวอ้าง
+
+ลำดับน้ำหนักของหลักฐานคือ: เอกสารมาตรฐาน/เจ้าของ platform, CWE/CVE/KEV และ vendor advisory, fixture/measurement/compatibility contract ที่ทำซ้ำได้, community report ที่ใช้ได้เพียงค้นหาคำถาม และ model-generated idea ที่ถือเป็นสมมติฐานที่ยังไม่น่าเชื่อถือ ทุก candidate ต้องผ่านการตรวจซ้ำ invariant implementation mapping remediation false-positive analysis และ fixtures ด้านบวก/ลบ/adversarial ก่อนเลื่อนเป็น `SPxxx`
+
+| Research artifact | ขอบเขต | ผลต่อ runtime |
+| :--- | :--- | :--- |
+| [Expert catalog](docs/rule-expansion-1000.md) | 1,000 สมมติฐานจากโมเดลและแหล่งต้นทาง | ไม่มี |
+| [Annual catalog 2021–2026](docs/rule-expansion-2021-2026.md) | 1,800 สัญญาณจาก CVE/CWE/community | ไม่มี |
+| [Language catalog](docs/rule-expansion-languages-5000.md) | 5,000 research slots แยก ecosystem/CWE | ไม่มี |
+| [ตารางกฎที่รันได้จริง](#ตารางกฎการตรวจสอบ-detection-rules-reference) | 571 detectors ที่ผ่านการทบทวน | สร้าง finding แบบ versioned |
+
+## ธรรมาภิบาลโครงการ
+
+ShipProof ใช้การตัดสินใจแบบ maintainer-led และ evidence-first การเปลี่ยนสัญญา compatibility การเลื่อนกฎ release security response และ trust boundary ปริยายอยู่ภายใต้ [GOVERNANCE.md](GOVERNANCE.md) การมีส่วนร่วมต้องปฏิบัติตาม [CONTRIBUTING.md](CONTRIBUTING.md) และ [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) ประเด็นช่องโหว่ที่นำไปใช้โจมตีได้ต้องรายงานแบบส่วนตัวตาม [SECURITY.md](SECURITY.md)
 
 ## เอกสารเพิ่มเติม
 
 - [คำสั่งทั้งหมดและ Exit Codes](docs/commands.md)
 - [คู่มือสถาปัตยกรรม Production Playbook](docs/production-playbook.md)
 - [คู่มือการวิเคราะห์และที่มาของกฎ](docs/research.md)
+- [แผนวิจัยกฎปี 2021–2026 และ Expert Candidates](docs/rule-expansion-2021-2026.md)
+- [แผนวิจัยกฎเฉพาะภาษา 5,000 รายการ](docs/rule-expansion-languages-5000.md)
+- [แผนพัฒนาขั้นต่อไปและเกณฑ์รับงาน P0–P5](docs/next-development-plan.md)
 - [แผนการพัฒนา (Roadmap)](docs/roadmap.md)
 - [แนวทางการปล่อยเวอร์ชัน (Releasing)](docs/releasing.md)
+- [ธรรมาภิบาลและกระบวนการตัดสินใจ](GOVERNANCE.md)
+- [รูปแบบการอ้างอิงโครงการ](CITATION.cff)
+- [นโยบายความปลอดภัย](SECURITY.md)
 
-## ใบอนุญาต (License)
+## ใบอนุญาต การอ้างอิง และความปลอดภัย
 
-โปรเจกต์นี้เผยแพร่ภายใต้ใบอนุญาต [MIT License](LICENSE)
+โปรเจกต์นี้เผยแพร่ภายใต้ [MIT License](LICENSE) ผู้ใช้งานด้านวิจัยสามารถอ้างอิง release ผ่าน [CITATION.cff](CITATION.cff) และควรรายงานช่องโหว่แบบส่วนตัวตาม [SECURITY.md](SECURITY.md)

@@ -71,6 +71,40 @@ class StructureTests(unittest.TestCase):
             payload = json.loads(schema.read_text(encoding="utf-8"))
             self.assertEqual(payload["$schema"], "https://json-schema.org/draft/2020-12/schema")
 
+    def test_public_runtime_and_capability_claims_match_implementation(self):
+        ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        llms = (ROOT / "llms.txt").read_text(encoding="utf-8")
+        commands = (ROOT / "docs" / "commands.md").read_text(encoding="utf-8")
+        mcp_source = (ROOT / "lib" / "mcp-server.mjs").read_text(encoding="utf-8")
+
+        self.assertIn('python-version: ["3.10", "3.12", "3.13", "3.14"]', ci)
+        self.assertIn('node-version: ["20", "22", "24"]', ci)
+        for document in (readme, agents):
+            self.assertRegex(document, r"Node(?:\.js)? 20/22/24")
+            self.assertRegex(document, r"Python 3\.10/3\.12/3\.13/3\.14")
+
+        count_match = re.search(r"- (\d+) deterministic rules", llms)
+        self.assertIsNotNone(count_match)
+        self.assertEqual(int(count_match.group(1)), len(RULES))
+        self.assertIn("L2 intraprocedural Python taint", llms)
+
+        registered_tools = set(re.findall(r'server\.registerTool\(\s*"([^"]+)"', mcp_source))
+        self.assertEqual(
+            registered_tools,
+            {
+                "shipproof_scan",
+                "shipproof_budget",
+                "shipproof_capacity",
+                "shipproof_explain",
+                "shipproof_lint_snippet",
+            },
+        )
+        self.assertIn("The server registers five tools", commands)
+        for tool_name in registered_tools:
+            self.assertIn(f"`{tool_name}`", commands)
+
     def test_skill_frontmatter_has_no_placeholders(self):
         for name in SKILL_NAMES:
             content = (ROOT / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
@@ -138,11 +172,17 @@ class StructureTests(unittest.TestCase):
         scanner_rule_ids = {rule.rule_id for rule in RULES}
         for readme_name in ("README.md", "README.th.md"):
             content = (ROOT / readme_name).read_text(encoding="utf-8")
-            heading = (
-                "## Framework-Aware Detection"
-                if "## Framework-Aware Detection" in content
-                else "## การตรวจจับที่ปรับตาม Framework อัตโนมัติ"
+            supported_headings = (
+                "## Ecosystem-aware detection",
+                "## Framework-Aware Detection",
+                "## การตรวจจับตาม ecosystem",
+                "## การตรวจจับที่ปรับตาม Framework อัตโนมัติ",
             )
+            heading = next(
+                (candidate for candidate in supported_headings if candidate in content),
+                None,
+            )
+            self.assertIsNotNone(heading, f"Missing ecosystem table heading in {readme_name}")
             framework_section = content.split(heading, 1)[1]
             framework_table = framework_section.split("## ", 1)[0]
             mentioned_rules = set(re.findall(r"\b(SP\d{3})\b", framework_table))

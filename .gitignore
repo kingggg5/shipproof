@@ -7,6 +7,7 @@ coverage.xml
 .ruff_cache/
 .npm-cache/
 node_modules/
+.shipproof-research-cache/
 .venv/
 venv/
 tests/tmp*/

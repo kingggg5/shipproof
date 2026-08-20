@@ -115,7 +115,10 @@ class CapacityModelTests(unittest.TestCase):
                     "path": "/api/tickets",
                     "method": "POST",
                     "expected_statuses": [201, 202],
-                    "body": {"subject": "capacity probe"},
+                    "body": {
+                        "subject": "capacity probe",
+                        "password": {"$env": "LOAD_TEST_PASSWORD"},
+                    },
                 },
             ],
         }
@@ -124,8 +127,59 @@ class CapacityModelTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertIn('__ENV["SERVICE_URL"]', first)
         self.assertIn('__ENV["LOAD_TOKEN"]', first)
+        self.assertIn('password":{"$env":"LOAD_TEST_PASSWORD"}', first)
+        self.assertIn("resolveEnvironmentValues(route.body)", first)
         self.assertIn('executor: "constant-arrival-rate"', first)
         self.assertNotIn("https://", first)
+
+    def test_k6_body_rejects_literal_secrets_and_malformed_placeholders(self):
+        for sensitive_key in (
+            "client_" + "secret",
+            "Api" + "Key",
+            "Authori" + "zation",
+        ):
+            with (
+                self.subTest(sensitive_key=sensitive_key),
+                self.assertRaisesRegex(ValueError, "must use an environment placeholder"),
+            ):
+                validate_k6_config(
+                    {
+                        "routes": [
+                            {
+                                "name": "login",
+                                "path": "/login",
+                                "method": "POST",
+                                "body": {"profile": {sensitive_key: "Live" + "Secret_12345"}},
+                            }
+                        ]
+                    }
+                )
+        with self.assertRaisesRegex(ValueError, "environment placeholder must be exactly"):
+            validate_k6_config(
+                {
+                    "routes": [
+                        {
+                            "name": "profile",
+                            "path": "/profile",
+                            "body": {"user": {"$env": "lowercase", "extra": True}},
+                        }
+                    ]
+                }
+            )
+
+    def test_k6_body_allows_non_sensitive_token_names(self):
+        config = validate_k6_config(
+            {
+                "routes": [
+                    {
+                        "name": "metrics",
+                        "path": "/metrics",
+                        "body": {"token_count": 42, "cookie_consent": True},
+                    }
+                ]
+            }
+        )
+        self.assertEqual(config["routes"][0]["body"]["token_count"], 42)
 
     def test_k6_config_rejects_remote_targets_and_unknown_fields(self):
         with self.assertRaises(ValueError):

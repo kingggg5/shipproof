@@ -1,10 +1,23 @@
 # ShipProof research notebook
 
-Last reviewed: 2026-08-14.
+Last reviewed: 2026-08-20.
 
 This notebook records the external pages consulted while ShipProof was designed. It is intentionally separate from the [production playbook](production-playbook.md): the playbook contains ShipProof's operating model; this file preserves provenance, challenges assumptions, and makes later re-verification possible.
 
 ShipProof does not copy another project's source, prompts, or documentation. Community discussions are useful for discovering failure questions, but no ShipProof control is accepted solely because a post, comment, or competing repository recommends it.
+
+## Research status
+
+This notebook is an engineering provenance record, not a peer-reviewed publication and not evidence that ShipProof is endorsed by any referenced organization. As of the review date:
+
+| Corpus | Count | Status |
+| --- | ---: | --- |
+| Executable scanner rules | 571 | Versioned behavior; covered by structure and regression tests |
+| Expert research candidates | 1,000 | Non-executable hypotheses |
+| Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
+| Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
+
+Candidate count measures catalog coverage, not detector quality. Candidates have no runtime effect, cannot emit a finding, and must not be presented as shipped product capability.
 
 ## Reading protocol
 
@@ -16,6 +29,32 @@ For each research pass:
 4. Record what ShipProof deliberately does **not** infer from the page.
 5. Put operational guidance in a focused skill reference and keep the source link here.
 6. Re-check dated or fast-moving material when a release depends on exact syntax or behavior.
+
+## Rule promotion protocol
+
+A candidate may be proposed for promotion only when all of the following are present:
+
+1. **Provenance:** an owning specification, vendor/framework document, language specification, or real vulnerability record identifies the failure class.
+2. **Local invariant:** the repository contains a condition that can be observed without guessing deployment state, business intent, or cross-file reachability the engine does not implement.
+3. **Deduplication:** no existing detector already covers the same syntax, cause, and evidence boundary.
+4. **Bounded implementation:** applicable suffixes/manifests, multiline behavior, generated/test code handling, redaction, and complexity are explicit.
+5. **Quality corpus:** at least three positive, five negative, and two adversarial fixtures pass through the real repository walker.
+6. **Finding contract:** stable ID, severity, confidence, proof level, category, CWE/control mapping, explanation, remediation, fingerprint, and documented false-positive boundary.
+7. **Compatibility evidence:** English and Thai rule tables, schemas/fixtures where applicable, package tests, full test suite, and high-severity self-scan pass.
+
+New uncertain heuristics begin as review-first and non-blocking. Promotion to a blocking default requires representative repository evaluation and recorded precision evidence. A detector is narrowed or retired when field evidence invalidates its assumptions; its ID is not reassigned.
+
+## Source hierarchy and reproducibility
+
+Sources are ranked by their authority for the question being answered:
+
+1. owning standards body, platform/framework documentation, or language specification;
+2. vendor advisories and CVE/KEV/CWE records;
+3. reproducible local fixtures, measurements, and versioned compatibility contracts;
+4. community discussions as question-discovery signals only;
+5. model output as an untrusted hypothesis only.
+
+Offline catalogs record stable identifiers, source URLs, retrieval/review dates where available, and deterministic generation inputs. A URL proves only that a page was consulted. It does not prove reachability, prevalence, exploitability, conformance, or ownership of the referenced project. Re-running a catalog generator must not silently promote, delete, or change executable rules.
 
 ## Decision ledger
 
@@ -61,6 +100,46 @@ Only primary pages that directly affected a decision are retained below. A link 
 - **Not inferred:** One language, scanner, or platform makes a product secure by default.
 
 ### Development and supply chain
+
+#### OpenViking progressive context and observability review
+
+- **Page opened:** [Volcengine OpenViking](https://github.com/volcengine/OpenViking)
+- **Question:** Which context-management ideas improve ShipProof without importing a server, vector database, embedding model, or network dependency?
+- **Observation:** OpenViking presents context at progressively richer levels and treats retrieval/decision observability as an explicit concern rather than returning every detail for every request.
+- **ShipProof decision:** Implement a clean-room, domain-specific adaptation only: `summary`/`overview`/`full` disclosure for explanations and fix prompts, plus an opt-in deterministic scan decision trace made only from bounded counts. Keep all default execution local, offline, read-only, and dependency-free.
+- **Not inferred:** OpenViking's storage, retrieval, session, embedding, telemetry, or server architecture is appropriate for a static production gate. No OpenViking code, runtime dependency, protocol, or AGPL-covered implementation is copied into ShipProof.
+
+#### Annual NVD/CISA/CWE research snapshot
+
+- **Pages and APIs opened:** [NVD data feeds and API guidance](https://nvd.nist.gov/vuln/data-feeds), [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog), and the [MITRE CWE catalog](https://cwe.mitre.org/data/).
+- **Question:** How can a large current rule backlog remain traceable without bulk-enabling thousands of noisy patterns?
+- **Observation:** CVEs provide time-bounded incident signals, KEV distinguishes observed exploitation, and CWE provides stable weakness taxonomy. None of them alone specifies a precise source detector.
+- **ShipProof decision:** Keep 1,800 annual CVE signals and 1,000 CWE records as offline research-only snapshots. Route CVEs to dependency evidence by default and require the normal fixture/precision gates before any CWE-derived detector is promoted.
+- **Not inferred:** The sampled records are a global top 300, a CVE is reachable in a scanned repository, or a CWE title is an implementable regex specification.
+
+#### Community question discovery, 2021–2026
+
+- **Pages opened:** selected question and discussion URLs from Stack Overflow and Reddit, plus Google security and supply-chain publications. The repository-only URL ledger is in [`research/community-signals.json`](https://github.com/kingggg5/shipproof/blob/main/research/community-signals.json).
+- **Question:** Which production mistakes recur in practitioner questions after 2021?
+- **Observation:** Build-secret handling, privileged pull-request workflows, mutable CI dependencies, build-time environment exposure, unsafe cluster changes, and missing production lifecycle controls recur across years.
+- **ShipProof decision:** Use community pages only to prioritize a question, then confirm it against owning documentation such as Docker, GitHub Actions, Kubernetes, Next.js, NIST, CISA, or SLSA.
+- **Not inferred:** A post is accurate, representative, independently verified, or sufficient evidence for a scanner finding. Post bodies, answers, and code are not copied into ShipProof.
+
+#### Language and framework applicability pass
+
+- **Pages opened:** [.NET code analysis](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview), [TypeScript project references](https://www.typescriptlang.org/docs/handbook/project-references), [PHP database security](https://www.php.net/manual/en/security.database.php), [React reactive-effect lifecycle](https://react.dev/learn/lifecycle-of-reactive-effects), [Go security best practices](https://go.dev/doc/security/best-practices), [Go vulnerability database](https://go.dev/doc/security/vuln/database), [SEI CERT C++](https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682), [Angular security](https://angular.dev/best-practices/security), [Node.js security best practices](https://nodejs.org/en/learn/getting-started/security-best-practices), [PostgreSQL prepared statements](https://www.postgresql.org/docs/current/sql-prepare.html), [Python security considerations](https://docs.python.org/3/library/security_warnings.html), [Oracle Java security guide](https://docs.oracle.com/en/java/javase/17/security/index.html), [Rust unsafe contracts](https://doc.rust-lang.org/stable/nomicon/safe-unsafe-meaning.html), [Android/Kotlin security checklist](https://developer.android.com/privacy-and-security/security-tips), [Android/Kotlin performance](https://developer.android.com/topic/performance/overview), [Apple secure coding](https://developer.apple.com/library/archive/documentation/Security/Conceptual/SecureCodingGuide/Introduction.html), and [Apple secure decoding](https://developer.apple.com/documentation/foundation/nssecurecoding).
+- **Question:** How can 5,000 language-focused ideas be prioritized without treating a generic CWE name or model recollection as a valid detector?
+- **Observation:** The same weakness needs different syntax, lifecycle, and evidence in each ecosystem. Official documents expose precise boundaries such as parameterized SQL, React effect synchronization, Angular sanitization/Trusted Types, Go vulnerability evidence, .NET analyzer scope, C++ memory/concurrency contracts, Rust unsafe invariants, Android lifecycle/resource budgets, and secure Apple decoding.
+- **ShipProof decision:** Create one unique `(ecosystem, CWE)` research record, reject explicit incompatible CWE language declarations, record official ecosystem sources and CWE applicability/consequences, and compare every record with executable CWE/suffix coverage. Keep scale and performance non-blocking until a missing bound, lifecycle error, query pattern, or measured regression is locally provable.
+- **Not inferred:** An official best-practice page defines 5,000 scanner patterns, a repeated CWE root is a duplicate across different syntax ecosystems, or a security consequence can be proven through a source regex alone.
+
+#### Current framework configuration sources
+
+- **Pages opened:** [Kubernetes Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/), [GitHub Actions secure-use guidance](https://docs.github.com/en/actions/reference/security/secure-use), and [Next.js environment-variable guidance](https://nextjs.org/docs/app/guides/environment-variables).
+- **Question:** Which framework states are explicit enough for low-noise static analysis?
+- **Observation:** Explicit unsafe values and privileged workflow/data boundaries are stronger local proof than absence-based guesses. Framework version and document ownership matter.
+- **ShipProof decision:** Prefer structural checks for explicit unsafe configuration. Missing controls remain manual, admission-policy, or runtime evidence unless repository structure proves full scope.
+- **Not inferred:** A single manifest is the rendered deployment, an environment variable name proves secrecy, or every privileged workflow is exploitable.
 
 #### NIST Secure Software Development Framework
 

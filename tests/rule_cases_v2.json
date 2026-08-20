@@ -1,0 +1,742 @@
+{
+  "quality_contract_version": 2,
+  "rules": [
+    {
+      "rule_id": "SP651",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "claim": "The Restricted standard requires containers to drop ALL capabilities and limits capabilities that may be added."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/250.html",
+          "claim": "CWE-250 documents execution with unnecessary privileges."
+        }
+      ],
+      "false_positive_analysis": "The detector requires a capabilities mapping followed by an add list containing exactly ALL or SYS_ADMIN. It does not report drop: ALL, unrelated ALL lists, or individually scoped low-risk capabilities.",
+      "positive": [
+        {
+          "path": "deployment.yaml",
+          "source": "securityContext:\n  capabilities:\n    add:\n      - ALL\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "capabilities:\n  add: [NET_BIND_SERVICE, SYS_ADMIN]\n"
+        },
+        {
+          "path": "job.yaml",
+          "source": "capabilities:\n  drop:\n    - ALL\n  add:\n    - \"SYS_ADMIN\"\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "deployment.yaml",
+          "source": "capabilities:\n  drop:\n    - ALL\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "capabilities:\n  add: [NET_BIND_SERVICE]\n"
+        },
+        {
+          "path": "policy.yaml",
+          "source": "requestedCapabilities:\n  add: [ALL]\n"
+        },
+        {
+          "path": "comment.yaml",
+          "source": "# capabilities:\n#   add: [ALL]\n"
+        },
+        {
+          "path": "empty.yml",
+          "source": "capabilities:\n  add: []\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "quoted.yaml",
+          "source": "capabilities:\n  add: ['all']\n",
+          "expected": true,
+          "rationale": "YAML quoting and case must not evade an explicit dangerous capability."
+        },
+        {
+          "path": "drop-only.yaml",
+          "source": "capabilities:\n  drop: ['ALL', 'SYS_ADMIN']\n",
+          "expected": false,
+          "rationale": "Dropping dangerous capabilities is the recommended secure configuration."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP652",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "claim": "The Restricted standard requires an explicitly allowed seccomp profile and forbids Unconfined."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/693.html",
+          "claim": "CWE-693 covers missing or incorrectly applied protection mechanisms."
+        }
+      ],
+      "false_positive_analysis": "The detector requires the Kubernetes seccompProfile key immediately associated with type: Unconfined. Generic objects with a type named Unconfined and secure RuntimeDefault or Localhost profiles are excluded.",
+      "positive": [
+        {
+          "path": "deployment.yaml",
+          "source": "securityContext:\n  seccompProfile:\n    type: Unconfined\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "seccompProfile:\n  type: 'Unconfined'\n"
+        },
+        {
+          "path": "job.yaml",
+          "source": "seccompProfile:\n  type: unconfined # legacy exception\nrunAsNonRoot: true\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "deployment.yaml",
+          "source": "seccompProfile:\n  type: RuntimeDefault\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "seccompProfile:\n  type: Localhost\n  localhostProfile: profiles/app.json\n"
+        },
+        {
+          "path": "config.yaml",
+          "source": "profile:\n  type: Unconfined\n"
+        },
+        {
+          "path": "comment.yml",
+          "source": "# seccompProfile:\n#   type: Unconfined\n"
+        },
+        {
+          "path": "empty.yaml",
+          "source": "securityContext: {}\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "tabs.yml",
+          "source": "seccompProfile:\n\ttype: \"UNCONFINED\"\n",
+          "expected": true,
+          "rationale": "Equivalent capitalization, quoting, and indentation must not bypass detection."
+        },
+        {
+          "path": "similar-key.yaml",
+          "source": "seccompProfileType:\n  type: Unconfined\n",
+          "expected": false,
+          "rationale": "A similar application key is not necessarily a Kubernetes securityContext field."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP653",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "claim": "The Restricted standard forbids procMount: Unmasked."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/250.html",
+          "claim": "CWE-250 documents execution with unnecessary privileges."
+        }
+      ],
+      "false_positive_analysis": "procMount is a Kubernetes-specific field and Unmasked is an explicit insecure value. Similar key names, comments, and the runtime default proc mount are not reported.",
+      "positive": [
+        {
+          "path": "deployment.yaml",
+          "source": "securityContext:\n  procMount: Unmasked\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "procMount: \"Unmasked\"\n"
+        },
+        {
+          "path": "job.yaml",
+          "source": "      procMount: unmasked # required by old agent\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "deployment.yaml",
+          "source": "procMount: Default\n"
+        },
+        {
+          "path": "comment.yml",
+          "source": "# procMount: Unmasked\n"
+        },
+        {
+          "path": "config.yaml",
+          "source": "procMountPolicy: Unmasked\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "securityContext: {}\n"
+        },
+        {
+          "path": "text.yaml",
+          "source": "description: procMount Unmasked is forbidden\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "inline-comment.yaml",
+          "source": "procMount: 'UNMASKED' # exception\n",
+          "expected": true,
+          "rationale": "Quoting and an inline comment do not change the explicit Kubernetes value."
+        },
+        {
+          "path": "nested-name.yaml",
+          "source": "my_procMount: Unmasked\n",
+          "expected": false,
+          "rationale": "A custom application key must not be confused with the Kubernetes field."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP654",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "claim": "The Restricted standard requires windowsOptions.hostProcess to be undefined or false."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/250.html",
+          "claim": "CWE-250 documents execution with unnecessary privileges."
+        }
+      ],
+      "false_positive_analysis": "hostProcess is a Kubernetes Windows securityContext field and true is an explicit host-level request. False, comments, prose, and similarly named application settings are excluded.",
+      "positive": [
+        {
+          "path": "deployment.yaml",
+          "source": "windowsOptions:\n  hostProcess: true\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "hostProcess: TRUE\n"
+        },
+        {
+          "path": "daemonset.yaml",
+          "source": "      hostProcess: true # node agent\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "deployment.yaml",
+          "source": "windowsOptions:\n  hostProcess: false\n"
+        },
+        {
+          "path": "comment.yml",
+          "source": "# hostProcess: true\n"
+        },
+        {
+          "path": "config.yaml",
+          "source": "enableHostProcess: true\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "windowsOptions: {}\n"
+        },
+        {
+          "path": "text.yaml",
+          "source": "description: hostProcess true is not allowed\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "inline-comment.yaml",
+          "source": "hostProcess: true # temporary exception\n",
+          "expected": true,
+          "rationale": "An inline explanation does not make host-level isolation safe."
+        },
+        {
+          "path": "suffix-key.yaml",
+          "source": "my_hostProcess: true\n",
+          "expected": false,
+          "rationale": "A custom application field must not be treated as the Kubernetes field."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP655",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "claim": "The Restricted standard forbids AppArmor Unconfined profiles and legacy unconfined annotations."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/693.html",
+          "claim": "CWE-693 covers missing or incorrectly applied protection mechanisms."
+        }
+      ],
+      "false_positive_analysis": "The detector requires either the Kubernetes appArmorProfile structure or the exact legacy Kubernetes annotation. RuntimeDefault, Localhost, comments, and unrelated profile types are excluded.",
+      "positive": [
+        {
+          "path": "deployment.yaml",
+          "source": "securityContext:\n  appArmorProfile:\n    type: Unconfined\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "appArmorProfile:\n  type: 'unconfined'\n"
+        },
+        {
+          "path": "legacy.yaml",
+          "source": "metadata:\n  annotations:\n    container.apparmor.security.beta.kubernetes.io/app: unconfined\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "deployment.yaml",
+          "source": "appArmorProfile:\n  type: RuntimeDefault\n"
+        },
+        {
+          "path": "pod.yml",
+          "source": "appArmorProfile:\n  type: Localhost\n  localhostProfile: profiles/app\n"
+        },
+        {
+          "path": "legacy.yaml",
+          "source": "container.apparmor.security.beta.kubernetes.io/app: runtime/default\n"
+        },
+        {
+          "path": "comment.yml",
+          "source": "# appArmorProfile:\n#   type: Unconfined\n"
+        },
+        {
+          "path": "config.yaml",
+          "source": "profile:\n  type: Unconfined\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "quoted-legacy.yaml",
+          "source": "container.apparmor.security.beta.kubernetes.io/worker: \"UNCONFINED\"\n",
+          "expected": true,
+          "rationale": "The legacy annotation remains dangerous when quoted or capitalized."
+        },
+        {
+          "path": "similar-annotation.yaml",
+          "source": "container.apparmor.example.io/app: unconfined\n",
+          "expected": false,
+          "rationale": "Only the Kubernetes AppArmor annotation contract is in this detector's scope."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP656",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+          "claim": "Kubernetes cautions that wildcard RBAC entries include current and future resources and verbs and can grant access to sensitive resources."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/250.html",
+          "claim": "CWE-250 identifies execution with privileges that are not required for the intended operation."
+        }
+      ],
+      "false_positive_analysis": "The detector requires an RBAC API document, a Role or ClusterRole kind in the same YAML document, and an exact wildcard item under apiGroups, resources, or verbs. Generic resource lists, resourceNames, non-wildcard grants, prose, comments, and a wildcard in a separate YAML document are excluded.",
+      "positive": [
+        {
+          "path": "role.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nrules:\n  - apiGroups: [\"\"]\n    resources: [\"pods\"]\n    verbs: [\"*\"]\n"
+        },
+        {
+          "path": "cluster-role.yml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole\nrules:\n- apiGroups: [apps]\n  resources:\n    - deployments\n    - '*'\n  verbs: [get, list]\n"
+        },
+        {
+          "path": "custom-role.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  name: broad\nkind: Role\nrules:\n- apiGroups: [\"example.io\", \"*\"]\n  resources: [widgets]\n  verbs: [get]\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "role.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nrules:\n- apiGroups: [\"\"]\n  resources: [pods]\n  verbs: [get, list, watch]\n"
+        },
+        {
+          "path": "deployment.yaml",
+          "source": "apiVersion: apps/v1\nkind: Deployment\nspec:\n  resources: [\"*\"]\n"
+        },
+        {
+          "path": "role.yml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nrules:\n- resourceNames: [\"*\"]\n  resources: [pods]\n  verbs: [get]\n"
+        },
+        {
+          "path": "comment.yaml",
+          "source": "# apiVersion: rbac.authorization.k8s.io/v1\n# kind: Role\n# verbs: [\"*\"]\n"
+        },
+        {
+          "path": "documents.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nrules:\n- resources: [pods]\n  verbs: [get]\n---\nkind: ConfigMap\nresources: [\"*\"]\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "block-list.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole\nrules:\n- resources: [pods]\n  verbs:\n    - get\n    - \"*\" # generated grant\n",
+          "expected": true,
+          "rationale": "A quoted wildcard in a block list remains an unrestricted RBAC grant despite surrounding specific entries."
+        },
+        {
+          "path": "url-pattern.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nrules:\n- nonResourceURLs: [\"/healthz/*\"]\n  verbs: [get]\n",
+          "expected": false,
+          "rationale": "A suffix glob inside a non-resource URL is not an exact wildcard apiGroup, resource, or verb entry."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP657",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/",
+          "claim": "Kubernetes documents cluster-admin as the built-in ClusterRole used to grant full cluster administrator rights."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/250.html",
+          "claim": "CWE-250 identifies execution with privileges that are not required for the intended operation."
+        }
+      ],
+      "false_positive_analysis": "The detector requires an RBAC API document, a RoleBinding or ClusterRoleBinding kind, and roleRef.name equal to the exact built-in cluster-admin role in the same YAML document. A metadata name containing cluster-admin, a purpose-built admin role, comments, and references in another document are excluded.",
+      "positive": [
+        {
+          "path": "binding.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata:\n  name: app-admin\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: ClusterRole\n  name: cluster-admin\nsubjects:\n- kind: ServiceAccount\n  name: app\n"
+        },
+        {
+          "path": "namespace-binding.yml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nroleRef:\n  kind: ClusterRole\n  name: 'cluster-admin'\nsubjects: []\n"
+        },
+        {
+          "path": "inline.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nroleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: cluster-admin}\nsubjects: []\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "binding.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nroleRef:\n  kind: Role\n  name: app-reader\nsubjects: []\n"
+        },
+        {
+          "path": "metadata.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata:\n  name: cluster-admin-audit\nroleRef:\n  kind: ClusterRole\n  name: audit-reader\n"
+        },
+        {
+          "path": "role.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole\nmetadata:\n  name: cluster-admin\nrules: []\n"
+        },
+        {
+          "path": "comment.yml",
+          "source": "# apiVersion: rbac.authorization.k8s.io/v1\n# kind: ClusterRoleBinding\n# roleRef: {name: cluster-admin}\n"
+        },
+        {
+          "path": "documents.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nroleRef:\n  name: app-reader\n---\nkind: ConfigMap\nroleRef:\n  name: cluster-admin\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "quoted.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: ClusterRole\n  name: \"CLUSTER-ADMIN\" # generated\n",
+          "expected": true,
+          "rationale": "YAML quoting and capitalization do not change the identity of the built-in cluster-admin ClusterRole."
+        },
+        {
+          "path": "similar-name.yaml",
+          "source": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nroleRef:\n  kind: ClusterRole\n  name: cluster-administrator-readonly\n",
+          "expected": false,
+          "rationale": "A similarly named custom ClusterRole must not be confused with the exact built-in cluster-admin role."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP658",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://docs.github.com/en/actions/how-tos/create-and-publish-actions/set-exit-codes",
+          "claim": "GitHub Actions uses a nonzero process exit code to mark an action as failed and a zero exit code as successful."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/390.html",
+          "claim": "CWE-390 covers detecting an error condition without taking the action required by the product's strategy."
+        }
+      ],
+      "false_positive_analysis": "The detector runs only inside .github/workflows and requires a recognized security scanner command followed on the same shell command by an explicit forced-success branch such as || true, || :, or ; exit 0. Ordinary commands, correctly propagated failures, prose, other YAML files, and conditional handling that returns failure remain outside scope.",
+      "positive": [
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: npm audit || true\n"
+        },
+        {
+          "path": ".github/workflows/go.yaml",
+          "source": "steps:\n  - name: vulnerabilities\n    run: govulncheck ./... || :\n"
+        },
+        {
+          "path": ".github/workflows/gate.yml",
+          "source": "steps:\n  - run: shipproof check . ; exit 0\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: npm audit\n"
+        },
+        {
+          "path": ".github/workflows/test.yml",
+          "source": "steps:\n  - run: npm test || true\n"
+        },
+        {
+          "path": "config/security.yml",
+          "source": "run: npm audit || true\n"
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: npm audit || exit 1\n"
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "# run: npm audit || true\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: \"cargo audit || true\"\n",
+          "expected": true,
+          "rationale": "Quoting the entire shell command does not restore the scanner's nonzero exit status."
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: npm audit --audit-level=high || report_failure\n",
+          "expected": false,
+          "rationale": "A named failure handler is not proven to force success and requires data-flow evidence before reporting."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP659",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepscontinue-on-error",
+          "claim": "GitHub documents that step continue-on-error set to true allows the job to pass when that step fails."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/390.html",
+          "claim": "CWE-390 covers detecting an error condition without taking the action required by the product's strategy."
+        }
+      ],
+      "false_positive_analysis": "The detector runs only inside .github/workflows and requires continue-on-error: true within the same bounded YAML step as a recognized security scanner command or security action. Flaky tests, experimental matrix jobs, unrelated steps, false values, generic scan names, and other YAML files are excluded.",
+      "positive": [
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - name: Dependency audit\n    run: npm audit\n    continue-on-error: true\n"
+        },
+        {
+          "path": ".github/workflows/codeql.yaml",
+          "source": "steps:\n  - uses: github/codeql-action/analyze@v3\n    continue-on-error: true\n"
+        },
+        {
+          "path": ".github/workflows/go.yml",
+          "source": "steps:\n  - continue-on-error: true\n    run: govulncheck ./...\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: npm audit\n"
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: npm audit\n    continue-on-error: false\n"
+        },
+        {
+          "path": ".github/workflows/test.yml",
+          "source": "steps:\n  - run: npm test\n    continue-on-error: true\n"
+        },
+        {
+          "path": "examples/workflow.yml",
+          "source": "steps:\n  - run: trivy fs .\n    continue-on-error: true\n"
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: npm audit\n  - name: experimental test\n    continue-on-error: true\n    run: npm test\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - continue-on-error: TRUE # temporary\n    uses: actions/dependency-review-action@v4\n",
+          "expected": true,
+          "rationale": "YAML key ordering, capitalization, and an inline comment do not preserve enforcement."
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "source": "steps:\n  - run: npm audit\n  - name: allowed failure\n    continue-on-error: true\n    run: echo telemetry\n",
+          "expected": false,
+          "rationale": "The continue-on-error key belongs to a separate step and must not be correlated across the step boundary."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP660",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows#passing-secrets-to-nested-workflows",
+          "claim": "GitHub documents that jobs.<job_id>.secrets.inherit passes all caller secrets to the directly called reusable workflow."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/200.html",
+          "claim": "CWE-200 covers exposure of sensitive information to an actor that is not explicitly authorized to access it."
+        }
+      ],
+      "false_positive_analysis": "The detector is path-scoped to .github/workflows and requires the exact GitHub Actions secrets: inherit syntax. Named secret maps, environment names, false-like values, generic YAML outside workflows, comments, and similarly named application keys are excluded. Same-repository intentional inheritance remains a reviewable least-privilege finding.",
+      "positive": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "source": "jobs:\n  deploy:\n    uses: org/platform/.github/workflows/deploy.yml@main\n    secrets: inherit\n"
+        },
+        {
+          "path": ".github/workflows/local.yaml",
+          "source": "jobs:\n  build:\n    uses: ./.github/workflows/build.yml\n    secrets: INHERIT\n"
+        },
+        {
+          "path": ".github/workflows/nested.yml",
+          "source": "jobs:\n  call:\n    uses: org/repo/.github/workflows/ci.yml@v2\n    with:\n      mode: release\n    secrets: inherit # all caller secrets\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "source": "jobs:\n  deploy:\n    uses: org/platform/.github/workflows/deploy.yml@main\n    secrets:\n      deploy_token: ${{ secrets.DEPLOY_TOKEN }}\n"
+        },
+        {
+          "path": "config/workflows.yml",
+          "source": "secrets: inherit\n"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "source": "# secrets: inherit\n"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "source": "environment: inherit\n"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "source": "inherit_secrets: true\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": ".github/workflows/release.yaml",
+          "source": "jobs:\n  release:\n    uses: org/repo/.github/workflows/release.yml@main\n    secrets: 'inherit'\n",
+          "expected": true,
+          "rationale": "Quoting the inherit keyword does not narrow which caller secrets become available."
+        },
+        {
+          "path": ".github/workflows/release.yaml",
+          "source": "jobs:\n  release:\n    uses: org/repo/.github/workflows/release.yml@main\n    secrets:\n      inherit: ${{ secrets.INHERIT }}\n",
+          "expected": false,
+          "rationale": "A named secret whose key happens to be inherit is a mapping, not the GitHub inherit keyword."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP661",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/",
+          "claim": "Kubernetes states that AlwaysAllow authorizes no-opinion requests and should not be used on an API server reachable from the public internet."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/862.html",
+          "claim": "CWE-862 covers missing authorization checks for actors attempting to access resources or perform actions."
+        }
+      ],
+      "false_positive_analysis": "The detector requires the exact kube-apiserver authorization-mode flag or configuration key with an AlwaysAllow mode in YAML. RBAC, Node, Webhook, AlwaysDeny, prose, comments, similarly named application modes, and other file types are excluded. Isolated test control planes remain an explicit reviewed exception rather than a silent production default.",
+      "positive": [
+        {
+          "path": "kube-apiserver.yaml",
+          "source": "command:\n  - kube-apiserver\n  - --authorization-mode=AlwaysAllow\n"
+        },
+        {
+          "path": "cluster.yml",
+          "source": "apiServer:\n  extraArgs:\n    authorization-mode: Node,RBAC,AlwaysAllow\n"
+        },
+        {
+          "path": "static-pod.yaml",
+          "source": "args: [\"--authorization-mode=ALWAYSALLOW,RBAC\"]\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "kube-apiserver.yaml",
+          "source": "command:\n  - kube-apiserver\n  - --authorization-mode=Node,RBAC\n"
+        },
+        {
+          "path": "cluster.yml",
+          "source": "authorization-mode: Node,RBAC,Webhook\n"
+        },
+        {
+          "path": "comment.yaml",
+          "source": "# --authorization-mode=AlwaysAllow\n"
+        },
+        {
+          "path": "application.yaml",
+          "source": "authorization_mode: always_allow\n"
+        },
+        {
+          "path": "notes.txt",
+          "source": "--authorization-mode=AlwaysAllow is forbidden\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "cluster.yaml",
+          "source": "apiServer:\n  extraArgs:\n    authorization-mode: \"Webhook,AlwaysAllow\" # fallback\n",
+          "expected": true,
+          "rationale": "Combining AlwaysAllow with another authorizer still authorizes requests that receive no opinion."
+        },
+        {
+          "path": "cluster.yaml",
+          "source": "apiServer:\n  extraArgs:\n    authorization-mode: AlwaysDeny,RBAC\n",
+          "expected": false,
+          "rationale": "AlwaysDeny is a different authorization mode and must not be matched by an AlwaysAllow detector."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/cost-report.schema.json",
+  "title": "ShipProof AI cost estimate report",
+  "allOf": [
+    { "$ref": "evidence-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["root", "model", "iterations", "context_tokens", "output_tokens_per_iteration", "total_input_tokens", "total_output_tokens", "cached_input_tokens", "fresh_input_tokens", "estimated_cost_usd_single_run", "cadence", "monthly_estimated_cost_usd", "budget_usd", "budget_status", "savings_from_caching_usd"],
+      "properties": {
+        "tool": { "properties": { "command": { "const": "cost" } } },
+        "root": { "type": "string", "minLength": 1 },
+        "model": { "type": "string" }, "iterations": { "type": "integer", "minimum": 1 },
+        "context_tokens": { "type": "integer", "minimum": 1 },
+        "output_tokens_per_iteration": { "type": "integer", "minimum": 1 },
+        "total_input_tokens": { "type": "integer", "minimum": 0 },
+        "total_output_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "fresh_input_tokens": { "type": "integer", "minimum": 0 },
+        "estimated_cost_usd_single_run": { "type": "number", "minimum": 0 },
+        "cadence": { "type": "string" }, "monthly_estimated_cost_usd": { "type": "number", "minimum": 0 },
+        "budget_usd": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "budget_status": { "enum": ["UNSET", "PASS", "EXCEEDED"] },
+        "savings_from_caching_usd": { "type": "number", "minimum": 0 }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

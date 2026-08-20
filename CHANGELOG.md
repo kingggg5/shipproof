@@ -1,23 +1,21 @@
 # Changelog
 
-## 0.6.0 - 2026-08-19
-
-- Expand rule catalog to **150+ rules** across Multi-Language ecosystems with detectors `SP591` – `SP650`.
-- Add AI Agent Token & Financial Cost Budget Engine (`shipproof cost`): computes context footprint, prompt caching discount calculations across frontier AI models (Claude 3.7/3.5, GPT-4o, Gemini 2.0/1.5, DeepSeek-V3/R1), and multi-iteration financial budget gates (`--budget-usd`).
-- Add Git Worktree Isolation Sandbox (`shipproof worktree`): enables AI coding agents to create, test, and merge isolated workspace sandboxes safely without touching working branches.
-- Add Production Readiness Status Badge (`shipproof badge`): outputs shields.io Markdown or JSON status badges for `README.md`.
-- Add Next.js 15 App Router & TypeScript Enterprise Gate (`SP591` – `SP600`): Server-only ORM leakage in `"use client"` bundles, unawaited route segment params, mutating actions missing revalidation, and IDOR protection.
-- Add Multi-Language Enterprise Production Gate (`SP601` – `SP625`): OWASP Top 10 for LLMs, Kubernetes container hardening, GraphQL/gRPC resilience, OAuth2/PKCE security, PostgreSQL table lock protection, and language failure modes in Rust, Go, Java, Python, C#.
-- Add Cloud & Infrastructure-as-Code detectors (`SP626` – `SP630`): AWS S3 public access, unencrypted EBS/RDS storage, open security group SSH/RDP ports, IAM wildcard policies, CloudFront HTTPS enforcement.
-- Add Edge Runtimes & Serverless Isolation rules (`SP631` – `SP634`): Cloudflare Workers / Deno / Vercel Edge Node.js module check, unbounded KV loops, unbuffered response accumulation, authenticated CDN cache leaks.
-- Add Real-Time & Streaming Concurrency rules (`SP635` – `SP638`): WebSocket missing heartbeat keepalive, Server-Sent Events missing disconnect listeners, WebSocket unauthenticated handshake, BroadcastChannel unmount leaks.
-- Add Cryptographic Primitives & Key Management rules (`SP639` – `SP643`): Insecure symmetric ciphers, weak RSA key length, static/hardcoded IV reuse, legacy MD5/SHA1 hashing, timing-unsafe HMAC comparisons.
-- Add Modern Framework & Multitenancy Security rules (`SP644` – `SP650`): Svelte unescaped `{@html}`, Android WebView file access, iOS URLSession SSL trust bypass, Frontend API proxy SSRF, React useEffect WebSocket teardown, multitenant query tenant scoping, recursive JSON stack overflow bounds.
-- Expand full test suite to 284 unit tests passing 100% with 0 scanner findings.
-
 ## Unreleased
 
-- Publish the failure catalog (`docs/knowledge/failure-catalog.md`): 463 researched failure modes across 21 sections (web security, auth, crypto, SQL, APIs, performance, frontend, Python, concurrency, reliability, infrastructure, CI/CD, data integrity, AI/LLM), each with impact, fix direction, detection feasibility, and references. The catalog feeds detector selection for future rules.
+No unreleased changes.
+
+## 0.7.0 - 2026-08-20
+
+- Add opt-in, content-free scanner decision traces and progressive `summary`/`overview`/`full` context for rule explanations and AI fix prompts. The implementation adapts only the high-value context-disclosure and observability ideas identified in the OpenViking review; it adds no server, vector database, embeddings, telemetry, network path, or runtime dependency, and preserves `full` as the compatibility default.
+- Rework both public READMEs around an explicit trust model, verified `0.7.0`/571-rule status, evidence levels, executable-versus-research boundaries, ecosystem scope, and immutable Action guidance. Remove stale version/coverage badges and unsupported external statistics; add project governance, citation metadata, expanded contribution/conduct/security policies, and ship those documents in the allowlisted package artifact.
+- Promote six high-signal cloud and CI/CD candidates as non-blocking executable rules `SP656`–`SP661`: Kubernetes RBAC wildcard grants, `cluster-admin` bindings, masked scanner exits, security steps that continue on error, broad reusable-workflow secret inheritance, and Kubernetes `AlwaysAllow` authorization. Each rule ships with official-source grounding, CWE mapping, false-positive analysis, and positive/negative/adversarial fixtures.
+- Publish an ordered P0–P5 development plan covering contract integrity, executable-rule fixture assurance, evidence-gated candidate promotion, polyglot analyzers, scale/performance proof, real-world evaluation, measurable acceptance gates, and CLI 1.0 cleanup.
+- Add 5,000 deduplicated language-specific research candidates (`SP4451–SP9450`) across C#, TypeScript, PHP, React, Go, C++, Angular, JavaScript, SQL, Python, Java, Rust, Kotlin, and Swift. Rank variants from CWE-declared applicability, retain structured security/reliability/performance/scale consequences, cross-check executable CWE/suffix overlap, ground each ecosystem in owning documentation, and keep every record non-executable until its precision fixtures pass.
+- Add 2,800 traceable rule-research candidates without bulk-enabling detectors: 300 critical NVD samples for each year from 2021 through 2026 (`SP1651–SP3450`), plus 1,000 current CWE-grounded expert candidates (`SP3451–SP4450`). Add CISA KEV/vendor provenance, a 2021–2026 Reddit/Stack Overflow/Google discovery ledger with official confirmation links, an allowlisted offline snapshot builder, and tests enforcing counts, contiguous IDs, source URLs, CWE diversity, and research-only status.
+- Fail closed across evidence and release paths: reject missing analysis targets and non-positive cost inputs with exit `2`; probe Go with `go version`; require explicit approval before executing repository-local TypeScript or Rust tooling; distinguish analyzer crashes from findings; discard stale GitHub Action reports and derive summaries from the real gate exit; upload SARIF after blocking findings; and restrict releases to exact tags without automated registry publication or failure-masking fallbacks.
+- Harden scanner correctness and precision: route previously unreachable language and manifest suffixes, bound multiline structural matches, preserve Unicode/subdirectory Git changes, prevent credential rehydration in terminal and fix-prompt context, verify autofix results before returning success, and scope Dockerfile-only rules to Dockerfiles. Add the evidence-gated 1,000-candidate expansion program plus non-blocking pilot rules `SP651`–`SP661` and an enforceable positive/negative/adversarial quality manifest for every future rule.
+- Simplify the public CLI around `check`, `scan`, and `explain`; group deterministic primitives under `gate`, move heuristic analyzers under `labs`, add `config validate`, merge global skill setup into `init --scope global`, hide legacy aliases with migration warnings, and retire the static `badge` command because it could not attest repository status. `init` now emits a policy that round-trips through `check`, and missing-policy fallback no longer swallows wrong-type or unsafe policy errors.
+- Publish the failure catalog (`docs/knowledge/failure-catalog.md`): 527 researched failure modes across 27 sections, each with impact, fix direction, detection feasibility, and references. The catalog feeds detector selection for future rules.
 - Speed up the regex engine 3.3x (1,000-file benchmark: 7.16s → 2.19s, 139.7 → 456.5 files/s) by precomputing per-line comment/ignore flags once per file instead of per rule, and caching the applicable rule set per file class; findings and fingerprints are unchanged, enforced by the golden contract.
 - Add eleven CWE-driven detectors with positive, negative, and adversarial tests each: `SP115` (XXE via unhardened lxml), `SP116` (`dangerouslySetInnerHTML` XSS), `SP117` (`new Function` eval), `SP118` (timer-string eval), `SP119` (path traversal via `path.join`), `SP120` (`node-serialize` RCE), `SP121` (open redirect), `SP122` (insecure randomness for security values), `SP123` (hardcoded cipher IV), `SP124` (JS SSRF), and `SP318` (retry policies without a stop condition). Adversarial cases document the evasions the current engine cannot see, seeding the Red Team corpus.
 - Add evidence proof levels: every finding now reports `detection` (`pattern`, `ast`, `structural`, `artifact`) and `proof_level` (`L0`/`L1`) in JSON and SARIF, with documentation that higher levels requiring data-flow or runtime evidence are deliberately not claimed.
@@ -35,6 +33,21 @@
 - Sync the README rule tables with scanner severities (including `SP302` and seven Thai-table drifts) and add a structure test that fails when either README drifts from the code rules again.
 - Fix the zero-config quickstart: `npx @kingggg5/shipproof` cannot run anonymously because GitHub Packages requires authentication for public packages; the documented one-liner is now `npx github:kingggg5/shipproof check`.
 - Document reserved rule IDs (`SP111`, `SP308`–`SP312`) in both READMEs and correct the roadmap MCP tool count from three to five.
+
+## 0.6.0 - 2026-08-19
+
+- Expand the executable rule catalog to **560 rules** across multiple language ecosystems, including detectors `SP591`–`SP650`.
+- Add AI Agent Token & Financial Cost Budget Engine (`shipproof cost`): computes context footprint, prompt caching discount calculations across frontier models (Claude 3.7/3.5, GPT-4o, Gemini 2.0/1.5, DeepSeek-V3/R1), and multi-iteration financial budget gates (`--budget-usd`).
+- Add Git Worktree Isolation Sandbox (`shipproof worktree`): enables AI coding agents to create, test, and merge isolated workspace sandboxes safely without touching working branches.
+- Add Production Readiness Status Badge (`shipproof badge`): outputs shields.io Markdown or JSON status badges for `README.md`.
+- Add Next.js 15 App Router & TypeScript Enterprise Gate (`SP591`–`SP600`): server-only DB/ORM leakage in `"use client"` bundles, unawaited route-segment parameters, mutating actions missing revalidation, and IDOR protection.
+- Add Multi-Language Enterprise Production Gate (`SP601`–`SP625`): OWASP Top 10 for LLMs, Kubernetes container hardening, GraphQL/gRPC resilience, OAuth2/PKCE security, PostgreSQL table-lock protection, and language failure modes in Rust, Go, Java, Python, and C#.
+- Add Cloud & Infrastructure-as-Code detectors (`SP626`–`SP630`): AWS S3 public access, unencrypted EBS/RDS storage, open security-group SSH/RDP ports, IAM wildcard policies, and CloudFront HTTPS enforcement.
+- Add Edge Runtimes & Serverless Isolation rules (`SP631`–`SP634`): Cloudflare Workers, Deno, and Vercel Edge Node.js module checks, unbounded KV loops, unbuffered response accumulation, and authenticated CDN cache leaks.
+- Add Real-Time & Streaming Concurrency rules (`SP635`–`SP638`): WebSocket heartbeat keepalive, Server-Sent Events disconnect listeners, WebSocket handshake authentication, and BroadcastChannel unmount leaks.
+- Add Cryptographic Primitives & Key Management rules (`SP639`–`SP643`): insecure symmetric ciphers, weak RSA key length, static IV reuse, legacy MD5/SHA1 hashing, and timing-unsafe HMAC comparisons.
+- Add Modern Framework & Multitenancy Security rules (`SP644`–`SP650`): Svelte raw HTML, Android WebView file access, iOS URLSession trust bypass, frontend API proxy SSRF, React WebSocket teardown, multitenant query scoping, and recursive JSON nesting bounds.
+- Expand the full test suite to 284 unit tests with zero high-gate self-scan findings.
 
 ## 0.5.1 - 2026-08-16
 

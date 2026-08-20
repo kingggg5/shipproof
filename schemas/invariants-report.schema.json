@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/invariants-report.schema.json",
+  "title": "ShipProof repository invariants report",
+  "allOf": [
+    { "$ref": "evidence-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["root", "status", "total_violations", "violations"],
+      "properties": {
+        "tool": { "properties": { "command": { "const": "invariants" } } },
+        "root": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["PASS", "FAIL"] }, "total_violations": { "type": "integer", "minimum": 0 },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["invariant_id", "title", "path", "line", "severity", "message", "remediation", "proof_level"],
+            "properties": {
+              "invariant_id": { "type": "string", "pattern": "^INV-[A-Z]+-[0-9]{2}$" },
+              "title": { "type": "string" }, "path": { "type": "string" }, "line": { "type": "integer", "minimum": 1 },
+              "severity": { "enum": ["critical", "high", "medium"] }, "message": { "type": "string" },
+              "remediation": { "type": "string" }, "proof_level": { "const": "L3" }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

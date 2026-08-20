@@ -1,4 +1,5 @@
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -120,6 +121,29 @@ class CostModelTests(unittest.TestCase):
         self.assertEqual(code_md, 0)
         code_term = main(["--context-tokens", "1000", "--format", "terminal"])
         self.assertEqual(code_term, 0)
+
+    def test_negative_numeric_inputs_fail_closed(self):
+        invalid_arguments = (
+            ["--context-tokens", "-1"],
+            ["--output-tokens", "-1"],
+            ["--iterations", "0"],
+            ["--budget-usd", "0"],
+        )
+        for arguments in invalid_arguments:
+            with self.subTest(arguments=arguments):
+                self.assertEqual(main([*arguments, "--format", "json"]), 2)
+
+        with self.assertRaises(ValueError):
+            calculate_cost("o4-mini", context_tokens=100, output_tokens_per_iteration=-1)
+
+    def test_missing_path_is_unavailable_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "missing"
+            self.assertEqual(main([str(missing), "--format", "json"]), 2)
+            self.assertEqual(
+                main([str(missing), "--context-tokens", "1000", "--format", "json"]),
+                2,
+            )
 
 
 if __name__ == "__main__":

@@ -43,7 +43,7 @@ jobs:
       - name: Generate SARIF and enforce gate
         run: python skills/audit-production-readiness/scripts/scan_repo.py . --format sarif --output shipproof.sarif --fail-on high
       - name: Upload SARIF
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        if: always() && hashFiles('shipproof.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@b56ba49b26e50535fa1e7f7db0f4f7b4bf65d80d # v3.28.11
         with:
           sarif_file: shipproof.sarif

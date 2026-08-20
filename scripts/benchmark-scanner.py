@@ -45,12 +45,23 @@ def peak_rss_mb() -> float | None:
                 ("PeakPagefileUsage", ctypes.c_size_t),
             ]
 
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        process_api = (
+            kernel32.K32GetProcessMemoryInfo
+            if hasattr(kernel32, "K32GetProcessMemoryInfo")
+            else ctypes.WinDLL("psapi", use_last_error=True).GetProcessMemoryInfo
+        )
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        process_api.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(ProcessMemoryCounters),
+            wintypes.DWORD,
+        ]
+        process_api.restype = wintypes.BOOL
         counters = ProcessMemoryCounters()
         counters.cb = ctypes.sizeof(counters)
-        process = ctypes.windll.kernel32.GetCurrentProcess()
-        if not ctypes.windll.psapi.GetProcessMemoryInfo(
-            process, ctypes.byref(counters), counters.cb
-        ):
+        process = kernel32.GetCurrentProcess()
+        if not process_api(process, ctypes.byref(counters), counters.cb):
             return None
         return counters.PeakWorkingSetSize / 1_048_576
     try:
@@ -112,14 +123,19 @@ def main() -> int:
         "findings": len(findings),
     }
     failures = []
+    unavailable = []
     if arguments.max_seconds is not None and duration > arguments.max_seconds:
         failures.append("duration")
-    if arguments.max_memory_mb is not None and (memory is None or memory > arguments.max_memory_mb):
-        failures.append("memory")
-    report["verdict"] = "BLOCK" if failures else "PASS_WITH_EVIDENCE"
+    if arguments.max_memory_mb is not None:
+        if memory is None:
+            unavailable.append("memory")
+        elif memory > arguments.max_memory_mb:
+            failures.append("memory")
+    report["verdict"] = "WARN" if unavailable else ("BLOCK" if failures else "PASS_WITH_EVIDENCE")
     report["failed_budgets"] = failures
+    report["unavailable_budgets"] = unavailable
     print(json.dumps(report, indent=2))
-    return 1 if failures else 0
+    return 2 if unavailable else (1 if failures else 0)
 
 
 if __name__ == "__main__":

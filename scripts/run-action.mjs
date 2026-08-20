@@ -1,4 +1,4 @@
-import { appendFileSync, existsSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync, realpathSync, statSync, unlinkSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -124,20 +124,31 @@ function findPython() {
   throw new Error("Python 3.10+ is required by the ShipProof action");
 }
 
-export function formatActionSummary(reportPath, format) {
+function gateSummaryHeading(exitCode, failOn) {
+  const verdict = exitCode === 0 ? "PASSED" : exitCode === 1 ? "BLOCKED" : "UNAVAILABLE";
+  return `### 🛡️ ShipProof Gate: **${verdict}** (fail-on: \`${failOn}\`)`;
+}
+
+export function formatActionSummary(
+  reportPath,
+  format,
+  { exitCode = 0, failOn = "high" } = {},
+) {
   try {
     if (!existsSync(reportPath)) return "";
     const content = readFileSync(reportPath, "utf8");
+    const heading = gateSummaryHeading(exitCode, failOn);
     if (format === "markdown") {
-      return content;
+      return `${heading}\n\n${content}`;
     }
     if (format === "json") {
       const data = JSON.parse(content);
       const verdict = data.verdict || "UNKNOWN";
-      const icon = verdict === "PASS_WITH_EVIDENCE" ? "🟢" : "🔴";
       const findings = data.findings || [];
       const lines = [
-        `### 🛡️ ShipProof Gate: **${verdict}**`,
+        heading,
+        "",
+        `Evidence verdict: **${verdict}**`,
         "",
         `Scanned **${data.summary?.files_scanned || 0}** files • Found **${findings.length}** issues`,
         "",
@@ -155,9 +166,8 @@ export function formatActionSummary(reportPath, format) {
     if (format === "sarif") {
       const sarif = JSON.parse(content);
       const results = sarif.runs?.[0]?.results || [];
-      const verdict = results.length === 0 ? "PASSED" : "BLOCKED";
       const lines = [
-        `### 🛡️ ShipProof Gate: **${verdict}**`,
+        heading,
         "",
         `Found **${results.length}** issue(s)`,
         "",
@@ -184,21 +194,36 @@ export function main(environment = process.env) {
   try {
     const inputs = validateActionInputs(environment);
     const python = findPython();
+    if (existsSync(inputs.output)) unlinkSync(inputs.output);
     const result = spawnSync(python.command, [...python.prefix, ...buildScannerArguments(inputs)], {
       stdio: "inherit",
       shell: false,
       windowsHide: true,
     });
-    if (environment.GITHUB_OUTPUT) {
+    const exitCode = result.error ? 2 : (result.status ?? 2);
+    const reportAvailable = (
+      (exitCode === 0 || exitCode === 1)
+      && existsSync(inputs.output)
+      && statSync(inputs.output).isFile()
+    );
+    if ((exitCode === 0 || exitCode === 1) && !reportAvailable) {
+      console.error("shipproof-action: scanner did not produce a fresh report");
+      return 2;
+    }
+    if (!reportAvailable && existsSync(inputs.output)) unlinkSync(inputs.output);
+    if (reportAvailable && environment.GITHUB_OUTPUT) {
       appendFileSync(environment.GITHUB_OUTPUT, `report-path=${inputs.output}\n`, "utf8");
     }
-    if (environment.GITHUB_STEP_SUMMARY) {
-      const summary = formatActionSummary(inputs.output, inputs.format);
+    if (reportAvailable && environment.GITHUB_STEP_SUMMARY) {
+      const summary = formatActionSummary(inputs.output, inputs.format, {
+        exitCode,
+        failOn: inputs.failOn,
+      });
       if (summary) {
         appendFileSync(environment.GITHUB_STEP_SUMMARY, `${summary}\n`, "utf8");
       }
     }
-    return result.status ?? 2;
+    return exitCode;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`shipproof-action: ${message}`);

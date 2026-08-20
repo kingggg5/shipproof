@@ -10,7 +10,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 
 # 2026 Model Pricing catalog (USD per 1 Million tokens)
 # Format: input_per_m, output_per_m, cache_read_per_m, cache_write_per_m
@@ -197,6 +197,10 @@ def estimate_codebase_tokens(
     root: Path, max_file_bytes: int = 500_000, exclude_dirs: set[str] | None = None
 ) -> int:
     """Estimate context token count of scannable text files in directory."""
+    if not root.exists():
+        raise ValueError(f"path does not exist: {root}")
+    if not root.is_file() and not root.is_dir():
+        raise ValueError(f"path is not a regular file or directory: {root}")
     if exclude_dirs is None:
         exclude_dirs = {
             ".git",
@@ -259,6 +263,14 @@ def calculate_cost(
     budget_usd: float | None = None,
 ) -> CostEstimate:
     """Compute deterministic AI cost and token consumption model."""
+    if context_tokens < 1:
+        raise ValueError("context_tokens must be positive")
+    if output_tokens_per_iteration < 1:
+        raise ValueError("output_tokens_per_iteration must be positive")
+    if iterations < 1:
+        raise ValueError("iterations must be at least 1")
+    if budget_usd is not None and budget_usd <= 0:
+        raise ValueError("budget_usd must be positive")
     pricing = MODEL_PRICING.get(model.lower(), MODEL_PRICING["claude-3-5-sonnet"])
     total_output_tokens = output_tokens_per_iteration * iterations
 
@@ -417,11 +429,27 @@ def main(argv: list[str] | None = None) -> int:
     if args.iterations < 1:
         sys.stderr.write("Error: --iterations must be at least 1\n")
         return 2
+    if args.output_tokens < 1:
+        sys.stderr.write("Error: --output-tokens must be positive\n")
+        return 2
+    if args.context_tokens is not None and args.context_tokens < 1:
+        sys.stderr.write("Error: --context-tokens must be positive\n")
+        return 2
+    if args.budget_usd is not None and args.budget_usd <= 0:
+        sys.stderr.write("Error: --budget-usd must be positive\n")
+        return 2
+
+    target_path = Path(args.path).resolve()
+    if not target_path.exists():
+        sys.stderr.write(f"Error: path does not exist: {target_path}\n")
+        return 2
+    if not target_path.is_file() and not target_path.is_dir():
+        sys.stderr.write(f"Error: path is not a regular file or directory: {target_path}\n")
+        return 2
 
     if args.context_tokens is not None:
-        context_tokens = max(100, args.context_tokens)
+        context_tokens = args.context_tokens
     else:
-        target_path = Path(args.path).resolve()
         context_tokens = estimate_codebase_tokens(target_path)
 
     estimate = calculate_cost(
@@ -435,7 +463,18 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.format == "json":
-        print(json.dumps(asdict(estimate), indent=2))
+        payload = {
+            "schema_version": "1.0",
+            "tool": {"name": "ShipProof", "version": VERSION, "command": "cost"},
+            "verdict": "BLOCK" if estimate.budget_status == "EXCEEDED" else "CONDITIONAL",
+            "root": str(target_path),
+            **asdict(estimate),
+            "limitations": [
+                "Costs are estimates based on declared token counts and versioned price assumptions.",
+                "Provider discounts, batch pricing, tool calls, and future price changes may differ.",
+            ],
+        }
+        print(json.dumps(payload, indent=2))
     elif args.format == "markdown":
         print(format_markdown(estimate))
     else:

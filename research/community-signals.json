@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "researched_on": "2026-08-20",
+  "status": "question_discovery_only",
+  "policy": "Community and industry pages affect prioritization only. No post text or code is copied, and every theme requires confirmation from an official source before promotion.",
+  "signals": [
+    {
+      "signal_id": "COMM-2021-001",
+      "year": 2021,
+      "platform": "stackoverflow",
+      "url": "https://stackoverflow.com/questions/67716915/how-to-pass-a-github-secret-to-a-dockerfile-the-secure-way",
+      "theme": "Developers repeatedly need a safe boundary for build credentials that does not persist secret material in image layers.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.docker.com/build/building/secrets/"]
+    },
+    {
+      "signal_id": "COMM-2021-002",
+      "year": 2021,
+      "platform": "stackoverflow",
+      "url": "https://stackoverflow.com/questions/67868501/production-env-file-with-docker-build-push-action-and-github-actions",
+      "theme": "Production environment-file handling creates confusion between secret injection, build inputs, and committed configuration.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.docker.com/build/building/variables/", "https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions"]
+    },
+    {
+      "signal_id": "COMM-2021-003",
+      "year": 2021,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/qhqyhl/share_your_devops_horror_stories/",
+      "theme": "Operational anecdotes highlight configuration drift, excessive infrastructure multiplicity, and production changes without bounded recovery evidence.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://csrc.nist.gov/pubs/sp/800/218/final"]
+    },
+    {
+      "signal_id": "COMM-2021-004",
+      "year": 2021,
+      "platform": "google",
+      "url": "https://security.googleblog.com/2021/06/introducing-slsa-end-to-end-framework.html",
+      "theme": "Software-supply-chain integrity needs tamper-resistant build provenance rather than trust in mutable pipeline descriptions alone.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://slsa.dev/spec/v1.2/"]
+    },
+    {
+      "signal_id": "COMM-2022-001",
+      "year": 2022,
+      "platform": "stackoverflow",
+      "url": "https://stackoverflow.com/questions/72871599/use-github-secrets-in-dockerfile-does-not-work-with-github-actions",
+      "theme": "Build arguments are often mistaken for protected secret channels even though credentials can persist in metadata or layers.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.docker.com/build/building/secrets/"]
+    },
+    {
+      "signal_id": "COMM-2022-002",
+      "year": 2022,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/wajare/how_do_youcompany_deal_with_secrets_on_cicd/",
+      "theme": "Teams struggle with long-lived CI credentials, environment promotion, external secret stores, and ownership of secret rotation.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.github.com/en/actions/concepts/security/openid-connect"]
+    },
+    {
+      "signal_id": "COMM-2022-003",
+      "year": 2022,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/yfs45m/github_actions_prevent_secret_exfiltration_on_pull/",
+      "theme": "Pull-request workflows can combine untrusted contributor changes with credentials or privileged repository permissions.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.github.com/en/actions/reference/security/secure-use"]
+    },
+    {
+      "signal_id": "COMM-2022-004",
+      "year": 2022,
+      "platform": "google",
+      "url": "https://security.googleblog.com/2022/04/improving-software-supply-chain.html",
+      "theme": "Isolated builds, authenticated provenance, and verifiable artifacts reduce tampering opportunities in software delivery.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://slsa.dev/spec/v1.2/build-track"]
+    },
+    {
+      "signal_id": "COMM-2023-001",
+      "year": 2023,
+      "platform": "stackoverflow",
+      "url": "https://stackoverflow.com/questions/77268763/unable-to-mount-secret-to-dockerfile-using-docker-build-push-action-on-github-ac",
+      "theme": "Correct BuildKit secret identifiers and mounts are a recurring integration boundary that unsafe fallbacks can bypass.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.docker.com/build/building/secrets/"]
+    },
+    {
+      "signal_id": "COMM-2023-002",
+      "year": 2023,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/10ql5y8/securing_github_actions_from_the_inside/",
+      "theme": "Privileged cloud operations from CI need protected environments, least privilege, and review at the effect boundary.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.github.com/en/actions/deployment/targeting-different-environments/managing-environments-for-deployment"]
+    },
+    {
+      "signal_id": "COMM-2023-003",
+      "year": 2023,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/18j1gyc/tifu_and_took_down_production/",
+      "theme": "Cluster upgrades and infrastructure reconciliation can cause outages when disruption budgets and pre-production evidence are incomplete.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://kubernetes.io/docs/tasks/run-application/configure-pdb/"]
+    },
+    {
+      "signal_id": "COMM-2023-004",
+      "year": 2023,
+      "platform": "github",
+      "url": "https://github.blog/security/supply-chain-security/slsa-3-compliance-with-github-actions/",
+      "theme": "Hosted build isolation and signed provenance are concrete supply-chain properties that can be verified independently of source scanning.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://slsa.dev/spec/v1.2/requirements"]
+    },
+    {
+      "signal_id": "COMM-2024-001",
+      "year": 2024,
+      "platform": "stackoverflow",
+      "url": "https://stackoverflow.com/questions/77994694/environment-secrets-in-next-js-with-actions-runner-and-github-actions",
+      "theme": "Next.js build-time and runtime variables are frequently confused, creating accidental client exposure or missing production configuration.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://nextjs.org/docs/app/guides/environment-variables"]
+    },
+    {
+      "signal_id": "COMM-2024-002",
+      "year": 2024,
+      "platform": "stackoverflow",
+      "url": "https://stackoverflow.com/questions/79192747/how-to-use-enviornment-variables-with-azure-web-apps-nextjs",
+      "theme": "Cloud deployment pipelines expose a persistent distinction between values bundled at build time and server-only runtime configuration.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://nextjs.org/docs/app/guides/environment-variables"]
+    },
+    {
+      "signal_id": "COMM-2024-003",
+      "year": 2024,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/19f7yut/funny_stuff_happens_in_devops/",
+      "theme": "Destructive infrastructure commands and broad resource selection need previews, narrow scopes, and recoverable deployment controls.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/kubectl_apply_set-last-applied/"]
+    },
+    {
+      "signal_id": "COMM-2024-004",
+      "year": 2024,
+      "platform": "google",
+      "url": "https://blog.google/innovation-and-ai/technology/safety-security/new-insights-for-defending-the-software-supply-chain/",
+      "theme": "Supply-chain defense needs ecosystem-wide hygiene, resilient build infrastructure, and prioritization beyond isolated dependency alerts.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://csrc.nist.gov/pubs/sp/800/218/final"]
+    },
+    {
+      "signal_id": "COMM-2025-001",
+      "year": 2025,
+      "platform": "stackoverflow",
+      "url": "https://stackoverflow.com/questions/79716205/docker-cannot-locate-secrets-folders-during-image-build",
+      "theme": "Container secret mounts have explicit lifecycle and filesystem semantics that should not be replaced by copied application files.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.docker.com/compose/how-tos/use-secrets/"]
+    },
+    {
+      "signal_id": "COMM-2025-002",
+      "year": 2025,
+      "platform": "stackoverflow",
+      "url": "https://stackoverflow.com/questions/79591740/proper-devops-flow-for-applications-requiring-environment-variables-at-build-tim",
+      "theme": "Promoting one artifact across environments conflicts with frameworks that embed public configuration during their build phase.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://nextjs.org/docs/app/guides/environment-variables"]
+    },
+    {
+      "signal_id": "COMM-2025-003",
+      "year": 2025,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/1l6rnxp/what_was_your_i_broke_something_in_production/",
+      "theme": "Production-only changes and incomplete understanding of cluster configuration repeatedly appear as preventable operational risk.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://csrc.nist.gov/pubs/sp/800/218/final"]
+    },
+    {
+      "signal_id": "COMM-2025-004",
+      "year": 2025,
+      "platform": "cisa",
+      "url": "https://www.cisa.gov/news-events/alerts/2025/01/17/cisa-and-fbi-release-updated-guidance-product-security-bad-practices",
+      "theme": "Product producers should remove insecure defaults and entire vulnerability classes instead of transferring remediation burden to users.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://www.cisa.gov/resources-tools/resources/product-security-bad-practices"]
+    },
+    {
+      "signal_id": "COMM-2026-001",
+      "year": 2026,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/1vribl5/what_kubernetes_misconfigurations_have_caused_you/",
+      "theme": "Probe timing, shutdown grace, connection limits, and build-versus-runtime variables remain recurring production configuration questions.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"]
+    },
+    {
+      "signal_id": "COMM-2026-002",
+      "year": 2026,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devsecops/comments/1s8fpq5/whats_the_most_painful_devops_issue_youve_faced/",
+      "theme": "Mutable action references, broad workflow permissions, and long-lived cloud credentials remain high-priority CI supply-chain themes.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.github.com/en/actions/reference/security/secure-use"]
+    },
+    {
+      "signal_id": "COMM-2026-003",
+      "year": 2026,
+      "platform": "reddit",
+      "url": "https://www.reddit.com/r/devops/comments/1rdrpzz/whats_your_biggest_frustration_with_github/",
+      "theme": "Organization-wide secret scope and reusable workflow design create privilege boundaries that repository-local scanning cannot infer alone.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions"]
+    },
+    {
+      "signal_id": "COMM-2026-004",
+      "year": 2026,
+      "platform": "google",
+      "url": "https://cloud.google.com/blog/topics/threat-intelligence/mitigation-guidance-for-supply-chain-compromise",
+      "theme": "Recent supply-chain incidents reinforce protected repository identities, immutable dependencies, secret rotation, and review of privileged CI triggers.",
+      "use": "question_discovery_only",
+      "confirmation_urls": ["https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target"]
+    }
+  ]
+}

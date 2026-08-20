@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 
 SKIP_DIRS = {
     ".git",
@@ -442,7 +442,11 @@ def extract_js_ts_symbols(rel_path: str, content: str) -> dict[str, SymbolDef]:
 
 class ImpactGraph:
     def __init__(self, root: Path):
-        self.root = root
+        self.root = root.resolve()
+        if not self.root.exists():
+            raise ValueError(f"path does not exist: {self.root}")
+        if not self.root.is_dir():
+            raise ValueError(f"not a directory: {self.root}")
         self.symbols: dict[str, list[SymbolDef]] = defaultdict(list)
         self.file_to_symbols: dict[str, list[SymbolDef]] = defaultdict(list)
         self.summaries: dict[str, list[FunctionSummary]] = defaultdict(list)
@@ -617,7 +621,20 @@ class ImpactGraph:
         return flows
 
     def analyze_impact(self, target_file: str, target_line: int | None = None) -> ImpactReport:
-        norm_file = target_file.replace("\\", "/").lstrip("./")
+        candidate = Path(target_file)
+        candidate = (
+            candidate.resolve() if candidate.is_absolute() else (self.root / candidate).resolve()
+        )
+        try:
+            norm_file = candidate.relative_to(self.root).as_posix()
+        except ValueError as exc:
+            raise ValueError(f"target file escapes repository root: {target_file}") from exc
+        if not candidate.is_file():
+            raise ValueError(f"target file does not exist: {candidate}")
+        if candidate.suffix.lower() not in PYTHON_SUFFIXES | JS_TS_SUFFIXES:
+            raise ValueError(f"unsupported target file type: {candidate.suffix or '<none>'}")
+        if target_line is not None and target_line < 1:
+            raise ValueError("target line must be positive")
         target_symbols: list[SymbolDef] = []
 
         file_syms = self.file_to_symbols.get(norm_file, [])
@@ -788,12 +805,27 @@ def main(argv: Sequence[str] | None = None) -> int:
             target_str = parts[0]
             target_line = int(parts[1])
 
-    graph = ImpactGraph(args.root)
-    graph.build()
-    report = graph.analyze_impact(target_str, target_line)
+    try:
+        graph = ImpactGraph(args.root)
+        graph.build()
+        report = graph.analyze_impact(target_str, target_line)
+    except (OSError, ValueError) as exc:
+        print(f"shipproof: {exc}", file=sys.stderr)
+        return 2
 
     if args.format == "json":
-        print(json.dumps(asdict(report), indent=2))
+        payload = {
+            "schema_version": "1.0",
+            "tool": {"name": "ShipProof", "version": VERSION, "command": "impact"},
+            "verdict": "CONDITIONAL",
+            "root": str(args.root.resolve()),
+            **asdict(report),
+            "limitations": [
+                "Impact is inferred from static symbols and references; dynamic dispatch may be absent.",
+                "Selected tests are candidates, not proof that all affected behavior is covered.",
+            ],
+        }
+        print(json.dumps(payload, indent=2))
     else:
         print(render_impact_markdown(report))
 

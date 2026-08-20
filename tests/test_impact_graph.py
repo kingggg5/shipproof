@@ -12,6 +12,7 @@ sys.path.insert(0, str(SCRIPTS))
 from impact_graph import (  # noqa: E402
     ImpactGraph,
     extract_js_ts_symbols,
+    main,
     render_impact_markdown,
 )
 
@@ -94,6 +95,21 @@ class ImpactGraphTests(unittest.TestCase):
             md = render_impact_markdown(report)
             self.assertIn("ShipProof Change Impact Analysis", md)
             self.assertIn("tests/test_auth.py", md)
+
+    def test_missing_root_or_target_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            parent = Path(tmpdir)
+            root = parent / "repo"
+            root.mkdir()
+            outside = parent / "outside.py"
+            outside.write_text("value = 1\n", encoding="utf-8")
+
+            self.assertEqual(main(["missing.py", "--root", str(root), "--format", "json"]), 2)
+            self.assertEqual(main([str(outside), "--root", str(root), "--format", "json"]), 2)
+            self.assertEqual(
+                main(["missing.py", "--root", str(parent / "missing"), "--format", "json"]),
+                2,
+            )
 
 
 if __name__ == "__main__":

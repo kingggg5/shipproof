@@ -18,7 +18,7 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 
 SKIP_DIRS = {
     ".git",
@@ -35,6 +35,12 @@ SKIP_DIRS = {
     "dist",
     "build",
     "coverage",
+    "benchmarks",
+    "docs",
+    "examples",
+    "fixtures",
+    "test",
+    "tests",
     ".next",
     ".nuxt",
     ".cache",
@@ -158,7 +164,16 @@ def check_tenant_boundary(root: Path, file_path: Path, content: str) -> list[Inv
     violations: list[InvariantViolation] = []
     rel_str = str(file_path.relative_to(root)).replace("\\", "/")
 
-    if ("repo" in rel_str.lower() or "model" in rel_str.lower()) and file_path.suffix == ".py":
+    path_markers = {part.lower() for part in Path(rel_str).parts}
+    stem = file_path.stem.lower()
+    is_persistence_module = bool(
+        path_markers & {"model", "models", "repo", "repos", "repositories", "repository"}
+        or stem.endswith(("_model", "_repo", "_repository"))
+    )
+    tenancy_markers = re.compile(
+        r"\b(?:tenant_id|organization_id|org_id|account_id|workspace_id)\b", re.IGNORECASE
+    )
+    if is_persistence_module and file_path.suffix == ".py" and tenancy_markers.search(content):
         try:
             tree = ast.parse(content, filename=rel_str)
             for node in ast.walk(tree):
@@ -168,11 +183,26 @@ def check_tenant_boundary(root: Path, file_path: Path, content: str) -> list[Inv
                     or node.name.startswith("update_")
                 ):
                     args = [a.arg for a in node.args.args if a.arg != "self" and a.arg != "cls"]
-                    has_tenant = any(
-                        "tenant" in a.lower() or "org" in a.lower() or "account" in a.lower()
-                        for a in args
+                    has_tenant = any(tenancy_markers.fullmatch(argument) for argument in args)
+                    has_identifier = any(
+                        argument.lower() == "id" or argument.lower().endswith("_id")
+                        for argument in args
                     )
-                    if args and not has_tenant and any("id" in a.lower() for a in args):
+                    body_text = "\n".join(
+                        ast.unparse(statement) if hasattr(ast, "unparse") else ""
+                        for statement in node.body
+                    ).lower()
+                    performs_database_query = bool(
+                        re.search(
+                            r"(?:\b(?:db|session|cursor|queryset)\b|\.objects\b|\bselect\s*\()",
+                            body_text,
+                        )
+                        and re.search(
+                            r"(?:\.query\s*\(|\.filter(?:_by)?\s*\(|\.get\s*\(|\.execute\s*\(|\bselect\s*\()",
+                            body_text,
+                        )
+                    )
+                    if args and has_identifier and not has_tenant and performs_database_query:
                         violations.append(
                             InvariantViolation(
                                 invariant_id="INV-TENANT-01",
@@ -246,6 +276,11 @@ def check_transaction_hygiene(
 
 
 def evaluate_invariants(root: Path, config_file: Path | None = None) -> list[InvariantViolation]:
+    root = root.resolve()
+    if not root.exists():
+        raise ValueError(f"path does not exist: {root}")
+    if not root.is_dir():
+        raise ValueError(f"not a directory: {root}")
     violations: list[InvariantViolation] = []
 
     for directory, subdirs, filenames in os.walk(root, topdown=True, onerror=lambda _: None):
@@ -298,13 +333,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
     args = parser.parse_args(argv)
 
-    violations = evaluate_invariants(args.root)
+    try:
+        violations = evaluate_invariants(args.root)
+    except (OSError, ValueError) as exc:
+        print(f"shipproof: {exc}", file=sys.stderr)
+        return 2
 
     if args.format == "json":
         payload = {
+            "schema_version": "1.0",
+            "tool": {"name": "ShipProof", "version": VERSION, "command": "invariants"},
+            "verdict": "BLOCK" if violations else "PASS_WITH_EVIDENCE",
+            "root": str(args.root.resolve()),
             "status": "PASS" if not violations else "FAIL",
             "total_violations": len(violations),
             "violations": [asdict(v) for v in violations],
+            "limitations": [
+                "Invariant checks use explicit static evidence and do not prove runtime enforcement.",
+                "Dynamic routes, generated queries, and framework-specific authorization may be absent.",
+            ],
         }
         print(json.dumps(payload, indent=2))
     else:

@@ -1,5 +1,7 @@
 # AWE TraceGate and ShipProof roadmap
 
+The risk-based expansion program reserves 8,800 research slots without bulk-shipping noisy regexes. The original [1,000-candidate program](rule-expansion-1000.md) defines promotion thresholds and the `SP651–SP661` pilot. The [2021–2026 and expert expansion](rule-expansion-2021-2026.md) adds 1,800 annual CVE signals and 1,000 CWE-grounded expert candidates. The [5,000-candidate language expansion](rule-expansion-languages-5000.md) adds deduplicated C#, TypeScript, PHP, React, Go, C++, Angular, JavaScript, SQL, Python, Java, Rust, Kotlin, and Swift variants. Every unpromoted record remains research-only. The ordered implementation work, acceptance gates, promotion lifecycle, and CLI 1.0 cleanup are maintained in the [next development plan](next-development-plan.md).
+
 This roadmap turns ShipProof from a local evidence toolkit into a reusable execution layer for AWE TraceGate and global developer workflows. Version 0.4.0 ships the important end-to-end slices; unchecked acceptance work remains a release gate rather than an implied claim.
 
 ## Version 0.4.0 implementation status
@@ -96,7 +98,7 @@ Do not rename ShipProof after an external project or import another project's wo
 ### Command contract
 
 ```text
-shipproof capacity --config workload.json --export-k6 generated/load-test.js
+shipproof labs capacity --config workload.json --export-k6 generated/load-test.js
 ```
 
 ### Deliverables
@@ -123,7 +125,7 @@ shipproof capacity --config workload.json --export-k6 generated/load-test.js
 - Implement an optional ESM adapter using the official TypeScript SDK as peer dependencies, keeping the core CLI dependency-free and avoiding a transpiler/runtime build step.
 - Start with stdio transport: the client spawns the server locally and no network listener is opened.
 - Use the official MCP TypeScript SDK with closed input/output schemas and structured content.
-- Register the narrow shipped tools `shipproof_scan`, `shipproof_budget`, and `shipproof_capacity`. Add doctor or explain tools only after their output contracts justify a larger surface.
+- Keep the shipped surface limited to five read-only tools: `shipproof_scan`, `shipproof_budget`, `shipproof_capacity`, `shipproof_explain`, and `shipproof_lint_snippet`. Add another tool only when its contract and operational value justify the larger surface.
 - Keep tools read-only by default. Do not expose raw shell, arbitrary Python, arbitrary file reads, GitHub writes, or automatic production tests.
 - Restrict repository roots, canonicalize paths, block traversal/symlink escape, bound runtime/output, redact evidence, propagate cancellation, and return stable error codes.
 - If HTTP transport is added later, design authentication, audience binding, scopes, tenancy, rate limits, and audit logging before enabling it.
