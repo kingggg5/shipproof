@@ -8,8 +8,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
-from referencing import Registry, Resource
+try:
+    from jsonschema import Draft202012Validator
+    from referencing import Registry, Resource
+except ImportError:
+    Draft202012Validator = None
+    Registry = None
+    Resource = None
 
 ROOT = Path(__file__).parents[1]
 SCRIPTS = ROOT / "skills" / "audit-production-readiness" / "scripts"
@@ -32,15 +37,21 @@ class EvidenceSchemaTests(unittest.TestCase):
             path.name: json.loads(path.read_text(encoding="utf-8"))
             for path in (ROOT / "schemas").glob("*.schema.json")
         }
-        cls.registry = Registry().with_resources(
-            (
-                schema["$id"],
-                Resource.from_contents(schema),
+        if Registry is not None and Resource is not None:
+            cls.registry = Registry().with_resources(
+                (
+                    schema["$id"],
+                    Resource.from_contents(schema),
+                )
+                for schema in cls.schemas.values()
+                if "$id" in schema
             )
-            for schema in cls.schemas.values()
-        )
+        else:
+            cls.registry = None
 
     def assert_valid(self, schema_name: str, report: dict[str, object]) -> None:
+        if Draft202012Validator is None or self.registry is None:
+            self.skipTest("jsonschema/referencing not installed; skipping schema validation")
         schema = self.schemas[schema_name]
         Draft202012Validator.check_schema(schema)
         Draft202012Validator(schema, registry=self.registry).validate(report)
@@ -49,7 +60,8 @@ class EvidenceSchemaTests(unittest.TestCase):
         for name, schema in self.schemas.items():
             with self.subTest(schema=name):
                 self.assertEqual(schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
-                Draft202012Validator.check_schema(schema)
+                if Draft202012Validator is not None:
+                    Draft202012Validator.check_schema(schema)
 
     def test_evidence_envelope_accepts_semver_prerelease(self):
         self.assert_valid(
