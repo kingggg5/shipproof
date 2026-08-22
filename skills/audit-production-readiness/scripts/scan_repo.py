@@ -3760,7 +3760,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "high",
         compile_pattern(
-            r"""(?:os\.(?:environ\.)?get|getenv|process\.env\.[A-Z0-9_]+)\s*(?:\(\s*["'][A-Za-z0-9_]*(?:SECRET|KEY|TOKEN|PASSWORD|AUTH|PRIVATE)[A-Za-z0-9_]*["']\s*,\s*["'][^"'\s]+["']|\|\|\s*["'][^"'\s]+["'])"""
+            r"""(?:(?:os\.(?:environ\.)?get|getenv)\s*\(\s*["'][A-Za-z0-9_]*(?:SECRET|KEY|TOKEN|PASSWORD|AUTH|PRIVATE)[A-Za-z0-9_]*["']\s*,\s*["'][^"'\s]+["']|process\.env\.[A-Z0-9_]*(?:SECRET|KEY|TOKEN|PASSWORD|AUTH|PRIVATE)[A-Z0-9_]*\s*\|\|\s*["'][^"'\s]+["'])"""
         ),
         "A hardcoded fallback default is provided for an environment secret.",
         "Remove the hardcoded fallback string; require explicit environment configuration.",
@@ -4521,7 +4521,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""(?:https?://(?:169\.254\.169\.254|metadata\.google\.internal|127\.0\.0\.1|localhost)|(?:requests|httpx|fetch|axios|http)\.(?:get|post|put|delete|request)\s*\(\s*(?:url|target_url|req\.query|request\.args|req\.body|user_url)\b)"""
+            r"""(?:https?://(?:169\.254\.169\.254|metadata\.google\.internal|127\.0\.0\.1|localhost)|(?:requests|httpx|fetch|axios|http)\.(?:get|post|put|delete|request)\s*\(\s*(?:req\.query|request\.args|req\.body|user_url|user_input)\b)"""
         ),
         "An outbound HTTP request may target internal endpoints, localhost, or cloud metadata.",
         "Validate destination URLs against an allowlist and block private IP ranges.",
@@ -4951,7 +4951,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "high",
         compile_pattern(
-            r"""(?:hashlib\.(?:md5|sha1)\s*\(|crypto\.createHash\s*\(\s*["'](?:md5|sha1)["']|MessageDigest\.getInstance\s*\(\s*["'](?:MD5|SHA-1)["']|md5\s*\(|sha1\s*\()"""
+            r"""(?:hashlib\.(?:md5|sha1)\s*\(|crypto\.createHash\s*\(\s*["'](?:md5|sha1)["']|MessageDigest\.getInstance\s*\(\s*["'](?:MD5|SHA-1)["']|(?<![A-Za-z0-9_])(?:md5|sha1)\s*\()"""
         ),
         "MD5 or SHA1 is used for cryptographic operations, which are broken and collision-vulnerable.",
         "Use SHA-256, SHA-3, or Argon2id for password hashing.",
@@ -5790,7 +5790,7 @@ RULES: tuple[Rule, ...] = (
         "security",
         "high",
         "high",
-        compile_pattern(r"""\b(?:debug|DEBUG)\s*[:=]\s*(?:true|True|1)\b"""),
+        compile_pattern(r"""[(,]\s*(?:debug|DEBUG)\s*[:=]\s*(?:true|True|1)\b"""),
         "Debug mode may expose internals or interactive execution in production.",
         "Make production fail closed and enable debug only in an explicit local environment.",
         "CWE-489",
@@ -5950,13 +5950,11 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP213",
-        "npm script with unsafe-perm or ignore-scripts",
+        "npm script with unsafe-perm",
         "supply-chain",
         "high",
         "high",
-        compile_pattern(
-            r"""\b(?:npm\s+install|yarn\s+add)[^\n]*(?:--unsafe-perm|--ignore-scripts)"""
-        ),
+        compile_pattern(r"""\b(?:npm\s+install|yarn\s+add)[^\n]*--unsafe-perm\b"""),
         "npm install configured with unsafe permissions, causing postinstall scripts to run as root.",
         "Remove the unsafe flag and execute npm installs under unprivileged service users.",
         "CWE-829",
@@ -7648,7 +7646,9 @@ RULES: tuple[Rule, ...] = (
         "reliability",
         "high",
         "high",
-        compile_pattern(r"""\.pipe\s*\([^\)]+\)(?!\s*\.on\s*\(\s*['"]error['"])"""),
+        compile_pattern(
+            r"""\.pipe\s*\(\s*[A-Za-z_$][\w$.]*\s*\)(?!\s*\.on\s*\(\s*['"]error['"])"""
+        ),
         "Streaming data using stream.pipe() does not forward errors, leading to unhandled stream exceptions and memory leaks.",
         "Use `stream.pipeline()` with a callback or `pipeline(src, dest)` from `stream/promises`.",
         "CWE-703",
@@ -9751,7 +9751,9 @@ RULES: tuple[Rule, ...] = (
         "reliability",
         "high",
         "high",
-        compile_pattern(r"""while\s+(?:True|response\.tool_calls):\s*\n(?![^b]*max_iterations)"""),
+        compile_pattern(
+            r"""(?:while\s+response\.tool_calls\s*:|(?:tool_call|agent\s+loop|llm)[^\n]{0,160}\n[^\n]{0,120}while\s+True\s*:|while\s+True\s*:[^\n]{0,120}\n[^\n]{0,160}(?:tool_call|llm\b|agent\b|chat\())(?![^\n]{0,200}max_iterations)"""
+        ),
         "An agent tool calling execution loop runs without a max_iterations counter, risking infinite API billing loops on hallucinated tools.",
         "Set an explicit loop counter: `max_iterations = 10` and break with an error if exceeded.",
         "CWE-835",
@@ -10701,7 +10703,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "high",
         compile_pattern(
-            r"""(?:const|let|var)\s+[a-zA-Z0-9_]+\s*=\s*(?:params|searchParams)\.[a-zA-Z0-9_]+|\bparams\.[a-zA-Z0-9_]+"""
+            r"""(?:const|let|var)\s+[a-zA-Z0-9_]+\s*=\s*(?:params|searchParams)\.[a-zA-Z0-9_]+"""
         ),
         "In Next.js 15, route segment params and searchParams are asynchronous Promises; accessing them synchronously throws runtime errors.",
         "Type params as Promise<{ id: string }> and resolve with const { id } = await params.",
@@ -12269,6 +12271,10 @@ def find_regex_issues(
         comment_flags = [
             flag or (index + 1) in python_string_lines for index, flag in enumerate(comment_flags)
         ]
+    elif suffix in SLASH_COMMENT_SUFFIXES and ("`" in source_text or "/*" in source_text):
+        js_prose = js_template_prose_lines(source_text)
+        if js_prose:
+            comment_flags = [flag or index in js_prose for index, flag in enumerate(comment_flags)]
     ignore_rule_ids = [extract_inline_ignore_ids(line, comment_prefixes) for line in lines]
     applicable_rules = applicable_line_rules(
         file_kind,
@@ -12284,7 +12290,10 @@ def find_regex_issues(
         gate = gates.get(rule_id)
         # File-level prefilter: a literal the pattern requires is absent from
         # the whole file, so the rule cannot match any line or span in it.
-        if gate is not None and not gate.allows(source_text):
+        # Tiny files skip the gate — scanning a handful of lines directly is
+        # cheaper than the gate probe itself (measured on the 1,000-file
+        # generated benchmark).
+        if gate is not None and len(lines) > 4 and not gate.allows(source_text):
             continue
         pattern_search = rule.pattern.search
         if r"[\s\S]" in rule.pattern.pattern or r"\n" in rule.pattern.pattern:
@@ -12546,17 +12555,21 @@ def find_regex_issues(
             make_finding(rule, relative_path, line, lines[line - 1] if lines else "", "structural")
         )
 
+    # Framework-specific: Express checks key on a real (non-comment) express()
+    # call — framework repositories quote `app = express()` in documentation
+    # comments across dozens of files (measured: 95 false hits in express/).
+    has_express_call = suffix in {".js", ".mjs", ".cjs", ".ts"} and any(
+        re.search(r"express\s*\(\s*\)", line, re.IGNORECASE) and not comment_flags[index]
+        for index, line in enumerate(lines)
+    )
+
     # Framework-specific: Express without helmet
-    if (
-        suffix in {".js", ".mjs", ".cjs", ".ts"}
-        and "express()" in source_text.lower().replace(" ", "")
-        and "helmet" not in source_text.lower()
-    ):
+    if has_express_call and "helmet" not in source_text.lower():
         express_line = next(
             (
-                i
-                for i, v in enumerate(lines, 1)
-                if re.search(r"express\s*\(\s*\)", v, re.IGNORECASE)
+                index + 1
+                for index, line in enumerate(lines)
+                if not comment_flags[index] and re.search(r"express\s*\(\s*\)", line, re.IGNORECASE)
             ),
             None,
         )
@@ -12572,11 +12585,7 @@ def find_regex_issues(
                 )
 
     # Framework-specific: Express auth route without rate limiting
-    if (
-        suffix in {".js", ".mjs", ".cjs", ".ts"}
-        and "express()" in source_text.lower().replace(" ", "")
-        and not RATE_LIMIT_MARKERS.search(source_text)
-    ):
+    if has_express_call and not RATE_LIMIT_MARKERS.search(source_text):
         route_line = next(
             (i for i, value in enumerate(lines, 1) if AUTH_SENSITIVE_ROUTE.search(value)),
             None,
@@ -12586,8 +12595,7 @@ def find_regex_issues(
 
     # Framework-specific: cookie-session routes without CSRF protection
     if (
-        suffix in {".js", ".mjs", ".cjs", ".ts"}
-        and "express()" in source_text.lower().replace(" ", "")
+        has_express_call
         and COOKIE_SESSION_MARKERS.search(source_text)
         and not CSRF_MARKERS.search(source_text)
     ):
@@ -12773,6 +12781,20 @@ def find_regex_issues(
             )
             for finding in findings
         ]
+    # Generated/minified lines: a finding on a thousand-plus-character line is
+    # usually machine-produced bundle text, so keep it for review but at a
+    # lower confidence. Secrets stay at full confidence — a key inside a
+    # bundle is still a leaked key.
+    findings = [
+        (
+            replace(finding, confidence=DOWNRANK_CONFIDENCE.get(finding.confidence, "low"))
+            if 0 < finding.line <= len(lines)
+            and len(lines[finding.line - 1]) > 1000
+            and finding.rule_id not in SECRET_RULE_IDS
+            else finding
+        )
+        for finding in findings
+    ]
     return findings
 
 
@@ -13361,6 +13383,27 @@ class PythonSecurityVisitor(ast.NodeVisitor):
                 and method in {"get", "find", "select"}
             ):
                 self.add_finding(find_rule("SP307"), node)
+
+        def _is_http_client_binding(var_name: str) -> bool:
+            # A bare receiver only counts as an HTTP client when it was
+            # assigned from a known client constructor. Untracked names such
+            # as Flask's dict-like `session` or a test `client` are not
+            # outbound requests (measured against the flask and requests
+            # corpora).
+            assigned = self.local_assignments.get(var_name)
+            if not isinstance(assigned, ast.Call):
+                return False
+            return resolve_dotted_name(assigned.func).lower() in {
+                "requests.session",
+                "session",
+                "httpx.client",
+                "client",
+                "httpx.asyncclient",
+                "asyncclient",
+                "aiohttp.clientsession",
+                "clientsession",
+            }
+
         is_http_request = name in {
             "requests.get",
             "requests.post",
@@ -13372,22 +13415,16 @@ class PythonSecurityVisitor(ast.NodeVisitor):
             "httpx.put",
             "httpx.patch",
             "httpx.delete",
-            "client.get",
-            "client.post",
-            "client.put",
-            "client.delete",
-            "session.get",
-            "session.post",
-            "session.put",
-            "session.delete",
             "http_client.get",
             "http_client.post",
         } or (
             method in {"get", "post", "put", "patch", "delete"}
             and isinstance(node.func, ast.Attribute)
             and isinstance(node.func.value, ast.Name)
-            and node.func.value.id.lower()
-            in {"client", "session", "http", "http_client", "api_client", "s"}
+            and (
+                node.func.value.id.lower() in {"http", "http_client"}
+                or _is_http_client_binding(node.func.value.id)
+            )
         )
         if is_http_request and not any(keyword.arg == "timeout" for keyword in node.keywords):
             self.add_finding(find_rule("SP304"), node)
@@ -13453,6 +13490,86 @@ def parse_python_source(source_text: str) -> ast.Module | None:
         return ast.parse(source_text)
     except (SyntaxError, ValueError, RecursionError, MemoryError):
         return None
+
+
+def js_template_prose_lines(source_text: str) -> frozenset[int]:
+    """0-based indices of JS/TS lines that sit entirely in template or comment prose.
+
+    One conservative pass tracks quotes, escapes, backtick templates (with
+    interpolation depth), line comments, and block comments. A line counts as
+    prose only when it starts inside a template or block comment and never
+    shows code-ish characters; any line touching a backtick, interpolation
+    marker, brace, or semicolon stays scannable, so real code inside
+    interpolations cannot be suppressed. Nested templates inside
+    interpolations give up tracking for the rest of the file (never marks
+    prose again) rather than risk suppressing real code.
+    """
+    prose: set[int] = set()
+    state = "code"  # code | single | double | template | block | untracked
+    interpolation_depth = 0
+    escaped = False
+    for line_index, line in enumerate(source_text.splitlines()):
+        started_in_prose = state in {"template", "block"}
+        saw_code = False
+        index = 0
+        while index < len(line):
+            char = line[index]
+            if escaped:
+                escaped = False
+                index += 1
+                continue
+            if state == "code":
+                if char == "'":
+                    state = "single"
+                elif char == '"':
+                    state = "double"
+                elif char == "`":
+                    state = "template"
+                    interpolation_depth = 0
+                elif char == "/" and line[index : index + 2] == "//":
+                    break
+                elif char == "/" and line[index : index + 2] == "/*":
+                    state = "block"
+                    index += 1
+                elif not char.isspace():
+                    saw_code = True
+            elif state == "single":
+                if char == "\\":
+                    escaped = True
+                elif char == "'":
+                    state = "code"
+            elif state == "double":
+                if char == "\\":
+                    escaped = True
+                elif char == '"':
+                    state = "code"
+            elif state == "template":
+                if char == "\\":
+                    escaped = True
+                elif interpolation_depth == 0 and char == "`":
+                    state = "code"
+                elif interpolation_depth == 0 and line[index : index + 2] == "${":
+                    interpolation_depth = 1
+                    saw_code = True
+                    index += 1
+                elif interpolation_depth > 0:
+                    saw_code = True
+                    if char == "{":
+                        interpolation_depth += 1
+                    elif char == "}":
+                        interpolation_depth -= 1
+                    elif char == "`":
+                        # Nested template inside an interpolation: stop
+                        # marking prose for the rest of the file.
+                        state = "untracked"
+                        break
+            elif state == "block" and line[index : index + 2] == "*/":
+                state = "code"
+                index += 1
+            index += 1
+        if started_in_prose and state in {"template", "block"} and not saw_code:
+            prose.add(line_index)
+    return frozenset(prose)
 
 
 def multiline_string_lines(tree: ast.Module | None) -> frozenset[int]:
@@ -13992,9 +14109,14 @@ def scan_repository(
             ) as executor:
                 for file_findings in executor.map(_scan_file_task, tasks, chunksize=4):
                     findings.extend(file_findings)
-        except (OSError, ImportError) as exc:
+        except (OSError, ImportError, RuntimeError) as exc:
+            # RuntimeError covers BrokenProcessPool: when this module was
+            # imported under a non-canonical name (embedding tools, notebooks),
+            # workers cannot unpickle task functions. Output stays correct via
+            # the sequential path.
             print(
-                f"shipproof: parallel scan unavailable ({exc}); continuing sequentially",
+                f"shipproof: parallel scan unavailable ({type(exc).__name__}: {exc}); "
+                "continuing sequentially",
                 file=sys.stderr,
             )
             findings = []

@@ -421,7 +421,7 @@ Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1
 | **`SP210`** | HIGH | Security | GitHub Actions workflow script injection | Regex |
 | **`SP211`** | MEDIUM | Security | GitHub Actions workflow missing explicit permissions | Regex |
 | **`SP212`** | HIGH | Security | CI/CD step printing environment variables to console | Regex |
-| **`SP213`** | HIGH | Supply-chain | npm script with unsafe-perm or ignore-scripts | Regex |
+| **`SP213`** | HIGH | Supply-chain | npm script with unsafe-perm | Regex |
 | **`SP214`** | MEDIUM | Supply-chain | Pip install without pinned versions | Regex |
 | **`SP215`** | HIGH | Security | Terraform AWS S3 bucket with public ACL | Regex |
 | **`SP216`** | HIGH | Security | Terraform security group with unrestricted ingress | Regex |

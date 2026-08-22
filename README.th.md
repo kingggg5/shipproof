@@ -615,7 +615,7 @@ shipproof gate evidence . --adapter rust --allow-project-code --format json
 | **SP210** | GitHub Actions workflow script injection | HIGH | Regex |
 | **SP211** | GitHub Actions workflow missing explicit permissions | MEDIUM | Regex |
 | **SP212** | CI/CD step printing environment variables to console | HIGH | Regex |
-| **SP213** | npm script with unsafe-perm or ignore-scripts | HIGH | Regex |
+| **SP213** | npm script ที่ใช้ unsafe-perm | HIGH | Regex |
 | **SP214** | Pip install without pinned versions | MEDIUM | Regex |
 | **SP215** | Terraform AWS S3 bucket with public ACL | HIGH | Regex |
 | **SP216** | Terraform security group with unrestricted ingress | HIGH | Regex |

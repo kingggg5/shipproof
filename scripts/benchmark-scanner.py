@@ -17,7 +17,13 @@ SCANNER_PATH = ROOT / "skills" / "audit-production-readiness" / "scripts" / "sca
 
 
 def load_scanner():
-    spec = importlib.util.spec_from_file_location("shipproof_benchmark_scanner", SCANNER_PATH)
+    # Load under the canonical module name with the scripts directory on
+    # sys.path so multiprocessing workers (spawn) can import the pickled task
+    # functions when --jobs > 1.
+    scripts_directory = str(SCANNER_PATH.parent)
+    if scripts_directory not in sys.path:
+        sys.path.insert(0, scripts_directory)
+    spec = importlib.util.spec_from_file_location("scan_repo", SCANNER_PATH)
     if spec is None or spec.loader is None:
         raise RuntimeError("could not load scanner")
     module = importlib.util.module_from_spec(spec)
@@ -89,6 +95,17 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--workdir", type=Path, default=ROOT / "benchmarks" / ".work")
     parser.add_argument("--max-seconds", type=float)
     parser.add_argument("--max-memory-mb", type=float)
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=1,
+        help="Worker processes for the measured scans (1 stays sequential)",
+    )
+    parser.add_argument(
+        "--no-warmup",
+        action="store_true",
+        help="Skip the untimed warm-up pass (report cold-cache numbers only)",
+    )
     return parser.parse_args()
 
 
@@ -96,6 +113,8 @@ def main() -> int:
     arguments = parse_arguments()
     if not 1 <= arguments.files <= 100_000:
         raise ValueError("--files must be from 1 through 100000")
+    if arguments.jobs < 1:
+        raise ValueError("--jobs must be at least 1")
     workdir = arguments.workdir.resolve()
     workdir.mkdir(parents=True, exist_ok=True)
     scanner = load_scanner()
@@ -103,9 +122,17 @@ def main() -> int:
     fixture.mkdir()
     try:
         write_fixture(fixture, arguments.files)
+        if not arguments.no_warmup:
+            # The first scan of freshly written files pays OS-level first-open
+            # cost (antivirus, directory metadata) that is not scanner work.
+            # Warm up once, then measure a cold (fresh-state) and a warm pass.
+            scanner.scan_repository(fixture, jobs=arguments.jobs)
         started = perf_counter()
-        findings, stats = scanner.scan_repository(fixture)
+        findings, stats = scanner.scan_repository(fixture, jobs=arguments.jobs)
         duration = perf_counter() - started
+        started = perf_counter()
+        findings, stats = scanner.scan_repository(fixture, jobs=arguments.jobs)
+        warm_duration = perf_counter() - started
     finally:
         if fixture.parent != workdir:
             raise RuntimeError("refusing to remove a benchmark path outside the work directory")
@@ -116,9 +143,12 @@ def main() -> int:
         "tool": {"name": "ShipProof", "version": scanner.VERSION, "command": "benchmark"},
         "platform": platform.platform(),
         "python": platform.python_version(),
+        "jobs": arguments.jobs,
         "files": stats["files_scanned"],
         "seconds": round(duration, 4),
+        "warm_seconds": round(warm_duration, 4),
         "files_per_second": round(arguments.files / duration, 1),
+        "warm_files_per_second": round(arguments.files / warm_duration, 1),
         "peak_rss_mb": round(memory, 2) if memory is not None else None,
         "findings": len(findings),
     }

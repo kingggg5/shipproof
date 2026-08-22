@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-No unreleased changes.
+- Cut real-world false positives by 38% (1,461 → 908 findings across the five bundled OSS corpora: dvwa, express, flask, juice-shop, requests) with curated-suite precision and recall unchanged at 100%: SP304 requires proven HTTP-client bindings (Flask's dict-like `session.get` and test clients no longer count), SP109 drops generic `url` variable names in favor of user-input-shaped names, SP367 only matches Node stream destinations (RxJS operator chains excluded), SP593 drops the bare `params.` alternative that flagged every Express `req.params` access, SP401/SP402/SP407 require a non-comment `express()` call, SP004 requires a secret-shaped name on `process.env` fallbacks (`NODE_ENV` no longer matches), SP213 stops flagging the safe `--ignore-scripts` flag, SP201 fires only on debug keyword arguments, SP140 no longer matches helper names like `_lazy_sha1`, and SP527 requires agent-loop context instead of any `while True:`.
+- Add two general false-positive reducers: JS/TS lines fully inside template literals or block comments (without interpolation markers) are treated as prose for non-secret rules, and findings on thousand-plus-character minified lines keep their severity but downgrade one confidence level — secrets are exempt so leaked keys in bundles stay loud.
+- Benchmark-driven tuning: the maintainer scanner benchmark now warms the OS file cache with an untimed pass and reports cold and warm scans separately (the first open of freshly written files pays antivirus/metadata cost that is not scanner work), supports `--jobs N` for parallel measurements, and loads the scanner under its canonical module name so worker processes can unpickle tasks (measured: ~1,300–1,450 warm files/s sequential, ~2,600 warm files/s with four workers on 5,000 files, ≈2x).
+- Skip the literal-gate prefilter for files of four lines or fewer, where scanning directly is cheaper than the gate probe; tiny-file throughput recovers the gate overhead with identical findings.
+- Harden the parallel-scan fallback: a broken process pool (for example when the scanner is embedded under a non-canonical module name without its scripts directory importable) now logs and continues sequentially instead of crashing.
 
 ## 0.8.0 - 2026-08-22
 

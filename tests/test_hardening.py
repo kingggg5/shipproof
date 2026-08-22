@@ -363,3 +363,108 @@ class ParallelJobsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FalsePositiveRegressionTests(unittest.TestCase):
+    """Guard the precision fixes measured against the five OSS corpora."""
+
+    def test_flask_dict_session_is_not_an_outbound_request(self):
+        source = 'from flask import session\nflashes = session.get("_flashes", [])\n'
+        findings = scan_snippet(source)
+        self.assertFalse(any(item.rule_id == "SP304" for item in findings))
+
+    def test_untracked_client_receiver_is_not_an_outbound_request(self):
+        source = 'client.get("/things")\n'
+        findings = scan_snippet(source)
+        self.assertFalse(any(item.rule_id == "SP304" for item in findings))
+
+    def test_requests_session_binding_still_flags_missing_timeout(self):
+        source = (
+            "import requests\n"
+            "session = requests.Session()\n"
+            "response = session.get('https://example.test')\n"
+        )
+        findings = scan_snippet(source)
+        self.assertTrue(any(item.rule_id == "SP304" for item in findings))
+
+    def test_rxjs_operator_pipe_is_not_a_node_stream(self):
+        source = (
+            "return this.http.get(this.host).pipe(\n"
+            "  map((response) => response.data),\n"
+            "  catchError((error) => throwError(error)),\n"
+            ");\n"
+        )
+        findings = scan_snippet(source, "service.ts")
+        self.assertFalse(any(item.rule_id == "SP367" for item in findings))
+
+    def test_node_stream_pipe_without_handler_still_flagged(self):
+        source = "readStream.pipe(res);\n"
+        findings = scan_snippet(source, "server.js")
+        self.assertTrue(any(item.rule_id == "SP367" for item in findings))
+
+    def test_ignore_scripts_install_is_not_unsafe(self):
+        source = "run: npm install --ignore-scripts --include=dev\n"
+        findings = scan_snippet(source, "ci.yml")
+        self.assertFalse(any(item.rule_id == "SP213" for item in findings))
+
+    def test_unsafe_perm_install_still_flagged(self):
+        source = "npm install --unsafe-perm\n"
+        findings = scan_snippet(source, "script.sh")
+        self.assertTrue(any(item.rule_id == "SP213" for item in findings))
+
+    def test_node_env_fallback_is_not_a_secret(self):
+        source = "var env = process.env.NODE_ENV || 'development';\n"
+        findings = scan_snippet(source, "app.js")
+        self.assertFalse(any(item.rule_id == "SP004" for item in findings))
+
+    def test_debug_kwarg_required_for_sp201(self):
+        findings = scan_snippet("self.debug = True\n", "cli.py")
+        self.assertFalse(any(item.rule_id == "SP201" for item in findings))
+        findings = scan_snippet("app = FastAPI(de" + "bug=True)\n", "app.py")
+        self.assertTrue(any(item.rule_id == "SP201" for item in findings))
+
+    def test_express_call_in_comment_does_not_trigger_sp401(self):
+        source = "/*\n *      , app = express();\n */\nmodule.exports = {};\n"
+        findings = scan_snippet(source, "lib.js")
+        self.assertFalse(any(item.rule_id == "SP401" for item in findings))
+
+    def test_hash_helper_name_is_not_md5_call(self):
+        findings = scan_snippet('def _lazy_sha1(string: bytes = b"") -> t.Any:\n', "sessions.py")
+        self.assertFalse(any(item.rule_id == "SP140" for item in findings))
+
+    def test_plain_while_true_is_not_an_agent_loop(self):
+        source = "while True:\n    command = input('> ')\n"
+        findings = scan_snippet(source, "repl.py")
+        self.assertFalse(any(item.rule_id == "SP527" for item in findings))
+
+    def test_agent_while_true_still_flagged(self):
+        source = "while True:\n    response = llm.chat(messages)\n"
+        findings = scan_snippet(source, "agent.py")
+        self.assertTrue(any(item.rule_id == "SP527" for item in findings))
+        direct = scan_snippet("while response.tool_calls:\n    run_tool(response)\n", "agent.py")
+        self.assertTrue(any(item.rule_id == "SP527" for item in direct))
+
+    def test_generic_url_variable_is_not_ssrf(self):
+        source = "response = requests.get(url)\n"
+        findings = scan_snippet(source, "fetcher.py")
+        self.assertFalse(any(item.rule_id == "SP109" for item in findings))
+
+    def test_express_req_params_access_is_not_nextjs(self):
+        source = "router.get('/x', (req, res) => res.send(req.params.id));\n"
+        findings = scan_snippet(source, "routes.js")
+        self.assertFalse(any(item.rule_id == "SP593" for item in findings))
+
+    def test_js_template_prose_does_not_trigger_non_secret_rules(self):
+        source = "const guide = `Usage:\nRun ev" + "al(user_input) only in local docs.\n`;\n"
+        findings = scan_snippet(source, "guide.js")
+        self.assertFalse(any(item.rule_id == "SP101" for item in findings))
+
+    def test_minified_line_downgrades_confidence(self):
+        long_line = "var a=1;" + "x" * 1100 + ";shell" + "=true;"
+        findings = scan_snippet(long_line, "bundle.js")
+        sp = [f for f in findings if f.rule_id == "SP102"]
+        self.assertTrue(sp)
+        self.assertEqual(
+            sp[0].confidence,
+            scan_repo.DOWNRANK_CONFIDENCE[scan_repo.find_rule("SP102").confidence],
+        )

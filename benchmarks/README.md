@@ -1,11 +1,14 @@
 # Scanner benchmark
 
-ShipProof benchmarks its deterministic scanner against generated, finding-free Python repositories. The script reports wall-clock scan time, throughput, and process peak resident memory; file generation is excluded from timing.
+ShipProof benchmarks its deterministic scanner against generated, finding-free Python repositories. The script warms the OS file cache with one untimed pass, then reports a cold-state and a warm-state scan (seconds and files/second each) plus process peak resident memory; fixture generation is excluded from timing. Pass `--jobs N` to measure worker-process scanning and `--no-warmup` for cold-cache numbers only.
 
 ```bash
 python scripts/benchmark-scanner.py --files 1000
+python scripts/benchmark-scanner.py --files 1000 --jobs 4
 python scripts/benchmark-scanner.py --files 10000
 ```
+
+Reference numbers (Windows 11, 12 cores, Python 3.12): 1,000 files run at ~1,300–1,450 warm files/s sequentially and ~2,600 warm files/s with `--jobs 4` at 5,000 files (≈2x). The first scan of freshly written files additionally pays OS-level first-open cost (antivirus and directory metadata) that is not scanner work — that is why the harness reports warm numbers separately.
 
 Hardware, OS, filesystem, Python version, and cold/warm cache state materially affect results. Published numbers must include the generated JSON and environment instead of being presented as universal promises. CI runs a deliberately broad regression budget; maintainers review tighter budgets on stable runners.
 
