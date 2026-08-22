@@ -9,7 +9,9 @@ npm install --global github:kingggg5/shipproof
 shipproof help
 ```
 
-Use `SHIPPROOF_PYTHON` only when Python is not discoverable as `py -3`, `python3`, or `python`. Set it to an executable path or command name, not a command string with arguments.
+Use `SHIPPROOF_PYTHON` only when Python is not discoverable as `py -3`, `python3`, or `python`. Set it to an executable path or command name, not a command string with arguments. The detected runtime is probed once per process and shared by every gate.
+
+Policy gates launched by `shipproof check` buffer scanner JSON with a 60 second timeout and a 16 MB output cap. Override with `SHIPPROOF_GATE_TIMEOUT_MS` (minimum 1000) and `SHIPPROOF_MAX_BUFFER_BYTES` (minimum 65536); a timeout, an output overflow, or a scanner crash is always reported as exit `2` (invalid or unavailable evidence), never as a gate block.
 
 ## JSON evidence contracts
 
@@ -71,7 +73,7 @@ shipproof scan . --format json --trace --fail-on high
 shipproof scan . --fix-prompt --context-level overview
 ```
 
-The arguments after `scan` match `scan_repo.py`. `--fail-on` accepts `critical`, `high`, `medium`, `low`, or `none`. `--changed-since GIT_REF` limits the scan to files changed relative to a git ref (added, copied, modified, renamed, plus untracked files) and fails closed with exit `2` outside a git repository or on an unresolvable ref; the ref is recorded under `changed_since` in JSON output. Repeat `--exclude` with repository-relative glob patterns to skip generated or vendored paths. Parent traversal and absolute patterns are rejected.
+The arguments after `scan` match `scan_repo.py`. `--fail-on` accepts `critical`, `high`, `medium`, `low`, or `none`. `--changed-since GIT_REF` limits the scan to files changed relative to a git ref (added, copied, modified, renamed, plus untracked files) and fails closed with exit `2` outside a git repository or on an unresolvable ref; the ref is recorded under `changed_since` in JSON output. Repeat `--exclude` with repository-relative glob patterns to skip generated or vendored paths. Parent traversal and absolute patterns are rejected. `--cross-file` opts into interprocedural taint analysis: unsanitized flows from route entrypoints through helpers into dangerous sinks (SQL, command execution, eval) across files are promoted to `L2` taint findings on the sink line, and the flow count is recorded under `cross_file_flows` in JSON output. Cross-file analysis is slower and remains deterministic and offline. `--jobs N` scans files with N worker processes for large repositories; output is byte-identical to the sequential scan (`--jobs 1` stays sequential), and the scanner falls back to sequential execution with a stderr note when process pools are unavailable.
 
 `--trace` adds a deterministic decision trace to JSON, Markdown, or terminal repository-scan output. It reports bounded counts for rule selection, file selection, filters, baseline suppression, and gate evaluation. It deliberately excludes source text, evidence text, finding paths, secret values, timestamps, timings, user identifiers, and network telemetry. The option is rejected for SARIF, GitHub annotations, snippets, explanations, fix prompts, and autofix modes instead of silently doing less than requested.
 

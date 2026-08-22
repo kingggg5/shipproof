@@ -18,7 +18,7 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 
 SKIP_DIRS = {
     ".git",

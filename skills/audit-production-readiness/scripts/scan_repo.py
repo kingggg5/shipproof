@@ -7,18 +7,29 @@ import argparse
 import ast
 import fnmatch
 import hashlib
+import importlib.util
 import json
 import math
 import os
 import re
+import stat as stat_module
 import subprocess
 import sys
+
+try:  # Python 3.11+ ships the regex parser as a private re submodule.
+    import re._constants as _sre_constants
+    import re._parser as _sre_parser
+except ImportError:  # pragma: no cover - Python 3.10 fallback
+    import sre_constants as _sre_constants  # type: ignore[no-redef]
+    import sre_parse as _sre_parser  # type: ignore[no-redef]
+
 from collections import Counter
 from collections.abc import Iterable, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
+from functools import lru_cache
 from pathlib import Path
 
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 MAX_SNIPPET_BYTES = 200_000
 CONTEXT_LEVELS = ("summary", "overview", "full")
 
@@ -130,38 +141,12 @@ TEXT_NAMES = {
     ".npmrc",
     ".pypirc",
 }
-SECRET_RULE_IDS = {
-    "SP001",
-    "SP002",
-    "SP003",
-    "SP004",
-    "SP005",
-    "SP006",
-    "SP007",
-    "SP008",
-    "SP009",
-    "SP010",
-    "SP011",
-    "SP012",
-    "SP013",
-    "SP014",
-    "SP015",
-    "SP016",
-    "SP017",
-    "SP018",
-    "SP019",
-    "SP020",
-    "SP021",
-    "SP022",
-    "SP023",
-    "SP024",
-    "SP025",
-}
 PLACEHOLDERS = re.compile(
     r"(?i)(example|sample|placeholder|dummy|changeme|replace[_-]?me|your[_-]?|test[_-]?only|"
     r"not[_-]?a[_-]?real|fake|redacted|xxxx|<[^>]+>|\$\{|process\.env|os\.environ)"
 )
-INLINE_IGNORE = re.compile(r"shipproof-ignore(?:\s+|:)(SP\d+)")
+INLINE_IGNORE_MARKER = "shipproof-ignore"
+INLINE_IGNORE_IDS = re.compile(r"\bSP\d+\b")
 MAX_MULTILINE_MATCH_CHARS = 20_000
 MAX_MULTILINE_MATCH_LINES = 120
 
@@ -180,9 +165,24 @@ def shannon_entropy(s: str) -> float:
     return -sum((c / length) * math.log2(c / length) for c in counts.values())
 
 
+ENTROPY_CALIBRATED_RULE_IDS = frozenset({"SP003", "SP004", "SP019", "SP020", "SP021"})
+
+
+def is_placeholder_secret(matched_text: str) -> bool:
+    """Placeholder filtering targets the credential value, not the whole match.
+
+    SP004 matches inherently contain `os.environ` / `process.env` (the env
+    indirection itself), so scanning the full matched text would suppress every
+    fallback-default finding. Fall back to the whole text for unquoted shapes.
+    """
+    values = SECRET_VALUE_PATTERN.findall(matched_text)
+    target = values[-1] if values else matched_text
+    return bool(PLACEHOLDERS.search(target))
+
+
 def secret_confidence(rule: Rule, matched_text: str) -> str | None:
     """Adjust secret finding confidence based on entropy of generic credential matches."""
-    if rule.rule_id != "SP003":
+    if rule.rule_id not in ENTROPY_CALIBRATED_RULE_IDS:
         return None
     matches = SECRET_VALUE_PATTERN.findall(matched_text)
     if not matches:
@@ -3627,6 +3627,30 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "A disposable isolated test control plane can use AlwaysAllow, but production-reachable API servers must use an explicit authorization chain such as Node,RBAC.",
         "test": "Inspect the effective kube-apiserver flags or authorization configuration and assert AlwaysAllow is absent from every production control plane.",
     },
+    "SP662": {
+        "why": "CORS_ALLOW_ALL_ORIGINS makes django-cors-headers reflect any request origin, so any website a victim visits can read authenticated cross-origin responses from this API.",
+        "attack": "A malicious page in the victim's browser calls the API with the victim's credentials and reads the response, because the server echoes the attacker's origin with permissive CORS headers.",
+        "false_positive": "A deliberately public, credential-free read-only API may allow all origins; if credentials are never sent, wildcard CORS is acceptable. Verify cookies and Authorization headers are truly absent.",
+        "test": "Assert CORS_ALLOWED_ORIGINS enumerates trusted origins and that responses with credentials never carry Access-Control-Allow-Origin: *.",
+    },
+    "SP663": {
+        "why": "Assigning False to SESSION_COOKIE_SECURE overrides Django's secure default and lets the session cookie travel over plain HTTP where intermediaries can capture it.",
+        "attack": "An attacker on the same network or a downgrade path captures the session cookie from unencrypted traffic and reuses it to impersonate the victim.",
+        "false_positive": "A local-only settings module behind HTTPS-terminating tooling may set it for development; production settings must not, and Django's default already secures the cookie.",
+        "test": "Remove the override or set SESSION_COOKIE_SECURE = True, then assert the Set-Cookie header includes Secure in deployment smoke tests.",
+    },
+    "SP664": {
+        "why": "FastAPI routes without any visible rate limiting expose authentication and expensive endpoints to brute force, credential stuffing, and resource exhaustion.",
+        "attack": "An attacker scripts thousands of login or compute-heavy requests per second directly against the ASGI server because nothing throttles per-client request rates.",
+        "false_positive": "Rate limiting enforced by an API gateway, reverse proxy, or platform layer in front of the app is invisible to file scanning; verify the edge tier before suppressing.",
+        "test": "Add slowapi limits or gateway throttling, then assert sustained abusive requests receive HTTP 429 while normal traffic is unaffected.",
+    },
+    "SP665": {
+        "why": "Enabling DEBUG in a deployable Django settings module renders detailed error pages that leak settings, stack traces, and installed apps to any visitor who triggers an exception.",
+        "attack": "The attacker triggers a 500 error (malformed input is usually enough) and reads the debug page to harvest secret configuration values and internal structure.",
+        "false_positive": "Local development settings legitimately enable DEBUG; the finding targets settings modules that also carry deployment markers such as ALLOWED_HOSTS or production middleware stacks.",
+        "test": "Keep DEBUG = False in deployable settings, assert the deployed configuration via a settings-dump management command or deployment smoke test.",
+    },
 }
 
 
@@ -3665,6 +3689,9 @@ class Finding:
     proof_level: str = "L0"
     scope: str = "app"
     verification_status: str = "unverified"
+    column: int | None = None
+    end_line: int | None = None
+    end_column: int | None = None
 
 
 PROOF_LEVELS = {
@@ -3674,6 +3701,7 @@ PROOF_LEVELS = {
     "artifact": "L1",
     "taint": "L2",
 }
+PROOF_RANK = {"L0": 0, "L1": 1, "L2": 2}
 
 
 def compile_pattern(value: str) -> re.Pattern[str]:
@@ -10446,7 +10474,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "high",
         compile_pattern(
-            r"""(?:async\s+def|function)\s+[a-zA-Z0-9_]+[\s\S]*?new\s+(?:Counter|Gauge|Histogram)\s*\("""
+            r"""(?:async\s+def|function)\s+[a-zA-Z0-9_]+[\s\S]{0,2000}?new\s+(?:Counter|Gauge|Histogram)\s*\("""
         ),
         "Registering Prometheus metrics inside request handlers throws duplicate registration errors or leaks memory on every hit.",
         "Declare Prometheus metrics globally once in module scope.",
@@ -10476,7 +10504,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "high",
         compile_pattern(
-            r"""(?:async\s+def|function)\s+[a-zA-Z0-9_]+[\s\S]*?new\s+(?:LaunchDarkly|UnleashClient|PostHog)\s*\("""
+            r"""(?:async\s+def|function)\s+[a-zA-Z0-9_]+[\s\S]{0,2000}?new\s+(?:LaunchDarkly|UnleashClient|PostHog)\s*\("""
         ),
         "Initializing feature flag SDK clients inside request handlers forces network calls and certificate handshakes on every request.",
         "Instantiate feature flag clients once at application startup.",
@@ -11621,7 +11649,210 @@ RULES: tuple[Rule, ...] = (
         "Kubernetes authorization",
         frozenset({".yaml", ".yml"}),
     ),
+    Rule(
+        "SP662",
+        "Django CORS policy allows all origins",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"""(?<![A-Za-z0-9_])CORS_ALLOW_ALL_ORIGINS\s*[:=]\s*True"""),
+        "django-cors-headers is configured to reflect any origin, defeating origin-based browser isolation.",
+        "Set CORS_ALLOW_ALL_ORIGINS to False and enumerate the trusted origins in CORS_ALLOWED_ORIGINS.",
+        "CWE-942",
+        "OWASP ASVS V14",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP663",
+        "Django session cookie sent without the Secure flag",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"""(?<![A-Za-z0-9_])SESSION_COOKIE_SECURE\s*[:=]\s*False"""),
+        "Session cookies explicitly marked non-secure can be captured from plain-HTTP traffic or a shared network.",
+        "Remove the override (Django defaults SESSION_COOKIE_SECURE to True) or set it explicitly and serve the site over HTTPS only.",
+        "CWE-614",
+        "OWASP ASVS V3",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP664",
+        "FastAPI app routes without visible rate limiting",
+        "security",
+        "medium",
+        "low",
+        compile_pattern(r"""$^"""),
+        "FastAPI routes are registered without visible rate-limiting middleware or dependencies.",
+        "Add rate limiting (for example slowapi or gateway throttling) and cover authentication-sensitive routes with tests asserting 429 responses.",
+        "CWE-307",
+        "OWASP ASVS V2",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP665",
+        "Django settings enable DEBUG in a production settings module",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(r"""$^"""),
+        "A Django settings module turns DEBUG on, exposing detailed error pages, settings, and stack traces.",
+        "Set DEBUG = False for deployable settings and keep debug behavior in local-only settings modules.",
+        "CWE-489",
+        "OWASP ASVS V14",
+        frozenset({".py"}),
+    ),
 )
+
+# Secret rules are exactly the rules that redact credential material in evidence.
+# Derived from metadata (not a hand-maintained ID list) so new provider-token
+# rules inherit placeholder filtering, comment scanning, and document scanning.
+SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
+RULE_INDEX = {rule.rule_id: rule for rule in RULES}
+
+
+# --- Literal gate prefilter ---
+# A regex can only match text that contains every literal the pattern requires
+# (and, for alternations such as `Counter|Gauge|Histogram`, at least one literal
+# from each group). Checking those literals with substring/mini-regex probes
+# first skips most rule executions entirely without changing any result.
+
+_HAS_CASED = re.compile(r"[^\W\d_]", re.UNICODE)
+_SRE_ATOMIC_GROUP_OP = getattr(_sre_constants, "ATOMIC_GROUP", None)
+
+
+class LiteralGate:
+    """Sound prefilter: `allows(text)` is False only when the rule cannot match.
+
+    Constraints: every `required` literal must appear, and for each DNF group at
+    least one branch conjunction must be fully present.
+    """
+
+    __slots__ = ("_ci", "_group_branches", "_plain")
+
+    def __init__(
+        self,
+        required: Iterable[str],
+        groups: Iterable[Iterable[Iterable[str]]],
+    ) -> None:
+        self._plain = tuple(
+            lit for lit in required if _HAS_CASED.search(lit) is None and len(lit) >= 2
+        )
+        self._ci = tuple(
+            re.compile(re.escape(lit), re.IGNORECASE)
+            for lit in required
+            if _HAS_CASED.search(lit) is not None and len(lit) >= 2
+        )
+        self._group_branches = tuple(
+            tuple(
+                (
+                    frozenset(lit for lit in branch if _HAS_CASED.search(lit) is None),
+                    tuple(
+                        re.compile(re.escape(lit), re.IGNORECASE)
+                        for lit in branch
+                        if _HAS_CASED.search(lit) is not None
+                    ),
+                )
+                for branch in group
+            )
+            for group in groups
+        )
+
+    def allows(self, text: str) -> bool:
+        for literal in self._plain:
+            if literal not in text:
+                return False
+        for pattern in self._ci:
+            if pattern.search(text) is None:
+                return False
+        for group in self._group_branches:
+            if not any(
+                all(literal in text for literal in plain)
+                and all(pattern.search(text) is not None for pattern in ci)
+                for plain, ci in group
+            ):
+                return False
+        return True
+
+
+def _required_literals(
+    node: Iterable,
+) -> tuple[frozenset[str], tuple[tuple[frozenset[str], ...], ...]]:
+    """Walk a parsed regex tree collecting literals every match must contain.
+
+    Returns (and_literals, dnf_groups): each `and` literal must appear in any
+    match, and for each DNF group at least one branch's full literal set must be
+    present. When the tree cannot prove anything, both collections are empty.
+    """
+    required: set[str] = set()
+    groups: list[tuple[frozenset[str], ...]] = []
+    buffer: list[str] = []
+
+    def flush() -> None:
+        if buffer:
+            required.add("".join(buffer))
+            buffer.clear()
+
+    for op, arg in node:
+        if op is _sre_constants.LITERAL:
+            buffer.append(chr(arg))
+            continue
+        flush()
+        if op is _sre_constants.SUBPATTERN:
+            sub_required, sub_groups = _required_literals(arg[-1])
+            required |= sub_required
+            groups.extend(sub_groups)
+        elif _SRE_ATOMIC_GROUP_OP is not None and op is _SRE_ATOMIC_GROUP_OP:
+            sub_required, sub_groups = _required_literals(arg)
+            required |= sub_required
+            groups.extend(sub_groups)
+        elif op is _sre_constants.BRANCH:
+            branches = [_required_literals(branch) for branch in arg[1]]
+            if all(
+                branch_required and not branch_groups for branch_required, branch_groups in branches
+            ):
+                groups.append(tuple(branch_required for branch_required, _ in branches))
+                continue
+            common: set[str] | None = None
+            for branch_required, _branch_groups in branches:
+                common = set(branch_required) if common is None else common & set(branch_required)
+            if common:
+                required |= common
+        elif op in (_sre_constants.MAX_REPEAT, _sre_constants.MIN_REPEAT):
+            if arg[0] >= 1:
+                sub_required, sub_groups = _required_literals(arg[2])
+                required |= sub_required
+                groups.extend(sub_groups)
+        elif op is _sre_constants.ASSERT:
+            sub_required, sub_groups = _required_literals(arg[1])
+            required |= sub_required
+            groups.extend(sub_groups)
+        # IN, ANY, CATEGORY, AT, ASSERT_NOT, GROUPREF, GROUPREF_EXISTS and
+        # friends impose no provable literal requirement.
+
+    flush()
+    return frozenset(required), tuple(groups)
+
+
+def build_rule_gates(rules: Sequence[Rule]) -> dict[str, LiteralGate]:
+    gates: dict[str, LiteralGate] = {}
+    for rule in rules:
+        try:
+            parsed = _sre_parser.parse(rule.pattern.pattern, rule.pattern.flags)
+        except Exception:  # noqa: S112 - unparsable patterns simply stay ungated
+            continue
+        required, groups = _required_literals(parsed)
+        if required or groups:
+            gates[rule.rule_id] = LiteralGate(required, groups)
+    return gates
+
+
+def rule_gates() -> dict[str, LiteralGate]:
+    """Build the literal prefilter lazily to keep --explain/MCP startup fast."""
+    gates = getattr(rule_gates, "cache", None)
+    if gates is None:
+        gates = build_rule_gates(RULES)
+        rule_gates.cache = gates
+    return gates
 
 
 DATABASE_SUFFIXES = {".sqlite", ".sqlite3", ".db"}
@@ -11684,18 +11915,19 @@ def iter_scannable_files(
         )
         for filename in sorted(filenames):
             path = Path(directory, filename)
-            if path.is_symlink():
+            try:
+                file_stat = os.lstat(path)
+            except OSError:
+                continue
+            if stat_module.S_ISLNK(file_stat.st_mode):
                 continue
             if not is_text_file(path):
                 continue
             relative_path = path.relative_to(root).as_posix()
             if is_excluded(relative_path, exclude_patterns):
                 continue
-            try:
-                if path.stat().st_size <= max_file_bytes:
-                    yield path
-            except OSError:
-                continue
+            if file_stat.st_size <= max_file_bytes:
+                yield path
 
 
 def clean_evidence(line: str, redact: bool) -> str:
@@ -11703,13 +11935,8 @@ def clean_evidence(line: str, redact: bool) -> str:
     return "[REDACTED: credential-like material]" if redact else compact
 
 
-def is_pure_comment(line: str, path: Path) -> bool:
-    stripped = line.strip()
-    if not stripped:
-        return False
-    suffix = path.suffix.lower()
-    name = path.name.lower()
-    if suffix in {
+HASH_COMMENT_SUFFIXES = frozenset(
+    {
         ".py",
         ".pyi",
         ".sh",
@@ -11731,9 +11958,11 @@ def is_pure_comment(line: str, path: Path) -> bool:
         ".gql",
         ".prisma",
         ".service",
-    } or name in {"dockerfile", "containerfile", "makefile", "procfile", ".env"}:
-        return stripped.startswith("#")
-    if suffix in {
+    }
+)
+HASH_COMMENT_NAMES = frozenset({"dockerfile", "containerfile", "makefile", "procfile", ".env"})
+SLASH_COMMENT_SUFFIXES = frozenset(
+    {
         ".js",
         ".jsx",
         ".mjs",
@@ -11757,13 +11986,86 @@ def is_pure_comment(line: str, path: Path) -> bool:
         ".groovy",
         ".m",
         ".mm",
-    }:
-        return stripped.startswith(("//", "/*", "*", "<!--"))
+    }
+)
+
+
+def comment_line_prefixes(path: Path) -> tuple[str, ...]:
+    """Resolve the comment markers used to open a comment line for this file type."""
+    suffix = path.suffix.lower()
+    name = path.name.lower()
+    if suffix in HASH_COMMENT_SUFFIXES or name in HASH_COMMENT_NAMES:
+        return ("#",)
+    if suffix in SLASH_COMMENT_SUFFIXES:
+        return ("//", "/*")
     if suffix == ".sql":
-        return stripped.startswith(("--", "/*", "*"))
+        return ("--", "/*")
     if suffix in {".tf", ".hcl"}:
+        return ("#", "//")
+    return ()
+
+
+def is_pure_comment(line: str, path: Path, prefixes: Sequence[str] | None = None) -> bool:
+    stripped = line.strip()
+    if not stripped:
+        return False
+    markers = prefixes if prefixes is not None else comment_line_prefixes(path)
+    if markers == ("#",):
+        return stripped.startswith("#")
+    if markers == ("//", "/*"):
+        return stripped.startswith(("//", "/*", "*", "<!--"))
+    if markers == ("--", "/*"):
+        return stripped.startswith(("--", "/*", "*"))
+    if markers == ("#", "//"):
         return stripped.startswith(("#", "//"))
     return False
+
+
+def index_outside_strings(line: str, marker: str) -> int:
+    """Return the first index of marker that is not inside a quoted string segment."""
+    quote = ""
+    escaped = False
+    index = 0
+    while index < len(line):
+        char = line[index]
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = ""
+        elif char in {"'", '"', "`"}:
+            quote = char
+        elif line.startswith(marker, index):
+            return index
+        index += 1
+    return -1
+
+
+def extract_inline_ignore_ids(line: str, prefixes: Sequence[str]) -> tuple[str, ...]:
+    """Collect suppressed rule IDs, but only from markers inside comments (not string data).
+
+    Files without comment markers (JSON, Markdown) still honor a marker that
+    starts the line, which keeps documentation suppressions explicit.
+    """
+    marker_index = line.find(INLINE_IGNORE_MARKER)
+    if marker_index < 0:
+        return ()
+    rest = line[marker_index + len(INLINE_IGNORE_MARKER) :]
+    if rest and rest[0] not in " \t:,":
+        return ()
+    if prefixes:
+        comment_index = -1
+        for marker in prefixes:
+            position = index_outside_strings(line, marker)
+            if position >= 0 and (comment_index < 0 or position < comment_index):
+                comment_index = position
+        if comment_index < 0 or marker_index < comment_index:
+            return ()
+    elif not line.lstrip().startswith(INLINE_IGNORE_MARKER):
+        return ()
+    return tuple(dict.fromkeys(INLINE_IGNORE_IDS.findall(line, marker_index)))
 
 
 TEST_PATH_SEGMENTS = frozenset(
@@ -11792,7 +12094,28 @@ DOWNRANK_CONFIDENCE = {
     "low": "low",
 }
 
+# Structural rules whose framework must be declared in a repository manifest to
+# keep full confidence. Absent manifests keep confidence; present-but-absent
+# framework declarations downgrade it (see find_regex_issues).
+RULE_FRAMEWORK_HINTS = {
+    "SP401": frozenset({"express"}),
+    "SP402": frozenset({"express"}),
+    "SP407": frozenset({"express"}),
+    "SP408": frozenset({"express"}),
+    "SP404": frozenset({"django"}),
+    "SP410": frozenset({"flask"}),
+    "SP591": frozenset({"nextjs", "react"}),
+    "SP595": frozenset({"nextjs", "react"}),
+    "SP596": frozenset({"nextjs", "react"}),
+    "SP597": frozenset({"nextjs", "react"}),
+    "SP598": frozenset({"nextjs", "react"}),
+    "SP600": frozenset({"nextjs", "react"}),
+    "SP664": frozenset({"fastapi"}),
+    "SP665": frozenset({"django"}),
+}
 
+
+@lru_cache(maxsize=8192)
 def determine_scope(relative_path: str) -> str:
     normalized = relative_path.replace("\\", "/").removeprefix("./").lower()
     parts = normalized.split("/")
@@ -11809,6 +12132,13 @@ def determine_scope(relative_path: str) -> str:
     return "app"
 
 
+def offset_to_position(source_text: str, offset: int) -> tuple[int, int]:
+    """Map a 0-based string offset to a 1-based (line, column) pair."""
+    line = source_text.count("\n", 0, offset) + 1
+    column = offset - source_text.rfind("\n", 0, offset)
+    return line, column
+
+
 def make_finding(
     rule: Rule,
     relative_path: str,
@@ -11818,6 +12148,9 @@ def make_finding(
     scope: str | None = None,
     confidence: str | None = None,
     verification_status: str = "unverified",
+    column: int | None = None,
+    end_line: int | None = None,
+    end_column: int | None = None,
 ) -> Finding:
     safe_evidence = clean_evidence(evidence, rule.redact)
     if rule.redact:
@@ -11851,6 +12184,9 @@ def make_finding(
         PROOF_LEVELS.get(detection, "L0"),
         finding_scope,
         verification_status,
+        column,
+        end_line,
+        end_column,
     )
 
 
@@ -11882,26 +12218,28 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP609",
         "SP612",
         "SP631",
+        "SP664",
+        "SP665",
     }
 )
 
-APPLICABLE_RULES_CACHE: dict[tuple[str, bool, bool], tuple[tuple[Rule, bool], ...]] = {}
+APPLICABLE_RULES_CACHE: dict[tuple[str, bool, bool], tuple[Rule, ...]] = {}
 
 
 def applicable_line_rules(
     suffix: str, is_document: bool, is_manifest_name: bool
-) -> tuple[tuple[Rule, bool], ...]:
+) -> tuple[Rule, ...]:
     """Resolve the line-scanned rules once per file class instead of per file."""
     cache_key = (suffix, is_document, is_manifest_name)
     cached = APPLICABLE_RULES_CACHE.get(cache_key)
     if cached is not None:
         return cached
     selected = [
-        (rule, rule.rule_id in SECRET_RULE_IDS)
+        rule
         for rule in RULES
         if rule.rule_id not in FILE_LEVEL_RULE_IDS
         and not (rule.rule_id == "SP202" and not is_manifest_name)
-        and not (is_document and rule.rule_id not in SECRET_RULE_IDS)
+        and not (is_document and not rule.redact)
         and not (rule.suffixes and suffix not in rule.suffixes)
     ]
     resolved = tuple(selected)
@@ -11909,7 +12247,14 @@ def applicable_line_rules(
     return resolved
 
 
-def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[Finding]:
+def find_regex_issues(
+    path: Path,
+    relative_path: str,
+    source_text: str,
+    lines: Sequence[str] | None = None,
+    python_string_lines: frozenset[int] | None = None,
+    detected_frameworks: frozenset[str] | None = None,
+) -> list[Finding]:
     findings: list[Finding] = []
     suffix = path.suffix.lower()
     file_kind = scanner_file_kind(path)
@@ -11917,19 +12262,29 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
     is_github_workflow = normalized_relative_path.startswith(".github/workflows/") or (
         "/.github/workflows/" in f"/{normalized_relative_path}"
     )
-    lines = source_text.splitlines()
-    comment_flags = [is_pure_comment(line, path) for line in lines]
-    ignore_rule_ids = [
-        match.group(1) if (match := INLINE_IGNORE.search(line)) else None for line in lines
-    ]
+    lines = source_text.splitlines() if lines is None else lines
+    comment_prefixes = comment_line_prefixes(path)
+    comment_flags = [is_pure_comment(line, path, comment_prefixes) for line in lines]
+    if python_string_lines:
+        comment_flags = [
+            flag or (index + 1) in python_string_lines for index, flag in enumerate(comment_flags)
+        ]
+    ignore_rule_ids = [extract_inline_ignore_ids(line, comment_prefixes) for line in lines]
     applicable_rules = applicable_line_rules(
         file_kind,
         suffix in DOCUMENT_SUFFIXES,
         path.name.lower() in {"dockerfile", "containerfile"},
     )
-    for rule, rule_is_secret in applicable_rules:
+    gates = rule_gates()
+    for rule in applicable_rules:
+        rule_is_secret = rule.redact
         rule_id = rule.rule_id
         if rule_id in {"SP658", "SP659", "SP660"} and not is_github_workflow:
+            continue
+        gate = gates.get(rule_id)
+        # File-level prefilter: a literal the pattern requires is absent from
+        # the whole file, so the rule cannot match any line or span in it.
+        if gate is not None and not gate.allows(source_text):
             continue
         pattern_search = rule.pattern.search
         if r"[\s\S]" in rule.pattern.pattern or r"\n" in rule.pattern.pattern:
@@ -11948,11 +12303,11 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
                     continue
                 if not rule_is_secret and comment_flags[index]:
                     continue
-                if ignore_rule_ids[index] == rule_id:
+                if rule_id in ignore_rule_ids[index]:
                     continue
-                if index >= 1 and ignore_rule_ids[index - 1] == rule_id:
+                if index >= 1 and rule_id in ignore_rule_ids[index - 1]:
                     continue
-                if rule_is_secret and PLACEHOLDERS.search(matched_text):
+                if rule_is_secret and is_placeholder_secret(matched_text):
                     continue
                 if rule_id == "SP518" and re.search(
                     r"\b(?:require|request|verify|await)_?(?:human_)?approval\b|"
@@ -11965,6 +12320,8 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
                 confidence_override = (
                     secret_confidence(rule, matched_text) if rule_is_secret else None
                 )
+                start_column = offset_to_position(source_text, match.start())[1]
+                end_line_no, end_column = offset_to_position(source_text, match.end())
                 findings.append(
                     make_finding(
                         rule,
@@ -11972,25 +12329,36 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
                         line_number,
                         lines[index],
                         confidence=confidence_override,
+                        column=start_column,
+                        end_line=end_line_no if end_line_no != line_number else None,
+                        end_column=end_column if end_line_no != line_number else None,
                     )
                 )
             continue
         for index, line in enumerate(lines):
             if not rule_is_secret and comment_flags[index]:
                 continue
-            if ignore_rule_ids[index] == rule_id:
+            if rule_id in ignore_rule_ids[index]:
                 continue
-            if index >= 1 and ignore_rule_ids[index - 1] == rule_id:
+            if index >= 1 and rule_id in ignore_rule_ids[index - 1]:
                 continue
             match = pattern_search(line)
             if not match:
                 continue
             matched_text = match.group(0)
-            if rule_is_secret and PLACEHOLDERS.search(matched_text):
+            if rule_is_secret and is_placeholder_secret(matched_text):
                 continue
             confidence_override = secret_confidence(rule, matched_text) if rule_is_secret else None
             findings.append(
-                make_finding(rule, relative_path, index + 1, line, confidence=confidence_override)
+                make_finding(
+                    rule,
+                    relative_path,
+                    index + 1,
+                    line,
+                    confidence=confidence_override,
+                    column=match.start() + 1,
+                    end_column=match.end() + 1,
+                )
             )
 
     # Kubernetes: Deployment without liveness/readiness probe
@@ -12195,12 +12563,9 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
         if express_line:
             line_str = lines[express_line - 1]
             prev_line_str = lines[express_line - 2] if express_line >= 2 else ""
-            ignore_curr = INLINE_IGNORE.search(line_str)
-            ignore_prev = INLINE_IGNORE.search(prev_line_str)
-            if not (
-                (ignore_curr and ignore_curr.group(1) == "SP401")
-                or (ignore_prev and ignore_prev.group(1) == "SP401")
-            ):
+            ignore_curr = extract_inline_ignore_ids(line_str, comment_prefixes)
+            ignore_prev = extract_inline_ignore_ids(prev_line_str, comment_prefixes)
+            if not ("SP401" in ignore_curr or "SP401" in ignore_prev):
                 rule = find_rule("SP401")
                 findings.append(
                     make_finding(rule, relative_path, express_line, line_str, "structural")
@@ -12345,6 +12710,69 @@ def find_regex_issues(path: Path, relative_path: str, source_text: str) -> list[
         if edge_line:
             append_file_level_finding(findings, "SP631", relative_path, lines, edge_line)
 
+    # Framework-specific: FastAPI routes without visible rate limiting
+    if (
+        suffix == ".py"
+        and (re.search(r"\bFastAPI\s*\(", source_text) or "APIRouter(" in source_text)
+        and any(
+            re.search(r"@(?:app|router)\.[a-z]+(?:\.[a-z]+)?\s*\(", line)
+            for index, line in enumerate(lines)
+            if not comment_flags[index]
+        )
+        and not any(
+            marker in source_text.lower()
+            for marker in ("limiter", "slowapi", "rate_limit", "ratelimit", "throttle")
+        )
+    ):
+        rate_limit_line = next(
+            (
+                index + 1
+                for index, line in enumerate(lines)
+                if not comment_flags[index]
+                and re.search(r"@(?:app|router)\.[a-z]+(?:\.[a-z]+)?\s*\(", line)
+            ),
+            1,
+        )
+        append_file_level_finding(findings, "SP664", relative_path, lines, rate_limit_line)
+
+    # Framework-specific: Django deployable settings module with DEBUG enabled
+    if (
+        suffix == ".py"
+        and any(
+            re.search(r"\bDEBUG\s*=\s*True\b", line) and not comment_flags[index]
+            for index, line in enumerate(lines)
+        )
+        and any(
+            marker in source_text
+            for marker in ("ALLOWED_HOSTS", "INSTALLED_APPS", "MIDDLEWARE", "STATICFILES_DIRS")
+        )
+    ):
+        debug_line = next(
+            (
+                index + 1
+                for index, line in enumerate(lines)
+                if not comment_flags[index] and re.search(r"\bDEBUG\s*=\s*True\b", line)
+            ),
+            1,
+        )
+        append_file_level_finding(findings, "SP665", relative_path, lines, debug_line)
+
+    # Framework-aware confidence: structural framework rules keep their default
+    # confidence only when the manifest declares that framework. A rule firing
+    # in a repo whose manifests do not mention the framework is more likely a
+    # look-alike, so downgrade confidence (never suppress) — unless framework
+    # state is unknown (single-file snippets have no manifests to inspect).
+    if detected_frameworks is not None:
+        findings = [
+            (
+                replace(finding, confidence=DOWNRANK_CONFIDENCE.get(finding.confidence, "low"))
+                if finding.detection == "structural"
+                and finding.rule_id in RULE_FRAMEWORK_HINTS
+                and not RULE_FRAMEWORK_HINTS[finding.rule_id] & detected_frameworks
+                else finding
+            )
+            for finding in findings
+        ]
     return findings
 
 
@@ -12384,7 +12812,10 @@ GO_HTTP_SERVER_INIT = re.compile(r"http\.Server\s*\{")
 
 
 def find_rule(rule_id: str) -> Rule:
-    return next(rule for rule in RULES if rule.rule_id == rule_id)
+    rule = RULE_INDEX.get(rule_id)
+    if rule is None:
+        raise ValueError(f"unknown rule id: {rule_id}")
+    return rule
 
 
 def append_file_level_finding(
@@ -12396,11 +12827,10 @@ def append_file_level_finding(
 ) -> None:
     line_str = lines[line_number - 1] if 1 <= line_number <= len(lines) else ""
     prev_line_str = lines[line_number - 2] if line_number >= 2 else ""
-    ignore_curr = INLINE_IGNORE.search(line_str)
-    ignore_prev = INLINE_IGNORE.search(prev_line_str)
-    if (ignore_curr and ignore_curr.group(1) == rule_id) or (
-        ignore_prev and ignore_prev.group(1) == rule_id
-    ):
+    prefixes = comment_line_prefixes(Path(relative_path))
+    ignore_curr = extract_inline_ignore_ids(line_str, prefixes)
+    ignore_prev = extract_inline_ignore_ids(prev_line_str, prefixes)
+    if rule_id in ignore_curr or rule_id in ignore_prev:
         return
     findings.append(
         make_finding(find_rule(rule_id), relative_path, line_number, line_str, "structural")
@@ -12528,6 +12958,8 @@ def is_interpolated_sql_value(node: ast.AST) -> bool:
 
 
 # --- Taint tracking constants ---
+CREDENTIAL_NAME_HINTS = ("key", "token", "secret", "password", "passwd", "credential")
+BASE64_DECODE_NAMES = frozenset({"b64decode", "a2b_base64"})
 TAINT_SOURCES = frozenset(
     {
         "request.args",
@@ -12595,10 +13027,12 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         relative_path: str,
         source_lines: Sequence[str],
         authorized_routers: set[str] | None = None,
+        ignore_ids: Sequence[tuple[str, ...]] | None = None,
     ) -> None:
         self.relative_path = relative_path
         self.source_lines = source_lines
         self.authorized_routers = authorized_routers or set()
+        self.ignore_ids = ignore_ids or ()
         self.findings: list[Finding] = []
         self.async_function_depth = 0
         self.loop_depth = 0
@@ -12606,6 +13040,17 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.local_assignments: dict[str, ast.AST] = {}
         self.import_aliases: dict[str, str] = {}
         self.tainted_vars: set[str] = set()
+
+    def line_is_ignored(self, rule_id: str, line_number: int) -> bool:
+        if not self.ignore_ids:
+            return False
+        if 0 < line_number <= len(self.ignore_ids) and rule_id in self.ignore_ids[line_number - 1]:
+            return True
+        return (
+            line_number >= 2
+            and line_number - 2 < len(self.ignore_ids)
+            and rule_id in self.ignore_ids[line_number - 2]
+        )
 
     def add_finding(
         self,
@@ -12615,9 +13060,14 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         confidence: str | None = None,
     ) -> None:
         line_number = getattr(node, "lineno", 1)
+        if self.line_is_ignored(rule.rule_id, line_number):
+            return
         evidence = (
             self.source_lines[line_number - 1] if 0 < line_number <= len(self.source_lines) else ""
         )
+        column = getattr(node, "col_offset", None)
+        end_line = getattr(node, "end_lineno", None)
+        end_column = getattr(node, "end_col_offset", None)
         self.findings.append(
             make_finding(
                 rule,
@@ -12626,6 +13076,13 @@ class PythonSecurityVisitor(ast.NodeVisitor):
                 evidence,
                 detection=detection,
                 confidence=confidence,
+                column=column + 1 if column is not None else None,
+                end_line=end_line if end_line is not None and end_line != line_number else None,
+                end_column=(
+                    end_column + 1
+                    if end_column is not None and end_line is not None and end_line != line_number
+                    else None
+                ),
             )
         )
 
@@ -12730,6 +13187,33 @@ class PythonSecurityVisitor(ast.NodeVisitor):
                     self.tainted_vars.add(target.id)
                     return
 
+    def _inspect_hardcoded_credential(self, target: ast.Name, value: ast.AST) -> None:
+        """Flag credential variables assembled from string literals or base64 data.
+
+        The regex engine only sees single quoted literals, so concatenated or
+        encoded credentials would otherwise slip past SP003.
+        """
+        if not any(hint in target.id.lower() for hint in CREDENTIAL_NAME_HINTS):
+            return
+        if isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add):
+            parts = [
+                child.value
+                for child in ast.walk(value)
+                if isinstance(child, ast.Constant) and isinstance(child.value, str)
+            ]
+            if len(parts) >= 2 and sum(len(part) for part in parts) >= 16:
+                self.add_finding(find_rule("SP003"), value, detection="ast")
+        elif isinstance(value, ast.Call) and value.args:
+            call_name = self._resolve_name(resolve_dotted_name(value.func))
+            argument = value.args[0]
+            if (
+                call_name.rsplit(".", 1)[-1] in BASE64_DECODE_NAMES
+                and isinstance(argument, ast.Constant)
+                and isinstance(argument.value, str)
+                and len(argument.value) >= 16
+            ):
+                self.add_finding(find_rule("SP003"), value, detection="ast", confidence="low")
+
     def visit_Assign(self, node: ast.Assign) -> None:
         for target in node.targets:
             if isinstance(target, ast.Name):
@@ -12743,6 +13227,7 @@ class PythonSecurityVisitor(ast.NodeVisitor):
                 }:
                     self.import_aliases[target.id] = node.value.id
                 self._propagate_taint(target, node.value)
+                self._inspect_hardcoded_credential(target, node.value)
         self.generic_visit(node)
 
     def visit_For(self, node: ast.For) -> None:
@@ -12962,14 +13447,59 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def find_python_ast_issues(relative_path: str, source_text: str) -> list[Finding]:
+def parse_python_source(source_text: str) -> ast.Module | None:
+    """Parse Python source, treating pathological input as unparseable, not fatal."""
     try:
-        tree = ast.parse(source_text)
-    except (SyntaxError, ValueError):
-        return []
+        return ast.parse(source_text)
+    except (SyntaxError, ValueError, RecursionError, MemoryError):
+        return None
+
+
+def multiline_string_lines(tree: ast.Module | None) -> frozenset[int]:
+    """Interior lines of multi-line string constants (docstrings and prose blocks).
+
+    Those lines contain only literal text, so non-secret rules may skip them the
+    same way they skip comments. f-string components are excluded because their
+    embedded expressions can hold real code.
+    """
+    if tree is None:
+        return frozenset()
+    joined_parts: set[int] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.JoinedStr):
+            for child in ast.walk(node):
+                if isinstance(child, ast.Constant):
+                    joined_parts.add(id(child))
+    lines: set[int] = set()
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and id(node) not in joined_parts
+        ):
+            end = getattr(node, "end_lineno", None)
+            if end is not None and end > node.lineno:
+                lines.update(range(node.lineno + 1, end))
+    return frozenset(lines)
+
+
+def find_python_ast_issues(
+    relative_path: str,
+    source_text: str,
+    lines: Sequence[str] | None = None,
+    tree: ast.Module | None = None,
+    ignore_ids: Sequence[tuple[str, ...]] | None = None,
+) -> list[Finding]:
+    if tree is None:
+        tree = parse_python_source(source_text)
+        if tree is None:
+            return []
     authorized_routers = find_authorized_routers(tree)
     visitor = PythonSecurityVisitor(
-        relative_path, source_lines=source_text.splitlines(), authorized_routers=authorized_routers
+        relative_path,
+        source_lines=lines if lines is not None else source_text.splitlines(),
+        authorized_routers=authorized_routers,
+        ignore_ids=ignore_ids,
     )
     visitor.visit(tree)
     return visitor.findings
@@ -12978,9 +13508,16 @@ def find_python_ast_issues(relative_path: str, source_text: str) -> list[Finding
 def lint_source_snippet(source_text: str, filename: str = "snippet.py") -> list[Finding]:
     """Lint an in-memory code snippet without reading from disk."""
     path = Path(filename)
-    findings = find_regex_issues(path, filename, source_text)
-    if path.suffix.lower() == ".py":
-        findings.extend(find_python_ast_issues(filename, source_text))
+    lines = source_text.splitlines()
+    python_tree = parse_python_source(source_text) if path.suffix.lower() == ".py" else None
+    python_string_lines = multiline_string_lines(python_tree) if python_tree is not None else None
+    findings = find_regex_issues(path, filename, source_text, lines, python_string_lines)
+    if python_tree is not None:
+        prefixes = comment_line_prefixes(path)
+        ignore_ids = [extract_inline_ignore_ids(line, prefixes) for line in lines]
+        findings.extend(
+            find_python_ast_issues(filename, source_text, lines, python_tree, ignore_ids)
+        )
     active, _ = deduplicate_and_suppress_findings(findings)
     return active
 
@@ -13002,7 +13539,12 @@ def deduplicate_and_suppress_findings(
     unique: dict[tuple[str, str, int], Finding] = {}
     for finding in findings:
         key = (finding.rule_id, finding.path, finding.line)
-        if key not in unique:
+        existing = unique.get(key)
+        if existing is None:
+            unique[key] = finding
+        elif PROOF_RANK.get(finding.proof_level, 0) > PROOF_RANK.get(existing.proof_level, 0):
+            # Same rule and line: keep the finding from the stronger engine so a
+            # pattern hit never shadows richer AST/taint evidence.
             unique[key] = finding
     active: list[Finding] = []
     suppressed_count = 0
@@ -13021,6 +13563,31 @@ def deduplicate_and_suppress_findings(
         )
     )
     return active, suppressed_count
+
+
+MANIFEST_FILE_NAMES = (
+    "package.json",
+    "pyproject.toml",
+    "requirements.txt",
+    "setup.py",
+    "Pipfile",
+    "poetry.lock",
+    "go.mod",
+    "Cargo.toml",
+    "composer.json",
+    "Gemfile",
+    "pom.xml",
+    "build.gradle",
+    "build.gradle.kts",
+    "global.json",
+    "Directory.Packages.props",
+)
+
+
+def repository_manifest_present(root: Path) -> bool:
+    if any((root / name).is_file() for name in MANIFEST_FILE_NAMES):
+        return True
+    return bool(list(root.glob("*.csproj")) or list(root.glob("*.sln")))
 
 
 def detect_frameworks(root: Path) -> set[str]:
@@ -13274,57 +13841,188 @@ def changed_files(root: Path, git_ref: str) -> frozenset[str]:
     return frozenset(path.removeprefix("./") for path in changed)
 
 
+def load_impact_graph_module():
+    companion = Path(__file__).resolve().parent / "impact_graph.py"
+    if not companion.is_file():
+        raise ValueError("--cross-file requires the impact_graph.py companion script")
+    spec = importlib.util.spec_from_file_location("shipproof_impact_graph", companion)
+    if spec is None or spec.loader is None:
+        raise ValueError("could not load the impact graph analyzer")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def collect_cross_file_taint(root: Path) -> tuple[list[Finding], int, int]:
+    """Promote unsanitized interprocedural taint flows into L2 findings.
+
+    Uses the offline impact-graph analyzer (route entrypoints -> helpers ->
+    dangerous sinks across files). Each flow lands on the sink line; when a
+    lower-proof finding for the same rule and line already exists, dedup keeps
+    this richer taint evidence instead. Returns (findings, total_flows,
+    unsanitized_flows).
+    """
+    module = load_impact_graph_module()
+    graph = module.ImpactGraph(root)
+    graph.build()
+    flows = graph.propagate_interprocedural_taint()
+    findings: list[Finding] = []
+    unsanitized = 0
+    for flow in sorted(
+        flows,
+        key=lambda item: (item.sink_file, item.sink_line, item.sink_rule_id, item.source_file),
+    ):
+        if flow.is_sanitized:
+            continue
+        unsanitized += 1
+        rule = find_rule(flow.sink_rule_id)
+        chain = " -> ".join([*flow.call_chain[-4:], f"sink:{flow.sink_function}"])
+        evidence = (
+            f"Tainted '{flow.source_param}' from {flow.source_file} reaches a "
+            f"{flow.sink_type.replace('_', ' ')} sink via {chain}"
+        )
+        findings.append(make_finding(rule, flow.sink_file, flow.sink_line, evidence, "taint"))
+    return findings, len(flows), unsanitized
+
+
+PARALLEL_MIN_FILES = 24
+MAX_SCAN_JOBS = 32
+
+
+def _worker_initializer() -> None:
+    """Make this module importable inside spawned workers on every platform."""
+    scripts_directory = str(Path(__file__).resolve().parent)
+    if scripts_directory not in sys.path:
+        sys.path.insert(0, scripts_directory)
+
+
+def scan_single_file(
+    path: Path,
+    relative_path: str,
+    max_file_bytes: int,
+    detected_frameworks: frozenset[str] | None,
+) -> list[Finding]:
+    """Scan one file with both engines; shared by sequential and parallel paths."""
+    if path.suffix.lower() in {".sqlite", ".sqlite3", ".db"}:
+        try:
+            header = path.read_bytes()[:16]
+        except OSError:
+            return []
+        if header.startswith(b"SQLite format 3") or path.suffix.lower() in {".sqlite", ".sqlite3"}:
+            return [
+                make_finding(
+                    find_rule("SP314"),
+                    relative_path,
+                    1,
+                    f"Tracked database file: {relative_path}",
+                    "artifact",
+                )
+            ]
+        return []
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    lines = text.splitlines()
+    python_tree = parse_python_source(text) if path.suffix.lower() == ".py" else None
+    python_string_lines = multiline_string_lines(python_tree) if python_tree is not None else None
+    file_findings = find_regex_issues(
+        path, relative_path, text, lines, python_string_lines, detected_frameworks
+    )
+    if python_tree is not None:
+        prefixes = comment_line_prefixes(path)
+        ignore_ids = [extract_inline_ignore_ids(line, prefixes) for line in lines]
+        file_findings.extend(
+            find_python_ast_issues(relative_path, text, lines, python_tree, ignore_ids)
+        )
+    return file_findings
+
+
+def _scan_file_task(task: tuple[str, str, int, tuple[str, ...] | None]) -> list[Finding]:
+    """Pool worker entry point: unpack one scan task and return its findings."""
+    path_text, relative_path, max_file_bytes, frameworks = task
+    detected = frozenset(frameworks) if frameworks is not None else None
+    return scan_single_file(Path(path_text), relative_path, max_file_bytes, detected)
+
+
 def scan_repository(
     root: Path,
     max_file_bytes: int = 1_000_000,
     baseline: set[str] | None = None,
     exclude_patterns: Sequence[str] = (),
     include_paths: frozenset[str] | None = None,
+    cross_file: bool = False,
+    jobs: int = 1,
 ) -> tuple[list[Finding], dict[str, object]]:
     repository_root = root.resolve()
     if not repository_root.is_dir():
         raise ValueError(f"not a directory: {repository_root}")
+    if jobs < 1:
+        raise ValueError("jobs must be at least 1")
     findings: list[Finding] = []
-    files_scanned = 0
     frameworks = detect_frameworks(repository_root)
+    # Without any manifest at all, framework state is unknown (do not downgrade
+    # structural framework findings); with manifests present, an undeclared
+    # framework is real evidence the rule may be a look-alike.
+    detected_frameworks = (
+        frozenset(frameworks) if repository_manifest_present(repository_root) else None
+    )
+    framework_tuple = tuple(sorted(frameworks)) if detected_frameworks is not None else None
     normalized_excludes = normalize_exclude_patterns(exclude_patterns)
+    tasks: list[tuple[str, str, int, tuple[str, ...] | None]] = []
+    files_scanned = 0
     for path in iter_scannable_files(repository_root, max_file_bytes, normalized_excludes):
         relative_path = path.relative_to(repository_root).as_posix()
         if include_paths is not None and relative_path not in include_paths:
             continue
         files_scanned += 1
-        if path.suffix.lower() in {".sqlite", ".sqlite3", ".db"}:
-            try:
-                header = path.read_bytes()[:16]
-                if header.startswith(b"SQLite format 3") or path.suffix.lower() in {
-                    ".sqlite",
-                    ".sqlite3",
-                }:
-                    findings.append(
-                        make_finding(
-                            find_rule("SP314"),
-                            relative_path,
-                            1,
-                            f"Tracked database file: {relative_path}",
-                            "artifact",
-                        )
-                    )
-            except OSError:
-                pass
-            continue
+        tasks.append((str(path), relative_path, max_file_bytes, framework_tuple))
+
+    if jobs > 1 and len(tasks) >= PARALLEL_MIN_FILES:
+        # Parallel scanning keeps byte-identical output: tasks run in walk
+        # order, each file's findings stay grouped, and dedup/sort run in the
+        # parent exactly as in the sequential path.
+        from concurrent.futures import ProcessPoolExecutor
+
+        worker_jobs = min(jobs, MAX_SCAN_JOBS, len(tasks))
         try:
-            text = path.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        findings.extend(find_regex_issues(path, relative_path, text))
-        if path.suffix.lower() == ".py":
-            findings.extend(find_python_ast_issues(relative_path, text))
+            with ProcessPoolExecutor(
+                max_workers=worker_jobs, initializer=_worker_initializer
+            ) as executor:
+                for file_findings in executor.map(_scan_file_task, tasks, chunksize=4):
+                    findings.extend(file_findings)
+        except (OSError, ImportError) as exc:
+            print(
+                f"shipproof: parallel scan unavailable ({exc}); continuing sequentially",
+                file=sys.stderr,
+            )
+            findings = []
+            for task in tasks:
+                findings.extend(_scan_file_task(task))
+    else:
+        for task in tasks:
+            findings.extend(
+                scan_single_file(Path(task[0]), task[1], max_file_bytes, detected_frameworks)
+            )
+
+    if cross_file:
+        try:
+            cross_findings, flow_count, unsanitized_count = collect_cross_file_taint(
+                repository_root
+            )
+        except (OSError, ValueError, RecursionError, MemoryError) as exc:
+            raise ValueError(f"cross-file analysis failed: {exc}") from exc
+        findings.extend(cross_findings)
 
     active, suppressed = deduplicate_and_suppress_findings(findings, baseline)
     stats = {
         "files_scanned": files_scanned,
         "suppressed": suppressed,
     }
+    if cross_file:
+        stats["cross_file_flows"] = flow_count
+        stats["cross_file_flows_unsanitized"] = unsanitized_count
     if frameworks:
         stats["frameworks"] = sorted(frameworks)
     return active, stats
@@ -13607,9 +14305,15 @@ def render_github_annotations(findings: Sequence[Finding]) -> str:
     lines: list[str] = []
     for item in findings:
         level = "error" if item.severity in ("critical", "high") else "warning"
-        lines.append(
-            f"::{level} file={item.path},line={item.line},title={item.rule_id} {item.title}::{item.message} Fix: {item.remediation}"
+        position = f"file={item.path},line={item.line}"
+        title = f"{item.rule_id} {item.title}".replace(",", "%2C")
+        column_suffix = f",col={item.column}" if item.column is not None else ""
+        message = (
+            f"{item.message} Fix: {item.remediation}".replace("\r", " ")
+            .replace("\n", " ")
+            .replace("::", "")
         )
+        lines.append(f"::{level} {position},title={title}{column_suffix}::{message}")
     return "\n".join(lines)
 
 
@@ -14072,7 +14776,46 @@ def render_explain(
 
 def build_sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
     rules: dict[str, Finding] = {item.rule_id: item for item in findings}
-    level = {"critical": "error", "high": "error", "medium": "warning", "low": "note"}
+    level = {
+        "critical": "error",
+        "high": "error",
+        "medium": "warning",
+        "low": "note",
+        "none": "note",
+    }
+    results = []
+    for item in findings:
+        region: dict[str, int] = {"startLine": item.line}
+        if item.column is not None:
+            region["startColumn"] = item.column
+        if item.end_line is not None:
+            region["endLine"] = item.end_line
+        if item.end_column is not None:
+            region["endColumn"] = item.end_column
+        results.append(
+            {
+                "ruleId": item.rule_id,
+                "level": level.get(item.severity, "note"),
+                "message": {"text": item.message},
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": item.path},
+                            "region": region,
+                        }
+                    }
+                ],
+                "partialFingerprints": {"shipproof/v1": item.fingerprint},
+                "properties": {
+                    "severity": item.severity,
+                    "confidence": item.confidence,
+                    "detection": item.detection,
+                    "proof_level": item.proof_level,
+                    "scope": item.scope,
+                    "verification_status": item.verification_status,
+                },
+            }
+        )
     return {
         "version": "2.1.0",
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
@@ -14096,31 +14839,7 @@ def build_sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
                         ],
                     }
                 },
-                "results": [
-                    {
-                        "ruleId": item.rule_id,
-                        "level": level[item.severity],
-                        "message": {"text": item.message},
-                        "locations": [
-                            {
-                                "physicalLocation": {
-                                    "artifactLocation": {"uri": item.path},
-                                    "region": {"startLine": item.line},
-                                }
-                            }
-                        ],
-                        "partialFingerprints": {"shipproof/v1": item.fingerprint},
-                        "properties": {
-                            "severity": item.severity,
-                            "confidence": item.confidence,
-                            "detection": item.detection,
-                            "proof_level": item.proof_level,
-                            "scope": item.scope,
-                            "verification_status": item.verification_status,
-                        },
-                    }
-                    for item in findings
-                ],
+                "results": results,
             }
         ],
     }
@@ -14221,6 +14940,18 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Scan only files changed relative to a git ref (also includes untracked files)",
     )
+    parser.add_argument(
+        "--cross-file",
+        action="store_true",
+        default=False,
+        help="Augment findings with interprocedural taint flows across files (slower)",
+    )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=1,
+        help="Scan files with N worker processes (deterministic; 1 stays sequential)",
+    )
     return parser.parse_args(argv)
 
 
@@ -14290,6 +15021,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if arguments.max_file_bytes <= 0:
             raise ValueError("max-file-bytes must be positive")
+        if arguments.jobs < 1:
+            raise ValueError("jobs must be at least 1")
         include_paths = (
             changed_files(arguments.root, arguments.changed_since)
             if arguments.changed_since
@@ -14302,6 +15035,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             baseline=baseline_fingerprints,
             exclude_patterns=arguments.exclude,
             include_paths=include_paths,
+            cross_file=arguments.cross_file,
+            jobs=arguments.jobs,
         )
         if arguments.changed_since:
             stats["changed_since"] = arguments.changed_since
@@ -14362,6 +15097,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     baseline=load_baseline_fingerprints(arguments.baseline),
                     exclude_patterns=arguments.exclude,
                     include_paths=include_paths,
+                    cross_file=arguments.cross_file,
+                    jobs=arguments.jobs,
                 )
                 if arguments.min_confidence:
                     min_conf = CONFIDENCE[arguments.min_confidence]
@@ -14422,6 +15159,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(output)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"shipproof: {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:  # a scanner crash is invalid evidence, never a gate block
+        print(f"shipproof: internal error ({type(exc).__name__}): {exc}", file=sys.stderr)
         return 2
 
     # Gating: default evaluates app scope findings only unless --include-tests is set

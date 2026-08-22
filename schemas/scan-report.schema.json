@@ -21,6 +21,8 @@
             "suppressed": { "type": "integer", "minimum": 0 },
             "frameworks": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
             "changed_since": { "type": "string", "minLength": 1 },
+            "cross_file_flows": { "type": "integer", "minimum": 0 },
+            "cross_file_flows_unsanitized": { "type": "integer", "minimum": 0 },
             "by_severity": {
               "type": "object",
               "propertyNames": { "enum": ["critical", "high", "medium", "low"] },
@@ -44,7 +46,10 @@
               "remediation": { "type": "string" }, "cwe": { "type": "string" },
               "owasp": { "type": "string" }, "fingerprint": { "type": "string" },
               "detection": { "type": "string" }, "proof_level": { "enum": ["L0", "L1", "L2"] },
-              "scope": { "enum": ["app", "test"] }, "verification_status": { "type": "string" }
+              "scope": { "enum": ["app", "test"] }, "verification_status": { "type": "string" },
+              "column": { "type": ["integer", "null"], "minimum": 1 },
+              "end_line": { "type": ["integer", "null"], "minimum": 1 },
+              "end_column": { "type": ["integer", "null"], "minimum": 1 }
             },
             "additionalProperties": false
           }

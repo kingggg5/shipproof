@@ -69,7 +69,7 @@ ShipProof applies the same review contract regardless of who wrote the code. Its
 | :--- | :--- |
 | Current release | `v0.7.0` public beta |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
-| Executable rules | 571 (`SP001`–`SP661`, with deliberate reserved gaps) |
+| Executable rules | 575 (`SP001`–`SP665`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` intraprocedural Python taint |
 | Research backlog | 8,800 research-only candidates; none are findings until promoted |
 | Exit codes | `0` pass, `1` policy gate failure, `2` invalid or unavailable evidence |
@@ -830,12 +830,16 @@ Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1
 | **`SP659`** | MEDIUM | Security | GitHub Actions security scan step configured to continue on error | Regex |
 | **`SP660`** | MEDIUM | Security | GitHub reusable workflow inherits every caller secret | Regex |
 | **`SP661`** | MEDIUM | Security | Kubernetes API server enables AlwaysAllow authorization | Regex |
+| **`SP662`** | MEDIUM | Security | Django CORS policy allows all origins | Regex |
+| **`SP663`** | MEDIUM | Security | Django session cookie sent without the Secure flag | Regex |
+| **`SP664`** | MEDIUM | Security | FastAPI app routes without visible rate limiting | Structural |
+| **`SP665`** | MEDIUM | Security | Django settings enable DEBUG in a production settings module | Structural |
 
 ## False Positive Control
 
 ShipProof prioritizes high precision over noisy alerts:
 
-- **Inline suppression:** Add `# shipproof-ignore SP101` or `// shipproof-ignore SP101` directly on the line or on the line immediately preceding it.
+- **Inline suppression:** Add `# shipproof-ignore SP101` or `// shipproof-ignore SP101` directly on the line or on the line immediately preceding it. The marker is honored only inside a comment (or at the start of a documentation line), never inside string data, and may list several rules at once (for example `# shipproof-ignore SP101 SP102`). Both the regex and the Python AST engines honor these markers.
 - **Confidence filtering:** Run with `--min-confidence high` to surface only confirmed, high-confidence issues.
 - **Reviewed baselines:** Record existing technical debt into `.shipproof-baseline.json` using `shipproof scan --baseline-out .shipproof-baseline.json`.
 
@@ -870,6 +874,22 @@ For pull requests that touch a large repository, scan only what changed relative
 ```
 
 The scanner resolves the git diff (added, copied, modified, and renamed files, plus untracked files) and reports the ref under `changed_since` in JSON output. Findings outside the diff are not reported for that run; keep a scheduled full scan as the safety net.
+
+The default report format is `sarif`, which the action writes into the workspace. To surface findings as inline Code Scanning alerts, upload that artifact with GitHub's official action after the gate step:
+
+```yaml
+      - uses: kingggg5/shipproof@v0.7.0
+        with:
+          fail-on: high
+          format: sarif
+          output: shipproof.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: shipproof.sarif
+```
+
+Uploading requires `permissions: security-events: write` (keep `contents: read`) on the job or workflow.
 
 ## One Policy, One Command
 
@@ -957,7 +977,7 @@ Both hosts use the open `SKILL.md` structure, so ShipProof keeps one source of t
 
 ```text
 shipproof check [path] [--config <file>]     Run every gate (works without config)
-shipproof scan [path] [options]              Scan repository (--format terminal|json|sarif)
+shipproof scan [path] [options]              Scan repository (--format terminal|markdown|json|sarif|github)
 shipproof explain <rule-id>                  Explain a rule in detail (e.g. explain SP108)
 shipproof doctor [path] [--json]             Inspect local runtime and integration health
 shipproof init [path] [--scope <scope>]      Add project/global skills and a project policy
@@ -1087,7 +1107,7 @@ npm install --save-dev github:kingggg5/shipproof @modelcontextprotocol/sdk@1.29.
 npx shipproof mcp
 ```
 
-Set `SHIPPROOF_MCP_ROOT` to the repository root when the client does not launch the server there. Paths are canonicalized, symlink escapes are denied, execution is bounded to 30 seconds and 2 MB, and no raw shell or file-reading tool is exposed.
+Set `SHIPPROOF_MCP_ROOT` to the repository root when the client does not launch the server there. Paths are canonicalized, symlink escapes are denied, execution is bounded to 30 seconds (raise it for large repositories with `SHIPPROOF_MCP_TIMEOUT_MS`, an integer from 1000 through 600000) and 2 MB, and no raw shell or file-reading tool is exposed. `shipproof_scan` accepts the same core controls as the CLI: `exclude` glob patterns, `min_confidence`, and `cross_file` to augment findings with interprocedural taint flows.
 
 Inspect available language-native evidence adapters before running one:
 

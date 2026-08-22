@@ -14,7 +14,17 @@
         "analyzer": { "type": "string", "minLength": 1 },
         "process_exit_code": { "type": "integer", "minimum": 0 },
         "passed": { "type": "boolean" },
-        "diagnostics": { "type": "array", "items": { "type": "string" } }
+        "diagnostics": { "type": "array", "items": { "type": "string" } },
+        "severity_counts": {
+          "type": "object",
+          "required": ["error", "warning", "other"],
+          "properties": {
+            "error": { "type": "integer", "minimum": 0 },
+            "warning": { "type": "integer", "minimum": 0 },
+            "other": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
       }
     }
   ],

@@ -60,6 +60,17 @@
       "proof_level": "L1",
       "evidence": "app.post(\"/api/auth/login\", signIn);",
       "fingerprint": "90c21b33cc08cd5703db87e3"
+    },
+    {
+      "rule_id": "SP664",
+      "path": "server.py",
+      "line": 11,
+      "severity": "medium",
+      "confidence": "low",
+      "detection": "structural",
+      "proof_level": "L1",
+      "evidence": "@app.get(\"/health\")",
+      "fingerprint": "0c7a2f170e4694ad65621603"
     }
   ]
 }

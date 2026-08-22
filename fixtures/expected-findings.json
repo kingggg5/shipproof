@@ -1,5 +1,12 @@
 {
-  "vulnerable-node-api": ["SP103", "SP104"],
-  "vulnerable-python-api": ["SP201", "SP304"],
+  "vulnerable-node-api": [
+    "SP103",
+    "SP104"
+  ],
+  "vulnerable-python-api": [
+    "SP201",
+    "SP304",
+    "SP664"
+  ],
   "secure-node-api": []
 }

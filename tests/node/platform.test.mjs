@@ -278,7 +278,7 @@ test("release metadata rejects branches and accepts only the exact package tag",
       encoding: "utf8",
       env: {
         ...process.env,
-        GITHUB_REF_NAME: "v0.7.0",
+        GITHUB_REF_NAME: "v0.8.0",
         GITHUB_REF_TYPE: "tag",
         GITHUB_OUTPUT: outputPath,
       },
@@ -286,7 +286,7 @@ test("release metadata rejects branches and accepts only the exact package tag",
       windowsHide: true,
     });
     assert.equal(tag.status, 0, tag.stderr);
-    assert.match(readFileSync(outputPath, "utf8"), /version=0\.7\.0/);
+    assert.match(readFileSync(outputPath, "utf8"), /version=0\.8\.0/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

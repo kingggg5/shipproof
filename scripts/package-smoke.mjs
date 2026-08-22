@@ -82,7 +82,7 @@ function main() {
     assert.ok(existsSync(demoFixture), "installed package must ship the demo fixtures");
     const scanned = runProcess(process.execPath, [installedCli, "scan", demoFixture, "--format", "json", "--fail-on", "high"]);
     assert.equal(scanned.status, 1, scanned.stderr);
-    assert.equal(JSON.parse(scanned.stdout).summary.findings, 5, "demo before-fixture must report five findings");
+    assert.equal(JSON.parse(scanned.stdout).summary.findings, 6, "demo before-fixture must report six findings");
 
     const explained = runProcess(process.execPath, [installedCli, "explain", "SP402"]);
     assert.equal(explained.status, 0, explained.stderr);
@@ -123,7 +123,7 @@ function main() {
       },
     );
     assert.equal(action.status, 1, action.stderr);
-    assert.equal(JSON.parse(readFileSync(actionReportPath, "utf8")).summary.findings, 5);
+    assert.equal(JSON.parse(readFileSync(actionReportPath, "utf8")).summary.findings, 6);
     assert.match(readFileSync(actionOutputPath, "utf8"), /report-path=/);
     assert.match(readFileSync(actionSummaryPath, "utf8"), /BLOCKED/);
 

@@ -3,6 +3,8 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "nod
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { detectPythonRuntime } from "../lib/runtime.mjs";
+
 const ACTION_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const FORMATS = new Set(["json", "markdown", "sarif"]);
 const SEVERITIES = new Set(["critical", "high", "medium", "low", "none"]);
@@ -101,27 +103,18 @@ export function buildScannerArguments(inputs) {
 }
 
 function findPython() {
-  const candidates = [];
-  if (process.env.SHIPPROOF_PYTHON) candidates.push([process.env.SHIPPROOF_PYTHON, []]);
-  if (process.platform === "win32") candidates.push(["py", ["-3"]]);
-  candidates.push(["python3", []], ["python", []]);
-  for (const [command, prefix] of candidates) {
-    const result = spawnSync(command, [...prefix, "--version"], {
-      encoding: "utf8",
-      shell: false,
-      windowsHide: true,
-    });
-    const version = `${result.stdout || ""}${result.stderr || ""}`;
-    const match = /Python\s+(\d+)\.(\d+)/.exec(version);
-    if (
-      result.status === 0
-      && match
-      && (Number(match[1]) > 3 || (Number(match[1]) === 3 && Number(match[2]) >= 10))
-    ) {
-      return { command, prefix };
-    }
-  }
-  throw new Error("Python 3.10+ is required by the ShipProof action");
+  const runtime = detectPythonRuntime();
+  if (!runtime) throw new Error("Python 3.10+ is required by the ShipProof action");
+  return { command: runtime.command, prefix: runtime.argumentPrefix };
+}
+
+const MAX_SUMMARY_ROWS = 200;
+
+function markdownCell(value) {
+  return String(value ?? "")
+    .replaceAll("|", "\\|")
+    .replaceAll("\r", " ")
+    .replaceAll("\n", " ");
 }
 
 function gateSummaryHeading(exitCode, failOn) {
@@ -156,9 +149,12 @@ export function formatActionSummary(
       if (findings.length > 0) {
         lines.push("| Severity | Rule | Location | Description |");
         lines.push("| :--- | :--- | :--- | :--- |");
-        for (const f of findings) {
+        for (const f of findings.slice(0, MAX_SUMMARY_ROWS)) {
           const sevIcon = f.severity === "critical" || f.severity === "high" ? "🔴" : f.severity === "medium" ? "🟡" : "🟢";
-          lines.push(`| ${sevIcon} ${f.severity.toUpperCase()} | \`${f.rule_id}\` | \`${f.path}:${f.line}\` | ${f.title} |`);
+          lines.push(`| ${sevIcon} ${markdownCell(f.severity?.toUpperCase())} | \`${markdownCell(f.rule_id)}\` | \`${markdownCell(f.path)}:${markdownCell(f.line)}\` | ${markdownCell(f.title)} |`);
+        }
+        if (findings.length > MAX_SUMMARY_ROWS) {
+          lines.push("", `…and ${findings.length - MAX_SUMMARY_ROWS} more findings in the full report artifact.`);
         }
       }
       return lines.join("\n");
@@ -175,11 +171,14 @@ export function formatActionSummary(
       if (results.length > 0) {
         lines.push("| Level | Rule | Location | Message |");
         lines.push("| :--- | :--- | :--- | :--- |");
-        for (const r of results) {
+        for (const r of results.slice(0, MAX_SUMMARY_ROWS)) {
           const loc = r.locations?.[0]?.physicalLocation;
           const pathStr = loc?.artifactLocation?.uri ? `${loc.artifactLocation.uri}:${loc.region?.startLine || 1}` : "unknown";
           const levelIcon = r.level === "error" ? "🔴" : r.level === "warning" ? "🟡" : "🟢";
-          lines.push(`| ${levelIcon} ${r.level?.toUpperCase() || "NOTE"} | \`${r.ruleId}\` | \`${pathStr}\` | ${r.message?.text || ""} |`);
+          lines.push(`| ${levelIcon} ${markdownCell(r.level?.toUpperCase() || "NOTE")} | \`${markdownCell(r.ruleId)}\` | \`${markdownCell(pathStr)}\` | ${markdownCell(r.message?.text || "")} |`);
+        }
+        if (results.length > MAX_SUMMARY_ROWS) {
+          lines.push("", `…and ${results.length - MAX_SUMMARY_ROWS} more findings in the SARIF artifact.`);
         }
       }
       return lines.join("\n");
@@ -200,7 +199,13 @@ export function main(environment = process.env) {
       shell: false,
       windowsHide: true,
     });
-    const exitCode = result.error ? 2 : (result.status ?? 2);
+    let exitCode = result.error ? 2 : (result.status ?? 2);
+    // Scanner crashes surface as unusual statuses (including raw Windows
+    // NTSTATUS values); the action contract only defines 0/1/2.
+    if (exitCode !== 0 && exitCode !== 1 && exitCode !== 2) {
+      console.error(`shipproof-action: scanner exited with status ${exitCode}; reporting unavailable evidence`);
+      exitCode = 2;
+    }
     const reportAvailable = (
       (exitCode === 0 || exitCode === 1)
       && existsSync(inputs.output)

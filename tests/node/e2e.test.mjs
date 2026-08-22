@@ -67,7 +67,7 @@ test("CLI workflow preserves documented exit codes and artifacts", (context) => 
     const vulnerable = join(internals.PACKAGE_ROOT, "examples", "demo-api", "fixtures", "before");
     const scanned = runCli(["scan", vulnerable, "--format", "json", "--fail-on", "high"]);
     assert.equal(scanned.status, 1, scanned.stderr);
-    assert.equal(JSON.parse(scanned.stdout).summary.findings, 5);
+    assert.equal(JSON.parse(scanned.stdout).summary.findings, 6);
 
     const retiredBadge = runCli(["badge", vulnerable]);
     assert.equal(retiredBadge.status, 2);

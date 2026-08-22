@@ -737,6 +737,274 @@
           "rationale": "AlwaysDeny is a different authorization mode and must not be matched by an AlwaysAllow detector."
         }
       ]
+    },
+    {
+      "rule_id": "SP662",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://django-cors-headers.readthedocs.io/en/stable/settings.html",
+          "claim": "django-cors-headers documents CORS_ALLOW_ALL_ORIGINS as matching every origin in the browser, which is only safe when no credentials are involved."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/942.html",
+          "claim": "CWE-942 describes permissive cross-origin policies that allow arbitrary origins with credentials, enabling authenticated data theft from victim browsers."
+        }
+      ],
+      "false_positive_analysis": "The detector requires the exact CORS_ALLOW_ALL_ORIGINS setting assigned a literal True, so False assignments, enumerated CORS_ALLOWED_ORIGINS lists, environment-driven values, commented-out lines, and look-alike prefixed names are excluded. A deliberately public credential-free API may legitimately allow all origins; reviewers must confirm that cookies and Authorization headers are never sent before suppressing.",
+      "positive": [
+        {
+          "path": "settings.py",
+          "source": "CORS_ALLOW_ALL_ORIGINS = True\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "CORS_ALLOW_ALL_ORIGINS = True  # partner embeds need it\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "cors_allow_all_origins = true\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "settings.py",
+          "source": "CORS_ALLOW_ALL_ORIGINS = False\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "# CORS_ALLOW_ALL_ORIGINS = True\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "CORS_ALLOWED_ORIGINS = [\"https://app.example.com\"]\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "MY_CORS_ALLOW_ALL_ORIGINS = True\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "CORS_ALLOW_ALL_ORIGINS = os.environ.get(\"CORS_ALLOW_ALL\", False)\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "settings.py",
+          "source": "CORS_ALLOW_ALL_ORIGINS=True\n",
+          "expected": true,
+          "rationale": "A compact assignment without spaces still enables the permissive mode in django-cors-headers and must be detected."
+        },
+        {
+          "path": "settings.py",
+          "source": "CORS_ALLOW_ALL_ORIGINS = \"True\"\n",
+          "expected": false,
+          "rationale": "A quoted string is a configuration type error that does not activate the setting, so the detector must not fire on it."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP663",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-SESSION_COOKIE_SECURE",
+          "claim": "Django documents SESSION_COOKIE_SECURE as controlling whether the session cookie is only sent over HTTPS, with the secure default enabled in modern versions."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/614.html",
+          "claim": "CWE-614 covers sensitive cookies sent without the Secure attribute, exposing session identifiers to interception over unencrypted transport."
+        }
+      ],
+      "false_positive_analysis": "The detector requires the exact SESSION_COOKIE_SECURE setting explicitly assigned literal False, so secure True assignments, the safer CSRF cookie sibling, look-alike prefixed variable names, commented-out lines, and dynamic value expressions are all excluded. Local-only development settings that inherit or default securely do not carry the literal override and stay silent.",
+      "positive": [
+        {
+          "path": "settings.py",
+          "source": "SESSION_COOKIE_SECURE = False\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "SESSION_COOKIE_SECURE=False\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "session_cookie_secure = false\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "settings.py",
+          "source": "SESSION_COOKIE_SECURE = True\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "# SESSION_COOKIE_SECURE = False\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "CSRF_COOKIE_SECURE = False\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "MY_SESSION_COOKIE_SECURE = False\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "SESSION_COOKIE_SECURE = is_https()\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "settings.py",
+          "source": "MIDDLEWARE = [\"django.middleware.security.SecurityMiddleware\"]\nSESSION_COOKIE_SECURE = False\n",
+          "expected": true,
+          "rationale": "The override inside a realistic settings module with middleware configured is exactly the production risk the rule targets."
+        },
+        {
+          "path": "settings.py",
+          "source": "SESSION_COOKIE_SECURE = \"false\"\n",
+          "expected": false,
+          "rationale": "A quoted value is a type error that does not disable the secure flag, so the detector must not fire on it."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP664",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html",
+          "claim": "The OWASP REST Security Cheat Sheet recommends limiting the number of requests an API accepts per token, API key, or address to blunt brute force attacks."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/307.html",
+          "claim": "CWE-307 covers mechanisms that do not properly restrict excessive authentication attempts, enabling automated password guessing."
+        }
+      ],
+      "false_positive_analysis": "This structural check fires only when FastAPI or APIRouter applications register uncommented route decorators while no limiter, slowapi, rate-limit, or throttle marker appears anywhere in the file. Rate limiting enforced by an API gateway, reverse proxy, or platform tier is invisible to file scanning, so findings carry low confidence and must be verified against the edge tier before suppression.",
+      "positive": [
+        {
+          "path": "app.py",
+          "source": "from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/login\")\nasync def login():\n    return {}\n"
+        },
+        {
+          "path": "routes.py",
+          "source": "from fastapi import APIRouter\n\nrouter = APIRouter()\n\n@router.post(\"/token\")\ndef token():\n    return {}\n"
+        },
+        {
+          "path": "app.py",
+          "source": "app = FastAPI()\n\n@app.post(\"/search\")\ndef search():\n    return []\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "app.py",
+          "source": "from slowapi import Limiter\nfrom fastapi import FastAPI\n\nlimiter = Limiter(key_func=lambda r: r.client.host)\napp = FastAPI()\n\n@app.get(\"/x\")\n@limiter.limit(\"5/minute\")\ndef x():\n    return {}\n"
+        },
+        {
+          "path": "app.py",
+          "source": "app = FastAPI()\n\n@app.get(\"/x\")\ndef x():\n    return {\"throttled\": False}\n"
+        },
+        {
+          "path": "app.py",
+          "source": "app = FastAPI()\n"
+        },
+        {
+          "path": "app.py",
+          "source": "# @app.get(\"/old\")\napp = FastAPI()\n"
+        },
+        {
+          "path": "app.py",
+          "source": "from flask import Flask\n\napp = Flask(__name__)\n\n@app.route(\"/x\")\ndef x():\n    return {}\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "app.py",
+          "source": "RATE_LIMIT_PER_MINUTE = 60\napp = FastAPI()\n\n@app.get(\"/x\")\ndef x():\n    return {}\n",
+          "expected": false,
+          "rationale": "A visible rate-limit constant implies throttling may be wired elsewhere, so the heuristic abstains rather than guessing."
+        },
+        {
+          "path": "app.py",
+          "source": "app = FastAPI()\n\n@app.post(\"/login\")\ndef login():\n    # gateway handles everything\n    return {}\n",
+          "expected": true,
+          "rationale": "Prose claims of edge-tier protection are not verifier-visible throttling, so the finding stays for human review."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP665",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-DEBUG",
+          "claim": "Django documents that DEBUG must never be turned on in deployment because debug pages leak sensitive settings and stack traces to any visitor triggering an error."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/489.html",
+          "claim": "CWE-489 covers active debug code left deployed, which exposes sensitive information or functionality to attackers."
+        }
+      ],
+      "false_positive_analysis": "The check requires an uncommented literal DEBUG = True assignment in the same file as deployment-shaped settings markers such as ALLOWED_HOSTS, INSTALLED_APPS, MIDDLEWARE, or STATICFILES_DIRS. Plain scripts with DEBUG variables, secure False assignments, commented-out debug lines, environment-driven flags, and DEBUGGER-style look-alikes are excluded. Local-only settings modules without deployment markers stay silent.",
+      "positive": [
+        {
+          "path": "settings.py",
+          "source": "DEBUG = True\nALLOWED_HOSTS = [\"api.example.com\"]\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "DEBUG = True\nINSTALLED_APPS = [\"django.contrib.admin\"]\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "DEBUG=True\nMIDDLEWARE = [\"django.middleware.security.SecurityMiddleware\"]\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "settings.py",
+          "source": "DEBUG = False\nALLOWED_HOSTS = [\"api.example.com\"]\n"
+        },
+        {
+          "path": "local.py",
+          "source": "DEBUG = True\nprint(\"verbose local mode\")\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "# DEBUG = True\nALLOWED_HOSTS = []\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "DEBUG = os.environ.get(\"DEBUG\", \"0\") == \"1\"\nALLOWED_HOSTS = []\n"
+        },
+        {
+          "path": "settings.py",
+          "source": "DEBUGGER = True\nALLOWED_HOSTS = []\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "settings.py",
+          "source": "DEBUG = True\n# ALLOWED_HOSTS configured in production override\n",
+          "expected": true,
+          "rationale": "The heuristic keys on settings markers even in comments, so a deployable-looking module is flagged for human review rather than silently trusted."
+        },
+        {
+          "path": "settings.py",
+          "source": "settings_override = {\"DEBUG\": True}\nALLOWED_HOSTS = []\n",
+          "expected": false,
+          "rationale": "A dict-based override uses a colon rather than an assignment and lies outside this detector's documented shape."
+        }
+      ]
     }
   ]
 }

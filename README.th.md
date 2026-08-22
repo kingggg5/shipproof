@@ -69,7 +69,7 @@ ShipProof ใช้สัญญาการตรวจสอบเดียว�
 | :--- | :--- |
 | Current release | `v0.7.0` public beta |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่งที่ใช้ scanner |
-| กฎที่รันได้จริง | 571 กฎ (`SP001`–`SP661` โดยมีเลขที่เว้นไว้โดยตั้งใจ) |
+| กฎที่รันได้จริง | 575 กฎ (`SP001`–`SP665` โดยมีเลขที่เว้นไว้โดยตั้งใจ) |
 | ระดับหลักฐาน | `L0` pattern, `L1` structural/artifact, `L2` intraprocedural Python taint |
 | Research backlog | 8,800 candidates สำหรับวิจัยเท่านั้น ยังสร้าง finding ไม่ได้ |
 | Exit codes | `0` ผ่าน, `1` ไม่ผ่าน policy gate, `2` หลักฐานไม่ถูกต้องหรือไม่มีให้ใช้ |
@@ -257,7 +257,7 @@ ShipProof ใช้นามสกุลไฟล์ manifest และบริ
 
 ShipProof เน้นความแม่นยำสูงเพื่อไม่ให้เกิดการแจ้งเตือนรบกวน:
 
-- **Inline suppression:** ใส่คอมเมนต์ `# shipproof-ignore SP101` หรือ `// shipproof-ignore SP101` ไว้ที่บรรทัดนั้นหรือบรรทัดก่อนหน้าโดยตรง
+- **Inline suppression:** ใส่คอมเมนต์ `# shipproof-ignore SP101` หรือ `// shipproof-ignore SP101` ไว้ที่บรรทัดนั้นหรือบรรทัดก่อนหน้าโดยตรง ระบบจะยอมรับเครื่องหมายนี้เฉพาะที่อยู่ในคอมเมนต์ (หรือต้นบรรทัดของไฟล์เอกสาร) เท่านั้น ไม่ยอมรับที่อยู่ใน string literal และระบุหลาย rule พร้อมกันได้ เช่น `# shipproof-ignore SP101 SP102` โดยทั้ง regex engine และ Python AST engine จะเคารพเครื่องหมายนี้เหมือนกัน
 - **Confidence filtering:** รันด้วยตัวเลือก `--min-confidence high` เพื่อดูเฉพาะรายการที่มีความมั่นใจสูง
 - **Reviewed baselines:** บันทึกรายการหนี้ทางเทคนิคที่มีอยู่เดิมไว้ใน `.shipproof-baseline.json` ด้วยคำสั่ง `shipproof scan --baseline-out .shipproof-baseline.json`
 
@@ -323,7 +323,7 @@ shipproof check
 
 ```text
 shipproof check [path] [--config <file>]     รันทุกเกตตามที่ตั้งค่าไว้ (หรือรันได้ทันทีแม้ไม่มีไฟล์คอนฟิก)
-shipproof scan [path] [options]              สแกนโค้ดในโปรเจกต์ (--format terminal|json|sarif|markdown)
+shipproof scan [path] [options]              สแกนโค้ดในโปรเจกต์ (--format terminal|markdown|json|sarif|github)
 shipproof explain <rule-id>                  แสดงคำอธิบายกฎอย่างละเอียด (เช่น explain SP108)
 shipproof doctor [path] [--json]             ตรวจสอบความพร้อมของ Environment และ Runtime ในเครื่อง
 shipproof init [path] [--scope <scope>]      ติดตั้ง Skills ระดับโปรเจกต์/ส่วนตัวและสร้าง Policy
@@ -1024,6 +1024,10 @@ shipproof gate evidence . --adapter rust --allow-project-code --format json
 | **SP659** | GitHub Actions security scan step configured to continue on error | MEDIUM | Regex |
 | **SP660** | GitHub reusable workflow inherits every caller secret | MEDIUM | Regex |
 | **SP661** | Kubernetes API server enables AlwaysAllow authorization | MEDIUM | Regex |
+| **SP662** | การตั้งค่า CORS ของ Django เปิดรับทุก origin | MEDIUM | Regex |
+| **SP663** | Session cookie ของ Django ส่งโดยไม่มีแฟล็ก Secure | MEDIUM | Regex |
+| **SP664** | เส้นทาง FastAPI ไม่มีการจำกัดอัตราการยิงที่มองเห็นได้ | MEDIUM | Structural |
+| **SP665** | Settings ของ Django เปิด DEBUG ในโมดูล settings สำหรับ deploy | MEDIUM | Structural |
 
 ## การทำงานร่วมกับเครื่องมือเฉพาะทาง
 
