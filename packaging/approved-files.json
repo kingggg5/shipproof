@@ -95,6 +95,7 @@
     "skills/audit-production-readiness/references/scale.md",
     "skills/audit-production-readiness/references/security.md",
     "skills/audit-production-readiness/references/supply-chain.md",
+    "skills/audit-production-readiness/scripts/analysis.py",
     "skills/audit-production-readiness/scripts/capacity_model.py",
     "skills/audit-production-readiness/scripts/cost_model.py",
     "skills/audit-production-readiness/scripts/impact_graph.py",
