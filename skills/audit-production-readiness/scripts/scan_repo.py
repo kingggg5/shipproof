@@ -15371,9 +15371,9 @@ def _scan_history_secrets(root: Path, max_commits: int = 500) -> tuple[list[Find
         return [], 0
 
     try:
-        proc = subprocess.run(
+        proc = subprocess.run(  # noqa: S603, S607
             [
-                "git",  # noqa: S607
+                "git",
                 "-C",
                 str(root),
                 "log",
