@@ -181,23 +181,31 @@ def is_placeholder_secret(matched_text: str) -> bool:
 
 
 def secret_confidence(rule: Rule, matched_text: str) -> str | None:
-    """Adjust secret finding confidence based on entropy of generic credential matches."""
-    if rule.rule_id not in ENTROPY_CALIBRATED_RULE_IDS:
-        return None
+    """Adjust secret finding confidence based on entropy of credential values.
+
+    Calibrated rules (generic credential assignments) get full two-way
+    calibration. Every other secret rule gets a demote-only gate so long but
+    obviously low-entropy values - repeated characters, test filler - drop to
+    low confidence while structured provider tokens stay untouched.
+    """
     matches = SECRET_VALUE_PATTERN.findall(matched_text)
     if not matches:
         return None
     # Credential assignments may quote both the key and the value (JSON/YAML).
     # The final quoted token is the assigned credential, not the key name.
     value = matches[-1]
-    if len(value) < 8:
+    if rule.rule_id in ENTROPY_CALIBRATED_RULE_IDS:
+        if len(value) < 8:
+            return "low"
+        entropy = shannon_entropy(value)
+        if entropy >= 4.0:
+            return "high"
+        if entropy >= 3.0:
+            return rule.confidence
         return "low"
-    entropy = shannon_entropy(value)
-    if entropy >= 4.0:
-        return "high"
-    if entropy >= 3.0:
-        return rule.confidence
-    return "low"
+    if len(value) >= 8 and shannon_entropy(value) < 2.5:
+        return "low"
+    return None
 
 
 RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
