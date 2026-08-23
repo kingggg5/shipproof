@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
   "funnel": {
-    "cwe_already_covered": 539,
-    "implementable_pool": 4270,
+    "cwe_already_covered": 552,
+    "implementable_pool": 4257,
     "no_supported_language": 2991,
     "total": 7800
   },
-  "covered_cwe_roots": 105,
+  "covered_cwe_roots": 106,
   "candidates": [
     {
       "catalog": "expert",
@@ -2054,15 +2054,6 @@
       "candidate_id": "SP4474",
       "cwe": "CWE-784",
       "title": "[csharp/C#] CWE-784: Reliance on Cookies without Validation and Integrity Checking in a Security Decision",
-      "languages": [
-        ".cs"
-      ]
-    },
-    {
-      "catalog": "language",
-      "candidate_id": "SP4476",
-      "cwe": "CWE-80",
-      "title": "[csharp/C#] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
       "languages": [
         ".cs"
       ]
@@ -5437,16 +5428,6 @@
       "candidate_id": "SP4873",
       "cwe": "CWE-784",
       "title": "[typescript/TypeScript] CWE-784: Reliance on Cookies without Validation and Integrity Checking in a Security Decision",
-      "languages": [
-        ".ts",
-        ".tsx"
-      ]
-    },
-    {
-      "catalog": "language",
-      "candidate_id": "SP4875",
-      "cwe": "CWE-80",
-      "title": "[typescript/TypeScript] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
       "languages": [
         ".ts",
         ".tsx"
@@ -9519,15 +9500,6 @@
       "candidate_id": "SP5334",
       "cwe": "CWE-784",
       "title": "[php/PHP] CWE-784: Reliance on Cookies without Validation and Integrity Checking in a Security Decision",
-      "languages": [
-        ".php"
-      ]
-    },
-    {
-      "catalog": "language",
-      "candidate_id": "SP5336",
-      "cwe": "CWE-80",
-      "title": "[php/PHP] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
       "languages": [
         ".php"
       ]
@@ -14002,16 +13974,6 @@
     },
     {
       "catalog": "language",
-      "candidate_id": "SP5854",
-      "cwe": "CWE-80",
-      "title": "[react/React] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
-      "languages": [
-        ".ts",
-        ".tsx"
-      ]
-    },
-    {
-      "catalog": "language",
       "candidate_id": "SP5855",
       "cwe": "CWE-81",
       "title": "[react/React] CWE-81: Improper Neutralization of Script in an Error Message Web Page",
@@ -14966,15 +14928,6 @@
       "candidate_id": "SP5970",
       "cwe": "CWE-784",
       "title": "[go/Go] CWE-784: Reliance on Cookies without Validation and Integrity Checking in a Security Decision",
-      "languages": [
-        ".go"
-      ]
-    },
-    {
-      "catalog": "language",
-      "candidate_id": "SP5972",
-      "cwe": "CWE-80",
-      "title": "[go/Go] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
       "languages": [
         ".go"
       ]
@@ -20960,16 +20913,6 @@
     },
     {
       "catalog": "language",
-      "candidate_id": "SP6617",
-      "cwe": "CWE-80",
-      "title": "[cpp/C++] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
-      "languages": [
-        ".cpp",
-        ".hpp"
-      ]
-    },
-    {
-      "catalog": "language",
       "candidate_id": "SP6618",
       "cwe": "CWE-81",
       "title": "[cpp/C++] CWE-81: Improper Neutralization of Script in an Error Message Web Page",
@@ -23813,16 +23756,6 @@
     },
     {
       "catalog": "language",
-      "candidate_id": "SP6933",
-      "cwe": "CWE-80",
-      "title": "[angular/Angular] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
-      "languages": [
-        ".ts",
-        ".tsx"
-      ]
-    },
-    {
-      "catalog": "language",
       "candidate_id": "SP6934",
       "cwe": "CWE-81",
       "title": "[angular/Angular] CWE-81: Improper Neutralization of Script in an Error Message Web Page",
@@ -24603,17 +24536,6 @@
       "candidate_id": "SP7023",
       "cwe": "CWE-784",
       "title": "[javascript/JavaScript] CWE-784: Reliance on Cookies without Validation and Integrity Checking in a Security Decision",
-      "languages": [
-        ".cjs",
-        ".js",
-        ".mjs"
-      ]
-    },
-    {
-      "catalog": "language",
-      "candidate_id": "SP7025",
-      "cwe": "CWE-80",
-      "title": "[javascript/JavaScript] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
       "languages": [
         ".cjs",
         ".js",
@@ -29180,15 +29102,6 @@
     },
     {
       "catalog": "language",
-      "candidate_id": "SP7878",
-      "cwe": "CWE-80",
-      "title": "[python/Python] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
-      "languages": [
-        ".py"
-      ]
-    },
-    {
-      "catalog": "language",
       "candidate_id": "SP7879",
       "cwe": "CWE-81",
       "title": "[python/Python] CWE-81: Improper Neutralization of Script in an Error Message Web Page",
@@ -32542,16 +32455,6 @@
     },
     {
       "catalog": "language",
-      "candidate_id": "SP8286",
-      "cwe": "CWE-80",
-      "title": "[java/Java] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
-      "languages": [
-        ".java",
-        ".jsp"
-      ]
-    },
-    {
-      "catalog": "language",
       "candidate_id": "SP8287",
       "cwe": "CWE-81",
       "title": "[java/Java] CWE-81: Improper Neutralization of Script in an Error Message Web Page",
@@ -35661,15 +35564,6 @@
       "candidate_id": "SP8622",
       "cwe": "CWE-784",
       "title": "[rust/Rust] CWE-784: Reliance on Cookies without Validation and Integrity Checking in a Security Decision",
-      "languages": [
-        ".rs"
-      ]
-    },
-    {
-      "catalog": "language",
-      "candidate_id": "SP8624",
-      "cwe": "CWE-80",
-      "title": "[rust/Rust] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
       "languages": [
         ".rs"
       ]
@@ -39918,15 +39812,6 @@
     },
     {
       "catalog": "language",
-      "candidate_id": "SP9128",
-      "cwe": "CWE-80",
-      "title": "[kotlin/Kotlin] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
-      "languages": [
-        ".kt"
-      ]
-    },
-    {
-      "catalog": "language",
       "candidate_id": "SP9129",
       "cwe": "CWE-81",
       "title": "[kotlin/Kotlin] CWE-81: Improper Neutralization of Script in an Error Message Web Page",
@@ -42036,15 +41921,6 @@
       "candidate_id": "SP9377",
       "cwe": "CWE-797",
       "title": "[swift/Swift] CWE-797: Only Filtering Special Elements at an Absolute Position",
-      "languages": [
-        ".swift"
-      ]
-    },
-    {
-      "catalog": "language",
-      "candidate_id": "SP9378",
-      "cwe": "CWE-80",
-      "title": "[swift/Swift] CWE-80: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)",
       "languages": [
         ".swift"
       ]

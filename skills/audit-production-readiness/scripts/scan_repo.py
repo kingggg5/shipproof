@@ -3910,7 +3910,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""\b(?:[\w$.]*\.)?(?:deepMerge|mergeDeep|deepExtend|deepAssign|defaultsDeep|merge|extend|set)\s*\(\s*[^,()]{1,80},\s*(?:req(?:uest)?\s*\.\s*(?:body|query|params)|JSON\.parse\s*\(\s*req(?:uest)?\.\w+\s*\))"""
+            r"""\b(?:[\w$.]*\.)?(?:deepMerge|mergeDeep|deepExtend|deepAssign|defaultsDeep|merge(?:With)?|extend|set)\s*\(\s*[^,()]{1,80},\s*(?:req(?:uest)?\s*\.\s*(?:body|query|params)|JSON\.parse\s*\(\s*req(?:uest)?\.\w+\s*\))"""
         ),
         "A merge or set helper receives request-controlled data, allowing __proto__/constructor keys to pollute object prototypes.",
         "Reject __proto__, constructor, and prototype keys before merging, or copy with an explicit key allowlist and add a pollution regression test.",
@@ -3969,7 +3969,9 @@ RULES: tuple[Rule, ...] = (
         "security",
         "high",
         "medium",
-        compile_pattern(r"""(?<![\w.$])(?:execSync|spawnSync|exec)\s*\(\s*`[^`]*\$\{"""),
+        compile_pattern(
+            r"""(?<![\w.$])(?:(?:execSync|spawnSync|exec)|(?:child_process|childprocess|child|cp|proc)\s*\.\s*(?:execSync|exec))\s*\(\s*`[^`]*\$\{"""
+        ),
         "A child-process call receives an interpolated template literal, which executes through a shell.",
         "Use spawn/execFile with an argument array and never interpolate input into the command string.",
         "CWE-78",
@@ -3983,7 +3985,7 @@ RULES: tuple[Rule, ...] = (
         "medium",
         "medium",
         compile_pattern(
-            r"""\.cookie\s*\(\s*["'][^"']*(?:sess|session|token|jwt|auth|refresh)[^"']*["']\s*,(?![^)]*\bhttpOnly\b)[^)]*\)"""
+            r"""\.cookie\s*\(\s*["'][^"']*(?:sess|session|token|jwt|auth|refresh)[^"']*["']\s*,(?![^)]*httpOnly\s*[:=]\s*(?:true|True|1\b))[^)]*\)"""
         ),
         "An authentication or session cookie is set without HttpOnly, exposing it to JavaScript during XSS.",
         "Set httpOnly (with Secure and SameSite) on every session-bearing cookie.",
@@ -3998,7 +4000,7 @@ RULES: tuple[Rule, ...] = (
         "low",
         "medium",
         compile_pattern(
-            r"""\.cookie\s*\(\s*["'][^"']*(?:sess|session|token|jwt|auth|refresh)[^"']*["']\s*,(?![^)]*\bsameSite\b)[^)]*\)"""
+            r"""\.cookie\s*\(\s*["'][^"']*(?:sess|session|token|jwt|auth|refresh)[^"']*["']\s*,(?![^)]*[Ss]ame[Ss]ite)[^)]*\)"""
         ),
         "An authentication or session cookie is set without an explicit SameSite attribute.",
         "Set SameSite=Lax or Strict together with Secure on session cookies.",
@@ -4070,7 +4072,7 @@ RULES: tuple[Rule, ...] = (
         "security",
         "critical",
         "high",
-        compile_pattern(r"""preg_replace\s*\(\s*["'][^"']*/e["']"""),
+        compile_pattern(r"""preg_replace\s*\(\s*(["'])(.)((?:\\.|(?!\1).)*?)\2([a-z]*e[a-z]*)\1"""),
         "The removed /e modifier evaluates the replacement string as PHP code, turning crafted subjects into remote code execution.",
         "Replace with preg_replace_callback and never evaluate replacement strings.",
         "CWE-624",
@@ -4083,7 +4085,7 @@ RULES: tuple[Rule, ...] = (
         "security",
         "medium",
         "high",
-        compile_pattern(r"""<a\s+[^>]*target=["']?_blank["']?(?![^>]*rel\s*=)[^>]*>"""),
+        compile_pattern(r"""<a\b(?![^>]*\brel\s*=)[^>]*\btarget\s*=\s*["']?_blank[^>]*>"""),
         "A target=_blank anchor without rel=noopener lets the opened page control this page through window.opener.",
         'Add rel="noopener noreferrer" to every external blank-target link.',
         "CWE-1022",
@@ -4183,7 +4185,7 @@ RULES: tuple[Rule, ...] = (
         "security",
         "medium",
         "high",
-        compile_pattern(r"""CheckOrigin\s*:\s*func.{0,80}?return\s+true"""),
+        compile_pattern(r"""CheckOrigin\s*[:=]\s*func.{0,80}?return\s+true"""),
         "A WebSocket upgrader whose CheckOrigin always returns true lets any website open cross-site sockets with user credentials.",
         "Validate req.Host (and Origin when present) against an allowlist inside CheckOrigin.",
         "CWE-1385",
@@ -4210,7 +4212,7 @@ RULES: tuple[Rule, ...] = (
         "critical",
         "high",
         compile_pattern(
-            r"""\beval\s*\(\s*(?:params\[|request\.(?:params|raw_post)|session\[|cookies\[)"""
+            r"""\beval\s*\(\s*(?:params\[|request\.(?:params|raw_post)|session\[|cookies\.|cookies\[)"""
         ),
         "eval on Rails request/session data executes attacker-supplied code with full interpreter privileges.",
         "Parse input as data (JSON, typed casts) and remove every evaluation path that touches request state.",
@@ -4225,7 +4227,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""Cipher\.getInstance\s*\(\s*"AES"\s*\)|Cipher\.getInstance\s*\(\s*"DES\/ECB"""
+            r"""Cipher\.getInstance\s*\(\s*"(?:AES|DES)"\s*\)|Cipher\.getInstance\s*\(\s*"DES\/ECB"""
         ),
         'getInstance("AES") silently selects AES/ECB/PKCS5Padding; ECB reveals repeated plaintext blocks.',
         "Request an explicit secure transform such as AES/GCM/NoPadding with unique nonces.",
@@ -4239,7 +4241,9 @@ RULES: tuple[Rule, ...] = (
         "security",
         "high",
         "medium",
-        compile_pattern(r"""Runtime\.getRuntime\(\)\s*\.\s*exec\s*\([^)]*\+\s*[A-Za-z_$]"""),
+        compile_pattern(
+            r"""Runtime\.getRuntime\(\)\s*\.\s*exec\s*\([^)]*\+\s*[A-Za-z_$]|exec\s*\(\s*new\s*String\[\]\s*\{\s*"(?:sh"\s*,\s*"-c"|cmd\.exe"\s*,\s*"/c")"""
+        ),
         "Concatenating values into a Runtime.exec command string lets shell metacharacters inject extra commands.",
         "Use ProcessBuilder with an argument array and validate each externally controlled argument.",
         "CWE-78",
@@ -4253,7 +4257,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""(?:send_file|send_from_directory)\s*\([^)]*(?:request\.(?:args|form|values|files|json)\b|request\.values\.get\s*\()"""
+            r"""(?:send_file|send_from_directory)\s*\(\s*(?:request\.(?:args|form|values|files|json)\b|[A-Za-z_$][\w$.]*\s*,\s*request\.(?:form|args|values|get))"""
         ),
         "Serving files from request parameters enables path traversal into arbitrary readable locations.",
         "Map user selections to allowlisted server-side paths and never join raw request values onto filesystem paths.",
@@ -4268,7 +4272,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""sendFile\s*\(\s*(?:req(?:uest)?\.(?:query|params|body)|(?:path\.)?join\s*\([^)]*req(?:uest)?\.(?:query|params|body))"""
+            r"""sendFile\s*\(\s*(?:req(?:uest)?\.(?:query|params|body)|(?:path\.)?(?:join|resolve)\s*\([^)]*req(?:uest)?\.(?:query|params|body))"""
         ),
         "res.sendFile over request-controlled paths reads arbitrary files relative to the process.",
         "resolve the final path and require it to stay inside a dedicated public root before responding.",
@@ -4297,7 +4301,9 @@ RULES: tuple[Rule, ...] = (
         "security",
         "high",
         "high",
-        compile_pattern(r"""(?<![\w$])extract\s*\(\s*\$_(?:GET|POST|REQUEST)(?![^)]*EXTR_SKIP)"""),
+        compile_pattern(
+            r"""(?<![\w$])extract\s*\(\s*\$_(?:GET|POST|REQUEST)(?![^)]*EXTR_(?:SKIP|PREFIX))"""
+        ),
         "extract() turns query or body keys into PHP variables, letting attackers overwrite script state.",
         "Access request values explicitly by name; if extract is unavoidable, pass EXTR_SKIP and pre-seed variables.",
         "CWE-453",
@@ -12327,7 +12333,7 @@ RULE_INDEX = {rule.rule_id: rule for rule in RULES}
 # Rules whose evidence is the CONTENT of a string literal (URL query shapes,
 # URI schemes) rather than code position; the inside-string filter must not
 # suppress them.
-STRING_CONTENT_RULE_IDS = frozenset({"SP148", "SP615", "SP616", "SP617"})
+STRING_CONTENT_RULE_IDS = frozenset({"SP063", "SP148", "SP615", "SP616", "SP617"})
 
 
 # --- Literal gate prefilter ---

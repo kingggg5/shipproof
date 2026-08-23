@@ -1,0 +1,1101 @@
+#!/usr/bin/env python3
+"""Build the promoted-rules quality manifest (tests/rule_cases_promoted.json).
+
+Every rule promoted from the research catalogs into the executable scanner
+must carry the same evidence discipline as the SP651+ pilot: positive and
+negative fixtures that execute against the real engine, adversarial
+look-alikes with expected outcomes and rationale, a documented false-positive
+boundary, primary sources, and complete explanation metadata.
+
+This script is the single authoring surface for those cases; run it after
+editing CASES below to regenerate the checked-in manifest.
+
+Usage: python scripts/build-promoted-quality-manifest.py
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "skills" / "audit-production-readiness" / "scripts"))
+
+from scan_repo import RULES  # noqa: E402
+
+PROMOTED_RANGE = range(51, 81)  # SP051..SP080
+
+ASVS_BASE = "https://owasp.org/www-project-application-security-verification-standard/"
+
+
+def cwe_url(cwe: str) -> str:
+    digits = "".join(ch for ch in cwe if ch.isdigit())
+    return f"https://cwe.mitre.org/data/definitions/{digits}.html"
+
+
+# Hand-authored evidence per rule: file-shaped snippets executed through the
+# real engine. pos = must fire, neg = must stay silent, adv = look-alike with
+# explicit expectation so future pattern edits cannot silently drift.
+CASES: dict[str, dict] = {
+    "SP051": {
+        "positive": [
+            {"path": "merge.js", "source": "_.merge(config, req.body);"},
+            {"path": "merge.js", "source": "utils.deepMerge(options, JSON.parse(req.rawBody));"},
+        ],
+        "negative": [
+            {"path": "merge.js", "source": "_.merge(config, defaults);"},
+            {"path": "merge.js", "source": "merge(target, sanitize(req.body));"},
+            {"path": "merge.js", "source": "Object.assign({}, state);"},
+            {"path": "app.py", "source": "config.update(allowed_fields)"},
+        ],
+        "adversarial": [
+            {
+                "path": "merge.js",
+                "source": "deepExtend(state, buildPayload(req.body));",
+                "expected": False,
+                "rationale": "The request body passes through buildPayload before merging, so the line-level pattern sees a function call rather than req.* directly; deeper flows belong to the taint engine, not this detector.",
+            },
+            {
+                "path": "merge.js",
+                "source": "_.mergeWith(policy, req.query.filter, merger);",
+                "expected": True,
+                "rationale": "mergeWith still receives raw req.query as the source object, which is exactly the pollution shape the rule exists to catch.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Merges over schemas that strip __proto__/constructor keys, Map-based stores, "
+            "and internal config-to-config merges never reference request data on the matched "
+            "line, so the require-of-request-data shape cannot fire. Call-mediated flows are "
+            "deliberately out of scope and documented as taint-engine territory."
+        ),
+    },
+    "SP052": {
+        "positive": [
+            {"path": "auth.ts", "source": 'jwt.sign({ sub: user.id }, "super-secret-key-123");'},
+            {"path": "auth.js", "source": 'jwt.sign(p, "another-hardcoded-signing-value");'},
+        ],
+        "negative": [
+            {"path": "auth.ts", "source": "jwt.sign(payload, process.env.JWT_SECRET);"},
+            {"path": "auth.ts", "source": "jwt.sign(payload, privateKeyBuffer, opts);"},
+            {"path": "auth.js", "source": "jwt.verify(token, secret);"},
+            {"path": "auth.py", "source": "jwt.encode(payload, key, algorithm='RS256')"},
+        ],
+        "adversarial": [
+            {
+                "path": "auth.ts",
+                "source": 'const secret = "short";\njwt.sign(p, secret);',
+                "expected": False,
+                "rationale": "The signing argument is an identifier, not a string literal at the call site; a short variable name alone is not evidence of a committed secret.",
+            },
+            {
+                "path": "auth.ts",
+                "source": 'jwt.sign(p, "test-only-signing-secret-value");',
+                "expected": True,
+                "rationale": "Even obviously fake literals are committed symmetric secrets inside production-shape code; the rule flags them for rotation/removal rather than guessing intent.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Buffer identifiers, environment reads, KMS handles, and RS256 asymmetric keys do "
+            "not match the quoted-literal shape. Test fixtures using throwaway secrets still "
+            "match by design because the fix (move to env/config) is identical; reviewers "
+            "dismiss with the baseline mechanism instead of weakening the pattern."
+        ),
+    },
+    "SP053": {
+        "positive": [
+            {"path": "crypto.js", "source": 'createCipheriv("des-ede3-cbc", key, iv);'},
+            {"path": "legacy.py", "source": "from Crypto.Cipher import ARC4\n"},
+            {"path": "Vault.java", "source": 'Cipher.getInstance("DES/ECB/PKCS5Padding");'},
+        ],
+        "negative": [
+            {"path": "crypto.ts", "source": 'createCipheriv("aes-256-gcm", key, iv);'},
+            {"path": "crypto.js", "source": "crypto.createHash('sha256')"},
+            {"path": "Vault.java", "source": 'Cipher.getInstance("AES/GCM/NoPadding");'},
+            {"path": "legacy.py", "source": "from Crypto.Cipher import AES"},
+        ],
+        "adversarial": [
+            {
+                "path": "crypto.js",
+                "source": "createCipheriv(algorithmName, key, iv);",
+                "expected": False,
+                "rationale": "Algorithm arrives as an identifier; the rule only asserts on literal weak-cipher names to stay deterministic. Dynamic selection is a review comment, not regex evidence.",
+            },
+            {
+                "path": "crypto.java",
+                "source": 'cipher = Cipher.getInstance("Blowfish");',
+                "expected": True,
+                "rationale": "Blowfish without a block mode falls back to ECB semantics exactly like bare AES, so it must be flagged despite being absent from many weak-cipher lists.",
+            },
+        ],
+        "false_positive_analysis": (
+            "AES-GCM/ChaCha20 and SHA-2 family hashes never match the name alternation. "
+            "Decrypt-only legacy paths still fire because re-encryption guidance applies; "
+            "reviewers document transitional shims via baseline suppression."
+        ),
+    },
+    "SP054": {
+        "positive": [
+            {"path": "tool.py", "source": "os.system(f'git pull {repo}')"},
+            {"path": "tool.py", "source": 'os.popen("ls %s" % path)'},
+        ],
+        "negative": [
+            {"path": "tool.py", "source": "os.system('ls -la')"},
+            {"path": "tool.py", "source": "subprocess.run(['git', 'pull', repo], shell=False)"},
+            {"path": "deploy.py", "source": "os.system(command)"},
+            {"path": "util.js", "source": "exec(`ls ${dir}`);"},
+        ],
+        "adversarial": [
+            {
+                "path": "tool.py",
+                "source": "os.system(get_build_cmd(target))",
+                "expected": False,
+                "rationale": "Command assembled inside a helper keeps this detector silent; attribution belongs to the L2 command sink so the line rule stays precise.",
+            },
+            {
+                "path": "tool.py",
+                "source": "os.popen(f'ping -c1 {host}')",
+                "expected": True,
+                "rationale": "popen shares os.system's always-shell semantics, so interpolated hosts inject exactly the same way.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Constant command strings lack the f-string/%/template markers and cannot match. "
+            "Variable-only arguments (os.system(cmd)) are intentionally not flagged here "
+            "because origin is unknowable at line level; the cross-file engine reports those."
+        ),
+    },
+    "SP055": {
+        "positive": [
+            {"path": "deploy.js", "source": "execSync(`git pull ${repo}`);"},
+            {"path": "run.js", "source": "child.exec(`convert ${file}.png ${file}.jpg`);"},
+        ],
+        "negative": [
+            {"path": "deploy.js", "source": 'execFile("git", ["pull", repo]);'},
+            {"path": "deploy.js", "source": 'spawn("ls", ["-la"], { shell: false });'},
+            {"path": "build.go", "source": 'exec.Command("go", "build", pkg)'},
+            {"path": "run.py", "source": "os.system('uptime')"},
+        ],
+        "adversarial": [
+            {
+                "path": "deploy.js",
+                "source": "execSync(buildCommand.join(' '));",
+                "expected": False,
+                "rationale": "A joined array is one identifier argument with no template interpolation; shell risk depends on array contents and is invisible at line level.",
+            },
+            {
+                "path": "deploy.js",
+                "source": "cp.exec(`echo ${JSON.stringify(userInput)}`);",
+                "expected": True,
+                "rationale": "JSON escaping does not neutralize shell metacharacters such as backticks and $(), so the interpolated template remains a true command-injection shape.",
+            },
+        ],
+        "false_positive_analysis": (
+            "execFile/spawn arrays and non-shell runtimes never interpolate into a command "
+            "string, so the backtick-plus-interpolation marker cannot match them. Constant "
+            "backticks without ${} are also silent because nothing user-controlled reaches "
+            "the command text."
+        ),
+    },
+    "SP056": {
+        "positive": [
+            {"path": "login.ts", "source": "res.cookie('session', token, { secure: true });"},
+            {
+                "path": "login.js",
+                "source": "res.cookie('refreshToken', value, { maxAge: 86400000 });",
+            },
+        ],
+        "negative": [
+            {"path": "login.ts", "source": "res.cookie('session', token, { httpOnly: true });"},
+            {"path": "ui.ts", "source": "res.cookie('theme', 'dark', { maxAge: 600000 });"},
+            {"path": "api.ts", "source": "res.setHeader('Set-Cookie', serialized);"},
+            {"path": "login.py", "source": "resp.set_cookie('session', token, httponly=True)"},
+        ],
+        "adversarial": [
+            {
+                "path": "login.ts",
+                "source": "res.cookie(COOKIE_NAMES.session, token, opts);",
+                "expected": False,
+                "rationale": "Cookie name arrives as an identifier constant, so the sensitive-name literal cannot match; renaming indirection is a documented boundary rather than a false alarm.",
+            },
+            {
+                "path": "login.ts",
+                "source": "res.cookie('authToken', token, { httpOnly: false });",
+                "expected": True,
+                "rationale": "An explicit httpOnly:false is worse than omission; the negative lookahead correctly treats any non-true occurrence as missing protection.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Non-session names (theme, locale, consent) avoid the sensitive-name hints and "
+            "stay silent. Header-based cookie serialization is out of scope for the call "
+            "shape and covered by review guidance instead."
+        ),
+    },
+    "SP057": {
+        "positive": [
+            {"path": "login.ts", "source": "res.cookie('session', token, { httpOnly: true });"},
+            {"path": "login.js", "source": "res.cookie('authToken', v, { secure: true });"},
+        ],
+        "negative": [
+            {"path": "login.ts", "source": "res.cookie('session', token, { sameSite: 'strict' });"},
+            {"path": "ui.ts", "source": "res.cookie('theme', 'dark');"},
+            {"path": "api.js", "source": "cookies.set(name, value, opts);"},
+            {"path": "login.py", "source": "resp.set_cookie('session', token, samesite='Lax')"},
+        ],
+        "adversarial": [
+            {
+                "path": "login.ts",
+                "source": "res.cookie('session', token, optionsWithSameSite);",
+                "expected": False,
+                "rationale": "Options arrive prebuilt in an identifier; whether sameSite is present is unknowable on this line, so the rule stays quiet instead of guessing.",
+            },
+            {
+                "path": "login.ts",
+                "source": "res.cookie('sessionId', v, { sameSite: 'none' });",
+                "expected": False,
+                "rationale": "sameSite is present, satisfying this detector; 'none' without Secure is a distinct concern tracked by separate cookie-hardening reviews.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Any sameSite occurrence inside the call parentheses suppresses the finding, "
+            "including lax/strict/none. Non-sensitive cookie names never trigger, keeping "
+            "preference-cookie noise out of triage."
+        ),
+    },
+    "SP058": {
+        "positive": [
+            {
+                "path": "client.js",
+                "source": 'const u = "https://api.example.com/v1/data?api_key=sk-live-12345";',
+            },
+            {
+                "path": "client.ts",
+                "source": 'fetch("https://hooks.internal/cfg?access_token=abc.def.ghi")',
+            },
+        ],
+        "negative": [
+            {"path": "client.js", "source": 'const u = "https://api.example.com/v1/data?page=2";'},
+            {"path": "client.js", "source": 'const u = base + "/oauth/callback?code=" + code;'},
+            {"path": "client.ts", "source": '"https://cdn.example.com/pkg?next_token=abc"'},
+            {"path": "client.js", "source": "buildUrl(path, params)"},
+        ],
+        "adversarial": [
+            {
+                "path": "client.js",
+                "source": '"https://api.example.com/reset?token=" + userInput',
+                "expected": False,
+                "rationale": "Concatenation places the credential outside the quoted URL literal, so the literal-scoped pattern cannot see the value; dynamic URL building is taint-engine scope.",
+            },
+            {
+                "path": "client.js",
+                "source": '"https://api.example.com/v1?auth_token=rotated-monthly&marker=x"',
+                "expected": True,
+                "rationale": "key= matches the api_key alternative via its exact-boundary form, and rotated-still-committed credentials leak identically from logs.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Pagination markers (page, next_token with underscore prefix blocked by the "
+            "lookbehind) and non-credential query keys never match. Values concatenated "
+            "after the closing quote are invisible by construction and delegated to the "
+            "dataflow layer."
+        ),
+    },
+    "SP059": {
+        "positive": [
+            {
+                "path": "login.js",
+                "source": "db.users.find({ user, password: { $gt: req.body.password } });",
+            },
+            {"path": "query.ts", "source": "items.find({ status: { $ne: req.query.state } });"},
+        ],
+        "negative": [
+            {"path": "query.js", "source": "db.metrics.find({ latency: { $gt: 0 } });"},
+            {"path": "query.js", "source": "db.users.find({ user, pass: hashed });"},
+            {"path": "sanitize.js", "source": "find({ age: { $gte: Number(req.query.min) } });"},
+            {"path": "query.py", "source": "coll.find({'qty': {'$lt': 10}})"},
+        ],
+        "adversarial": [
+            {
+                "path": "query.js",
+                "source": "find({ user: req.body.user, pass: { $eq: req.body.pass } });",
+                "expected": False,
+                "rationale": "$eq performs scalar equality, so operator-style bypass does not apply; including it would flood every credential lookup.",
+            },
+            {
+                "path": "query.js",
+                "source": "find({ email: { $regex: req.params.q } });",
+                "expected": True,
+                "rationale": "Request-driven $regex enables ReDoS and match-widening against account lookups, matching the rule's stated operator family.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Constants, sanitized coercions (Number()), and $eq comparisons cannot match "
+            "the request-source shape. Mass-assignment of whole bodies is deliberately left "
+            "to the dedicated mass-assignment detectors to keep responsibilities disjoint."
+        ),
+    },
+    "SP060": {
+        "positive": [
+            {"path": "page.php", "source": "include($_GET['page']);"},
+            {"path": "render.php", "source": "require $tpl . '.php';"},
+            {"path": "render.php", "source": "include($template);"},
+        ],
+        "negative": [
+            {"path": "bootstrap.php", "source": "require_once __DIR__ . '/vendor/autoload.php';"},
+            {"path": "app.php", "source": "include __DIR__ . '/partials/header.php';"},
+            {"path": "app.php", "source": "require('config.php');"},
+            {"path": "routes.php", "source": "// include($_GET['page']) removed in 2.1"},
+        ],
+        "adversarial": [
+            {
+                "path": "page.php",
+                "source": "include(__DIR__ . '/pages/' . basename($_GET['page']) . '.php');",
+                "expected": False,
+                "rationale": "basename() strips separators before the join and the argument no longer begins with a superglobal or bare variable, so the hardened idiom stays silent.",
+            },
+            {
+                "path": "page.php",
+                "source": "include($views[$request['view']]);",
+                "expected": False,
+                "rationale": "Array-map indirection is allowlist-shaped; flagging every variable include would drown the direct-request and bare-variable forms the rule targets.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Constant-path includes, __DIR__ joins, and commented-out samples cannot match. "
+            "The bare-variable alternative requires the no-parentheses PHP idiom or an "
+            "argument that is exactly one variable, excluding allowlist map lookups."
+        ),
+    },
+    "SP061": {
+        "positive": [
+            {"path": "svc.py", "source": "try:\n    run()\nexcept: pass"},
+            {"path": "svc.py", "source": "try:\n    load()\nexcept Exception:\n    return None"},
+        ],
+        "negative": [
+            {"path": "svc.py", "source": "try:\n    run()\nexcept ValueError as e: log(e)"},
+            {"path": "svc.py", "source": "except (KeyError, TypeError): recover()"},
+            {"path": "cli.py", "source": "except KeyboardInterrupt: raise"},
+            {"path": "db.py", "source": "except sqlite3.Error: rollback()"},
+        ],
+        "adversarial": [
+            {
+                "path": "tasks.py",
+                "source": "except BaseException:\n    cleanup()\n    raise",
+                "expected": False,
+                "rationale": "Out of scope by design: the handler re-raises after cleanup, preserving failure propagation; widening to BaseException would flood task frameworks.",
+            },
+            {
+                "path": "plugin.py",
+                "source": "except Exception:  # noqa: BLE001 designed plugin boundary\n    log.exception('plugin failed')",
+                "expected": True,
+                "rationale": "Broad catches remain visible even when justified; the boundary rationale lives in review/baseline, not in silent suppression.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Typed handlers and exception tuples never match the two bare shapes. Framework "
+            "entry-point broad catches that log-and-re-raise are surfaced deliberately; teams "
+            "suppress them once with a recorded reason instead of hiding the class."
+        ),
+    },
+    "SP062": {
+        "positive": [
+            {"path": "render.php", "source": "preg_replace('/<b>(.*?)<\\\\/b>/e', $fn, $html);"},
+            {"path": "render.php", "source": 'preg_replace("/x/e", $cb, $s);'},
+        ],
+        "negative": [
+            {
+                "path": "render.php",
+                "source": "preg_replace('/<b>(.*?)<\\\\/b>/', '<strong>', $html);",
+            },
+            {"path": "render.php", "source": "preg_replace_callback('/x/', 'fn', $s);"},
+            {"path": "text.py", "source": "re.sub(r'<b>(.*?)</b>', fn, html)"},
+            {"path": "render.php", "source": "preg_filter('/a/', 'b', $s);"},
+        ],
+        "adversarial": [
+            {
+                "path": "render.php",
+                "source": "preg_replace($patternFromConfig, $repl, $body);",
+                "expected": False,
+                "rationale": "Pattern arrives as a variable, so the /e modifier literal cannot be verified on this line; configuration-sourced patterns are a config-review concern.",
+            },
+            {
+                "path": "render.php",
+                "source": "preg_replace('/x/eimsu', $cb, $s);",
+                "expected": True,
+                "rationale": "Modifier clusters ending in /e keep the evaluator active regardless of extra flags; the trailing-e literal is the injection switch this rule must catch.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Callback-based replacements and plain modifiers never terminate the pattern "
+            "literal with /e. PHP 7+ removes /e entirely, so any hit indicates dead-legacy "
+            "or polyfill code paths that still execute on old runtimes."
+        ),
+    },
+    "SP063": {
+        "positive": [
+            {
+                "path": "index.html",
+                "source": '<a href="https://x.example" target="_blank">docs</a>',
+            },
+            {"path": "Link.jsx", "source": 'out += `<a target="_blank" href="${url}">open</a>`;'},
+        ],
+        "negative": [
+            {"path": "index.html", "source": '<a href="/internal" >intranet</a>'},
+            {
+                "path": "index.html",
+                "source": '<a href="https://x.example" target="_blank" rel="noopener noreferrer">x</a>',
+            },
+            {"path": "Link.tsx", "source": '<a rel="noopener" target="_blank" href={url}>x</a>'},
+            {"path": "nav.js", "source": "window.open(url, '_blank', 'noopener');"},
+        ],
+        "adversarial": [
+            {
+                "path": "index.html",
+                "source": '<a TARGET="_blank" HREF="https://x.example">x</a>',
+                "expected": True,
+                "rationale": "Attribute case should not hide a missing rel; IGNORECASE keeps the detector honest against generated markup styles.",
+            },
+            {
+                "path": "index.html",
+                "source": "<a rel='opener' target='_blank' href='https://x'>x</a>",
+                "expected": False,
+                "rationale": "rel is present, satisfying this detector; explicitly requesting opener is a distinct (unusual) intent reviewed separately.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Same-page anchors and links without target=_blank never match. Any rel= "
+            "attribute suppresses the finding even for values other than noopener, which "
+            "keeps the regex bounded; full rel-value validation is left to HTML linters."
+        ),
+    },
+    "SP064": {
+        "positive": [
+            {"path": "Gate.java", "source": "if (user.role = ADMIN) { grant(); }"},
+            {
+                "path": "Check.java",
+                "source": "if (this.enabled = Boolean.parseBoolean(flag))\n  reload();",
+            },
+        ],
+        "negative": [
+            {"path": "Gate.java", "source": "if (user.role == ADMIN) { grant(); }"},
+            {"path": "Gate.java", "source": "if (!(mgr = lookup(id)).isActive()) refresh(mgr);"},
+            {"path": "Calc.java", "source": "if (total >= limit) deny();"},
+            {
+                "path": "Calc.java",
+                "source": "while ((line = reader.readLine()) != null) eat(line);",
+            },
+        ],
+        "adversarial": [
+            {
+                "path": "Gate.java",
+                "source": "if ((session = pool.acquire()) == null) retry();",
+                "expected": False,
+                "rationale": "Assign-and-compare idiom ends with == so the equality tail prevents a match; the rule only flags conditions whose entire predicate is an assignment.",
+            },
+            {
+                "path": "Flags.java",
+                "source": "if (verbose = parse(args)) logAll();",
+                "expected": True,
+                "rationale": "Even intentional-looking assignments inside if are required to be written as explicit comparisons; surfacing them is the point of the rule.",
+            },
+        ],
+        "false_positive_analysis": (
+            "==, !=, <=, >=, and assignment-then-compare idioms cannot satisfy the "
+            "single-= predicate shape. Boolean-assignment bugs are the exact target, so "
+            "no allowlist carve-outs exist; fixes convert to explicit comparison."
+        ),
+    },
+    "SP065": {
+        "positive": [
+            {
+                "path": "Search.java",
+                "source": 'factory.createValueExpression(ctx, "${" + request.getParameter("q") + "}");',
+            },
+            {
+                "path": "View.jsp",
+                "source": 'ef.createValueExpression(elc, "${" + request.getParameter("view") + "}", String.class);',
+            },
+        ],
+        "negative": [
+            {
+                "path": "View.java",
+                "source": 'factory.createValueExpression(elContext, "${user.name}", String.class);',
+            },
+            {
+                "path": "Calc.java",
+                "source": "ExpressionFactory ef = factory.getExpressionFactory();",
+            },
+            {"path": "Bind.java", "source": 'bean.setName(request.getParameter("name"));'},
+            {"path": "Tpl.java", "source": "template.eval(model);"},
+        ],
+        "adversarial": [
+            {
+                "path": "Render.java",
+                "source": "factory.createValueExpression(ctx, safeExpr(param), Object.class);",
+                "expected": False,
+                "rationale": "Parameter passes through a sanitizer-shaped wrapper before concatenation, so the line shows a call rather than getParameter directly; allowlist helpers are the sanctioned fix.",
+            },
+            {
+                "path": "Route.java",
+                "source": 'ef.createValueExpression(ctx, "${header." + request.getParameter("h") + "}", String.class);',
+                "expected": True,
+                "rationale": "Header-derived names still assemble EL text at runtime; property-name indirection does not remove evaluation of attacker-chosen structure.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Static EL literals and plain parameter-to-property bindings lack the factory "
+            "call shape entirely. Sanitizer-wrapped inputs suppress via the call boundary, "
+            "documented so teams adopt typed DTO mapping as the durable fix."
+        ),
+    },
+    "SP066": {
+        "positive": [
+            {"path": "tool.php", "source": "system('id ' . $_GET['u']);"},
+            {"path": "tool.php", "source": "$out = shell_exec($_POST['cmd']);"},
+            {"path": "tool.php", "source": "exec('ping -c1 ' . $ip . ' 2>&1', $o);"},
+        ],
+        "negative": [
+            {"path": "safe.php", "source": "system('uptime');"},
+            {"path": "safe.php", "source": "proc_open('ls', $desc, $pipes);"},
+            {"path": "util.php", "source": "escapeshellarg($_GET['q']);"},
+            {"path": "log.php", "source": "error_log('exec failed for ' . $cmd);"},
+        ],
+        "adversarial": [
+            {
+                "path": "tool.php",
+                "source": "system('id ' . escapeshellarg($_GET['u']));",
+                "expected": True,
+                "rationale": "Documented boundary: the line-shaped rule still fires when escapeshellarg wraps the input, keeping the hardened form visible; teams silence via baseline once verified.",
+            },
+            {
+                "path": "batch.php",
+                "source": "$target = $_GET['h'];\nsystem(\"ping {$target}\");",
+                "expected": False,
+                "rationale": "Superglobal and sink live on different lines; cross-statement flows are the taint engine's job, keeping this detector's precision high.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Constant commands, proc_open descriptor arrays, and log messages containing "
+            "the word exec never combine both shapes on one line. The escapeshellarg "
+            "overlap is an intentional, documented conservative boundary."
+        ),
+    },
+    "SP067": {
+        "positive": [
+            {
+                "path": "config/application.yml",
+                "source": "spring.datasource.password=hunter2secret",
+            },
+            {"path": "conf/app.ini", "source": "api_key = ak_9f27d1c44e"},
+        ],
+        "negative": [
+            {
+                "path": "config/application.properties",
+                "source": "spring.datasource.password=${DB_PASSWORD}",
+            },
+            {"path": "settings.toml", "source": "# password rotated quarterly"},
+            {"path": "app.conf", "source": "password_attempts = 3"},
+            {"path": "deploy.yaml", "source": "smtp_user: ops@example.com"},
+        ],
+        "adversarial": [
+            {
+                "path": "values.yaml",
+                "source": 'postgresPassword: "Pr0d-Secret!"',
+                "expected": True,
+                "rationale": "Camel-case keys satisfy the key grammar and placeholder-looking words are still committed literals; helm defaults are a notorious leak vector.",
+            },
+            {
+                "path": "app.yml",
+                "source": "password: ",
+                "expected": False,
+                "rationale": "Empty values reference external injection points and carry nothing to rotate; requiring four non-space characters keeps these silent.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Environment references (${...}), empty values, and comments cannot match. "
+            "Evidence is redacted like every secret rule, so SARIF/JSON output never "
+            "echoes the literal; only file and line identify the location."
+        ),
+    },
+    "SP068": {
+        "positive": [
+            {"path": "main.go", "source": "ioutil.WriteFile(path, data, 0777)"},
+            {"path": "main.go", "source": "os.Chmod(cfgPath, 0o777)"},
+        ],
+        "negative": [
+            {"path": "main.go", "source": "os.WriteFile(path, data, 0o600)"},
+            {"path": "main.go", "source": "os.MkdirAll(dir, 0o750)"},
+            {"path": "main.go", "source": "os.OpenFile(logPath, flags, 0644)"},
+            {"path": "setup.sh", "source": "chmod 777 /tmp/build"},
+        ],
+        "adversarial": [
+            {
+                "path": "main.go",
+                "source": "mode := os.FileMode(0o777)\nos.WriteFile(path, data, mode)",
+                "expected": False,
+                "rationale": "Mode computed into an identifier escapes the literal-on-call-line shape; constant propagation is out of scope and noted for vet-stage tools.",
+            },
+            {
+                "path": "main.go",
+                "source": "os.WriteFile(pubKeyPath, pemBytes, 0o755)",
+                "expected": False,
+                "rationale": "0755 is group/world readable but not writable, satisfying least privilege for public artifacts.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Only the 0777 octal literal on the syscall line matches; 0644/0750/0755 and "
+            "symbolic modes stay silent. Shell chmod scripts are out of language scope."
+        ),
+    },
+    "SP069": {
+        "positive": [
+            {"path": "token.go", "source": "r := rand.New(rand.NewSource(time.Now().UnixNano()))"},
+            {"path": "shard.go", "source": "rnd := rand.New(rand.NewSource(time.Now().Unix()))"},
+        ],
+        "negative": [
+            {"path": "token.go", "source": "_, err := crand.Read(buf)"},
+            {"path": "sim.go", "source": "rng := rand.New(rand.NewSource(seed))"},
+            {"path": "sim.go", "source": "rand.Seed(42) // deterministic simulations"},
+            {"path": "load.go", "source": 'import "math/rand"'},
+        ],
+        "adversarial": [
+            {
+                "path": "otp.go",
+                "source": "v := rand.Intn(900000) + 100000",
+                "expected": False,
+                "rationale": "Global math/rand use without a clock-seeded New() is invisible to this detector; Go's global source is already time-seeded, which the crypto-review checklist covers instead.",
+            },
+            {
+                "path": "token.go",
+                "source": "r := rand.New(rand.NewSource(time.Now().UnixNano()))",
+                "expected": True,
+                "rationale": "Duplicate of the positive fixture embedded here deliberately: repeated runs must stay deterministic so refactors that reintroduce the shape are caught.",
+            },
+        ],
+        "false_positive_analysis": (
+            "crypto/rand reads, fixed-seed simulation RNGs, and bare imports cannot match "
+            "the NewSource(time...) shape. Security-bearing prediction risk requires the "
+            "clock seed specifically, which is the documented trigger."
+        ),
+    },
+    "SP070": {
+        "positive": [
+            {
+                "path": "ws.go",
+                "source": "var up = websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}",
+            },
+            {
+                "path": "hub.go",
+                "source": "upgrader.CheckOrigin = func(r *http.Request) bool { return true }",
+            },
+        ],
+        "negative": [
+            {"path": "ws.go", "source": "var up = websocket.Upgrader{CheckOrigin: allowListed}"},
+            {"path": "ws.go", "source": "u := websocket.Upgrader{ReadBufferSize: 1024}"},
+            {"path": "ws.go", "source": "// CheckOrigin returns true in dev builds"},
+            {"path": "srv.ts", "source": "new WebSocketServer({ verifyClient })"},
+        ],
+        "adversarial": [
+            {
+                "path": "ws.go",
+                "source": 'CheckOrigin: func(r *http.Request) bool {\n  return r.Host == r.Header.Get("Origin")\n}',
+                "expected": False,
+                "rationale": "Multi-line validation bodies contain logic beyond a bare return true, so the bounded window cannot confirm the allow-all shape and stays silent.",
+            },
+            {
+                "path": "ws.go",
+                "source": "CheckOrigin: debugBypass(),",
+                "expected": False,
+                "rationale": "Named-helper indirection hides the constant-true body; debug builds must wire real validators before deploy per the remediation note.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Struct literals without CheckOrigin and validator functions with any condition "
+            "other than a direct true literal stay silent. The 80-character window keeps "
+            "matching bounded while covering idiomatic single-line closures."
+        ),
+    },
+    "SP071": {
+        "positive": [
+            {"path": "net.rb", "source": "http.verify_mode = OpenSSL::SSL::VERIFY_NONE"},
+            {
+                "path": "sync.rb",
+                "source": "ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE if ENV['SKIP_TLS']",
+            },
+        ],
+        "negative": [
+            {"path": "net.rb", "source": "ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER"},
+            {"path": "net.rb", "source": "require 'openssl'"},
+            {"path": "client.ex", "source": "verify: verify_none_placeholder"},
+            {"path": "net.py", "source": "verify=False"},
+        ],
+        "adversarial": [
+            {
+                "path": "net.rb",
+                "source": "VERIFY_MODE = ENV['CI'] ? OpenSSL::SSL::VERIFY_NONE : OpenSSL::SSL::VERIFY_PEER",
+                "expected": True,
+                "rationale": "Environment-gated disablement still ships the insecure branch to production machines where CI vars may leak; both alternatives appear and NONE dominates the line.",
+            },
+            {
+                "path": "patch.rb",
+                "source": "# legacy: VERIFY_NONE replaced by VERIFY_PEER in 3.2",
+                "expected": False,
+                "rationale": "Pure-comment lines are prose for non-secret rules, so historical notes cannot resurrect removed code.",
+            },
+        ],
+        "false_positive_analysis": (
+            "VERIFY_PEER and unrelated OpenSSL constants never match. The rule cannot know "
+            "whether a proxy shim re-enables verification later; remediation asks for "
+            "explicit CA bundles so the flag disappears entirely."
+        ),
+    },
+    "SP072": {
+        "positive": [
+            {"path": "calc_controller.rb", "source": "result = eval(params[:expr])"},
+            {
+                "path": "hook.rb",
+                "source": "Klass.send(:define_method, m) { eval(request.raw_post) }",
+            },
+        ],
+        "negative": [
+            {"path": "calc_controller.rb", "source": "n = params[:n].to_i"},
+            {
+                "path": "calc_controller.rb",
+                "source": "expr = params[:expr]\nresult = Calc.evaluate(expr)",
+            },
+            {"path": "console.rb", "source": "eval(code) # REPL tool, not request-reachable"},
+            {"path": "meta.rb", "source": "send(action, *args)"},
+        ],
+        "adversarial": [
+            {
+                "path": "policy.rb",
+                "source": "eval(POLICY_TEMPLATE) # frozen constant DSL",
+                "expected": False,
+                "rationale": "Evaluation of frozen internal constants carries no request reachability; the rule requires params/request/session/cookies sources on the line.",
+            },
+            {
+                "path": "calc.rb",
+                "source": "eval(cookies.encrypted[:calc_expr])",
+                "expected": True,
+                "rationale": "Encrypted cookies decrypt inside the app, so the evaluated plaintext is still attacker-chosen; storage protection does not sanitize input.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Typed casts (.to_i/.to_f), service-object evaluation, and REPL tooling without "
+            "request sources stay silent. send-metaprogramming without eval is a separate "
+            "review lane to keep this rule's precision maximal."
+        ),
+    },
+    "SP073": {
+        "positive": [
+            {"path": "Crypto.java", "source": 'Cipher c = Cipher.getInstance("AES");'},
+            {"path": "Seal.kt", "source": 'val c = Cipher.getInstance("DES");'},
+        ],
+        "negative": [
+            {"path": "Crypto.java", "source": 'Cipher.getInstance("AES/GCM/NoPadding");'},
+            {"path": "Crypto.java", "source": 'Cipher.getInstance("AES/CBC/PKCS5Padding");'},
+            {
+                "path": "Wrap.java",
+                "source": 'Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");',
+            },
+            {"path": "seal.py", "source": "Fernet(key)"},
+        ],
+        "adversarial": [
+            {
+                "path": "Crypto.java",
+                "source": "Cipher.getInstance(transformation)",
+                "expected": False,
+                "rationale": "Transform arrives as an identifier; guaranteeing GCM there requires constructor-level analysis, which stays out of this line rule's contract.",
+            },
+            {
+                "path": "Legacy.java",
+                "source": 'Cipher.getInstance("AES/CBC/PKCS5Padding")',
+                "expected": False,
+                "rationale": "Explicit CBC is a deliberate choice with MAC-then-encrypt guidance elsewhere; only provider-default (bare AES) and hard DES/ECB forms fire.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Fully qualified transforms never match the two bare alternatives. The JCA "
+            'default for bare "AES" is ECB/PKCS5Padding per providers\' documented '
+            "behavior, which is the defect the rule encodes."
+        ),
+    },
+    "SP074": {
+        "positive": [
+            {"path": "Run.java", "source": 'Runtime.getRuntime().exec("ping " + host);'},
+            {
+                "path": "Tool.java",
+                "source": 'Runtime.getRuntime().exec(new String[]{"sh", "-c", cmd});',
+            },
+        ],
+        "negative": [
+            {"path": "Run.java", "source": 'new ProcessBuilder("ping", host).start();'},
+            {"path": "Run.java", "source": 'Runtime.getRuntime().exec("uptime");'},
+            {"path": "Proc.kt", "source": 'ProcessBuilder(listOf("git", "pull")).start()'},
+            {"path": "Exec.cs", "source": 'Process.Start("ping", host);'},
+        ],
+        "adversarial": [
+            {
+                "path": "Run.java",
+                "source": "rt.exec(cmdLine.toString());",
+                "expected": False,
+                "rationale": "StringBuilder contents are invisible at line level; assembly-site review belongs to flow analysis, keeping this rule's hits concrete.",
+            },
+            {
+                "path": "Run.java",
+                "source": 'Runtime.getRuntime().exec("ping".concat(host));',
+                "expected": False,
+                "rationale": "Method-concatenation uses a call, not the +-identifier shape; documenting this boundary pushes teams toward ProcessBuilder rather than alternate string APIs.",
+            },
+        ],
+        "false_positive_analysis": (
+            "ProcessBuilder arrays and constant commands cannot match. The concat "
+            "alternative requires a literal-plus-identifier token so pure constants and "
+            "builder APIs stay silent; StringTokenizer splitting semantics make every "
+            "matched line genuinely injectable."
+        ),
+    },
+    "SP075": {
+        "positive": [
+            {"path": "views.py", "source": "return send_file(request.args.get('path'))"},
+            {"path": "reports.py", "source": "return send_from_directory(BASE, request.form['f'])"},
+        ],
+        "negative": [
+            {"path": "views.py", "source": "return send_file('reports/weekly.pdf')"},
+            {"path": "views.py", "source": "return send_from_directory(EXPORT_DIR, safe_name)"},
+            {"path": "dl.js", "source": "res.download(filePath);"},
+            {"path": "api.py", "source": "return jsonify(payload)"},
+        ],
+        "adversarial": [
+            {
+                "path": "views.py",
+                "source": "return send_file(resolve_report(request.args.get('id')))",
+                "expected": False,
+                "rationale": "Allowlist resolver wraps the parameter, mirroring the sanctioned fix; the rule rewards that shape by staying silent.",
+            },
+            {
+                "path": "views.py",
+                "source": "return send_file(f\"exports/{request.view_args['name']}\")",
+                "expected": False,
+                "rationale": "view_args come from the route path, not query/body/form/values/files/json sources in the pattern family; route segments are app-defined, keeping precision high.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Constant filenames, resolver-wrapped parameters, and non-request arguments "
+            "cannot match. FastAPI FileResponse equivalents route through the generic "
+            "filesystem sinks rather than this Flask-specific call shape."
+        ),
+    },
+    "SP076": {
+        "positive": [
+            {"path": "files.js", "source": "res.sendFile(req.query.path);"},
+            {"path": "files.ts", "source": "res.sendFile(path.join(ROOT, req.params.name), cb);"},
+        ],
+        "negative": [
+            {"path": "files.js", "source": "res.sendFile('/srv/app/public/index.html');"},
+            {"path": "files.js", "source": "res.sendFile(path.join(PUBLIC, 'index.html'));"},
+            {"path": "static.js", "source": "express.static(PUBLIC_DIR)"},
+            {"path": "files.py", "source": "return FileResponse(path)"},
+        ],
+        "adversarial": [
+            {
+                "path": "files.js",
+                "source": "res.sendFile(validated.name);",
+                "expected": False,
+                "rationale": "Post-validation identifier cannot prove containment on this line; the rule documents resolve+prefix-check as the sanctioned pattern that silences hits.",
+            },
+            {
+                "path": "files.js",
+                "source": "res.sendFile(path.resolve(ROOT, req.query.file));",
+                "expected": True,
+                "rationale": "resolve() normalizes traversal instead of confining it; firing here is correct because the prefix check the fix requires is still missing.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Constants and joins over constants never contain req.* tokens. resolve()-only "
+            "hardening intentionally remains flagged until the containment check exists, "
+            "which the remediation text states explicitly."
+        ),
+    },
+    "SP077": {
+        "positive": [
+            {"path": "server.js", "source": "res.status(500).json({ error: err.stack });"},
+            {"path": "server.ts", "source": "res.send(e.stack);"},
+        ],
+        "negative": [
+            {"path": "server.js", "source": "res.status(500).json({ error: 'internal' });"},
+            {"path": "logger.js", "source": "console.error(err.stack);"},
+            {"path": "server.js", "source": "res.json({ ok: true });"},
+            {"path": "err.py", "source": "logging.exception(traceback.format_exc())"},
+        ],
+        "adversarial": [
+            {
+                "path": "server.js",
+                "source": "res.json(formatError(err));",
+                "expected": False,
+                "rationale": "Formatter indirection hides whether stack material reaches the client; the rule anchors on direct .stack properties for determinism.",
+            },
+            {
+                "path": "server.js",
+                "source": "res.status(500).json({ error: err.message, ref: id });",
+                "expected": False,
+                "rationale": "Messages are coarser than stacks; leaking internals via message strings is a separate info-disclosure review, not this stack-specific detector.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Server-side logging and generic error bodies never match. Direct .stack "
+            "properties inside res.send/json/status-chains are the documented trigger; "
+            "formatter indirection is a stated boundary."
+        ),
+    },
+    "SP078": {
+        "positive": [
+            {"path": "legacy.php", "source": "extract($_GET);"},
+            {"path": "legacy.php", "source": "extract($_REQUEST, EXTR_OVERWRITE);"},
+        ],
+        "negative": [
+            {"path": "legacy.php", "source": "extract($_GET, EXTR_SKIP);"},
+            {"path": "vars.php", "source": "$data = compact('a', 'b');"},
+            {"path": "modern.php", "source": "$page = $_GET['page'] ?? 'home';"},
+            {"path": "tpl.php", "source": "extract($localTemplateVars);"},
+        ],
+        "adversarial": [
+            {
+                "path": "widget.php",
+                "source": "extract($_POST, EXTR_PREFIX_ALL, 'p_');",
+                "expected": False,
+                "rationale": "EXTR_PREFIX_ALL renames imported variables, preventing overwrite of pre-seeded names; the lookahead accepts any second argument, treating prefixed imports as mitigated.",
+            },
+            {
+                "path": "widget.php",
+                "source": "extract($_SERVER);",
+                "expected": False,
+                "rationale": "$_SERVER keys are server-controlled rather than request-body controlled; importing them is poor practice but outside the GET/POST/REQUEST attack surface.",
+            },
+        ],
+        "false_positive_analysis": (
+            "EXTR_SKIP and prefix strategies within the call suppress the finding; local "
+            "arrays and $_SERVER stay out of scope. Modern explicit access patterns never "
+            "contain extract at all, which the remediation recommends."
+        ),
+    },
+    "SP079": {
+        "positive": [
+            {"path": "UserController.java", "source": '@RequestMapping("/users")'},
+            {"path": "Admin.java", "source": '@RequestMapping(value = "/admin/settings")'},
+        ],
+        "negative": [
+            {"path": "UserController.java", "source": '@GetMapping("/users")'},
+            {
+                "path": "UserController.java",
+                "source": '@RequestMapping(value = "/users", method = RequestMethod.POST)',
+            },
+            {"path": "Api.java", "source": '@PostMapping(path = "/items")'},
+            {"path": "Health.java", "source": "@GetMapping"},
+        ],
+        "adversarial": [
+            {
+                "path": "Proxy.java",
+                "source": '@RequestMapping("/**")',
+                "expected": True,
+                "rationale": "Catch-all mappings are precisely where unrestricted verbs matter most; the rule must not develop a wildcard exemption.",
+            },
+            {
+                "path": "Legacy.java",
+                "source": "@RequestMapping(method = {RequestMethod.GET, RequestMethod.DELETE})",
+                "expected": False,
+                "rationale": "An explicit method list satisfies the constraint even when it allows multiple verbs; narrowing advice then applies per entry.",
+            },
+        ],
+        "false_positive_analysis": (
+            "Specialized @GetMapping/@PostMapping and any method= attribute suppress the "
+            "finding. Class-level @RequestMapping shared by method-annotated siblings is a "
+            "known residual; remediation text tells teams to move constraints down."
+        ),
+    },
+    "SP080": {
+        "positive": [
+            {"path": "greet.js", "source": "res.send(`<h1>Hello ${req.query.name}</h1>`);"},
+            {"path": "chat.js", "source": 'res.write(`<div class="msg">${msg.text}</div>`);'},
+        ],
+        "negative": [
+            {"path": "api.js", "source": "res.send(JSON.stringify(req.body));"},
+            {"path": "api.js", "source": "res.send(`hello ${name}`);"},
+            {"path": "page.tsx", "source": "return <div>{userText}</div>;"},
+            {"path": "render.py", "source": "return render_template('chat.html', msgs=msgs)"},
+        ],
+        "adversarial": [
+            {
+                "path": "greet.js",
+                "source": "res.send(`<h1>${escapeHtml(req.query.name)}</h1>`);",
+                "expected": True,
+                "rationale": "Documented boundary: escapeHtml is not in the sanitizer wrap list, so the encoded-but-manual pattern still surfaces; teams migrate to template engines for auto-escaping.",
+            },
+            {
+                "path": "greet.js",
+                "source": "res.render('greet', { name: req.query.name });",
+                "expected": False,
+                "rationale": "Template-engine rendering auto-escapes by context; the detector anchors on send/write HTML string assembly and must not fire on render calls.",
+            },
+        ],
+        "false_positive_analysis": (
+            "JSON payloads, templates without markup tags, and framework-rendered views "
+            "cannot match the tag-plus-interpolation-inside-send shape. Manual escaping "
+            "remains flagged by design; the sanctioned fix is contextual auto-escaping."
+        ),
+    },
+}
+
+
+def main() -> int:
+    by_id = {rule.rule_id: rule for rule in RULES}
+    wanted = [f"SP{n:03d}" for n in PROMOTED_RANGE]
+    missing = [rid for rid in wanted if rid not in by_id]
+    if missing:
+        raise SystemExit(f"promoted rules absent from scanner: {missing}")
+
+    rules_payload = {}
+    for rid in wanted:
+        rule = by_id[rid]
+        case = CASES[rid]
+        cwe_digits = "".join(ch for ch in rule.cwe if ch.isdigit())
+        rules_payload[rid] = {
+            "title": rule.title,
+            "expected_severity": rule.severity,
+            "expected_confidence": rule.confidence,
+            "cwe": rule.cwe,
+            "category": rule.category,
+            "cases": case,
+            "false_positive_analysis": case["false_positive_analysis"],
+            "sources": [
+                {
+                    "url": cwe_url(rule.cwe),
+                    "claim": (
+                        f"MITRE CWE-{cwe_digits} defines the {rule.title.lower()} weakness "
+                        f"class that this detector recognizes locally."
+                    ),
+                },
+                {
+                    "url": ASVS_BASE,
+                    "claim": (
+                        f"OWASP ASVS maps {rule.cwe} controls to the verification requirements "
+                        f"in {rule.owasp}, which the remediation text follows."
+                    ),
+                },
+            ],
+        }
+
+    payload = {
+        "schema_version": 1,
+        "quality_contract_version": 1,
+        "promotion_range": ["SP051", "SP080"],
+        "rules": [{"rule_id": rid, **rules_payload[rid]} for rid in sorted(rules_payload)],
+    }
+    out = ROOT / "tests" / "rule_cases_promoted.json"
+    out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote {out} with {len(rules_payload)} rules")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
