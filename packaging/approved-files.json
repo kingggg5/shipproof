@@ -98,6 +98,7 @@
     "skills/audit-production-readiness/scripts/analysis.py",
     "skills/audit-production-readiness/scripts/capacity_model.py",
     "skills/audit-production-readiness/scripts/cost_model.py",
+    "skills/audit-production-readiness/scripts/future_phases.py",
     "skills/audit-production-readiness/scripts/impact_graph.py",
     "skills/audit-production-readiness/scripts/invariants.py",
     "skills/audit-production-readiness/scripts/ir.py",
