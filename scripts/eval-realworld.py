@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -32,6 +34,7 @@ DEFAULT_REPOS = [
     # Famous intentionally-vulnerable apps: expect meaningful detections (recall check).
     ("https://github.com/juice-shop/juice-shop", "juice-shop"),
     ("https://github.com/digininja/DVWA", "dvwa"),
+    ("https://github.com/OWASP/NodeGoat", "nodegoat"),
 ]
 
 
@@ -47,10 +50,23 @@ def run_git(*arguments: str, cwd: Path | None = None) -> subprocess.CompletedPro
     )
 
 
+def _force_delete(func, path, _exc) -> None:
+    """Clear the read-only attribute git sets on pack files before deleting
+    (Windows denies unlinking them otherwise)."""
+    try:
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    except OSError:
+        pass
+
+
 def prepare(url: str, name: str, workspace: Path) -> Path | None:
     target = workspace / name
     if target.exists():
-        shutil.rmtree(target)
+        if sys.version_info >= (3, 12):
+            shutil.rmtree(target, onexc=_force_delete)
+        else:
+            shutil.rmtree(target, onerror=_force_delete)
     cloned = run_git("clone", "--depth", "1", "--quiet", url, str(target))
     if cloned.returncode != 0:
         print(f"skip {name}: clone failed ({cloned.stderr.strip().splitlines()[:1]})")
@@ -67,16 +83,23 @@ def evaluate(url: str, name: str, workspace: Path) -> dict[str, object]:
     elapsed = round(time.perf_counter() - started, 2)
     by_rule: dict[str, int] = {}
     by_severity: dict[str, int] = {}
+    app_by_severity: dict[str, int] = {}
     for finding in findings:
         by_rule[finding.rule_id] = by_rule.get(finding.rule_id, 0) + 1
         by_severity[finding.severity] = by_severity.get(finding.severity, 0) + 1
+        if finding.scope == "app":
+            # The gate verdict evaluates application code only; test-scope
+            # findings are downranked noise for this measurement.
+            app_by_severity[finding.severity] = app_by_severity.get(finding.severity, 0) + 1
     return {
         "repo": name,
         "status": "scanned",
         "files": stats["files_scanned"],
         "seconds": elapsed,
         "findings": len(findings),
+        "app_findings": sum(app_by_severity.values()),
         "by_severity": dict(sorted(by_severity.items())),
+        "app_by_severity": dict(sorted(app_by_severity.items())),
         "by_rule": dict(sorted(by_rule.items(), key=lambda item: -item[1])),
     }
 
@@ -119,7 +142,8 @@ def main() -> int:
             continue
         print(
             f"{result['repo']:14} {result['files']:5} files {result['seconds']:6}s "
-            f"findings={result['findings']:4} {result['by_severity']}"
+            f"findings={result['findings']:4} app={result['app_findings']:3} "
+            f"app_by_severity={result['app_by_severity']}"
         )
         top = list(result["by_rule"].items())[:8]
         if top:

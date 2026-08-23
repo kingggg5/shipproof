@@ -1,0 +1,67 @@
+name: Benchmarks
+
+on:
+  schedule:
+    # Weekly, Monday 03:20 UTC — off-peak, deterministic runner pool.
+    - cron: "20 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      run-realworld:
+        description: "Also clone and scan public OSS repositories (network)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmarks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detection-and-throughput:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: "3.12"
+      - name: Detection head-to-head (self-leg, all fixture corpora)
+        run: |
+          python benchmarks/head_to_head.py \
+            fixtures/vulnerable-node-api \
+            fixtures/vulnerable-python-api \
+            fixtures/node-taint-crossfile \
+            fixtures/adversarial-node \
+            fixtures/secure-node-api \
+            fixtures/node-secure-crossfile \
+            --repeat 3 --format json | tee benchmark-detection.json
+          python benchmarks/head_to_head.py \
+            fixtures/vulnerable-node-api \
+            fixtures/vulnerable-python-api \
+            fixtures/node-taint-crossfile \
+            fixtures/adversarial-node \
+            fixtures/secure-node-api \
+            fixtures/node-secure-crossfile \
+            --repeat 3 | tee benchmark-detection.md
+      - name: Throughput regression (1k files, 4 workers)
+        run: |
+          python scripts/benchmark-scanner.py --files 1000 --jobs 4 \
+            | tee benchmark-throughput.json
+      - name: Real-world open-source evaluation
+        if: ${{ inputs.run-realworld == true }}
+        run: python scripts/eval-realworld.py --json | tee benchmark-realworld.json
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: shipproof-benchmarks-${{ github.run_id }}
+          path: |
+            benchmark-detection.json
+            benchmark-detection.md
+            benchmark-throughput.json
+            benchmark-realworld.json
+          if-no-files-found: ignore
+          retention-days: 90

@@ -1,0 +1,9 @@
+{
+  "name": "node-taint-crossfile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Intentionally vulnerable head-to-head corpus fixture",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

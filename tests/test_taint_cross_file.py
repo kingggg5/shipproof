@@ -152,6 +152,95 @@ def orphan_function(data: str):
         report = graph.analyze_impact("utils/helper.py")
         self.assertIn("UNREACHABLE", report.reachability_status)
 
+    def test_local_alias_carries_param_taint_to_sink(self) -> None:
+        """A query built from a parameter into a local variable must still
+        reach the execute() sink through alias resolution."""
+        services_dir = self.root / "services"
+        services_dir.mkdir(parents=True)
+
+        (services_dir / "search.py").write_text(
+            """
+def search_products(term):
+    query = "SELECT * FROM products WHERE name LIKE '%" + term + "%'"
+    cursor.execute(query)
+""",
+            encoding="utf-8",
+        )
+
+        graph = ImpactGraph(self.root)
+        graph.build()
+        summary = next(
+            s for s in graph.summaries["search_products"] if s.file == "services/search.py"
+        )
+        sql_sinks = [s for s in summary.param_to_sinks if s.rule_id == "SP103"]
+        self.assertEqual(len(sql_sinks), 1)
+        self.assertEqual(sql_sinks[0].param_name, "term")
+        self.assertEqual(sql_sinks[0].line, 4)
+
+    def test_alias_chain_across_files_propagates(self) -> None:
+        """Route param -> helper builds SQL via alias -> repo executes it."""
+        routes_dir = self.root / "routes"
+        routes_dir.mkdir(parents=True)
+        services_dir = self.root / "services"
+        services_dir.mkdir(parents=True)
+
+        (routes_dir / "items.py").write_text(
+            """
+from services.items import transform
+
+@app.get('/items/{item_id}')
+def get_item(item_id: str):
+    return transform(item_id)
+""",
+            encoding="utf-8",
+        )
+        (services_dir / "items.py").write_text(
+            """
+from repos.items import execute_query
+
+def transform(uid):
+    query = "SELECT * FROM items WHERE id = '" + uid + "'"
+    return execute_query(query)
+""",
+            encoding="utf-8",
+        )
+        repos_dir = self.root / "repos"
+        repos_dir.mkdir(parents=True)
+        (repos_dir / "items.py").write_text(
+            """
+def execute_query(statement):
+    cursor.execute(statement)
+""",
+            encoding="utf-8",
+        )
+
+        graph = ImpactGraph(self.root)
+        graph.build()
+        flows = [f for f in graph.taint_flows if f.sink_rule_id == "SP103" and not f.is_sanitized]
+        self.assertEqual(len(flows), 1)
+        self.assertEqual(flows[0].source_entrypoint, "get_item")
+        self.assertEqual(flows[0].sink_file, "repos/items.py")
+
+    def test_command_injection_via_os_system_alias(self) -> None:
+        utils_dir = self.root / "jobs"
+        utils_dir.mkdir(parents=True)
+
+        (utils_dir / "cleanup.py").write_text(
+            """
+@app.post('/cleanup/{tag}')
+def cleanup(tag: str):
+    command = "rm -rf /tmp/" + tag
+    os.system(command)
+""",
+            encoding="utf-8",
+        )
+
+        graph = ImpactGraph(self.root)
+        graph.build()
+        cmd_flows = [f for f in graph.taint_flows if f.sink_rule_id == "SP102"]
+        self.assertEqual(len(cmd_flows), 1)
+        self.assertFalse(cmd_flows[0].is_sanitized)
+
 
 if __name__ == "__main__":
     unittest.main()

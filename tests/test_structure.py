@@ -88,7 +88,8 @@ class StructureTests(unittest.TestCase):
         count_match = re.search(r"- (\d+) deterministic rules", llms)
         self.assertIsNotNone(count_match)
         self.assertEqual(int(count_match.group(1)), len(RULES))
-        self.assertIn("L2 intraprocedural Python taint", llms)
+        self.assertIn("L2 interprocedural taint flows", llms)
+        self.assertIn("--cross-file", llms)
 
         registered_tools = set(re.findall(r'server\.registerTool\(\s*"([^"]+)"', mcp_source))
         self.assertEqual(
@@ -149,11 +150,8 @@ class StructureTests(unittest.TestCase):
             r"^\|\s*\*\*`(SP\d+)`\*\*\s*\|\s*(CRITICAL|HIGH|MEDIUM|LOW)\s*\|",
             re.MULTILINE,
         )
-        thai_row = re.compile(
-            r"^\|\s*\*\*(SP\d+)\*\*\s*\|[^|]+\|\s*(CRITICAL|HIGH|MEDIUM|LOW)\s*\|",
-            re.MULTILINE,
-        )
-        for readme_name, row_pattern in (("README.md", english_row), ("README.th.md", thai_row)):
+        sources = (("docs/rules.md", english_row),)
+        for readme_name, row_pattern in sources:
             content = (ROOT / readme_name).read_text(encoding="utf-8")
             documented = {match.group(1): match.group(2) for match in row_pattern.finditer(content)}
             self.assertEqual(
@@ -170,8 +168,8 @@ class StructureTests(unittest.TestCase):
 
     def test_framework_table_rules_exist_in_scanner(self):
         scanner_rule_ids = {rule.rule_id for rule in RULES}
-        for readme_name in ("README.md", "README.th.md"):
-            content = (ROOT / readme_name).read_text(encoding="utf-8")
+        for doc_name in ("docs/rules.md",):
+            content = (ROOT / doc_name).read_text(encoding="utf-8")
             supported_headings = (
                 "## Ecosystem-aware detection",
                 "## Framework-Aware Detection",
@@ -182,13 +180,13 @@ class StructureTests(unittest.TestCase):
                 (candidate for candidate in supported_headings if candidate in content),
                 None,
             )
-            self.assertIsNotNone(heading, f"Missing ecosystem table heading in {readme_name}")
+            self.assertIsNotNone(heading, f"Missing ecosystem table heading in {doc_name}")
             framework_section = content.split(heading, 1)[1]
             framework_table = framework_section.split("## ", 1)[0]
             mentioned_rules = set(re.findall(r"\b(SP\d{3})\b", framework_table))
             self.assertTrue(
                 mentioned_rules.issubset(scanner_rule_ids),
-                f"Rules in {readme_name} framework table not in scanner: {mentioned_rules - scanner_rule_ids}",
+                f"Rules in {doc_name} framework table not in scanner: {mentioned_rules - scanner_rule_ids}",
             )
 
     def test_catalog_shipped_claims_exist_in_scanner(self):

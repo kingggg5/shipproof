@@ -12,4 +12,6 @@ The repository self-scan skips directories named `fixtures` so intentional vulne
 
 `golden-contract/` plus `expected-golden-scan.json` form the compatibility contract: the same fixture must produce identical findings and fingerprints through direct Python, the Node CLI, and the SARIF builder. Update the expectation deliberately whenever a detection change is intended.
 
+The multi-file corpora `node-taint-crossfile/` and `node-secure-crossfile/` extend the head-to-head benchmark: request input crosses file boundaries into concatenated SQL sinks, admin routes lack authorization middleware, and the secure counterpart parameterizes every query behind explicit auth guards. File-level labels live in `benchmarks/head-to-head-labels.json`.
+
 The repository self-scan skips directories named `fixtures` so intentional vulnerabilities do not create misleading failures. Selecting a fixture directory as the scan root still analyzes it.

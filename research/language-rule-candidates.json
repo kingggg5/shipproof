@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "generated_on": "2026-08-20",
+  "generated_on": "2026-08-23",
   "status": "research_only",
   "selection": "CWE weakness variants ranked by CWE-declared language, language-class, and technology applicability; explicit incompatible language declarations are excluded",
   "promotion_boundary": "No candidate is executable until it has ecosystem-specific semantics, positive, negative, and adversarial fixtures, false-positive analysis, and measured precision",
   "source_cwe_catalog_version": "4.20",
   "source_cwe_archive_sha256": "3976f599e5e5200219a3108bb896d06e2a88fbb293369e1883cb423a5e9d7d50",
-  "existing_scanner_version": "0.7.0",
-  "existing_rule_count": 571,
+  "existing_scanner_version": "0.8.0",
+  "existing_rule_count": 605,
   "candidate_count": 5000,
   "allocations": {
     "csharp": {
@@ -169,9 +169,9 @@
     "taxonomy_only": 9
   },
   "dedup_disposition_counts": {
-    "coverage_gap": 4542,
-    "distinct_ecosystem_variant": 127,
-    "extend_or_replace_existing": 331
+    "coverage_gap": 4424,
+    "distinct_ecosystem_variant": 219,
+    "extend_or_replace_existing": 357
   },
   "root_overlap": {
     "unique_cwe_roots": 635,
@@ -553,6 +553,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -619,9 +620,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -754,9 +757,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP057"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -823,9 +828,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -1296,10 +1303,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -1523,7 +1532,7 @@
       "ecosystem_name": "C#",
       "source_id": "CWE-650",
       "title": "[csharp/C#] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -1581,9 +1590,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -1710,6 +1721,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -1951,9 +1965,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -2611,7 +2627,7 @@
       "ecosystem_name": "C#",
       "source_id": "CWE-444",
       "title": "[csharp/C#] CWE-444: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')",
-      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d\u2026",
+      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -3868,9 +3884,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP064"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-481",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -4949,9 +4967,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP061"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-396",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -6464,7 +6484,7 @@
       "ecosystem_name": "C#",
       "source_id": "CWE-1222",
       "title": "[csharp/C#] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -9225,7 +9245,7 @@
       "ecosystem_name": "C#",
       "source_id": "CWE-190",
       "title": "[csharp/C#] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -9475,7 +9495,7 @@
       "ecosystem_name": "C#",
       "source_id": "CWE-22",
       "title": "[csharp/C#] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -9538,6 +9558,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -11283,9 +11305,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -12555,9 +12579,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -15893,7 +15919,7 @@
       "ecosystem_name": "C#",
       "source_id": "CWE-89",
       "title": "[csharp/C#] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -18676,6 +18702,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
@@ -18856,7 +18883,7 @@
       "ecosystem_name": "C#",
       "source_id": "CWE-213",
       "title": "[csharp/C#] CWE-213: Exposure of Sensitive Information Due to Incompatible Policies",
-      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being\u2026",
+      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -19778,9 +19805,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP067"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-256",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -19796,7 +19825,7 @@
       "ecosystem_name": "C#",
       "source_id": "CWE-257",
       "title": "[csharp/C#] CWE-257: Storing Passwords in a Recoverable Format",
-      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou\u2026",
+      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -22258,9 +22287,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -24140,9 +24171,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP063"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP063"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -24395,10 +24430,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP056",
         "SP159"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -24536,9 +24573,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP057"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP057"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -24605,9 +24646,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -25078,10 +25121,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
@@ -25306,7 +25351,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-650",
       "title": "[typescript/TypeScript] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -25364,9 +25409,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -25493,6 +25540,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -25501,6 +25551,7 @@
         "SP518"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP055",
         "SP102",
         "SP152",
         "SP518"
@@ -25744,9 +25795,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP080"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP080"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-80",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -26477,7 +26532,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-444",
       "title": "[typescript/TypeScript] CWE-444: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')",
-      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d\u2026",
+      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -27313,9 +27368,11 @@
         }
       ],
       "existing_rule_ids": [
+        "SP051",
         "SP176"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP051",
         "SP176"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -27437,6 +27494,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP072",
         "SP101",
         "SP117",
         "SP118",
@@ -28241,6 +28299,7 @@
         "SP661"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP108",
         "SP420",
         "SP421",
         "SP432",
@@ -29001,7 +29060,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-1222",
       "title": "[typescript/TypeScript] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -31762,7 +31821,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-190",
       "title": "[typescript/TypeScript] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -32012,7 +32071,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-22",
       "title": "[typescript/TypeScript] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -32075,11 +32134,14 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -33822,9 +33884,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP052"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP052"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -35094,9 +35160,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -38374,7 +38442,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-89",
       "title": "[typescript/TypeScript] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -41161,12 +41229,14 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
         "SP453"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP077",
         "SP406",
         "SP428"
       ],
@@ -41341,7 +41411,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-213",
       "title": "[typescript/TypeScript] CWE-213: Exposure of Sensitive Information Due to Incompatible Policies",
-      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being\u2026",
+      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -42265,9 +42335,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP067"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-256",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -42283,7 +42355,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-257",
       "title": "[typescript/TypeScript] CWE-257: Storing Passwords in a Recoverable Format",
-      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou\u2026",
+      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -43352,6 +43424,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP071",
         "SP104",
         "SP163",
         "SP646"
@@ -44389,7 +44462,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-328",
       "title": "[typescript/TypeScript] CWE-328: Use of Weak Hash",
-      "description": "The product uses an algorithm that produces a digest (output value) that does not meet security expectations for a hash function that allows an adversary to reasonably determine the original input (preimage attack), find another input that can produce the same hash (2nd preimage attack), or find multiple inputs that e\u2026",
+      "description": "The product uses an algorithm that produces a digest (output value) that does not meet security expectations for a hash function that allows an adversary to reasonably determine the original input (preimage attack), find another input that can produce the same hash (2nd preimage attack), or find multiple inputs that e…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -47564,7 +47637,7 @@
       "ecosystem_name": "TypeScript",
       "source_id": "CWE-455",
       "title": "[typescript/TypeScript] CWE-455: Non-exit on Failed Initialization",
-      "description": "The product does not exit or otherwise modify its operation when security-relevant errors occur during initialization, such as when a configuration file has a format error or a hardware security module (HSM) cannot be activated, which can cause the product to execute in a less secure fashion than intended by the admin\u2026",
+      "description": "The product does not exit or otherwise modify its operation when security-relevant errors occur during initialization, such as when a configuration file has a format error or a hardware security module (HSM) cannot be activated, which can cause the product to execute in a less secure fashion than intended by the admin…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -48849,9 +48922,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -50886,9 +50961,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP060"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP060"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-98",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -50940,9 +51019,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP078"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP078"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-453",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -51273,6 +51356,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
@@ -51591,9 +51675,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP066"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP066"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-88",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -51761,6 +51849,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -51829,9 +51918,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -51964,9 +52055,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP057"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -52033,9 +52126,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -52506,10 +52601,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -52733,7 +52830,7 @@
       "ecosystem_name": "PHP",
       "source_id": "CWE-650",
       "title": "[php/PHP] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -52791,9 +52888,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -52920,6 +53019,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -53161,9 +53263,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -53821,7 +53925,7 @@
       "ecosystem_name": "PHP",
       "source_id": "CWE-444",
       "title": "[php/PHP] CWE-444: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')",
-      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d\u2026",
+      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -54978,6 +55082,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP072",
         "SP101",
         "SP117",
         "SP118",
@@ -55336,9 +55441,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP062"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP062"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-624",
       "recommended_route": "benchmark_or_policy_research",
       "promotion_status": "research_only",
@@ -56667,7 +56776,7 @@
       "ecosystem_name": "PHP",
       "source_id": "CWE-1222",
       "title": "[php/PHP] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -59428,7 +59537,7 @@
       "ecosystem_name": "PHP",
       "source_id": "CWE-190",
       "title": "[php/PHP] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -59678,7 +59787,7 @@
       "ecosystem_name": "PHP",
       "source_id": "CWE-22",
       "title": "[php/PHP] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -59741,6 +59850,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -61486,9 +61597,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -65904,7 +66017,7 @@
       "ecosystem_name": "PHP",
       "source_id": "CWE-89",
       "title": "[php/PHP] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -71991,9 +72104,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP063"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP063"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -72239,9 +72356,11 @@
         }
       ],
       "existing_rule_ids": [
+        "SP051",
         "SP176"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP051",
         "SP176"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -72363,6 +72482,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP072",
         "SP101",
         "SP117",
         "SP118",
@@ -72803,10 +72923,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP056",
         "SP159"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -73247,7 +73369,7 @@
       "ecosystem_name": "React",
       "source_id": "CWE-1222",
       "title": "[react/React] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -74095,9 +74217,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP057"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP057"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -74537,9 +74663,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -76147,7 +76275,7 @@
       "ecosystem_name": "React",
       "source_id": "CWE-190",
       "title": "[react/React] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -76455,7 +76583,7 @@
       "ecosystem_name": "React",
       "source_id": "CWE-22",
       "title": "[react/React] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -76518,11 +76646,14 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -78320,9 +78451,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP052"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP052"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -79650,9 +79785,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -81512,10 +81649,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
@@ -82241,7 +82380,7 @@
       "ecosystem_name": "React",
       "source_id": "CWE-650",
       "title": "[react/React] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -82298,9 +82437,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -83100,6 +83241,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -83108,6 +83252,7 @@
         "SP518"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP055",
         "SP102",
         "SP152",
         "SP518"
@@ -83696,9 +83841,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP080"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP080"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-80",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -84310,7 +84459,7 @@
       "ecosystem_name": "React",
       "source_id": "CWE-89",
       "title": "[react/React] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -88468,9 +88617,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -89859,6 +90010,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -89925,9 +90077,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -90062,9 +90216,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP057"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -90131,9 +90287,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP070"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP070"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -90604,10 +90764,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -90831,7 +90993,7 @@
       "ecosystem_name": "Go",
       "source_id": "CWE-650",
       "title": "[go/Go] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -90889,9 +91051,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -91018,6 +91182,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -91259,9 +91426,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -91991,7 +92160,7 @@
       "ecosystem_name": "Go",
       "source_id": "CWE-444",
       "title": "[go/Go] CWE-444: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')",
-      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d\u2026",
+      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -94023,7 +94192,7 @@
       "ecosystem_name": "Go",
       "source_id": "CWE-1222",
       "title": "[go/Go] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -96784,7 +96953,7 @@
       "ecosystem_name": "Go",
       "source_id": "CWE-190",
       "title": "[go/Go] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -97034,7 +97203,7 @@
       "ecosystem_name": "Go",
       "source_id": "CWE-22",
       "title": "[go/Go] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -97097,6 +97266,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -98843,9 +99014,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -100115,9 +100288,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -103521,7 +103696,7 @@
       "ecosystem_name": "Go",
       "source_id": "CWE-89",
       "title": "[go/Go] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -106305,6 +106480,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
@@ -106482,7 +106658,7 @@
       "ecosystem_name": "Go",
       "source_id": "CWE-213",
       "title": "[go/Go] CWE-213: Exposure of Sensitive Information Due to Incompatible Policies",
-      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being\u2026",
+      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -108851,9 +109027,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -111562,7 +111740,7 @@
       "ecosystem_name": "C++",
       "source_id": "CWE-190",
       "title": "[cpp/C++] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -112582,7 +112760,7 @@
       "ecosystem_name": "C++",
       "source_id": "CWE-416",
       "title": "[cpp/C++] CWE-416: Use After Free",
-      "description": "The product reuses or references memory after it has been freed. At some point afterward, the memory may be allocated again and saved in another pointer, while the original pointer references a location somewhere within the new allocation. Any operations using the original pointer are no longer valid because the memor\u2026",
+      "description": "The product reuses or references memory after it has been freed. At some point afterward, the memory may be allocated again and saved in another pointer, while the original pointer references a location somewhere within the new allocation. Any operations using the original pointer are no longer valid because the memor…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Stable",
       "risk_lane": "reliability",
@@ -114442,9 +114620,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP064"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-481",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -119327,9 +119507,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP061"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-396",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -119890,6 +120072,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -119955,9 +120138,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -120393,7 +120578,7 @@
       "ecosystem_name": "C++",
       "source_id": "CWE-1222",
       "title": "[cpp/C++] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -121168,9 +121353,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP057"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -121509,9 +121696,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -123263,7 +123452,7 @@
       "ecosystem_name": "C++",
       "source_id": "CWE-22",
       "title": "[cpp/C++] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -123326,6 +123515,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -125126,9 +125317,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -126383,9 +126576,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -128291,10 +128486,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -129019,7 +129216,7 @@
       "ecosystem_name": "C++",
       "source_id": "CWE-650",
       "title": "[cpp/C++] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -129076,9 +129273,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -129822,6 +130021,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -130347,9 +130549,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -130904,7 +131108,7 @@
       "ecosystem_name": "C++",
       "source_id": "CWE-89",
       "title": "[cpp/C++] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -133467,6 +133671,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
@@ -133644,7 +133849,7 @@
       "ecosystem_name": "C++",
       "source_id": "CWE-213",
       "title": "[cpp/C++] CWE-213: Exposure of Sensitive Information Due to Incompatible Policies",
-      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being\u2026",
+      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -134564,9 +134769,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP067"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-256",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -134582,7 +134789,7 @@
       "ecosystem_name": "C++",
       "source_id": "CWE-257",
       "title": "[cpp/C++] CWE-257: Storing Passwords in a Recoverable Format",
-      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou\u2026",
+      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -136498,9 +136705,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -138439,9 +138648,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP063"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP063"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -138687,9 +138900,11 @@
         }
       ],
       "existing_rule_ids": [
+        "SP051",
         "SP176"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP051",
         "SP176"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -138811,6 +139026,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP072",
         "SP101",
         "SP117",
         "SP118",
@@ -141139,7 +141355,7 @@
       "ecosystem_name": "Angular",
       "source_id": "CWE-190",
       "title": "[angular/Angular] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -141447,7 +141663,7 @@
       "ecosystem_name": "Angular",
       "source_id": "CWE-22",
       "title": "[angular/Angular] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -141510,11 +141726,14 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -143312,9 +143531,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP052"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP052"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -144642,9 +144865,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -146504,10 +146729,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
@@ -147233,7 +147460,7 @@
       "ecosystem_name": "Angular",
       "source_id": "CWE-650",
       "title": "[angular/Angular] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -147290,9 +147517,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -148092,6 +148321,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -148100,6 +148332,7 @@
         "SP518"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP055",
         "SP102",
         "SP152",
         "SP518"
@@ -148689,9 +148922,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP080"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP080"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-80",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -149303,7 +149540,7 @@
       "ecosystem_name": "Angular",
       "source_id": "CWE-89",
       "title": "[angular/Angular] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -153050,9 +153287,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP063"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP063"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -153305,10 +153546,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP056",
         "SP159"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -153446,9 +153689,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP057"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP057"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -153515,9 +153762,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -153988,10 +154237,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
@@ -154216,7 +154467,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-650",
       "title": "[javascript/JavaScript] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -154274,9 +154525,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -154403,6 +154656,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -154411,6 +154667,7 @@
         "SP518"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP055",
         "SP102",
         "SP152",
         "SP518"
@@ -154653,9 +154910,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP080"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP080"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-80",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -155386,7 +155647,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-444",
       "title": "[javascript/JavaScript] CWE-444: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')",
-      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d\u2026",
+      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -156222,9 +156483,11 @@
         }
       ],
       "existing_rule_ids": [
+        "SP051",
         "SP176"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP051",
         "SP176"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -156346,6 +156609,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP072",
         "SP101",
         "SP117",
         "SP118",
@@ -157150,6 +157414,7 @@
         "SP661"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP108",
         "SP420",
         "SP421",
         "SP463",
@@ -157909,7 +158174,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-1222",
       "title": "[javascript/JavaScript] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -160670,7 +160935,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-190",
       "title": "[javascript/JavaScript] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -160920,7 +161185,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-22",
       "title": "[javascript/JavaScript] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -160983,11 +161248,14 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -162730,9 +162998,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP052"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP052"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -164002,9 +164274,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -167282,7 +167556,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-89",
       "title": "[javascript/JavaScript] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -170069,12 +170343,14 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
         "SP453"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP077",
         "SP406",
         "SP428"
       ],
@@ -170249,7 +170525,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-213",
       "title": "[javascript/JavaScript] CWE-213: Exposure of Sensitive Information Due to Incompatible Policies",
-      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being\u2026",
+      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -171173,9 +171449,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP067"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-256",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -171191,7 +171469,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-257",
       "title": "[javascript/JavaScript] CWE-257: Storing Passwords in a Recoverable Format",
-      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou\u2026",
+      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -172260,6 +172538,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP071",
         "SP104",
         "SP163",
         "SP646"
@@ -173297,7 +173576,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-328",
       "title": "[javascript/JavaScript] CWE-328: Use of Weak Hash",
-      "description": "The product uses an algorithm that produces a digest (output value) that does not meet security expectations for a hash function that allows an adversary to reasonably determine the original input (preimage attack), find another input that can produce the same hash (2nd preimage attack), or find multiple inputs that e\u2026",
+      "description": "The product uses an algorithm that produces a digest (output value) that does not meet security expectations for a hash function that allows an adversary to reasonably determine the original input (preimage attack), find another input that can produce the same hash (2nd preimage attack), or find multiple inputs that e…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -176472,7 +176751,7 @@
       "ecosystem_name": "JavaScript",
       "source_id": "CWE-455",
       "title": "[javascript/JavaScript] CWE-455: Non-exit on Failed Initialization",
-      "description": "The product does not exit or otherwise modify its operation when security-relevant errors occur during initialization, such as when a configuration file has a format error or a hardware security module (HSM) cannot be activated, which can cause the product to execute in a less secure fashion than intended by the admin\u2026",
+      "description": "The product does not exit or otherwise modify its operation when security-relevant errors occur during initialization, such as when a configuration file has a format error or a hardware security module (HSM) cannot be activated, which can cause the product to execute in a less secure fashion than intended by the admin…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -177757,9 +178036,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -179674,7 +179955,7 @@
       "ecosystem_name": "SQL",
       "source_id": "CWE-89",
       "title": "[sql/SQL] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -180523,6 +180804,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -180588,9 +180870,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -181026,7 +181310,7 @@
       "ecosystem_name": "SQL",
       "source_id": "CWE-1222",
       "title": "[sql/SQL] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -181874,9 +182158,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP057"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -182316,9 +182602,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -183926,7 +184214,7 @@
       "ecosystem_name": "SQL",
       "source_id": "CWE-190",
       "title": "[sql/SQL] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -184234,7 +184522,7 @@
       "ecosystem_name": "SQL",
       "source_id": "CWE-22",
       "title": "[sql/SQL] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -184297,6 +184585,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -186097,9 +186387,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -187426,9 +187718,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -189414,10 +189708,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -190142,7 +190438,7 @@
       "ecosystem_name": "SQL",
       "source_id": "CWE-650",
       "title": "[sql/SQL] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -190199,9 +190495,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -191001,6 +191299,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -191586,9 +191887,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -195012,6 +195315,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
@@ -195189,7 +195493,7 @@
       "ecosystem_name": "SQL",
       "source_id": "CWE-213",
       "title": "[sql/SQL] CWE-213: Exposure of Sensitive Information Due to Incompatible Policies",
-      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being\u2026",
+      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -196109,9 +196413,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP067"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-256",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -196127,7 +196433,7 @@
       "ecosystem_name": "SQL",
       "source_id": "CWE-257",
       "title": "[sql/SQL] CWE-257: Storing Passwords in a Recoverable Format",
-      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou\u2026",
+      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -197193,6 +197499,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP071",
         "SP104",
         "SP163",
         "SP646"
@@ -198222,7 +198529,7 @@
       "ecosystem_name": "SQL",
       "source_id": "CWE-328",
       "title": "[sql/SQL] CWE-328: Use of Weak Hash",
-      "description": "The product uses an algorithm that produces a digest (output value) that does not meet security expectations for a hash function that allows an adversary to reasonably determine the original input (preimage attack), find another input that can produce the same hash (2nd preimage attack), or find multiple inputs that e\u2026",
+      "description": "The product uses an algorithm that produces a digest (output value) that does not meet security expectations for a hash function that allows an adversary to reasonably determine the original input (preimage attack), find another input that can produce the same hash (2nd preimage attack), or find multiple inputs that e…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -201166,9 +201473,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -203104,6 +203413,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP072",
         "SP101",
         "SP117",
         "SP118",
@@ -203504,6 +203814,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -203512,6 +203825,7 @@
         "SP518"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP054",
         "SP102",
         "SP151",
         "SP518"
@@ -203691,6 +204005,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -203760,9 +204075,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -203897,9 +204214,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP057"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -203966,9 +204285,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -204099,7 +204420,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-22",
       "title": "[python/Python] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -204163,11 +204484,14 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP075",
         "SP110",
         "SP111"
       ],
@@ -204583,10 +204907,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
@@ -204813,7 +205139,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-650",
       "title": "[python/Python] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -204871,9 +205197,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -205048,9 +205376,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -206386,7 +206716,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-444",
       "title": "[python/Python] CWE-444: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')",
-      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d\u2026",
+      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -207318,9 +207648,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP061"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP061"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-396",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -207596,7 +207930,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-1039",
       "title": "[python/Python] CWE-1039: Inadequate Detection or Handling of Adversarial Input Perturbations in Automated Recognition Mechanism",
-      "description": "The product uses an automated mechanism such as machine learning to recognize complex data inputs (e.g. image or audio) as a particular concept or category, but it does not properly detect or handle inputs that have been modified or constructed in a way that causes the mechanism to detect a different, incorrect concep\u2026",
+      "description": "The product uses an automated mechanism such as machine learning to recognize complex data inputs (e.g. image or audio) as a particular concept or category, but it does not properly detect or handle inputs that have been modified or constructed in a way that causes the mechanism to detect a different, incorrect concep…",
       "cwe_abstraction": "Class",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -209059,7 +209393,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-1222",
       "title": "[python/Python] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -211765,7 +212099,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-190",
       "title": "[python/Python] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -213737,9 +214071,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -215009,9 +215345,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -218415,7 +218753,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-89",
       "title": "[python/Python] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -221204,6 +221542,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
@@ -221381,7 +221720,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-213",
       "title": "[python/Python] CWE-213: Exposure of Sensitive Information Due to Incompatible Policies",
-      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being\u2026",
+      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -222121,9 +222460,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP067"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-256",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -222139,7 +222480,7 @@
       "ecosystem_name": "Python",
       "source_id": "CWE-257",
       "title": "[python/Python] CWE-257: Storing Passwords in a Recoverable Format",
-      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou\u2026",
+      "description": "The storage of passwords in a recoverable format makes them subject to password reuse attacks by malicious users. In fact, it should be noted that recoverable encrypted passwords provide no significant benefit over plaintext passwords since they are subject not only to reuse by malicious attackers but also by maliciou…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -223208,6 +223549,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP071",
         "SP104",
         "SP163",
         "SP646"
@@ -225485,9 +225827,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -227868,6 +228212,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
@@ -228085,6 +228430,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -228151,9 +228497,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -228288,9 +228636,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP057"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -228357,9 +228707,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -228830,10 +229182,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -229057,7 +229411,7 @@
       "ecosystem_name": "Java",
       "source_id": "CWE-650",
       "title": "[java/Java] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -229115,9 +229469,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP079"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP079"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-650",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -229244,6 +229602,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -229252,6 +229613,7 @@
         "SP518"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP074",
         "SP102"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -229484,9 +229846,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -230217,7 +230581,7 @@
       "ecosystem_name": "Java",
       "source_id": "CWE-444",
       "title": "[java/Java] CWE-444: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')",
-      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d\u2026",
+      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -231856,9 +232220,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP064"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP064"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-481",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -233545,6 +233913,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP072",
         "SP101",
         "SP117",
         "SP118",
@@ -234335,9 +234704,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP061"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-396",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -235098,7 +235469,7 @@
       "ecosystem_name": "Java",
       "source_id": "CWE-917",
       "title": "[java/Java] CWE-917: Improper Neutralization of Special Elements used in an Expression Language Statement ('Expression Language Injection')",
-      "description": "The product constructs all or part of an expression language (EL) statement in a framework such as a Java Server Page (JSP) using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended EL statement before it is execu\u2026",
+      "description": "The product constructs all or part of an expression language (EL) statement in a framework such as a Java Server Page (JSP) using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended EL statement before it is execu…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -235137,9 +235508,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP065"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP065"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-917",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -237950,7 +238325,7 @@
       "ecosystem_name": "Java",
       "source_id": "CWE-190",
       "title": "[java/Java] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -238200,7 +238575,7 @@
       "ecosystem_name": "Java",
       "source_id": "CWE-22",
       "title": "[java/Java] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -238263,6 +238638,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -240009,9 +240386,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -241281,9 +241660,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -244350,7 +244731,7 @@
       "ecosystem_name": "Java",
       "source_id": "CWE-89",
       "title": "[java/Java] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -248161,6 +248542,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -248227,9 +248609,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -248362,9 +248746,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP057"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1275",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -248431,9 +248817,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP070"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1385",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -248904,10 +249292,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -249131,7 +249521,7 @@
       "ecosystem_name": "Rust",
       "source_id": "CWE-650",
       "title": "[rust/Rust] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -249189,9 +249579,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -249318,6 +249710,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -249558,9 +249953,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "static_research",
       "promotion_status": "research_only",
@@ -250290,7 +250687,7 @@
       "ecosystem_name": "Rust",
       "source_id": "CWE-444",
       "title": "[rust/Rust] CWE-444: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')",
-      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d\u2026",
+      "description": "The product acts as an intermediary HTTP agent (such as a proxy or firewall) in the data flow between two entities such as a client and server, but it does not interpret malformed HTTP requests or responses in ways that are consistent with how the messages will be processed by those entities that are at the ultimate d…",
       "cwe_abstraction": "Base",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -252237,7 +252634,7 @@
       "ecosystem_name": "Rust",
       "source_id": "CWE-1222",
       "title": "[rust/Rust] CWE-1222: Insufficient Granularity of Address Regions Protected by Register Locks",
-      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se\u2026",
+      "description": "The product defines a large address region protected from modification by the same register lock control bit. This results in a conflict between the functional requirement that some addresses need to be writable by software during operation and the security requirement that the system configuration lock bit must be se…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "security",
@@ -254998,7 +255395,7 @@
       "ecosystem_name": "Rust",
       "source_id": "CWE-190",
       "title": "[rust/Rust] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -255248,7 +255645,7 @@
       "ecosystem_name": "Rust",
       "source_id": "CWE-22",
       "title": "[rust/Rust] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -255311,6 +255708,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -257056,9 +257455,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -258327,9 +258728,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -261733,7 +262136,7 @@
       "ecosystem_name": "Rust",
       "source_id": "CWE-89",
       "title": "[rust/Rust] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -264516,6 +264919,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP077",
         "SP406",
         "SP418",
         "SP428",
@@ -264693,7 +265097,7 @@
       "ecosystem_name": "Rust",
       "source_id": "CWE-213",
       "title": "[rust/Rust] CWE-213: Exposure of Sensitive Information Due to Incompatible Policies",
-      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being\u2026",
+      "description": "The product's intended functionality exposes information to certain actors in accordance with the developer's security policy, but this information is regarded as sensitive according to the intended security policies of other stakeholders such as the product's administrator, users, or others whose information is being…",
       "cwe_abstraction": "Base",
       "cwe_status": "Draft",
       "risk_lane": "security",
@@ -266990,9 +267394,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP066"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-88",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -268871,6 +269277,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -268936,9 +269343,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -270937,7 +271346,7 @@
       "ecosystem_name": "Kotlin",
       "source_id": "CWE-190",
       "title": "[kotlin/Kotlin] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -271245,7 +271654,7 @@
       "ecosystem_name": "Kotlin",
       "source_id": "CWE-22",
       "title": "[kotlin/Kotlin] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -271308,6 +271717,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -273108,9 +273519,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -274437,9 +274850,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -276425,10 +276840,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -277153,7 +277570,7 @@
       "ecosystem_name": "Kotlin",
       "source_id": "CWE-650",
       "title": "[kotlin/Kotlin] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -277210,9 +277627,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP079"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP079"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-650",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -278012,6 +278433,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -278597,9 +279021,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -279211,7 +279637,7 @@
       "ecosystem_name": "Kotlin",
       "source_id": "CWE-89",
       "title": "[kotlin/Kotlin] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -283237,6 +283663,7 @@
         }
       ],
       "existing_rule_ids": [
+        "SP056",
         "SP159",
         "SP442"
       ],
@@ -283302,9 +283729,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP063"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-1022",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -285303,7 +285732,7 @@
       "ecosystem_name": "Swift",
       "source_id": "CWE-190",
       "title": "[swift/Swift] CWE-190: Integer Overflow or Wraparound",
-      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,\u2026",
+      "description": "The product performs a calculation that can produce an integer overflow or wraparound when the logic assumes that the resulting value will always be larger than the original value. This occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs,…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -285611,7 +286040,7 @@
       "ecosystem_name": "Swift",
       "source_id": "CWE-22",
       "title": "[swift/Swift] CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th\u2026",
+      "description": "The product uses external input to construct a pathname that is intended to identify a file or directory that is located underneath a restricted parent directory, but the product does not properly neutralize special elements within the pathname that can cause the pathname to resolve to a location that is outside of th…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",
@@ -285674,6 +286103,8 @@
         }
       ],
       "existing_rule_ids": [
+        "SP075",
+        "SP076",
         "SP110",
         "SP111",
         "SP119"
@@ -287474,9 +287905,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP052"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-321",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -288803,9 +289236,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP078"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-453",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -290791,10 +291226,12 @@
         }
       ],
       "existing_rule_ids": [
+        "SP058",
         "SP160",
         "SP168"
       ],
       "existing_ecosystem_rule_ids": [
+        "SP058",
         "SP160"
       ],
       "dedup_disposition": "extend_or_replace_existing",
@@ -291519,7 +291956,7 @@
       "ecosystem_name": "Swift",
       "source_id": "CWE-650",
       "title": "[swift/Swift] CWE-650: Trusting HTTP Permission Methods on the Server Side",
-      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m\u2026",
+      "description": "The server contains a protection mechanism that assumes that any URI that is accessed using HTTP GET will not cause a state change to the associated resource. This might allow attackers to bypass intended access restrictions and conduct resource modification and deletion attacks, since some applications allow GET to m…",
       "cwe_abstraction": "Variant",
       "cwe_status": "Incomplete",
       "risk_lane": "reliability",
@@ -291576,9 +292013,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP079"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-650",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -292378,6 +292817,9 @@
         }
       ],
       "existing_rule_ids": [
+        "SP054",
+        "SP055",
+        "SP074",
         "SP102",
         "SP151",
         "SP152",
@@ -292963,9 +293405,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP080"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-80",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -293577,7 +294021,7 @@
       "ecosystem_name": "Swift",
       "source_id": "CWE-89",
       "title": "[swift/Swift] CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
-      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy\u2026",
+      "description": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL sy…",
       "cwe_abstraction": "Base",
       "cwe_status": "Stable",
       "risk_lane": "security",

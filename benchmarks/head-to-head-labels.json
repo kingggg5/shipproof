@@ -1,5 +1,21 @@
 {
   "vulnerable-node-api": ["app.js"],
   "vulnerable-python-api": ["app.py"],
-  "secure-node-api": []
+  "secure-node-api": [],
+  "node-taint-crossfile": [
+    "routes/orders.js",
+    "routes/admin.js",
+    "routes/files.js",
+    "services/order-service.js",
+    "utils/storage.js"
+  ],
+  "node-secure-crossfile": [],
+  "adversarial-node": [
+    "vuln-two-hop.js",
+    "vuln-destructure-fs.js",
+    "routes/vuln-chain.js",
+    "services/chain.js",
+    "db/raw.js",
+    "vuln-cookie-dom.js"
+  ]
 }

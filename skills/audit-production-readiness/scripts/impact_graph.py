@@ -76,6 +76,71 @@ KNOWN_SANITIZERS = frozenset(
     }
 )
 
+# Simple-call sink table shared by the JS/TS lexical analyzer. Keys are the
+# lowercased final call segment; values map onto the same rule IDs the Python
+# engine reports so downstream policy and explanations stay consistent.
+JS_SINK_CALLS: dict[str, tuple[str, str]] = {
+    "execute": ("sql_injection", "SP103"),
+    "query": ("sql_injection", "SP103"),
+    "raw": ("sql_injection", "SP103"),
+    "exec": ("command_injection", "SP102"),
+    "execsync": ("command_injection", "SP102"),
+    # Filesystem sinks: a tainted path reaching these calls is the classic
+    # traversal pattern; containment guards and basename() clear it upstream.
+    "readfile": ("path_traversal", "SP110"),
+    "readfilesync": ("path_traversal", "SP110"),
+    "writefile": ("path_traversal", "SP110"),
+    "writefilesync": ("path_traversal", "SP110"),
+    "appendfile": ("path_traversal", "SP110"),
+    "createreadstream": ("path_traversal", "SP110"),
+    "createwritestream": ("path_traversal", "SP110"),
+}
+JS_CODE_EXEC_SINK_CALLS: dict[str, tuple[str, str]] = {
+    "eval": ("code_execution", "SP101"),
+}
+# Outbound HTTP sinks matched by receiver so route registrations such as
+# router.get(...) are never mistaken for requests: bare fetch(...) and
+# axios.<method>(...) only. Both map to SP124 (user-controlled request URL).
+JS_HTTP_SINK_BARE_NAMES = frozenset({"fetch"})
+JS_SANITIZER_SIMPLE_NAMES = frozenset({"number", "parseint", "parsefloat"})
+JS_AUTH_HINTS = ("auth", "admin", "permission", "policy", "role", "scope", "jwt", "passport")
+JS_BUILTIN_CALLEE_NAMES = frozenset(
+    {
+        "array",
+        "boolean",
+        "catch",
+        "console",
+        "date",
+        "decodeuricomponent",
+        "encodeuricomponent",
+        "error",
+        "exports",
+        "for",
+        "if",
+        "import",
+        "isnan",
+        "isfinite",
+        "json",
+        "map",
+        "math",
+        "number",
+        "object",
+        "parseint",
+        "parsefloat",
+        "promise",
+        "rangeerror",
+        "regexp",
+        "require",
+        "return",
+        "string",
+        "symbol",
+        "switch",
+        "typeerror",
+        "weakmap",
+        "while",
+    }
+)
+
 
 @dataclass
 class TaintSinkOccurrence:
@@ -162,6 +227,7 @@ class PythonASTVisitor(ast.NodeVisitor):
         self.tables_in_func: set[str] = set()
         self.func_params: list[str] = []
         self.func_sanitized: set[str] = set()
+        self.func_aliases: dict[str, str] = {}
         self.func_sinks: list[TaintSinkOccurrence] = []
         self.func_callee_calls: list[CalleeCallSite] = []
         self.is_entrypoint_func: bool = False
@@ -186,6 +252,7 @@ class PythonASTVisitor(ast.NodeVisitor):
         prev_tables = self.tables_in_func
         prev_params = self.func_params
         prev_sanitized = self.func_sanitized
+        prev_aliases = self.func_aliases
         prev_sinks = self.func_sinks
         prev_callee_calls = self.func_callee_calls
         prev_is_entry = self.is_entrypoint_func
@@ -196,6 +263,7 @@ class PythonASTVisitor(ast.NodeVisitor):
         self.tables_in_func = set()
         self.func_params = [a.arg for a in node.args.args if a.arg not in ("self", "cls")]
         self.func_sanitized = set()
+        self.func_aliases = {}
         self.func_sinks = []
         self.func_callee_calls = []
 
@@ -243,6 +311,7 @@ class PythonASTVisitor(ast.NodeVisitor):
         self.tables_in_func = prev_tables
         self.func_params = prev_params
         self.func_sanitized = prev_sanitized
+        self.func_aliases = prev_aliases
         self.func_sinks = prev_sinks
         self.func_callee_calls = prev_callee_calls
         self.is_entrypoint_func = prev_is_entry
@@ -258,7 +327,41 @@ class PythonASTVisitor(ast.NodeVisitor):
                         for target in node.targets:
                             if isinstance(target, ast.Name):
                                 self.func_sanitized.add(target.id)
+        # Alias tracking: a single target assigned from exactly one live
+        # parameter (possibly through other aliases) carries that parameter's
+        # taint into later statements (q = "SELECT" + uid; execute(q)).
+        if self.current_func and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            names = {c.id for c in ast.walk(node.value) if isinstance(c, ast.Name)}
+            roots = {self._resolve_alias(name) for name in names}
+            roots = {
+                root
+                for root in roots
+                if root in self.func_params and root not in self.func_sanitized
+            }
+            target_name = node.targets[0].id
+            if len(roots) == 1 and target_name not in self.func_sanitized:
+                root = next(iter(roots))
+                if target_name != root:
+                    self.func_aliases[target_name] = root
         self.generic_visit(node)
+
+    def _resolve_alias(self, name: str) -> str:
+        current = name
+        seen: set[str] = set()
+        while current in self.func_aliases and current not in seen and len(seen) < 6:
+            seen.add(current)
+            current = self.func_aliases[current]
+        return current
+
+    def _resolve_carrier(self, name: str) -> str | None:
+        """Map a local name to the live parameter whose taint it carries, or
+        None when the name is not a parameter, not an alias, or sanitized."""
+        if name in self.func_params:
+            return None if name in self.func_sanitized else name
+        root = self._resolve_alias(name)
+        if root in self.func_params and root not in self.func_sanitized:
+            return root
+        return None
 
     def visit_Call(self, node: ast.Call) -> None:
         if self.current_func:
@@ -270,15 +373,20 @@ class PythonASTVisitor(ast.NodeVisitor):
                 # 1. Track Callee Call Sites for inter-procedural propagation
                 for idx, arg in enumerate(node.args):
                     param_name = self._extract_var_name(arg)
-                    if param_name and param_name in self.func_params:
+                    if param_name:
+                        resolved = self._resolve_carrier(param_name)
+                        if resolved is None:
+                            continue
                         # Check if arg is wrapped in a sanitizer at call site
                         if self._is_node_sanitized(arg):
                             self.func_sanitized.add(param_name)
+                            if param_name in self.func_aliases:
+                                del self.func_aliases[param_name]
                         else:
                             self.func_callee_calls.append(
                                 CalleeCallSite(
                                     callee_name=call_name,
-                                    param_name=param_name,
+                                    param_name=resolved,
                                     arg_index=idx,
                                     line=node.lineno,
                                 )
@@ -286,8 +394,15 @@ class PythonASTVisitor(ast.NodeVisitor):
 
                 # 2. Track Dangerous Sinks
                 if simple_call in {"execute", "executemany", "raw"}:
-                    for arg in node.args:
+                    # Only the first argument carries the SQL statement; the
+                    # remaining arguments are bound parameters (cursor.execute
+                    # (sql, (a, b))) and are safe by construction.
+                    for arg in node.args[:1]:
                         p_name = self._extract_tainted_param_in_expr(arg)
+                        if p_name is None and isinstance(arg, ast.Name):
+                            p_name = self._resolve_carrier(arg.id)
+                            if p_name is not None:
+                                self.func_aliases.pop(arg.id, None)
                         if p_name and p_name not in self.func_sanitized:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
@@ -303,6 +418,10 @@ class PythonASTVisitor(ast.NodeVisitor):
                 elif simple_call in {"system", "popen", "check_output", "check_call"}:
                     for arg in node.args:
                         p_name = self._extract_tainted_param_in_expr(arg)
+                        if p_name is None and isinstance(arg, ast.Name):
+                            p_name = self._resolve_carrier(arg.id)
+                            if p_name is not None:
+                                self.func_aliases.pop(arg.id, None)
                         if p_name and p_name not in self.func_sanitized:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
@@ -318,6 +437,10 @@ class PythonASTVisitor(ast.NodeVisitor):
                 elif simple_call in {"eval", "exec", "compile"}:
                     for arg in node.args:
                         p_name = self._extract_tainted_param_in_expr(arg)
+                        if p_name is None and isinstance(arg, ast.Name):
+                            p_name = self._resolve_carrier(arg.id)
+                            if p_name is not None:
+                                self.func_aliases.pop(arg.id, None)
                         if p_name and p_name not in self.func_sanitized:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
@@ -440,6 +563,697 @@ def extract_js_ts_symbols(rel_path: str, content: str) -> dict[str, SymbolDef]:
     return symbols
 
 
+JS_EXCLUDED_CALLEES = frozenset(
+    name.lower()
+    for name in JS_BUILTIN_CALLEE_NAMES | set(JS_SINK_CALLS) | set(JS_CODE_EXEC_SINK_CALLS)
+)
+
+
+@dataclass
+class _JsFunctionSpan:
+    name: str
+    params_text: str
+    decl_start: int  # char offset where the function header match starts
+    body_start: int  # char offset just after the opening '{'
+    body_end: int  # char offset of the matching '}'
+    line_start: int
+
+
+class JsTsAnalyzer:
+    """Bounded lexical taint analysis for JavaScript and TypeScript files.
+
+    Produces the same FunctionSummary contract as the Python AST visitor so
+    interprocedural taint propagation covers Node.js routes without adding a
+    parser dependency. Extraction is deliberately conservative: dynamic
+    dispatch, cross-scope reassignment, and unusual syntax may be missed, and
+    every emitted flow stays review-first evidence rather than proof.
+    """
+
+    MAX_FILE_CHARS = 400_000
+    MAX_FUNCTIONS_PER_FILE = 400
+    MAX_BODY_CHARS = 60_000
+    MAX_ARG_CHARS = 2_000
+    MAX_PARAMS = 12
+    MAX_SINKS_PER_FUNCTION = 32
+    MAX_CALLEES_PER_FUNCTION = 64
+
+    FUNC_DECL = re.compile(
+        r"(?:^|\n)[ \t]*(?:export\s+)?(?:default\s+)?(?:async\s+)?function[ \t]+"
+        r"(?P<name>[A-Za-z_$][\w$]*)[ \t]*\((?P<params>[^)]*)\)[ \t]*\{"
+    )
+    ARROW_DECL = re.compile(
+        r"(?:^|\n)[ \t]*(?:export\s+)?(?:const|let|var)[ \t]+(?P<name>[A-Za-z_$][\w$]*)"
+        r"[ \t]*(?::[^=\n]+)?=[ \t]*(?:async[ \t]+)?\((?P<params>[^)]*)\)[ \t]*"
+        r"(?::[^=\n]+)?=>[ \t]*\{"
+    )
+    ARROW_SINGLE_PARAM = re.compile(
+        r"(?:^|\n)[ \t]*(?:export\s+)?(?:const|let|var)[ \t]+(?P<name>[A-Za-z_$][\w$]*)"
+        r"[ \t]*(?::[^=\n]+)?=[ \t]*(?:async[ \t]+)?(?P<param>[A-Za-z_$][\w$]*)[ \t]*=>[ \t]*\{"
+    )
+    ROUTE_REGISTRATION = re.compile(
+        r"\.\s*(?P<method>get|post|put|patch|delete|all|head|options)[ \t]*\("
+    )
+    REQUEST_SOURCE_ACCESS = re.compile(
+        r"\breq(?:uest)?\s*\.\s*(?:params|query|body|headers|cookies|files|session)\b"
+        r"|\blocation\s*\.\s*(?:search|hash|href)\b"
+        r"|\bdocument\s*\.\s*cookie\b"
+        r"|\bwindow\s*\.\s*name\b"
+    )
+    DECLARATION_LINE = re.compile(
+        r"(?:const|let|var)\s+(?P<target>[^=\n]{1,120}?)\s*(?::[^=\n]+)?=(?!=)(?P<rhs>.*)"
+    )
+    PLAIN_ASSIGNMENT = re.compile(
+        r"(?:this\.)?(?P<name>[A-Za-z_$][\w$]*)\s*(?::[^=\n]+)?=(?!=)(?P<rhs>.*)"
+    )
+    SINK_CALL = re.compile(
+        r"\.\s*(?P<method>execute|executemany|query|raw|execSync|exec"
+        r"|readFile|readFileSync|writeFile|writeFileSync|appendFile"
+        r"|createReadStream|createWriteStream)\s*\("
+        r"|(?<![\w$.])(?P<bare>eval|fetch)\s*\("
+        r"|axios\s*\.\s*(?P<http_method>get|post|put|delete|patch|request)\s*\("
+        r"|res(?:ponse)?\s*\.\s*(?P<res_sink>send|write)\s*\(",
+        re.IGNORECASE,
+    )
+    CALLEE_CALL = re.compile(r"(?<![\w$.])(?P<callee>[A-Za-z_$][\w$]{0,63})\s*\(")
+    DOM_SINK_ASSIGNMENT = re.compile(
+        r"\.\s*(?:innerHTML|outerHTML)\s*=(?!=)|insertAdjacentHTML\s*\("
+    )
+    DOCUMENT_WRITE_CALL = re.compile(r"\bdocument\s*\.\s*write(?:ln)?\s*\(")
+    SANITIZER_WRAP = re.compile(
+        r"(?:\bnumber\b|\bparseint\b|\bparsefloat\b|\bpath\s*\.\s*basename\b"
+        r"|[A-Za-z_$][\w$]*sanitiz[\w$]*|[A-Za-z_$][\w$]*escape[\w$]*"
+        r"|\bdompurify\b[\w$]*)\s*\([^()]*\)",
+        re.IGNORECASE,
+    )
+    IDENTIFIER_TOKEN = re.compile(r"[A-Za-z_$][\w$]*")
+    CONTAINMENT_GUARD = re.compile(r"\b(?P<name>[A-Za-z_$][\w$]*)\s*\.\s*startsWith\s*\(")
+    ENTRYPOINT_FALLBACK_NAMES = frozenset({"main", "handler"})
+    RESPONSE_SIDE_NAMES = frozenset({"res", "response", "next"})
+    RESERVED_WORDS = frozenset(
+        {"true", "false", "null", "undefined", "this", "new", "typeof", "await"}
+    )
+
+    def analyze(self, rel_path: str, content: str) -> list[FunctionSummary]:
+        """Return function summaries with entrypoint/taint evidence for one file."""
+        if len(content) > self.MAX_FILE_CHARS:
+            content = content[: self.MAX_FILE_CHARS]
+        spans = self._collect_named_spans(content)
+        route_handlers, inline_spans = self._collect_registrations(content)
+        spans.extend(inline_spans)
+        spans.sort(key=lambda item: (item.decl_start, item.name))
+        if len(spans) > self.MAX_FUNCTIONS_PER_FILE:
+            spans = spans[: self.MAX_FUNCTIONS_PER_FILE]
+
+        summaries: list[FunctionSummary] = []
+        for span in spans:
+            is_entrypoint = (
+                span.name in route_handlers
+                or span.name.startswith("inline:")
+                or span.name in self.ENTRYPOINT_FALLBACK_NAMES
+            )
+            summaries.append(self._summarize(rel_path, content, span, is_entrypoint, spans))
+        return summaries
+
+    # ------------------------------------------------------------------
+    # Span extraction
+    # ------------------------------------------------------------------
+
+    def _collect_named_spans(self, content: str) -> list[_JsFunctionSpan]:
+        found: dict[int, _JsFunctionSpan] = {}
+        for pattern in (self.FUNC_DECL, self.ARROW_DECL, self.ARROW_SINGLE_PARAM):
+            for match in pattern.finditer(content):
+                if match.start() in found:
+                    continue
+                brace_index = match.end() - 1
+                body_end = self._match_delim(content, brace_index, "{", "}")
+                if body_end is None:
+                    continue
+                groups = match.groupdict()
+                params_text = groups.get("params") or groups.get("param") or ""
+                found[match.start()] = _JsFunctionSpan(
+                    name=groups["name"],
+                    params_text=params_text,
+                    decl_start=match.start(),
+                    body_start=brace_index + 1,
+                    body_end=body_end,
+                    line_start=content.count("\n", 0, match.start()) + 1,
+                )
+        return sorted(found.values(), key=lambda item: (item.decl_start, item.name))
+
+    def _collect_registrations(self, content: str) -> tuple[set[str], list[_JsFunctionSpan]]:
+        """Parse Express-style route registrations.
+
+        Returns the names of declared handlers referenced by a registration
+        plus anonymous handler spans declared inline inside the call.
+        """
+        route_handlers: set[str] = set()
+        inline_spans: list[_JsFunctionSpan] = []
+        limit = len(content)
+
+        for match in self.ROUTE_REGISTRATION.finditer(content):
+            open_paren = match.end() - 1
+            close_paren = self._match_delim(
+                content,
+                open_paren,
+                "(",
+                ")",
+                bound=min(limit, open_paren + self.MAX_ARG_CHARS * 8),
+            )
+            if close_paren is None:
+                continue
+            tokens = [
+                (text, open_paren + 1 + offset)
+                for text, offset in self._split_top_level(content[open_paren + 1 : close_paren])
+            ]
+            # A registration looks like <obj>.method("<path>", ..., <handler>);
+            # require the quoted path and at least one further argument so HTTP
+            # clients such as axios.get(url, config) are not mistaken for routes.
+            if len(tokens) < 2 or tokens[0][0][:1] not in {"'", '"', "`"}:
+                continue
+            handler_text, handler_offset = tokens[-1]
+            stripped = handler_text.strip().rstrip(";").strip()
+            while stripped.startswith("[") and stripped.endswith("]"):
+                inner_tokens = self._split_top_level(stripped[1:-1])
+                if not inner_tokens:
+                    break
+                last_text, last_offset = inner_tokens[-1]
+                handler_offset = handler_offset + 1 + last_offset
+                stripped = last_text.strip().rstrip(";").strip()
+            if not stripped:
+                continue
+            inline_marker = "=>" in stripped
+            keyword_marker = re.match(r"(?:async\s+)?function\b", stripped) is not None
+            if inline_marker or keyword_marker:
+                span = self._inline_span(content, handler_offset, stripped)
+                if span is not None:
+                    inline_spans.append(span)
+                continue
+            if self.IDENTIFIER_TOKEN.fullmatch(stripped):
+                route_handlers.add(stripped.rsplit(".", 1)[-1])
+        return route_handlers, inline_spans
+
+    def _inline_span(
+        self, content: str, token_offset: int, token_text: str
+    ) -> _JsFunctionSpan | None:
+        header = token_text.split("=>", 1)[0]
+        paren_match = re.search(r"\(([^)]*)\)", header)
+        if paren_match:
+            params_text = paren_match.group(1)
+        else:
+            bare = re.match(r"(?:async\s+)?([A-Za-z_$][\w$]*)", header.strip())
+            params_text = bare.group(1) if bare else ""
+        brace_relative = token_text.find("{")
+        if brace_relative < 0:
+            return None
+        brace_absolute = token_offset + brace_relative
+        body_end = self._match_delim(content, brace_absolute, "{", "}")
+        if body_end is None:
+            return None
+        return _JsFunctionSpan(
+            name=f"inline:{content.count(chr(10), 0, token_offset) + 1}",
+            params_text=params_text,
+            decl_start=token_offset,
+            body_start=brace_absolute + 1,
+            body_end=body_end,
+            line_start=content.count("\n", 0, token_offset) + 1,
+        )
+
+    # ------------------------------------------------------------------
+    # Per-function analysis
+    # ------------------------------------------------------------------
+
+    def _summarize(
+        self,
+        rel_path: str,
+        content: str,
+        span: _JsFunctionSpan,
+        is_entrypoint: bool,
+        all_spans: Sequence[_JsFunctionSpan],
+    ) -> FunctionSummary:
+        raw_body = content[
+            span.body_start : min(span.body_end, span.body_start + self.MAX_BODY_CHARS)
+        ]
+        body = self._blank_nested_bodies(raw_body, span, all_spans)
+        params = self._parse_params(span.params_text)
+
+        # Comments may quote request sources in examples; only executable
+        # lines count as evidence.
+        code_lines = [line for line in body.splitlines() if not line.lstrip().startswith("//")]
+        code_only_body = "\n".join(code_lines)
+
+        tainted: set[str] = set(params)
+        sanitized: set[str] = set()
+        has_source_access = self.REQUEST_SOURCE_ACCESS.search(code_only_body) is not None
+        if is_entrypoint and has_source_access:
+            tainted.update({"req", "request"})
+        elif not is_entrypoint and has_source_access:
+            # Global request-derived reads (location.hash, document.cookie,
+            # req.headers inside middleware) make this function a taint root
+            # even without a route registration.
+            is_entrypoint = True
+            tainted.update({"req", "request"})
+        aliases = self._track_assignments(body, tainted, sanitized)
+
+        # Carriers exclude response-side objects (never attacker-controlled).
+        # Sanitizer-cleared locals drop out through _track_assignments, so a
+        # fully sanitized chain produces no flow instead of a safe-marked one.
+        carriers = sorted(tainted - sanitized - self.RESPONSE_SIDE_NAMES)
+        sinks = self._collect_sinks(content, span.body_start, body, carriers, aliases)
+        if has_source_access:
+            # DOM sinks are assignments rather than calls; scan them on the
+            # same carrier set so client-side XSS chains reach the engine.
+            sinks.extend(self._collect_dom_sinks(content, span.body_start, body, carriers, aliases))
+        callees = self._collect_callees(content, span.body_start, body, carriers, aliases)
+
+        entrypoint_taint_params: list[str] = []
+        if is_entrypoint:
+            candidates = set(carriers)
+            if not candidates:
+                candidates = {name for name in params if name not in self.RESPONSE_SIDE_NAMES}
+            entrypoint_taint_params = sorted(candidates)[: self.MAX_PARAMS]
+
+        return FunctionSummary(
+            name=span.name,
+            file=rel_path,
+            params=params,
+            is_entrypoint=is_entrypoint,
+            entrypoint_taint_params=entrypoint_taint_params,
+            param_to_sinks=sinks,
+            callee_calls=callees,
+            sanitized_params=sanitized,
+        )
+
+    def _blank_nested_bodies(
+        self,
+        raw_body: str,
+        span: _JsFunctionSpan,
+        all_spans: Sequence[_JsFunctionSpan],
+    ) -> str:
+        """Replace nested function declarations with blanks so their statements
+        are attributed to the innermost function only (mirrors the Python AST
+        visitor's current-function attribution)."""
+        chars = list(raw_body)
+        for other in all_spans:
+            if other is span:
+                continue
+            if other.decl_start < span.body_start or other.body_end > span.body_end:
+                continue
+            start = max(other.decl_start - span.body_start, 0)
+            end = min(other.body_end + 1 - span.body_start, len(chars))
+            for index in range(start, end):
+                if chars[index] != "\n":
+                    chars[index] = " "
+        return "".join(chars)
+
+    def _track_assignments(
+        self, body: str, tainted: set[str], sanitized: set[str]
+    ) -> dict[str, str]:
+        """Propagate request-derived taint through local aliases and record
+        sanitizer-wrapped assignments (mirrors the Python visitor's behavior
+        of clearing both source and target names).
+
+        Returns a target->source alias map so a sink that consumes a derived
+        variable can be attributed back to the parameter carrying the taint."""
+        aliases: dict[str, str] = {}
+        for line in body.splitlines():
+            if "=>" in line:
+                # Arrow expressions are function boundaries, not value aliases.
+                continue
+            if line.lstrip().startswith("//"):
+                continue
+            declaration = self.DECLARATION_LINE.search(line)
+            plain = None if declaration else self.PLAIN_ASSIGNMENT.match(line.strip())
+            if declaration is not None:
+                targets = self._binding_names(declaration.group("target"))
+                rhs = declaration.group("rhs")
+            elif plain is not None:
+                targets = [plain.group("name").rsplit(".", 1)[-1]]
+                rhs = plain.group("rhs")
+            else:
+                continue
+            targets = [name for name in targets if name.lower() not in self.RESERVED_WORDS][:8]
+            if not targets:
+                continue
+            cleaned_rhs = self.SANITIZER_WRAP.sub(" ", rhs)
+            had_wrap = bool(self.SANITIZER_WRAP.search(rhs))
+            req_derived = bool(self.REQUEST_SOURCE_ACCESS.search(rhs))
+            flowing = any(
+                self._contains_word(cleaned_rhs, name) for name in sorted(tainted - sanitized)
+            )
+            if req_derived:
+                if had_wrap and not flowing and not self.REQUEST_SOURCE_ACCESS.search(cleaned_rhs):
+                    sanitized.update(targets)
+                else:
+                    tainted.update(targets)
+            elif flowing:
+                sources = [
+                    name
+                    for name in sorted(tainted - sanitized)
+                    if self._contains_word(cleaned_rhs, name)
+                ]
+                tainted.update(targets)
+                # Single-source aliasing lets sinks reached through the copy
+                # report under the parameter that carries the taint.
+                if len(sources) == 1 and len(targets) == 1:
+                    aliases[targets[0]] = sources[0]
+            elif had_wrap:
+                wrapped_sources = [
+                    name for name in sorted(tainted - sanitized) if self._contains_word(rhs, name)
+                ]
+                if wrapped_sources:
+                    sanitized.update(wrapped_sources)
+                    sanitized.update(targets)
+        # Containment guards: a value explicitly checked against a prefix
+        # (reportPath.startsWith(BASE_DIR)) was reviewed for traversal, so its
+        # flow is treated as sanitized downstream.
+        for guard_match in self.CONTAINMENT_GUARD.finditer(body):
+            sanitized.add(guard_match.group("name"))
+        return aliases
+
+    def _collect_sinks(
+        self,
+        content: str,
+        base_offset: int,
+        body: str,
+        carriers: Sequence[str],
+        aliases: dict[str, str] | None = None,
+    ) -> list[TaintSinkOccurrence]:
+        occurrences: list[TaintSinkOccurrence] = []
+        if not carriers:
+            return occurrences
+        limit = len(body)
+        carrier_list = list(carriers)
+        alias_map = aliases or {}
+        for match in self.SINK_CALL.finditer(body):
+            method = (match.group("method") or "").lower()
+            bare = (match.group("bare") or "").lower()
+            http_method = (match.group("http_method") or "").lower()
+            res_sink = (match.group("res_sink") or "").lower()
+            if http_method:
+                sink_info: tuple[str, str] | None = ("ssrf", "SP124")
+            elif res_sink:
+                sink_info = ("xss", "SP080")
+            elif method:
+                sink_info = JS_SINK_CALLS.get(method) or JS_CODE_EXEC_SINK_CALLS.get(method)
+            elif bare == "eval":
+                sink_info = JS_CODE_EXEC_SINK_CALLS.get("eval")
+            elif bare == "fetch":
+                sink_info = ("ssrf", "SP124")
+            else:
+                sink_info = None
+            if sink_info is None:
+                continue
+            open_paren = match.end() - 1
+            close_paren = self._match_delim(
+                body,
+                open_paren,
+                "(",
+                ")",
+                bound=min(limit, open_paren + 2 + self.MAX_ARG_CHARS),
+            )
+            if close_paren is None:
+                continue
+            cleaned_args = self.SANITIZER_WRAP.sub(" ", body[open_paren + 1 : close_paren])
+            # Parameterized style passes values inside a placeholder array
+            # (db.query(sql, [x])); the driver binds them safely, so drop
+            # flat bracketed segments before searching for raw carriers.
+            cleaned_args = re.sub(r"\[[^[\]]*\]", " ", cleaned_args)
+            hit = next(
+                (name for name in carrier_list if self._contains_word(cleaned_args, name)),
+                None,
+            )
+            if hit is None:
+                continue
+            # A response sink is only an XSS sink when HTML markup is being
+            # assembled; tainted JSON/plain payloads are safe by design.
+            if (
+                sink_info[0] == "xss"
+                and sink_info[1] == "SP080"
+                and not re.search(r"<[a-zA-Z]", cleaned_args)
+            ):
+                continue
+            # Resolve the derived variable back to the carrier that entered the
+            # function (const reportPath = path.join(dir, ".." + rawName) ->
+            # rawName) so interprocedural propagation can match its parameter.
+            root = hit
+            for _ in range(6):
+                if root in alias_map:
+                    root = alias_map[root]
+                else:
+                    break
+            occurrences.append(
+                TaintSinkOccurrence(
+                    sink_type=sink_info[0],
+                    rule_id=sink_info[1],
+                    line=content.count("\n", 0, base_offset + match.start()) + 1,
+                    param_name=root,
+                    call_snippet=body[match.start() : close_paren + 1][:160],
+                )
+            )
+            if len(occurrences) >= self.MAX_SINKS_PER_FUNCTION:
+                break
+        occurrences.sort(key=lambda item: (item.line, item.param_name))
+        return occurrences
+
+    def _collect_dom_sinks(
+        self,
+        content: str,
+        base_offset: int,
+        body: str,
+        carriers: Sequence[str],
+        aliases: dict[str, str] | None = None,
+    ) -> list[TaintSinkOccurrence]:
+        """DOM XSS sinks expressed as assignments (innerHTML/outerHTML/
+        insertAdjacentHTML) and document.write calls. These never appear as
+        ordinary call expressions, so they need their own bounded scan."""
+        occurrences: list[TaintSinkOccurrence] = []
+        if not carriers:
+            return occurrences
+        carrier_list = list(carriers)
+        alias_map = aliases or {}
+        limit = len(body)
+
+        def resolve_root(name: str) -> str:
+            current = name
+            for _ in range(6):
+                if current in alias_map:
+                    current = alias_map[current]
+                else:
+                    return current
+            return current
+
+        patterns = (
+            (self.DOM_SINK_ASSIGNMENT, "xss", "SP147"),
+            (self.DOCUMENT_WRITE_CALL, "xss", "SP146"),
+        )
+        for pattern, sink_type, rule_id in patterns:
+            for match in pattern.finditer(body):
+                line_end = body.find("\n", match.end())
+                if line_end == -1:
+                    line_end = min(limit, match.end() + self.MAX_ARG_CHARS)
+                rhs_text = body[match.end() : min(limit, line_end)]
+                cleaned_rhs = self.SANITIZER_WRAP.sub(" ", rhs_text)
+                hit = next(
+                    (name for name in carrier_list if self._contains_word(cleaned_rhs, name)),
+                    None,
+                )
+                if hit is None:
+                    continue
+                occurrences.append(
+                    TaintSinkOccurrence(
+                        sink_type=sink_type,
+                        rule_id=rule_id,
+                        line=content.count("\n", 0, base_offset + match.start()) + 1,
+                        param_name=resolve_root(hit),
+                        call_snippet=body[match.start() : line_end][:160],
+                    )
+                )
+                if len(occurrences) >= self.MAX_SINKS_PER_FUNCTION:
+                    occurrences.sort(key=lambda item: (item.line, item.param_name))
+                    return occurrences
+        occurrences.sort(key=lambda item: (item.line, item.param_name))
+        return occurrences
+
+    def _collect_callees(
+        self,
+        content: str,
+        base_offset: int,
+        body: str,
+        carriers: Sequence[str],
+        aliases: dict[str, str] | None = None,
+    ) -> list[CalleeCallSite]:
+        call_sites: list[CalleeCallSite] = []
+        if not carriers:
+            return call_sites
+        limit = len(body)
+        carrier_list = list(carriers)
+        alias_map = aliases or {}
+        for match in self.CALLEE_CALL.finditer(body):
+            callee = match.group("callee")
+            if callee.lower() in JS_EXCLUDED_CALLEES:
+                continue
+            open_paren = match.end() - 1
+            close_paren = self._match_delim(
+                body,
+                open_paren,
+                "(",
+                ")",
+                bound=min(limit, open_paren + 2 + self.MAX_ARG_CHARS),
+            )
+            if close_paren is None:
+                continue
+            arguments = self._split_top_level(body[open_paren + 1 : close_paren])[:8]
+            for position, (argument, _offset) in enumerate(arguments):
+                cleaned_argument = self.SANITIZER_WRAP.sub(" ", argument)
+                hit = next(
+                    (name for name in carrier_list if self._contains_word(cleaned_argument, name)),
+                    None,
+                )
+                if hit is None:
+                    continue
+                root = hit
+                for _ in range(6):
+                    if root in alias_map:
+                        root = alias_map[root]
+                    else:
+                        break
+                call_sites.append(
+                    CalleeCallSite(
+                        callee_name=callee,
+                        param_name=root,
+                        arg_index=position,
+                        line=content.count("\n", 0, base_offset + match.start()) + 1,
+                    )
+                )
+                break
+            if len(call_sites) >= self.MAX_CALLEES_PER_FUNCTION:
+                break
+        call_sites.sort(key=lambda item: (item.line, item.callee_name, item.arg_index))
+        return call_sites
+
+    # ------------------------------------------------------------------
+    # Lexical helpers (string/comment aware, bounded)
+    # ------------------------------------------------------------------
+
+    def _match_delim(
+        self,
+        text: str,
+        open_index: int,
+        open_char: str,
+        close_char: str,
+        bound: int | None = None,
+    ) -> int | None:
+        limit = min(len(text), bound) if bound is not None else len(text)
+        depth = 0
+        index = open_index
+        while index < limit:
+            char = text[index]
+            if char == "/" and index + 1 < limit and text[index + 1] == "/":
+                newline = text.find("\n", index, limit)
+                index = newline if newline != -1 else limit
+                continue
+            if char == "/" and index + 1 < limit and text[index + 1] == "*":
+                closing = text.find("*/", index + 2, limit)
+                index = closing + 2 if closing != -1 else limit
+                continue
+            if char in {"'", '"', "`"}:
+                index = self._scan_past_string(text, index, limit)
+                continue
+            if char == open_char:
+                depth += 1
+            elif char == close_char:
+                depth -= 1
+                if depth == 0:
+                    return index
+            index += 1
+        return None
+
+    def _scan_past_string(self, text: str, quote_index: int, limit: int) -> int:
+        quote = text[quote_index]
+        index = quote_index + 1
+        while index < limit:
+            char = text[index]
+            if char == "\\":
+                index += 2
+                continue
+            if quote == "`" and char == "$" and index + 1 < limit and text[index + 1] == "{":
+                close_brace = self._match_delim(text, index + 1, "{", "}", bound=limit)
+                if close_brace is None:
+                    return limit
+                index = close_brace + 1
+                continue
+            if char == quote:
+                return index + 1
+            index += 1
+        return limit
+
+    def _split_top_level(self, text: str) -> list[tuple[str, int]]:
+        parts: list[tuple[str, int]] = []
+        depth = 0
+        segment_start = 0
+        index = 0
+        limit = len(text)
+        while index < limit:
+            char = text[index]
+            if char in {"'", '"', "`"}:
+                index = self._scan_past_string(text, index, limit)
+                continue
+            if char in "{([":
+                depth += 1
+            elif char in "})]":
+                depth -= 1
+            elif char == "," and depth <= 0:
+                parts.append((text[segment_start:index], segment_start))
+                segment_start = index + 1
+            index += 1
+        tail = text[segment_start:]
+        if tail.strip():
+            parts.append((tail, segment_start))
+        cleaned: list[tuple[str, int]] = []
+        for text_part, offset in parts:
+            leading = len(text_part) - len(text_part.lstrip())
+            stripped = text_part.strip()
+            if stripped:
+                cleaned.append((stripped, offset + leading))
+        return cleaned
+
+    def _parse_params(self, params_text: str) -> list[str]:
+        if not params_text or not params_text.strip():
+            return []
+        names: list[str] = []
+        for text_part, _offset in self._split_top_level(params_text[:400]):
+            part = text_part.rstrip(",")
+            if not part:
+                continue
+            if part[0] in "{[":
+                for name in self.IDENTIFIER_TOKEN.findall(part):
+                    if name.lower() not in self.RESERVED_WORDS and name not in names:
+                        names.append(name)
+            else:
+                match = re.match(r"\.{0,3}([A-Za-z_$][\w$]*)", part.strip())
+                if match:
+                    name = match.group(1)
+                    if name.lower() not in self.RESERVED_WORDS and name not in names:
+                        names.append(name)
+            if len(names) >= self.MAX_PARAMS:
+                break
+        return names[: self.MAX_PARAMS]
+
+    def _binding_names(self, target_text: str) -> list[str]:
+        names: list[str] = []
+        for name in self.IDENTIFIER_TOKEN.findall(target_text[:200]):
+            if name.lower() not in self.RESERVED_WORDS and name not in names:
+                names.append(name)
+        return names[:8]
+
+    @staticmethod
+    def _contains_word(text: str, word: str) -> bool:
+        if not word:
+            return False
+        escaped = re.escape(word)
+        return re.search(rf"(?<![\w$]){escaped}(?![\w$])", text) is not None
+
+
 class ImpactGraph:
     def __init__(self, root: Path):
         self.root = root.resolve()
@@ -505,9 +1319,23 @@ class ImpactGraph:
                         pass
                 elif suffix in JS_TS_SUFFIXES:
                     js_symbols = extract_js_ts_symbols(rel_path, content)
+                    try:
+                        js_summaries = JsTsAnalyzer().analyze(rel_path, content)
+                    except (ValueError, IndexError, RecursionError):
+                        # Lexical analysis must never break a scan; fall back to
+                        # symbol extraction only for this file.
+                        js_summaries = []
+                    entrypoint_names = {
+                        summary.name for summary in js_summaries if summary.is_entrypoint
+                    }
                     for sym in js_symbols.values():
+                        if sym.name in entrypoint_names:
+                            sym.is_entrypoint = True
                         self.symbols[sym.name].append(sym)
                         self.file_to_symbols[rel_path].append(sym)
+                    for summary in js_summaries:
+                        self.summaries[summary.name].append(summary)
+                        self.file_to_summaries[rel_path].append(summary)
 
         # Build caller graph
         for sym_list in self.symbols.values():

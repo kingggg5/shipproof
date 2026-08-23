@@ -1,0 +1,63 @@
+# Original minimal Semgrep ruleset for the offline head-to-head protocol.
+#
+# These rules were written fresh for this repository's comparison corpora
+# (fixtures/node-taint-crossfile and fixtures/node-secure-crossfile). No
+# third-party rule text is copied or bundled; supply this file explicitly:
+#
+#   python benchmarks/head_to_head.py fixtures/node-taint-crossfile \
+#       fixtures/node-secure-crossfile \
+#       --semgrep-config benchmarks/semgrep-comparison/rules.yml
+#
+# Coverage intentionally mirrors the same risk classes ShipProof's shipped
+# detectors target so the file-level score compares capability, not rule count.
+rules:
+  - id: js-sql-concat
+    languages: [javascript, typescript]
+    message: SQL statement built with string concatenation
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: $DB.query($A + $B)
+          - pattern: $DB.execute($A + $B)
+          - pattern: |
+              $DB.query(`$A${$B}`)
+          - pattern: |
+              $DB.execute(`$A${$B}`)
+
+  - id: js-tls-verification-disabled
+    languages: [javascript, typescript]
+    message: rejectUnauthorized disabled disables TLS peer verification
+    severity: ERROR
+    pattern: "rejectUnauthorized: false"
+
+  - id: js-admin-route-without-auth-middleware
+    languages: [javascript, typescript]
+    message: admin route registered without authorization middleware
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: $APP.delete($PATH, ...)
+          - pattern: $APP.post($PATH, ...)
+          - pattern: $APP.put($PATH, ...)
+      - metavariable-regex:
+          metavariable: $PATH
+          regex: .*admin.*
+
+  - id: js-path-join-with-concat
+    languages: [javascript, typescript]
+    message: filesystem path built by concatenating a dynamic value
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: path.join($BASE, $A + $B)
+          - pattern: |
+              path.join($BASE, `$A${$B}`)
+
+  - id: js-fs-read-of-dynamic-path
+    languages: [javascript, typescript]
+    message: fs read consumes a dynamically built path variable
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: fs.readFile($P, ...)
+          - pattern: fs.readFileSync($P, ...)

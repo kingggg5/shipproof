@@ -71,7 +71,18 @@ def run_shipproof(corpus: Path, repeat: int) -> dict[str, object]:
     file_rule_hits: set[tuple[str, str]] = set()
     for _ in range(repeat):
         elapsed, process = timed_run(
-            [sys.executable, str(SCANNER), str(corpus), "--format", "json", "--fail-on", "none"],
+            [
+                sys.executable,
+                str(SCANNER),
+                str(corpus),
+                "--format",
+                "json",
+                "--fail-on",
+                "none",
+                # The full capability as shipped: include the interprocedural
+                # taint engine so the comparison covers L2 evidence too.
+                "--cross-file",
+            ],
             corpus.parent,
         )
         if process.returncode not in (0, 1):

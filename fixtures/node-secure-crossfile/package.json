@@ -1,0 +1,10 @@
+{
+  "name": "node-secure-crossfile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Secure counterpart of the head-to-head corpus fixture",
+  "dependencies": {
+    "express": "^4.19.2",
+    "helmet": "^7.1.0"
+  }
+}
