@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add `scan --history`: scan git history for secrets that were added in past commits and may still exist in history even after removal from HEAD. Uses only stdlib subprocess + git commands; bounded to 500 commits by default; findings anchored to the introducing commit with redacted evidence.
+- Extend secrets detection quality: a demote-only Shannon entropy gate now covers all non-calibrated secret rules (45+ provider token patterns), dropping format-valid but obviously filler test tokens to low confidence while leaving structured high-entropy keys untouched.
+- Add four supply-chain detectors: `SP092` npm wildcard/latest ranges, `SP093` Maven SNAPSHOT versions, `SP094` Dockerfile ADD over remote URLs, `SP095` package lifecycle scripts fetching from network.
+- Enforce promoted-quality contract for SP051-SP095: every catalog-promoted rule ships with executed positive/negative/adversarial fixtures, documented false-positive boundaries, dual primary sources, and complete explanations via `tests/rule_cases_promoted.json`.
+- Add secrets-lane quality manifest for SP001-SP050: all 50 secret-detection rules documented with false-positive boundaries, dual primary sources, negative/adversarial evidence, and enforcement tests.
+
 ## 0.8.1 - 2026-08-23
 
 - Ship a JavaScript/TypeScript interprocedural taint engine: inline and named route handlers become entrypoints, request-derived values flow through local aliases into SQL, command-execution, path-traversal, SSRF (`fetch`/`axios`), DOM XSS (`innerHTML`, `document.write`), and reflected-HTML sinks, with sanitizer awareness (`Number`, `path.basename`, containment guards) and parameterized-query suppression. The Python engine gains the same alias tracking (a query built from a parameter now reaches `execute()` through its variable), and `execute(sql, params)` tuples are no longer treated as injectable SQL text.

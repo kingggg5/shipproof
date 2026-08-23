@@ -15360,6 +15360,87 @@ def build_decision_trace(
     }
 
 
+def _scan_history_secrets(root: Path, max_commits: int = 500) -> tuple[list[Finding], int]:
+    """Scan git history for secrets in added lines that were later removed.
+
+    Uses only stdlib subprocess + git commands. Bounded by max_commits.
+    Returns findings anchored to the commit that introduced the secret.
+    """
+    secret_rules = [r for r in RULES if r.redact]
+    if not secret_rules:
+        return [], 0
+
+    try:
+        proc = subprocess.run(  # noqa: S603, S607
+            [
+                "git",
+                "-C",
+                str(root),
+                "log",
+                "--all",
+                "-p",
+                f"--max-count={max_commits}",
+                "--format=%x00%H|%s",
+            ],
+            capture_output=True,
+            text=True,
+            shell=False,
+            check=False,
+            timeout=120,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return [], 0
+
+    raw_output = proc.stdout
+    commits = raw_output.split("\x00")
+    findings: list[Finding] = []
+    total_scanned = 0
+
+    for commit_block in commits:
+        if not commit_block.strip():
+            continue
+        lines = commit_block.split("\n")
+        header = lines[0].strip()
+        if "|" not in header:
+            continue
+        sha, subject = header.split("|", 1)
+        sha = sha.strip()
+
+        # Collect added lines from the diff
+        added_text: list[str] = []
+        current_file = ""
+        for line in lines[1:]:
+            if line.startswith("+++ b/"):
+                current_file = line[6:]
+            elif line.startswith("+") and not line.startswith("+++"):
+                added_text.append(line[1:])
+
+        if not added_text:
+            continue
+        chunk = "\n".join(added_text)
+        total_scanned += 1
+
+        for rule in secret_rules:
+            for match in rule.pattern.finditer(chunk):
+                matched = match.group(0)
+                if is_placeholder_secret(matched):
+                    continue
+                evidence = f"commit {sha[:8]}: {subject[:60]} ({current_file})"
+                finding = make_finding(
+                    rule,
+                    current_file or "unknown",
+                    1,
+                    evidence,
+                    detection="history",
+                )
+                findings.append(finding)
+                break  # one finding per rule per commit
+
+    return findings, total_scanned
+
+
 def build_json_report(
     root: Path,
     findings: Sequence[Finding],
@@ -16403,6 +16484,12 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--max-file-bytes", type=int, default=1_000_000)
     parser.add_argument(
+        "--history",
+        action="store_true",
+        default=False,
+        help="Scan git history for secrets that were added and later removed (requires git)",
+    )
+    parser.add_argument(
         "--min-confidence",
         choices=("high", "medium", "low"),
         default=None,
@@ -16574,6 +16661,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         if arguments.changed_since:
             stats["changed_since"] = arguments.changed_since
+        if arguments.history:
+            history_findings, history_commits = _scan_history_secrets(arguments.root)
+            findings.extend(history_findings)
+            stats["history_commits_scanned"] = history_commits
+            stats["history_findings"] = len(history_findings)
 
         findings_before_confidence_filter = len(findings)
 
