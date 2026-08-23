@@ -7,8 +7,10 @@ Analysis passes consume IRProgram without knowing which parser created it.
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from dataclasses import dataclass, field
+from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Effect kinds (normalized across languages)
