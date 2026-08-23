@@ -4513,7 +4513,7 @@ RULES: tuple[Rule, ...] = (
         "security",
         "high",
         "high",
-        compile_pattern(r"""InsecureSkipVerify\s*:\s*true"""),
+        compile_pattern(r"""InsecureSkipVerify\s*[:=]\s*true"""),
         "InsecureSkipVerify accepts any certificate, so every TLS connection can be intercepted silently.",
         "Remove the flag and configure a CA pool; pin certificates only for fixed internal endpoints.",
         "CWE-297",

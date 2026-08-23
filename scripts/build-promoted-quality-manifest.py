@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT / "skills" / "audit-production-readiness" / "scripts
 from scan_repo import RULES  # noqa: E402
 
 MANIFEST = ROOT / "tests" / "rule_cases_promoted.json"
-PROMOTED_RANGE = range(51, 88)
+PROMOTED_RANGE = range(51, 92)
 ASVS_BASE = "https://owasp.org/www-project-application-security-verification-standard/"
 
 

@@ -139,7 +139,7 @@ Full prompt samples, invariant analysis, token cost budgeting, worktree isolatio
 
 **616 deterministic executable rules** (`SP001`–`SP665`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
 
-The complete catalog — severity, category, and detection method per rule, plus the ecosystem/framework mapping that decides where each structural check runs — lives in **[docs/rules.md](docs/rules.md)**.
+The complete catalog, severity, category, and detection method per rule, plus the ecosystem/framework mapping that decides where each structural check runs, lives in **[docs/rules.md](docs/rules.md)**.
 
 ## False Positive Control
 
@@ -295,11 +295,9 @@ All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
 ## Research & evaluation status
 
-ShipProof measures itself the same way it asks you to measure everything else: with reproducible commands, published corpora, and stated limitations. Nothing on this page is a benchmark against another product; every number below comes from our own fixture battery and public repositories scanned at a pinned commit.
+The scanner ships 616 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates, now fully triaged: 934 targets have a concrete local signature and are queued for promotion (wave 1 covers JavaScript/TypeScript, Python, and Go), 435 need dataflow evidence beyond today's engines and wait on analyzer work, and 1,595 are design, process, or hardware classes that a regex-based gate cannot catch. Each target keeps its source-catalog ids in [research/promotion-plan.json](research/promotion-plan.json).
 
-**Where the catalog stands.** The scanner ships 616 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates that has been fully triaged: 934 targets have a concrete local signature and are queued for promotion (wave 1 covers JavaScript/TypeScript, Python, and Go), 435 need richer dataflow evidence than today's engines provide and wait on analyzer work, and 1,595 are design, process, or hardware classes that a regex-based gate should never pretend to catch. Every target keeps its source-catalog ids in [research/promotion-plan.json](research/promotion-plan.json).
-
-**Fixture battery** (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
+Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
 
 | Corpus | Precision | Recall | F1 |
 | :--- | :--- | :--- | :--- |
@@ -307,13 +305,13 @@ ShipProof measures itself the same way it asks you to measure everything else: w
 | vulnerable-python-api | 1.0 | 1.0 | 1.0 |
 | node-taint-crossfile | 1.0 | 0.8 | 0.889 |
 | adversarial-node | 1.0 | 0.667 | 0.8 |
-| secure-node-api / node-secure-crossfile | — | — | 0 findings |
+| secure-node-api / node-secure-crossfile |: |: | 0 findings |
 
-The adversarial corpus exists to keep us honest: look-alikes inside comments and string literals must stay silent while two-hop aliasing, destructured parameters, cookie-to-DOM chains, and three-file taint chains must all fire.
+The adversarial corpus holds look-alikes inside comments and string literals that must stay silent, next to disguised chains (two-hop aliasing, destructured parameters, cookie-to-DOM, three-file taint) that must fire.
 
-**Public-repository battery.** A separate run clones express, flask, requests (clean baselines) plus juice-shop, DVWA, and NodeGoat (intentionally vulnerable). Application-scope findings: 2 / 5 / 3 / 153 / 74 / 20 respectively, with NodeGoat's documented `eval(req.body)` chain confirmed by the cross-file engine. Clean baselines stay quiet because test-scope noise is excluded from the gate.
+A separate run clones express, flask, requests as clean baselines plus juice-shop, DVWA, and NodeGoat as intentionally vulnerable apps. Application-scope findings came out at 2 / 5 / 3 / 153 / 74 / 20 on the last snapshot, and the cross-file engine confirmed NodeGoat's documented `eval(req.body)` chain.
 
-**How we compare with Semgrep tiers.** Semgrep's free tier caps private scans at 10 repositories and 10 contributors, runs through their cloud infrastructure, and gates cross-file analysis behind Pro Engine/Pro Rules. ShipProof has no repository, contributor, or account limits; scanning is fully offline against local files only; and interprocedural taint across files ships in the open core for JavaScript/TypeScript and Python. Their paid tiers add secrets validation with live-network checks, historical git scanning, SBOM/license compliance, and an AppSec management platform - capabilities we deliberately do not claim and recommend pairing with dedicated tools instead ([layering guidance](docs/features.md)). Feature-level details are tracked in [docs/benchmarks.md](docs/benchmarks.md); we publish no head-to-head runtime numbers until both tools are measured on identical hardware.
+On Semgrep tiers: their free tier caps private scans at 10 repositories and 10 contributors, runs through their cloud, and puts cross-file analysis behind Pro Engine/Pro Rules. ShipProof has no repository or contributor limits, scans offline against local files only, and ships interprocedural taint for JavaScript/TypeScript and Python in the open core. Their paid tiers add secrets validation with live-network checks, historical git scanning, SBOM/license compliance, and an AppSec platform; we do not claim those and suggest pairing with dedicated tools ([layering guidance](docs/features.md)). Details in [docs/benchmarks.md](docs/benchmarks.md). We have not published head-to-head runtime numbers yet because both tools have not been measured on identical hardware.
 
 ## Research methodology and provenance
 

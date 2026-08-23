@@ -1,6 +1,6 @@
 # Benchmarks and evaluation methodology
 
-This page documents how ShipProof measures itself, publishes every number we currently claim, and states plainly what we have *not* measured yet. If a number here cannot be reproduced by the commands shown, treat it as stale and open an issue.
+Every number on this page comes from a command you can run. If one does not reproduce, it is stale; please open an issue.
 
 ## Reproducing everything
 
@@ -32,10 +32,10 @@ Latest run (Windows 11, Python 3.13, `--cross-file`, median of 3):
 | vulnerable-python-api | 3 | 1 | 1.0 | 1.0 | 1.0 |
 | node-taint-crossfile | 6 | 4 | 1.0 | 0.8 | 0.889 |
 | adversarial-node | 4 | 4 | 1.0 | 0.667 | 0.8 |
-| secure-node-api | 0 | 0 | — | — | — |
-| node-secure-crossfile | 0 | 0 | — | — | — |
+| secure-node-api | 0 | 0 |: |: |: |
+| node-secure-crossfile | 0 | 0 |: |: |: |
 
-Two notes on honesty rather than score inflation. The adversarial corpus deliberately contains vulnerable-looking code confined to comments and string literals; detectors must stay silent there while still catching disguised chains elsewhere - both directions are asserted in tests. And `routes/orders.js` in the taint corpus is labeled vulnerable even though no sink-based tool flags pure sources; we keep the label because the file genuinely contains an issue, accepting the recall cost instead of bending labels toward our output.
+Two caveats. The adversarial corpus contains vulnerable-looking code confined to comments and string literals; detectors must stay silent there while still catching disguised chains elsewhere - both directions are asserted in tests. And `routes/orders.js` in the taint corpus is labeled vulnerable even though no sink-based tool flags pure sources; the label stays even though it costs recall.
 
 ## Open-source battery
 
@@ -56,7 +56,7 @@ Clean baselines are the FP story: express lands at 2 application findings on 162
 
 ## Performance
 
-Measured by [scripts/benchmark-scanner.py](scripts/benchmark-scanner.py) over generated Python repositories (warm-cache pass reported separately):
+Measured by [scripts/benchmark-scanner.py](../scripts/benchmark-scanner.py) over generated Python repositories (warm-cache pass reported separately):
 
 - Sequential: ~1,400 warm files/s at 1,000 files
 - `--jobs 4`: ~2,100 files/s
@@ -64,9 +64,9 @@ Measured by [scripts/benchmark-scanner.py](scripts/benchmark-scanner.py) over ge
 
 Throughput is re-checked after engine changes; the JS/TS analyzer and SARIF enrichment did not move it measurably.
 
-## Comparison context
+## Semgrep tier features
 
-We publish feature context rather than head-to-head scores until both tools run on identical hardware. Against Semgrep's published tier table (checked August 2026):
+No head-to-head scores appear here because both tools have not been measured on identical hardware. The table below restates Semgrep's published tier table (checked August 2026) next to what ships in this repository:
 
 | Capability | Semgrep Free | Semgrep Teams+ | ShipProof |
 | :--- | :--- | :--- | :--- |
@@ -80,7 +80,7 @@ We publish feature context rather than head-to-head scores until both tools run 
 | SBOM / license compliance | separate product lane | included | out of scope; pair with OSV-Scanner/Trivy |
 | Deterministic fingerprints across runs | varies with config resolution | varies | stable by contract, parity-tested |
 
-The honest reading: ShipProof overlaps semgrep's free tier on detection breadth and beats it on operating limits and offline determinism, while semgrep's paid tiers cover product lanes (SCA reachability, secrets validation, platform management) that we explicitly recommend pairing with dedicated tools instead of reimplementing.
+In short: detection breadth overlaps semgrep's free tier; operating limits and offline determinism differ by design; and the paid lanes above stay out of scope on purpose.
 
 ## Limitations
 
@@ -88,11 +88,11 @@ The honest reading: ShipProof overlaps semgrep's free tier on detection breadth 
 - Fixture corpora are authored in this repository. They prevent regressions and document intent, but they cannot substitute for third-party benchmark suites.
 - The OSS battery uses upstream snapshots, so counts drift as projects evolve. Ranges are reported where drift was observed.
 - No runtime numbers for other scanners appear here yet. A Linux CI job running semgrep with a caller-supplied config on these same corpora is the next planned measurement; until then we make no comparative speed or accuracy claims.
-- Tier-A/B/C triage of the research backlog is keyword-classification based; individual targets can be re-tiered when someone examines them closely.
+- Backlog triage uses keyword classification; individual targets get re-tiered on close inspection.
 
 ## Planned next measurements
 
-1. Head-to-head against semgrep binary (Linux runner, identical corpora, caller-supplied ruleset already staged in [benchmarks/semgrep-comparison/](semgrep-comparison/)).
+1. Head-to-head against semgrep binary (Linux runner, identical corpora, caller-supplied ruleset already staged in [benchmarks/semgrep-comparison/](../benchmarks/semgrep-comparison/)).
 2. Line-level labels for the cross-file corpora so sink-line accuracy becomes measurable.
 3. Adoption of a standard third-party benchmark corpus (OWASP Benchmark style) after license review.
 4. Weekly workflow artifacts published as release checks once the first scheduled run completes.

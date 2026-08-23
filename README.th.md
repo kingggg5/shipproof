@@ -126,7 +126,7 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 **576 deterministic executable rules** (`SP001`–`SP665`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
 
-catalog ฉบับเต็ม — severity, category และวิธี detection ต่อกฎ พร้อม mapping ecosystem/framework ที่กำหนดว่า structural check แต่ละตัวรันที่ไหน — อยู่ที่ **[docs/rules.md](docs/rules.md)**
+catalog ฉบับเต็ม, severity, category และวิธี detection ต่อกฎ พร้อม mapping ecosystem/framework ที่กำหนดว่า structural check แต่ละตัวรันที่ไหน: อยู่ที่ **[docs/rules.md](docs/rules.md)**
 
 ## ควบคุม False Positive
 
@@ -244,7 +244,7 @@ Claude Code โหลด repository เป็น plugin ระหว่าง de
 
 ShipProof implement ขึ้นต้นแบบ independent references ถูกใช้เพื่อกำหนดคำถาม ศัพท์ และขอบเขตความปลอดภัยที่คาดหวัง; detector code ภายนอกและ ruleset ที่มี license จำกัดไม่ถูกคัดลอก [research notebook](docs/research.md) บันทึกหน้าที่ consult, คำถามที่ถาม, การตัดสินใจที่ retain และ claim ที่ไม่ infer ตั้งแต่ต้น
 
-candidate จาก research จะกลายเป็น executable `SPxxx` rule ได้หลัง deduplication, local invariant ที่สังเกตได้, bounded implementation, CWE/control mapping, remediation, false-positive analysis และ positive/negative/adversarial tests เท่านั้น severity สื่อ potential impact ของเงื่อนไขที่ match; proof level สื่อความแข็งแรงของหลักฐาน local — ไม่มีตัวไหนคือ probability of exploitation
+candidate จาก research จะกลายเป็น executable `SPxxx` rule ได้หลัง deduplication, local invariant ที่สังเกตได้, bounded implementation, CWE/control mapping, remediation, false-positive analysis และ positive/negative/adversarial tests เท่านั้น severity สื่อ potential impact ของเงื่อนไขที่ match; proof level สื่อความแข็งแรงของหลักฐาน local: ไม่มีตัวไหนคือ probability of exploitation
 
 | Research artifact | ขอบเขต | ผลต่อ runtime |
 | :--- | :--- | :--- |

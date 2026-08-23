@@ -2430,7 +2430,17 @@
           }
         ]
       },
-      "false_positive_analysis": "Only the literal colon-true struct field matches. False values, omitted fields, and commented samples stay silent. Assignment-form bypasses are intentionally surfaced as review-first."
+      "false_positive_analysis": "Only the literal colon-true struct field matches. False values, omitted fields, and commented samples stay silent. Assignment-form bypasses are intentionally surfaced as review-first.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/297.html",
+          "claim": "MITRE CWE-297 defines the tls certificate verification skipped weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-297 controls to the verification requirements in OWASP ASVS V9, which the remediation text follows."
+        }
+      ]
     },
     {
       "rule_id": "SP089",
@@ -2483,7 +2493,17 @@
           }
         ]
       },
-      "false_positive_analysis": "Only stdlib log-package calls whose argument text references r.URL.Query/FormValue/GetHeader match. Structured loggers and sanitized wrappers are stated boundaries in the remediation."
+      "false_positive_analysis": "Only stdlib log-package calls whose argument text references r.URL.Query/FormValue/GetHeader match. Structured loggers and sanitized wrappers are stated boundaries in the remediation.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/117.html",
+          "claim": "MITRE CWE-117 defines the request data logged without sanitization weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-117 controls to the verification requirements in OWASP ASVS V14, which the remediation text follows."
+        }
+      ]
     },
     {
       "rule_id": "SP090",
@@ -2536,7 +2556,17 @@
           }
         ]
       },
-      "false_positive_analysis": "Required parameters, environment reads, generated secrets, and empty strings cannot match the four-plus-character quoted literal requirement. Test doubles using throwaway literals still surface by design because rotation guidance applies identically."
+      "false_positive_analysis": "Required parameters, environment reads, generated secrets, and empty strings cannot match the four-plus-character quoted literal requirement. Test doubles using throwaway literals still surface by design because rotation guidance applies identically.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/259.html",
+          "claim": "MITRE CWE-259 defines the hardcoded default password parameter weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-259 controls to the verification requirements in OWASP ASVS V14, which the remediation text follows."
+        }
+      ]
     },
     {
       "rule_id": "SP091",
@@ -2589,7 +2619,17 @@
           }
         ]
       },
-      "false_positive_analysis": "Variable URLs, https literals, and server listeners cannot match. Cross-line URL assembly and loopback probes are documented boundaries; both are visible in evidence for reviewer disposition."
+      "false_positive_analysis": "Variable URLs, https literals, and server listeners cannot match. Cross-line URL assembly and loopback probes are documented boundaries; both are visible in evidence for reviewer disposition.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/319.html",
+          "claim": "MITRE CWE-319 defines the outbound http request over cleartext weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-319 controls to the verification requirements in OWASP ASVS V9, which the remediation text follows."
+        }
+      ]
     }
   ]
 }

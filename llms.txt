@@ -4,11 +4,11 @@
 
 ## Quickstart
 
-- Quickstart (zero-config): `npx github:kingggg5/shipproof check` — works without registry credentials.
+- Quickstart (zero-config): `npx github:kingggg5/shipproof check`, works without registry credentials.
 - Install globally: `npm install --global github:kingggg5/shipproof`
-- Scan a repository: `shipproof scan . --fail-on high` — exit 0 pass, 1 blocked, 2 invalid evidence.
+- Scan a repository: `shipproof scan . --fail-on high`, exit 0 pass, 1 blocked, 2 invalid evidence.
 - Scan only changed files: `shipproof scan . --changed-since origin/main`
-- Explain a finding: `shipproof explain SP108` — threat scenario, false positives, regression test guidance.
+- Explain a finding: `shipproof explain SP108`, threat scenario, false positives, regression test guidance.
 
 ## What it detects
 
