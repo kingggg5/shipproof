@@ -51,8 +51,20 @@ FAMILY = {
     ".swift": "swift",
 }
 
-# Title keyword -> tier. First match wins; order encodes precedence so
-# dataflow-only classes beat generic injection wording when both appear.
+# Title keyword -> tier. Order encodes precedence:
+#   1. FORCE_C hardware/firmware/process classes never locally observable in
+#      application source, regardless of overlapping words ("On-Chip Debug"
+#      contains "debug"; "Register Interface" contains "access control").
+#   2. B_PATTERNS dataflow/engine-required classes beat generic injection
+#      wording when both appear.
+#   3. A_PATTERNS concrete API/config signatures only.
+FORCE_C_PATTERNS = (
+    r"on-chip|microarchitectural|register interface|volatile memory|jtag",
+    r"hardware|firmware|silicon|fuse\b|one-time programmable|secure boot|boot rom",
+    r"test or debug logic|debug access|debug interface",
+    r"physical|tamper protection|electro",
+    r"process.*organizational|policy document|training|documentation guide",
+)
 B_PATTERNS = (
     r"integer|numeric truncat|coercion|shift|overflow|underflow|wraparound",
     r"race condit|deadlock|double-checked|synchroniz|thread|concurr|atomic",
@@ -64,13 +76,15 @@ B_PATTERNS = (
     r"serialization of sensitive|compar(?:ison|e) of object|wrong operator|incompatible types",
     r"bitwise|signed.to.unsigned|type size|cast|coerce",
     r"memoization|reachable assertion|assertion",
+    r"neutralization of (?:delimiters?|input terminators?|input leaders?|quoting|escape, meta|wildcards?|whitespace|substitution|macro symbols?|variable name|record |section |line delim|parameter/argument)",
+    r"output neutralization for logs|log output neutraliz",
 )
 A_PATTERNS = (
-    r"injection|neutralization|script|xss|cross-site scripting",
+    r"injection|script|xss|cross-site scripting",
     r"cookie|password|secret|credential|token|api key|hard.?coded|cleartext|plaintext",
     r"tls|ssl|certificate|verify|verification disabled|https",
-    r"debug|verbose|error message|stack trace|log(?:ging| file)? information|information (?:exposure|leak)",
-    r"missing (?:authorization|authentication)|access control|permission|privilege|forced browsing|direct request",
+    r"error message|stack trace|information exposure through (?:an )?error",
+    r"missing (?:authorization|authentication)|access control for user|permission|privilege (?:assignment|dropping)|forced browsing|direct request",
     r"session (?:fixation|expiration|timeout)|csrf|cross-site request|open redirect|url redir",
     r"upload|path traversal|traversal|directory|file inclusion|download of files",
     r"command injection|sql|nosql|xpath|ldap|template injection|code injection|deserializ|eval|expression language",
@@ -89,6 +103,9 @@ A_PATTERNS = (
 
 def classify(title: str) -> tuple[str, str]:
     lowered = title.lower()
+    for pat in FORCE_C_PATTERNS:
+        if re.search(pat, lowered):
+            return "tier_c", f"not locally observable: matches hardware/class '{pat}'"
     for pat in B_PATTERNS:
         if re.search(pat, lowered):
             return "tier_b", f"dataflow/engine gap: matches '{pat}'"

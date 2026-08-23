@@ -63,13 +63,13 @@ Node.js 20+ runs the front-door CLI. Python 3.10+ is needed for `scan`, `check`,
 
 ## Scope and project status
 
-ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **612 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
+ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **616 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
 
 | Property | Current contract |
 | :--- | :--- |
 | Current release | `v0.7.0` public beta |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
-| Executable rules | 612 (`SP001`–`SP665`, with deliberate reserved gaps) |
+| Executable rules | 616 (`SP001`–`SP665`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research backlog | 8,800 research-only candidates; none are findings until promoted |
 | Exit codes | `0` pass, `1` policy gate failure, `2` invalid or unavailable evidence |
@@ -137,7 +137,7 @@ Full prompt samples, invariant analysis, token cost budgeting, worktree isolatio
 
 ## Detection rules
 
-**612 deterministic executable rules** (`SP001`–`SP665`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
+**616 deterministic executable rules** (`SP001`–`SP665`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
 
 The complete catalog — severity, category, and detection method per rule, plus the ecosystem/framework mapping that decides where each structural check runs — lives in **[docs/rules.md](docs/rules.md)**.
 
@@ -293,6 +293,28 @@ Plugin-installed Claude skills use the namespaced commands `/shipproof:engineer-
 
 All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
+## Research & evaluation status
+
+ShipProof measures itself the same way it asks you to measure everything else: with reproducible commands, published corpora, and stated limitations. Nothing on this page is a benchmark against another product; every number below comes from our own fixture battery and public repositories scanned at a pinned commit.
+
+**Where the catalog stands.** The scanner ships 616 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates that has been fully triaged: 934 targets have a concrete local signature and are queued for promotion (wave 1 covers JavaScript/TypeScript, Python, and Go), 435 need richer dataflow evidence than today's engines provide and wait on analyzer work, and 1,595 are design, process, or hardware classes that a regex-based gate should never pretend to catch. Every target keeps its source-catalog ids in [research/promotion-plan.json](research/promotion-plan.json).
+
+**Fixture battery** (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
+
+| Corpus | Precision | Recall | F1 |
+| :--- | :--- | :--- | :--- |
+| vulnerable-node-api | 1.0 | 1.0 | 1.0 |
+| vulnerable-python-api | 1.0 | 1.0 | 1.0 |
+| node-taint-crossfile | 1.0 | 0.8 | 0.889 |
+| adversarial-node | 1.0 | 0.667 | 0.8 |
+| secure-node-api / node-secure-crossfile | — | — | 0 findings |
+
+The adversarial corpus exists to keep us honest: look-alikes inside comments and string literals must stay silent while two-hop aliasing, destructured parameters, cookie-to-DOM chains, and three-file taint chains must all fire.
+
+**Public-repository battery.** A separate run clones express, flask, requests (clean baselines) plus juice-shop, DVWA, and NodeGoat (intentionally vulnerable). Application-scope findings: 2 / 5 / 3 / 153 / 74 / 20 respectively, with NodeGoat's documented `eval(req.body)` chain confirmed by the cross-file engine. Clean baselines stay quiet because test-scope noise is excluded from the gate.
+
+**How we compare with Semgrep tiers.** Semgrep's free tier caps private scans at 10 repositories and 10 contributors, runs through their cloud infrastructure, and gates cross-file analysis behind Pro Engine/Pro Rules. ShipProof has no repository, contributor, or account limits; scanning is fully offline against local files only; and interprocedural taint across files ships in the open core for JavaScript/TypeScript and Python. Their paid tiers add secrets validation with live-network checks, historical git scanning, SBOM/license compliance, and an AppSec management platform - capabilities we deliberately do not claim and recommend pairing with dedicated tools instead ([layering guidance](docs/features.md)). Feature-level details are tracked in [docs/benchmarks.md](docs/benchmarks.md); we publish no head-to-head runtime numbers until both tools are measured on identical hardware.
+
 ## Research methodology and provenance
 
 ShipProof is independently implemented. References are used to define questions, terminology, and expected safety boundaries; external detector code and license-restricted rule sets are not copied. The [research notebook](docs/research.md) records the page consulted, the question asked, the decision retained, and the claims deliberately not inferred.
@@ -312,7 +334,7 @@ A research candidate becomes an executable `SPxxx` rule only after deduplication
 | [Expert candidate catalog](docs/rule-expansion-1000.md) | 1,000 model-assisted, source-mapped hypotheses | None |
 | [2021–2026 annual catalog](docs/rule-expansion-2021-2026.md) | 1,800 time-bounded CVE/CWE/community signals | None |
 | [Language catalog](docs/rule-expansion-languages-5000.md) | 5,000 deduplicated ecosystem/CWE research slots | None |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 612 reviewed detectors | Emits versioned findings |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 616 reviewed detectors | Emits versioned findings |
 
 See the [production playbook](docs/production-playbook.md), [development plan](docs/next-development-plan.md), and [delivery roadmap](docs/roadmap.md) for operational boundaries and acceptance gates. Cite a release using [CITATION.cff](CITATION.cff). ShipProof deliberately avoids a single readiness score because one veto-level failure must not be averaged away by many clean checks.
 

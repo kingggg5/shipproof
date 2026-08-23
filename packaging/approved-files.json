@@ -24,6 +24,7 @@
     "docs/assets/architecture-workflow.svg",
     "docs/assets/capacity-demo.svg",
     "docs/assets/terminal-demo.svg",
+    "docs/benchmarks.md",
     "docs/commands.md",
     "docs/features.md",
     "docs/knowledge/eval-report-v1.md",

@@ -3,7 +3,7 @@
   "quality_contract_version": 1,
   "promotion_range": [
     "SP051",
-    "SP087"
+    "SP091"
   ],
   "rules": [
     {
@@ -2378,6 +2378,218 @@
           "claim": "OWASP ASVS maps CWE-78 controls to the verification requirements in OWASP ASVS V5, which the remediation text follows."
         }
       ]
+    },
+    {
+      "rule_id": "SP088",
+      "title": "TLS certificate verification skipped",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-297",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "tls.go",
+            "source": "cfg := &tls.Config{InsecureSkipVerify: true}"
+          },
+          {
+            "path": "client.go",
+            "source": "tr.TLSClientConfig = &tls.Config{RootCAs: pool, InsecureSkipVerify: true}"
+          }
+        ],
+        "negative": [
+          {
+            "path": "tls.go",
+            "source": "cfg := &tls.Config{InsecureSkipVerify: false, MinVersion: tls.VersionTLS12}"
+          },
+          {
+            "path": "tls.go",
+            "source": "cfg := &tls.Config{}"
+          },
+          {
+            "path": "client.py",
+            "source": "verify=False"
+          },
+          {
+            "path": "net.rb",
+            "source": "OpenSSL::SSL::VERIFY_NONE"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "tls.go",
+            "source": "// InsecureSkipVerify: true removed in v2",
+            "expected": false,
+            "rationale": "Pure-comment lines are prose for non-secret rules; historical notes cannot resurrect removed code."
+          },
+          {
+            "path": "tls.go",
+            "source": "if devMode {\n  cfg.InsecureSkipVerify = true\n}",
+            "expected": true,
+            "rationale": "Assignment form with equals is a distinct idiom from the struct-literal colon shape; surfacing it keeps even gated bypasses visible for review."
+          }
+        ]
+      },
+      "false_positive_analysis": "Only the literal colon-true struct field matches. False values, omitted fields, and commented samples stay silent. Assignment-form bypasses are intentionally surfaced as review-first."
+    },
+    {
+      "rule_id": "SP089",
+      "title": "Request data logged without sanitization",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-117",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "reqlog.go",
+            "source": "log.Printf(\"request %s failed\", r.URL.Query().Get(\"u\"))"
+          },
+          {
+            "path": "authlog.go",
+            "source": "log.Println(\"login user=\", r.FormValue(\"user\"))"
+          }
+        ],
+        "negative": [
+          {
+            "path": "reqlog.go",
+            "source": "log.Printf(\"server started on port %d\", port)"
+          },
+          {
+            "path": "reqlog.go",
+            "source": "logger.Info(\"sanitized request logged\")"
+          },
+          {
+            "path": "srv.js",
+            "source": "console.log(req.url)"
+          },
+          {
+            "path": "app.py",
+            "source": "logging.info(request.path)"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "reqlog.go",
+            "source": "log.Printf(\"id=%q\", sanitize(r.URL.Query().Get(\"id\")))",
+            "expected": true,
+            "rationale": "Documented boundary: sanitizer wrapping inside the log call still matches the line shape; structured-field logging is the sanctioned migration that silences it."
+          },
+          {
+            "path": "reqlog.go",
+            "source": "log.Printf(\"count=%d total=%d\", n, m)",
+            "expected": false,
+            "rationale": "Server-computed integers carry no request reachability and cannot forge entries."
+          }
+        ]
+      },
+      "false_positive_analysis": "Only stdlib log-package calls whose argument text references r.URL.Query/FormValue/GetHeader match. Structured loggers and sanitized wrappers are stated boundaries in the remediation."
+    },
+    {
+      "rule_id": "SP090",
+      "title": "Hardcoded default password parameter",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-259",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "db.py",
+            "source": "def connect(host, user, password=\"sup3rs3cret\"):"
+          },
+          {
+            "path": "cli.py",
+            "source": "def login(username, passwd=\"admin1234\", otp=None):"
+          }
+        ],
+        "negative": [
+          {
+            "path": "db.py",
+            "source": "def connect(host, user, password):"
+          },
+          {
+            "path": "db.py",
+            "source": "def connect(host, user, password=os.environ[\"DB_PASS\"]):"
+          },
+          {
+            "path": "cli.py",
+            "source": "def login(user, password=\"\"): "
+          },
+          {
+            "path": "auth.ts",
+            "source": "function login(password: string) {}"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "db.py",
+            "source": "def connect(host, user, password=secrets.token_urlsafe(16)):",
+            "expected": false,
+            "rationale": "Generated-per-call defaults are not committed credentials; the rule anchors on quoted literals only."
+          },
+          {
+            "path": "db.py",
+            "source": "def connect(host, user, password=\"\"):",
+            "expected": false,
+            "rationale": "Empty-string defaults force explicit configuration at call sites and contain no secret material to rotate."
+          }
+        ]
+      },
+      "false_positive_analysis": "Required parameters, environment reads, generated secrets, and empty strings cannot match the four-plus-character quoted literal requirement. Test doubles using throwaway literals still surface by design because rotation guidance applies identically."
+    },
+    {
+      "rule_id": "SP091",
+      "title": "Outbound HTTP request over cleartext",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-319",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "fetch.go",
+            "source": "resp, err := http.Get(\"http://api.internal/v1/data\")"
+          },
+          {
+            "path": "push.go",
+            "source": "http.Post(\"http://hooks.local/notify\", \"application/json\", body)"
+          }
+        ],
+        "negative": [
+          {
+            "path": "fetch.go",
+            "source": "resp, err := http.Get(httpsURL)"
+          },
+          {
+            "path": "fetch.go",
+            "source": "resp, err := http.Get(\"https://api.internal/v1/data\")"
+          },
+          {
+            "path": "fetch.py",
+            "source": "requests.get('http://localhost:9000/metrics')"
+          },
+          {
+            "path": "proxy.go",
+            "source": "http.ListenAndServe(\":8080\", nil)"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "fetch.go",
+            "source": "u := \"https://\" + host\nresp, err := http.Get(u)",
+            "expected": false,
+            "rationale": "The scheme lives on a different line from the call; cross-statement construction belongs to flow analysis, keeping this detector line-precise."
+          },
+          {
+            "path": "probe.go",
+            "source": "http.Get(\"http://127.0.0.1:15000/selfcheck\")",
+            "expected": true,
+            "rationale": "Loopback cleartext calls still fire; localhost exceptions are documented so teams suppress deliberately instead of silently excluding the class."
+          }
+        ]
+      },
+      "false_positive_analysis": "Variable URLs, https literals, and server listeners cannot match. Cross-line URL assembly and loopback probes are documented boundaries; both are visible in evidence for reviewer disposition."
     }
   ]
 }

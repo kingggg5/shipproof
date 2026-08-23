@@ -94,7 +94,7 @@ def main() -> int:
             print(f"manifest problem: {problem}", file=sys.stderr)
         return 1
 
-    payload["promotion_range"] = ["SP051", "SP087"]
+    payload["promotion_range"] = ["SP051", "SP091"]
     payload["rules"] = [entries[rid] for rid in sorted(entries)]
     MANIFEST.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"validated + refreshed metadata for {len(entries)} promoted rules")
