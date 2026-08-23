@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT / "skills" / "audit-production-readiness" / "scripts
 from scan_repo import RULES  # noqa: E402
 
 MANIFEST = ROOT / "tests" / "rule_cases_promoted.json"
-PROMOTED_RANGE = range(51, 81)
+PROMOTED_RANGE = range(51, 88)
 ASVS_BASE = "https://owasp.org/www-project-application-security-verification-standard/"
 
 
@@ -94,7 +94,7 @@ def main() -> int:
             print(f"manifest problem: {problem}", file=sys.stderr)
         return 1
 
-    payload["promotion_range"] = ["SP051", "SP080"]
+    payload["promotion_range"] = ["SP051", "SP087"]
     payload["rules"] = [entries[rid] for rid in sorted(entries)]
     MANIFEST.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"validated + refreshed metadata for {len(entries)} promoted rules")

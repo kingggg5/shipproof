@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 605 deterministic executable rules (`SP001`-`SP665`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
+ShipProof applies 612 deterministic executable rules (`SP001`-`SP665`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -113,6 +113,13 @@ Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1
 | **`SP078`** | HIGH | Security | PHP extract of request superglobal | Regex |
 | **`SP079`** | LOW | Security | Spring mapping without HTTP method constraint | Regex |
 | **`SP080`** | HIGH | Security | HTML response built from interpolated request data | Regex |
+| **`SP081`** | HIGH | Security | Go file serving driven by request parameters | Regex |
+| **`SP082`** | HIGH | Security | RegExp compiled from request input | Regex |
+| **`SP083`** | HIGH | Security | Request body spread into persisted object | Regex |
+| **`SP084`** | MEDIUM | Security | Session cookie without Secure flag | Regex |
+| **`SP085`** | CRITICAL | Security | XXE protection explicitly disabled in Java parser | Regex |
+| **`SP086`** | CRITICAL | Security | Ruby dynamic method invocation from request | Regex |
+| **`SP087`** | HIGH | Security | Go command built by concatenation | Regex |
 | **`SP101`** | HIGH | Security | Dynamic code execution | Python AST |
 | **`SP102`** | HIGH | Security | Shell execution enabled | Python AST |
 | **`SP103`** | HIGH | Security | SQL built with interpolation | Python AST |

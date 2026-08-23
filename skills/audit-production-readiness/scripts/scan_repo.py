@@ -687,6 +687,48 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Responses interpolating only server-controlled constants are safe; request-derived values are the risk.",
         "test": "Send <script>alert(1)</script> through the interpolated value and assert it appears encoded, never executed.",
     },
+    "SP081": {
+        "why": "http.ServeFile with request-derived names walks the server filesystem via ../ sequences.",
+        "attack": "Attacker requests ?f=../../../../etc/passwd and receives arbitrary readable files.",
+        "false_positive": "Handlers that enforce filepath.Rel containment against a fixed root are safe; keep the check visible.",
+        "test": "Probe ../ traversals and absolute paths; assert only allowlisted files are served.",
+    },
+    "SP082": {
+        "why": "RegExp built from request text accepts attacker-chosen metacharacters, enabling ReDoS and match-semantics tampering.",
+        "attack": "Attacker supplies (a+)+$ against a vulnerable pattern and pins a CPU core per request.",
+        "false_positive": "Patterns built from server-side enums are safe; only request-sourced construction is flagged.",
+        "test": "Submit nested-quantifier payloads and assert bounded response times under load.",
+    },
+    "SP083": {
+        "why": "Spread-inserting raw bodies forwards every attacker key, including role/tenant/price, into persistence.",
+        "attack": 'Attacker adds "isAdmin":true to a profile update and escalates without any dedicated endpoint.',
+        "false_positive": "Spreads over previously allowlisted/picked objects are safe when the pick happens first on the same line.",
+        "test": "Send unexpected privileged fields and assert stored entities ignore them.",
+    },
+    "SP084": {
+        "why": "Without Secure, session cookies ride plaintext HTTP and leak to passive network observers.",
+        "attack": "Attacker on cafe Wi-Fi captures the cookie from an http:// downgrade request and hijacks the session.",
+        "false_positive": "Localhost-only development servers are exempt in practice by scoping config out of deploys.",
+        "test": "Set secure: true and verify Set-Cookie carries Secure over HTTPS and is dropped over HTTP.",
+    },
+    "SP085": {
+        "why": "Disabling doctype/entity features re-arms XXE primitives the parser defaults protect against.",
+        "attack": "Attacker uploads XML with an external entity reading file:///etc/passwd or hitting internal metadata endpoints.",
+        "false_positive": "Trusted internal document pipelines may need DTDs; scope those factories away from untrusted input.",
+        "test": "Feed DOCTYPE/XXE payloads and assert parsing fails closed with no external fetches.",
+    },
+    "SP086": {
+        "why": "send() resolves arbitrary method names, so parameter-driven names can trigger destructive or private actions.",
+        "attack": "Attacker sends ?action=delete_all! and the controller invokes that method through send().",
+        "false_positive": "Dispatch tables mapping sanitized keys to procs are safe; reflection-free lookups never match.",
+        "test": "Send method-name payloads including private/bang suffixes and assert only allowlisted actions execute.",
+    },
+    "SP087": {
+        "why": "Concatenated exec.Command arguments let inputs introduce extra arguments or, behind sh -c wrappers, full commands.",
+        "attack": "A filename containing '; rm -rf /' turns a backup invocation into arbitrary command execution.",
+        "false_positive": "Constant argv slices with validated single values are the sanctioned shape this rule steers toward.",
+        "test": "Pass semicolon/space payloads through each concatenated argument and assert argv boundaries hold.",
+    },
     "SP102": {
         "why": "Enabling shell execution passes the command through a shell interpreter, enabling injection via metacharacters (;, |, $()).",
         "attack": "Attacker injects shell metacharacters into a parameter that reaches subprocess with shell enabled.",
@@ -4339,6 +4381,107 @@ RULES: tuple[Rule, ...] = (
         "CWE-80",
         "OWASP ASVS V5",
         frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP081",
+        "Go file serving driven by request parameters",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""http\.(?:ServeFile|ServeContent|ServeFileFS)\s*\([^)]*(?:r\.URL\.Query\(\)|FormValue\(|r\.FormValue)"""
+        ),
+        "Serving files from request parameters in Go enables path traversal outside the intended document root.",
+        "Map identifiers to allowlisted paths, or enforce filepath.Rel containment against a dedicated root before responding.",
+        "CWE-22",
+        "OWASP ASVS V12",
+        frozenset({".go"}),
+    ),
+    Rule(
+        "SP082",
+        "RegExp compiled from request input",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"""new\s+RegExp\s*\([^)]*req(?:uest)?\.(?:query|body|params|headers)"""),
+        "Compiling regular expressions from request data lets attackers inject catastrophic-backtracking patterns or alter match semantics.",
+        "Match inputs against prebuilt allowlisted patterns; never construct RegExp text from untrusted values.",
+        "CWE-1333",
+        "OWASP ASVS V5",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP083",
+        "Request body spread into persisted object",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?:create|update|save|insert|upsert)\w*\s*\([^)]*\.\.\.\s*req(?:uest)?\.(?:body|query)"""
+        ),
+        "Spreading raw request bodies into create/update calls lets attackers overwrite fields such as role, tenant, or price.",
+        "Pick explicit allowed fields before persistence and add a mass-assignment regression test.",
+        "CWE-915",
+        "OWASP ASVS V4",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP084",
+        "Session cookie without Secure flag",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(
+            r"""\.cookie\s*\(\s*["'][^"']*(?:sess|session|token|jwt|auth|refresh)[^"']*["']\s*,(?![^)]*[Ss]ecure\s*[:=]\s*(?:true|True|1\b))[^)]*\)"""
+        ),
+        "An authentication cookie without Secure travels over plaintext HTTP, exposing it to network interception.",
+        "Set secure alongside HttpOnly and SameSite on every session-bearing cookie.",
+        "CWE-614",
+        "OWASP ASVS V3",
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+    ),
+    Rule(
+        "SP085",
+        "XXE protection explicitly disabled in Java parser",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""setFeature\s*\(\s*["'][^"']*(?:disallow-doctype-decl)[^"']*["']\s*,\s*false|setFeature\s*\(\s*["'][^"']*(?:external-(?:general|parameter)-entities)[^"']*["']\s*,\s*true"""
+        ),
+        "Explicitly disabling doctype/entity protections turns XML parsers into file-read and SSRF primitives.",
+        "Keep disallow-doctype-decl=true and both external-entity features false on every factory that parses untrusted XML.",
+        "CWE-611",
+        "OWASP ASVS V5",
+        frozenset({".java", ".jsp"}),
+    ),
+    Rule(
+        "SP086",
+        "Ruby dynamic method invocation from request",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""\bsend\s*\(\s*(?:params\[|request\.(?:params|parameters)|cookies\[|session\[)"""
+        ),
+        "send() invokes arbitrary methods by name; request-driven names reach private or destructive methods directly.",
+        "Map permitted actions through an explicit case/allowlist instead of reflecting parameter values into send().",
+        "CWE-94",
+        "OWASP ASVS V5",
+        frozenset({".rb", ".erb"}),
+    ),
+    Rule(
+        "SP087",
+        "Go command built by concatenation",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"""exec\.Command(?:Context)?\s*\([^)]*(?:\+\s*[A-Za-z_]|\.Join\()"""),
+        "Concatenating values into exec.Command arguments can smuggle extra flags or, with a shell wrapper, entire commands.",
+        "Pass fixed argv slices and validate each externally controlled argument against an allowlist.",
+        "CWE-78",
+        "OWASP ASVS V5",
+        frozenset({".go"}),
     ),
     Rule(
         "SP002",
@@ -15735,8 +15878,11 @@ def render_explain(
 # material into reports.
 _FIX_LINE_TRANSFORMS: dict[str, tuple[re.Pattern[str], object, str, str]] = {
     "SP102": (
-        re.compile(r"(shell\s*=\s*)(?:true|True)"),
-        lambda m: m.group(1) + "False",
+        re.compile(r"(shell\s*[=:]\s*)(true|True|1)(?![\w])"),
+        lambda m: (
+            m.group(1)
+            + ("0" if m.group(2) == "1" else ("False" if m.group(2)[0].isupper() else "false"))
+        ),
         "Disable shell interpretation so metacharacters cannot chain commands.",
         "Confirm no argument depends on shell syntax (pipes, globs, $VAR); prefer argument arrays.",
     ),

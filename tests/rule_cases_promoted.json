@@ -3,7 +3,7 @@
   "quality_contract_version": 1,
   "promotion_range": [
     "SP051",
-    "SP080"
+    "SP087"
   ],
   "rules": [
     {
@@ -1935,6 +1935,447 @@
         {
           "url": "https://owasp.org/www-project-application-security-verification-standard/",
           "claim": "OWASP ASVS maps CWE-80 controls to the verification requirements in OWASP ASVS V5, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP081",
+      "title": "Go file serving driven by request parameters",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-22",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "dl.go",
+            "source": "http.ServeFile(w, r, \"/srv\"+r.URL.Query().Get(\"f\"))"
+          },
+          {
+            "path": "dl.go",
+            "source": "http.ServeContent(w, r, name, mod, opener(r.FormValue(\"p\")))"
+          }
+        ],
+        "negative": [
+          {
+            "path": "dl.go",
+            "source": "http.ServeFile(w, r, \"/srv/public/index.html\")"
+          },
+          {
+            "path": "static.go",
+            "source": "fs := http.FileServer(http.Dir(root))"
+          },
+          {
+            "path": "api.go",
+            "source": "http.ServeFile(w, r, allowlisted[r.URL.Path])"
+          },
+          {
+            "path": "dl.py",
+            "source": "send_file(uploads, name)"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "dl.go",
+            "source": "http.ServeFileFS(w, r, embedFS, r.FormValue(\"f\"))",
+            "expected": true,
+            "rationale": "ServeFileFS shares the request-driven-name risk inside embedded trees; excluding it would leave the modern API uncovered."
+          },
+          {
+            "path": "dl.go",
+            "source": "http.ServeFile(w, r, filepath.Join(root, filepath.FromSlash(r.URL.Query().Get(\"f\"))))",
+            "expected": true,
+            "rationale": "Join alone does not confine traversal; remediation requires a Rel-based containment check, so join-shaped hits remain flagged."
+          }
+        ]
+      },
+      "false_positive_analysis": "Constant paths and map-allowlist lookups never contain the request-access tokens. Join-only hardening intentionally remains flagged until the documented Rel containment check appears.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/22.html",
+          "claim": "MITRE CWE-22 defines the go file serving driven by request parameters weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-22 controls to the verification requirements in OWASP ASVS V12, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP082",
+      "title": "RegExp compiled from request input",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-1333",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "search.js",
+            "source": "const re = new RegExp(req.query.q);"
+          },
+          {
+            "path": "filter.ts",
+            "source": "items.filter(i => new RegExp(req.body.pattern).test(i.name))"
+          }
+        ],
+        "negative": [
+          {
+            "path": "search.js",
+            "source": "const re = /^[a-z0-9-]{1,32}$/;"
+          },
+          {
+            "path": "filter.js",
+            "source": "new RegExp(PATTERNS[kind]);"
+          },
+          {
+            "path": "search.py",
+            "source": "re.compile(user_pattern)"
+          },
+          {
+            "path": "validate.js",
+            "source": "new RegExp('\\\\d{4}')"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "search.js",
+            "source": "new RegExp(req.query.q, flagsFromConfig)",
+            "expected": true,
+            "rationale": "A second argument cannot neutralize attacker metacharacters already inside the source string; only pre-escaping into an identifier silences this."
+          },
+          {
+            "path": "search.js",
+            "source": "new RegExp(allowed[kind] ?? DEFAULT_PATTERN);",
+            "expected": false,
+            "rationale": "Nullish fallback over server-owned constants keeps every possible value server-controlled; no request token appears on the line."
+          }
+        ]
+      },
+      "false_positive_analysis": "Literals, constant maps, and non-request identifiers cannot match. Dynamic construction from enums is safe because values are compile-time; the rule requires req/request query/body/params/header tokens specifically.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1333.html",
+          "claim": "MITRE CWE-1333 defines the regexp compiled from request input weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-1333 controls to the verification requirements in OWASP ASVS V5, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP083",
+      "title": "Request body spread into persisted object",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-915",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "users.js",
+            "source": "db.user.create({ data: { ...req.body } });"
+          },
+          {
+            "path": "profile.ts",
+            "source": "repo.update(id, { ...request.body, updatedBy: actor })"
+          }
+        ],
+        "negative": [
+          {
+            "path": "users.js",
+            "source": "db.user.create({ data: pick(req.body, ['name']) });"
+          },
+          {
+            "path": "users.js",
+            "source": "create({ ...defaults, ...config });"
+          },
+          {
+            "path": "profile.ts",
+            "source": "update(id, { name: req.body.name });"
+          },
+          {
+            "path": "merge.go",
+            "source": "cfg = merge(cfg, opts)"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "users.js",
+            "source": "db.user.create({ data: sanitizeBody({ ...req.body }) });",
+            "expected": true,
+            "rationale": "Documented boundary: allowlisting-wrapper indirection still surfaces because the raw spread appears within the persisted-call line; teams silence by moving pick() before the create call."
+          },
+          {
+            "path": "billing.ts",
+            "source": "invoice.update({ ...patch, amountLocked: true });",
+            "expected": false,
+            "rationale": "Patch originates from internal code with a hardening flag; without a request token the line carries no mass-assignment evidence."
+          }
+        ]
+      },
+      "false_positive_analysis": "Explicit field maps, picked bodies wrapped in helper calls, and spreads over server-side objects cannot match the ellipsis-request-body shape. ORM-specific detectors continue to cover their native create/update entry points.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/915.html",
+          "claim": "MITRE CWE-915 defines the request body spread into persisted object weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-915 controls to the verification requirements in OWASP ASVS V4, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP084",
+      "title": "Session cookie without Secure flag",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-614",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "login.ts",
+            "source": "res.cookie('session', token, { httpOnly: true, sameSite: 'lax' });"
+          },
+          {
+            "path": "login.js",
+            "source": "res.cookie('authToken', v, { maxAge: 3600000 });"
+          }
+        ],
+        "negative": [
+          {
+            "path": "login.ts",
+            "source": "res.cookie('session', token, { secure: true, httpOnly: true });"
+          },
+          {
+            "path": "ui.ts",
+            "source": "res.cookie('theme', 'dark');"
+          },
+          {
+            "path": "login.py",
+            "source": "resp.set_cookie('session', token, secure=True)"
+          },
+          {
+            "path": "api.js",
+            "source": "res.cookie('csrf', tok, { sameSite: 'strict' });"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "login.ts",
+            "source": "res.cookie('session', token, cookieOptionsFromEnv);",
+            "expected": true,
+            "rationale": "Identifier options are unverifiable at line level, so the rule stays visible until configuration is proven; review-first matches sibling cookie rules."
+          },
+          {
+            "path": "login.ts",
+            "source": "res.cookie('session', token, { secure: false, httpOnly: true });",
+            "expected": true,
+            "rationale": "Explicit secure:false is worse than omission; the negative lookahead treats any non-true occurrence as missing transport protection."
+          }
+        ]
+      },
+      "false_positive_analysis": "Any Secure occurrence suppresses the finding including explicit false, documented intentionally as review-first behavior. Non-session cookie names avoid the sensitive hints entirely.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/614.html",
+          "claim": "MITRE CWE-614 defines the session cookie without secure flag weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-614 controls to the verification requirements in OWASP ASVS V3, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP085",
+      "title": "XXE protection explicitly disabled in Java parser",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-611",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "Parse.java",
+            "source": "dbf.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", false);"
+          },
+          {
+            "path": "Feed.java",
+            "source": "parser.setFeature(\"http://xml.org/sax/features/external-general-entities\", true);"
+          }
+        ],
+        "negative": [
+          {
+            "path": "Parse.java",
+            "source": "dbf.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);"
+          },
+          {
+            "path": "Parse.java",
+            "source": "factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);"
+          },
+          {
+            "path": "Xml.java",
+            "source": "DocumentBuilderFactory.newInstance();"
+          },
+          {
+            "path": "parse.py",
+            "source": "etree.fromstring(data, etree.XMLParser(resolve_entities=False))"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "Parse.java",
+            "source": "configure(dbf); // sets disallow-doctype-decl internally",
+            "expected": false,
+            "rationale": "Feature configuration hides behind a helper comment; line-level rules cannot verify helper bodies, matching the documented boundary."
+          },
+          {
+            "path": "Feed.java",
+            "source": "parser.setFeature(\"http://xml.org/sax/features/external-parameter-entities\", false);",
+            "expected": false,
+            "rationale": "Setting external-parameter-entities to FALSE is the protective direction; the rule fires only when protection features are explicitly disabled."
+          }
+        ]
+      },
+      "false_positive_analysis": "True-valued feature calls and bare newInstance() lines cannot match. The pattern requires a known XXE-protection feature id followed by an explicit false, making every hit a deliberate disablement.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/611.html",
+          "claim": "MITRE CWE-611 defines the xxe protection explicitly disabled in java parser weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-611 controls to the verification requirements in OWASP ASVS V5, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP086",
+      "title": "Ruby dynamic method invocation from request",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-94",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "admin_controller.rb",
+            "source": "object.send(request.params[:op], payload)"
+          },
+          {
+            "path": "hook.rb",
+            "source": "Klass.send(params[:action], body)"
+          }
+        ],
+        "negative": [
+          {
+            "path": "worker.rb",
+            "source": "obj.public_send(:process, item)"
+          },
+          {
+            "path": "admin_controller.rb",
+            "source": "case params[:action] when 'publish' then publish end"
+          },
+          {
+            "path": "meta.rb",
+            "source": "send(:include, Concerne)"
+          },
+          {
+            "path": "calc.rb",
+            "source": "eval(params[:expr])"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "router.rb",
+            "source": "send(ACTIONS.fetch(params[:action]), payload)",
+            "expected": false,
+            "rationale": "fetch() against a frozen action map is sanctioned allowlist indirection; the argument is a lookup result rather than params directly after send's open paren."
+          },
+          {
+            "path": "admin.rb",
+            "source": "send(params[:action].to_sym, body)",
+            "expected": true,
+            "rationale": "to_sym still yields an attacker-chosen method name; casting does not constrain the dispatch target and must remain flagged."
+          }
+        ]
+      },
+      "false_positive_analysis": "public_send with literal symbols, case-dispatch allowlists, and eval usage (covered separately) never match the params-directly-after-send shape. Fetch-map indirection documents the safe pattern the remediation recommends.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/94.html",
+          "claim": "MITRE CWE-94 defines the ruby dynamic method invocation from request weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-94 controls to the verification requirements in OWASP ASVS V5, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP087",
+      "title": "Go command built by concatenation",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-78",
+      "category": "security",
+      "cases": {
+        "positive": [
+          {
+            "path": "backup.go",
+            "source": "exec.CommandContext(ctx, \"sh\", \"-c\", \"tar czf \"+archive)"
+          },
+          {
+            "path": "img.go",
+            "source": "cmd := exec.Command(\"convert\", src+flags)"
+          }
+        ],
+        "negative": [
+          {
+            "path": "backup.go",
+            "source": "exec.Command(\"tar\", \"czf\", archive, src)"
+          },
+          {
+            "path": "img.go",
+            "source": "exec.CommandContext(ctx, binPath, args...)"
+          },
+          {
+            "path": "run.sh",
+            "source": "convert \"$in\" \"$out\""
+          },
+          {
+            "path": "run.py",
+            "source": "subprocess.run(['convert', src])"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "backup.go",
+            "source": "cmd := exec.Command(bin, buildArgs(spec)...)",
+            "expected": false,
+            "rationale": "Slice-expansion of programmatically built args has no concatenation operator on the line; argv-boundary safety lives in buildArgs review."
+          },
+          {
+            "path": "backup.go",
+            "source": "exec.Command(\"/bin/sh\", \"-c\", strings.Join(parts, \" \"))",
+            "expected": true,
+            "rationale": "Joining parts into one sh -c string reconstructs the shell-interpreter surface; helper indirection does not remove injection capability."
+          }
+        ]
+      },
+      "false_positive_analysis": "Fixed argv slices, variadic expansions of programmatic slices, and Context variants without concatenation stay silent. Any +-identifier token inside the call parentheses indicates assembled command text worth reviewing.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/78.html",
+          "claim": "MITRE CWE-78 defines the go command built by concatenation weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-78 controls to the verification requirements in OWASP ASVS V5, which the remediation text follows."
         }
       ]
     }
