@@ -262,7 +262,7 @@ def analyze_program(program: IRProgram) -> AnalysisResult:
     flows = propagate_taint(program)
 
     evidence_levels = {}
-    for i, flow in enumerate(flows):
+    for flow in flows:
         key = f"{flow['sink_rule_id']}:{flow['sink_file']}:{flow['sink_line']}"
         evidence_levels[key] = assign_evidence_level(flow, False, False)
 
