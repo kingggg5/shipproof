@@ -44,7 +44,7 @@ class PromotedRuleQualityTests(unittest.TestCase):
         cls.manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         cls.cases = {entry["rule_id"]: entry for entry in cls.manifest["rules"]}
         cls.promoted = {
-            rule.rule_id: rule for rule in RULES if 51 <= int(rule.rule_id.removeprefix("SP")) <= 91
+            rule.rule_id: rule for rule in RULES if 51 <= int(rule.rule_id.removeprefix("SP")) <= 95
         }
 
     def test_manifest_covers_exactly_the_promoted_range(self) -> None:

