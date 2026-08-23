@@ -1669,7 +1669,7 @@ if __name__ == "__main__":
 # ---------------------------------------------------------------------------
 
 
-def _summary_to_ir_function(summary, effects=None, guards=None) -> IRFunction:
+def _summary_to_ir_function(summary, effects=None, guards=None):
     """Convert a FunctionSummary (Python or JS/TS engine) into an IRFunction."""
     from ir import IRCallee, IRFunction, IRSink
 
@@ -1707,7 +1707,7 @@ def _summary_to_ir_function(summary, effects=None, guards=None) -> IRFunction:
     )
 
 
-def build_ir_program(graph) -> IRProgram:
+def build_ir_program(graph):
     """Build an IRProgram from an ImpactGraph that has already been built."""
     from ir import IRCallee, IRFunction, IRProgram, IRSink
 
