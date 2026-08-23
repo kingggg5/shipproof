@@ -1,0 +1,39 @@
+{
+  "framework": "express",
+  "version_range": ">=4 <6",
+  "entrypoints": {
+    "route_registration": {
+      "pattern": "\\.(get|post|put|patch|delete|all|head|options)\\s*\\(",
+      "receiver_hints": ["app", "router", "server", "api"],
+      "path_arg_index": 0,
+      "handler_arg": "last"
+    }
+  },
+  "request_sources": {
+    "params": "req.params",
+    "query": "req.query",
+    "body": "req.body",
+    "headers": "req.headers",
+    "cookies": "req.cookies",
+    "files": "req.files"
+  },
+  "auth_guards": {
+    "global_middleware": ".use(<identifier>) where identifier matches auth hints",
+    "route_middleware": "identifier between path and handler in route registration args"
+  },
+  "response_sinks": {
+    "send": { "xss_risk": true, "safe_if": ["template engine", "JSON.stringify"] },
+    "json": { "xss_risk": false },
+    "sendFile": { "path_traversal_risk": true },
+    "render": { "xss_risk": false, "auto_escaped_by": "template engine" }
+  },
+  "db_sinks": {
+    "query": ["mysql", "mysql2", "pg", "sqlite3"],
+    "execute": ["mysql2", "sqlite3"],
+    "$raw": ["prisma"]
+  },
+  "http_effects": ["axios.get|post|put|delete|patch", "fetch", "node:http.request"],
+  "timeout_apis": ["server.timeout", "connect-timeout"],
+  "retry_apis": ["axios-retry", "got.retry"],
+  "resource_lifecycle": {}
+}

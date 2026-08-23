@@ -67,7 +67,7 @@ ShipProof applies the same review contract regardless of who wrote the code. Its
 
 | Property | Current contract |
 | :--- | :--- |
-| Current release | `v0.7.0` public beta |
+| Current release | `v0.8.1` public beta |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
 | Executable rules | 620 (`SP001`–`SP665`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
@@ -163,17 +163,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.7.0
+      - uses: kingggg5/shipproof@v0.8.1
         with:
           fail-on: high
 ```
 
-The action writes a structured Markdown status card to the GitHub Step Summary. The example uses the `v0.7.0` release tag; pin the action to a reviewed full commit SHA when an immutable supply-chain reference is required.
+The action writes a structured Markdown status card to the GitHub Step Summary. The example uses the `v0.8.1` release tag; pin the action to a reviewed full commit SHA when an immutable supply-chain reference is required.
 
 For pull requests that touch a large repository, scan only what changed relative to the base branch:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.7.0
+      - uses: kingggg5/shipproof@v0.8.1
         with:
           fail-on: high
           changed-since: origin/main
@@ -184,7 +184,7 @@ The scanner resolves the git diff (added, copied, modified, and renamed files, p
 The default report format is `sarif`, which the action writes into the workspace. To surface findings as inline Code Scanning alerts, upload that artifact with GitHub's official action after the gate step:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.7.0
+      - uses: kingggg5/shipproof@v0.8.1
         with:
           fail-on: high
           format: sarif
@@ -295,7 +295,7 @@ All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
 ## Research & evaluation status
 
-The scanner ships 616 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates, now fully triaged: 934 targets have a concrete local signature and are queued for promotion (wave 1 covers JavaScript/TypeScript, Python, and Go), 435 need dataflow evidence beyond today's engines and wait on analyzer work, and 1,595 are design, process, or hardware classes that a regex-based gate cannot catch. Each target keeps its source-catalog ids in [research/promotion-plan.json](research/promotion-plan.json).
+The scanner ships 620 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates, now fully triaged: 934 targets have a concrete local signature and are queued for promotion (wave 1 covers JavaScript/TypeScript, Python, and Go), 435 need dataflow evidence beyond today's engines and wait on analyzer work, and 1,595 are design, process, or hardware classes that a regex-based gate cannot catch. Each target keeps its source-catalog ids in [research/promotion-plan.json](research/promotion-plan.json).
 
 Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
 

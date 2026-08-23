@@ -150,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.7.0
+      - uses: kingggg5/shipproof@v0.8.1
         with:
           fail-on: high
 ```
@@ -158,7 +158,7 @@ jobs:
 Action เขียน status card Markdown ลง GitHub Step Summary สำหรับ PR ที่แตะ repository ใหญ่ ให้ scan เฉพาะสิ่งที่เปลี่ยน:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.7.0
+      - uses: kingggg5/shipproof@v0.8.1
         with:
           fail-on: high
           changed-since: origin/main

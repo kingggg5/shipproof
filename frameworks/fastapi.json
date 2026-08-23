@@ -1,0 +1,42 @@
+{
+  "framework": "fastapi",
+  "version_range": ">=0.60",
+  "entrypoints": {
+    "route_decorator": {
+      "pattern": "@\\w+\\.(get|post|put|patch|delete|head|options)\\(",
+      "receiver_hints": ["app", "router", "api"],
+      "handler": "decorated function"
+    }
+  },
+  "request_sources": {
+    "query": "Query()",
+    "path": "Path()",
+    "body": "Body()",
+    "header": "Header()",
+    "cookie": "Cookie()",
+    "form": "Form()",
+    "file": "File()"
+  },
+  "auth_guards": {
+    "dependencies": "Depends(auth_function) in route decorator or router",
+    "global_middleware": "app.add_middleware(AuthMiddleware)"
+  },
+  "response_sinks": {
+    "json_response": { "xss_risk": false },
+    "html_response": { "xss_risk": true, "safe_if": ["Jinja2 autoescape"] },
+    "send_file": { "path_traversal_risk": true },
+    "redirect": { "open_redirect_risk": true }
+  },
+  "db_sinks": {
+    "execute": ["sqlalchemy", "databases"],
+    "raw": ["sqlalchemy.text()"],
+    "from_statement": ["sqlalchemy"]
+  },
+  "http_effects": ["httpx.get|post|put|delete", "requests.get|post", "aiohttp.ClientSession"],
+  "timeout_apis": ["httpx.Timeout", "asyncio.wait_for"],
+  "retry_apis": ["tenacity.retry", "httpx transport retries"],
+  "resource_lifecycle": {
+    "db_session": "Depends(get_db) yields session; commit/rollback managed by caller",
+    "background_tasks": "BackgroundTasks.add_task runs after response"
+  }
+}

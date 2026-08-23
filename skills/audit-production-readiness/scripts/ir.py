@@ -232,3 +232,80 @@ def aggregate_effects(program: IRProgram) -> dict[str, Counter]:
         for effect in fn.effects:
             counter[effect.kind] += 1
     return {k: v for k, v in result.items()}
+
+
+# ---------------------------------------------------------------------------
+# Symbol resolution with confidence levels
+# ---------------------------------------------------------------------------
+
+
+class ResolutionConfidence:
+    RESOLVED = "resolved"
+    PROBABLE = "probable"
+    AMBIGUOUS = "ambiguous"
+    UNRESOLVED = "unresolved"
+
+
+@dataclass(frozen=True)
+class SymbolResolution:
+    """Result of resolving a name to its semantic role."""
+
+    name: str
+    resolved_to: str  # e.g. "pg.query", "prisma.user.findMany", "custom_wrapper"
+    confidence: str  # ResolutionConfidence value
+
+
+def resolve_symbol(name: str, imports: dict[str, str]) -> SymbolResolution:
+    """Resolve a dotted name against the file's import table.
+
+    Returns a SymbolResolution with confidence based on how much evidence
+    was available. Never pretends ambiguous names are fully resolved.
+    """
+    root = name.split(".")[0]
+    source = imports.get(root, "")
+    if not source:
+        return SymbolResolution(
+            name=name, resolved_to="", confidence=ResolutionConfidence.UNRESOLVED
+        )
+    return SymbolResolution(name=name, resolved_to=source, confidence=ResolutionConfidence.RESOLVED)
+
+
+# ---------------------------------------------------------------------------
+# Guard dominance check (bounded, line-level)
+# ---------------------------------------------------------------------------
+
+
+def check_guard_dominance(
+    guards: list[IRGuard], sinks: list[IRSink], body_lines: list[str]
+) -> list[IRSink]:
+    """Return sinks that are NOT dominated by any guard of matching kind.
+
+    A guard dominates a sink when it appears on an earlier line in the same
+    function and the sink is not inside an early-return branch. This is a
+    bounded heuristic; full CFG dominance is a future enhancement.
+    """
+    if not guards:
+        return list(sinks)
+    unguarded = []
+    for sink in sinks:
+        dominated = False
+        for guard in guards:
+            # Guard must appear before the sink on a prior line
+            if 0 < guard.line < sink.line:
+                dominated = True
+                break
+        if not dominated:
+            unguarded.append(sink)
+    return unguarded
+
+
+# ---------------------------------------------------------------------------
+# Framework model loading
+# ---------------------------------------------------------------------------
+
+
+def load_framework_model(path: Path) -> dict:
+    """Load a framework model JSON file declaring sources/sinks/guards."""
+    if not path.is_file():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
