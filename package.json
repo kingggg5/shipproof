@@ -1,6 +1,6 @@
 {
   "name": "@kingggg5/shipproof",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Zero-dependency production gate, resource budget, and capacity model for AI-written code",
   "type": "module",
   "bin": {

@@ -11,7 +11,7 @@ import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 
 
 def load_json_object(path: str | Path) -> dict[str, object]:
