@@ -15371,9 +15371,12 @@ def _scan_history_secrets(root: Path, max_commits: int = 500) -> tuple[list[Find
         return [], 0
 
     try:
+        import shutil
+
+        git_bin = shutil.which("git") or "git"
         proc = subprocess.run(  # noqa: S603
             [
-                "git",  # noqa: S607
+                git_bin,
                 "-C",
                 str(root),
                 "log",
