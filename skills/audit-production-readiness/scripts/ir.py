@@ -40,7 +40,7 @@ class TaintKind:
     HTML = "html"
     SHELL = "shell"
     URL = "url"
-    SECRET = "secret_kind"
+    SECRET = "secret_kind"  # noqa: S105
     TENANT_ID = "tenant_id"
     AUTH_PRINCIPAL = "auth_principal"
     UNTRUSTED_JSON = "untrusted_json"
