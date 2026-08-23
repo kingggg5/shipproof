@@ -1662,3 +1662,89 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# ---------------------------------------------------------------------------
+# IR adapters: convert engine-specific summaries into unified IRFunction
+# ---------------------------------------------------------------------------
+
+
+def _summary_to_ir_function(summary, effects=None, guards=None) -> IRFunction:
+    """Convert a FunctionSummary (Python or JS/TS engine) into an IRFunction."""
+    from ir import IRCallee, IRFunction, IRSink
+
+    return IRFunction(
+        name=summary.name,
+        file=summary.file,
+        params=list(summary.params),
+        line_start=0,
+        line_end=0,
+        is_entrypoint=summary.is_entrypoint,
+        entry_taint_vars=list(summary.entrypoint_taint_params),
+        sinks=[
+            IRSink(
+                rule_id=s.rule_id,
+                sink_type=s.sink_type,
+                variable=s.param_name,
+                call_expr=s.call_snippet[:120],
+                line=s.line,
+            )
+            for s in summary.param_to_sinks
+        ],
+        callees=[
+            IRCallee(
+                callee_name=c.callee_name,
+                arg_index=c.arg_index,
+                param_name=c.param_name,
+                line=c.line,
+            )
+            for c in summary.callee_calls
+        ],
+        sanitized_params=set(summary.sanitized_params),
+        aliases={},
+        effects=effects or [],
+        guards=guards or [],
+    )
+
+
+def build_ir_program(graph) -> IRProgram:
+    """Build an IRProgram from an ImpactGraph that has already been built."""
+    from ir import IRCallee, IRFunction, IRProgram, IRSink
+
+    functions = []
+    for summary_list in graph.summaries.values():
+        for summary in summary_list:
+            fn = IRFunction(
+                name=summary.name,
+                file=summary.file,
+                params=list(summary.params),
+                line_start=0,
+                line_end=0,
+                is_entrypoint=summary.is_entrypoint,
+                entry_taint_vars=list(summary.entrypoint_taint_params),
+                sinks=[
+                    IRSink(
+                        rule_id=s.rule_id,
+                        sink_type=s.sink_type,
+                        variable=s.param_name,
+                        call_expr=s.call_snippet[:120],
+                        line=s.line,
+                    )
+                    for s in summary.param_to_sinks
+                ],
+                callees=[
+                    IRCallee(
+                        callee_name=c.callee_name,
+                        arg_index=c.arg_index,
+                        param_name=c.param_name,
+                        line=c.line,
+                    )
+                    for c in summary.callee_calls
+                ],
+                sanitized_params=set(summary.sanitized_params),
+                aliases={},
+                effects=[],
+                guards=[],
+            )
+            functions.append(fn)
+    return IRProgram(functions=functions)
