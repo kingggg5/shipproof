@@ -23,7 +23,7 @@
 ## Key facts for agents
 
 - The scan never executes project code. Capacity arithmetic is a hypothesis model, not a load test; replace sample values with measured data.
-- Layer with mature tools instead of replacing them: CodeQL/Semgrep for data flow, OSV-Scanner/Trivy for dependencies, Gitleaks for secret history, k6 for load.
+- Layer with mature tools instead of replacing them: dedicated SAST/dataflow scanners, OSV-Scanner/Trivy for dependencies, Gitleaks for secret history, k6 for load.
 - Development guide for coding agents: [AGENTS.md](AGENTS.md). Contribution rules: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Docs

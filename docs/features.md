@@ -275,7 +275,7 @@ Dependency downloads are disabled for Go and Rust adapters. TypeScript must exis
 
 ShipProof routes the agent to tools already present in the environment and never silently installs them:
 
-- CodeQL or Semgrep for source and data-flow analysis.
+- Dedicated source and data-flow analyzers already approved in your environment.
 - OSV-Scanner or Trivy for dependencies, containers, IaC, secrets, licenses, and SBOM evidence.
 - Gitleaks for current and historical secrets.
 - SkillSpector for trust checks before installing third-party agent skills.

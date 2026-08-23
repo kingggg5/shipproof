@@ -236,7 +236,7 @@ Claude Code โหลด repository เป็น plugin ระหว่าง de
 - **Capacity planning:** เปลี่ยน workload assumption ที่ผ่าน review เป็น model โปร่งใสหรือ k6 scaffold แบบ deterministic ด้วย `shipproof labs capacity`
 - **MCP mode:** `shipproof mcp` เปิด five read-only tools ให้ MCP client ใดก็ได้ พร้อม canonical paths, bounded runtime และ evidence แบบ redact
 - **Language-native evidence:** `shipproof gate evidence . --adapter typescript|go|rust` รัน approved analyzers ในเครื่องโดยไม่ดาวน์โหลด dependency
-- **Layering:** ใช้คู่กับ CodeQL/Semgrep, OSV-Scanner/Trivy, Gitleaks และ OpenSSF Scorecard; ShipProof route ไปยังเครื่องมือที่มีอยู่แล้วและไม่ install แอบ ๆ
+- **Layering:** ใช้คู่กับเครื่องมือ SAST/SCA/secret-history/supply-chain ที่มีอยู่แล้วในสภาพแวดล้อมของคุณ; ShipProof route ไปยังเครื่องมือที่มีอยู่แล้วและไม่ install แอบ ๆ
 
 รายละเอียดทุก walkthrough อยู่ใน [docs/features.md](docs/features.md)
 

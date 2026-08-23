@@ -289,7 +289,7 @@ Plugin-installed Claude skills use the namespaced commands `/shipproof:engineer-
 - **Capacity planning:** turn reviewed workload assumptions into a transparent model or a deterministic k6 scaffold with `shipproof labs capacity`.
 - **MCP mode:** `shipproof mcp` exposes five read-only tools to any MCP client with canonical paths, bounded runtime, and redacted evidence.
 - **Language-native evidence:** `shipproof gate evidence . --adapter typescript|go|rust` runs approved local analyzers without downloading dependencies.
-- **Layering:** pair ShipProof with CodeQL/Semgrep, OSV-Scanner/Trivy, Gitleaks, and OpenSSF Scorecard; ShipProof routes to tools already present and never silently installs them.
+- **Layering:** pair ShipProof with mature SAST, SCA, secret-history, and supply-chain tools already present in your environment; it routes to them and never silently installs anything.
 
 All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
@@ -311,7 +311,7 @@ The adversarial corpus holds look-alikes inside comments and string literals tha
 
 A separate run clones express, flask, requests as clean baselines plus juice-shop, DVWA, and NodeGoat as intentionally vulnerable apps. Application-scope findings came out at 2 / 5 / 3 / 153 / 74 / 20 on the last snapshot, and the cross-file engine confirmed NodeGoat's documented `eval(req.body)` chain.
 
-On Semgrep tiers: their free tier caps private scans at 10 repositories and 10 contributors, runs through their cloud, and puts cross-file analysis behind Pro Engine/Pro Rules. ShipProof has no repository or contributor limits, scans offline against local files only, and ships interprocedural taint for JavaScript/TypeScript and Python in the open core. Their paid tiers add secrets validation with live-network checks, historical git scanning, SBOM/license compliance, and an AppSec platform; we do not claim those and suggest pairing with dedicated tools ([layering guidance](docs/features.md)). Details in [docs/benchmarks.md](docs/benchmarks.md). We have not published head-to-head runtime numbers yet because both tools have not been measured on identical hardware.
+Operating profile: no repository or contributor limits, fully offline against local files only, and interprocedural taint for JavaScript/TypeScript and Python in the open core. Capabilities we do not cover (secrets validation with live checks, git-history scanning, SBOM/licensing, AppSec management) are listed so you can pair dedicated tools where they fit ([layering guidance](docs/features.md)). Measurement methodology and current results: [docs/benchmarks.md](docs/benchmarks.md).
 
 ## Research methodology and provenance
 

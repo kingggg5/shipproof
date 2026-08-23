@@ -64,23 +64,18 @@ Measured by [scripts/benchmark-scanner.py](../scripts/benchmark-scanner.py) over
 
 Throughput is re-checked after engine changes; the JS/TS analyzer and SARIF enrichment did not move it measurably.
 
-## Semgrep tier features
+## Scope and operating limits
 
-No head-to-head scores appear here because both tools have not been measured on identical hardware. The table below restates Semgrep's published tier table (checked August 2026) next to what ships in this repository:
+ShipProof is one layer of an application-security stack. It scans source code deterministically, fully offline, with no repository or contributor limits. Capabilities that belong to other tool lanes are listed here so teams can pair dedicated products instead of expecting them from this gate:
 
-| Capability | Semgrep Free | Semgrep Teams+ | ShipProof |
-| :--- | :--- | :--- | :--- |
-| Cross-file analysis | via Pro Engine/Pro Rules | included | **open core**, JS/TS + Python |
-| Cross-function taint | yes | yes | yes (`--cross-file`) |
-| Repositories scanned | 10 private max | 500 max | unlimited, local only |
-| Contributors | 10 max | metered per contributor | unlimited |
-| Network requirement | cloud infrastructure | cloud infrastructure | fully offline |
-| Secrets detection | not in free tier | semantic + validation + history | 50+ redacting rules; no validation/history |
-| Historical git scanning | paid beta | paid | not claimed (roadmap candidate) |
-| SBOM / license compliance | separate product lane | included | out of scope; pair with OSV-Scanner/Trivy |
-| Deterministic fingerprints across runs | varies with config resolution | varies | stable by contract, parity-tested |
-
-In short: detection breadth overlaps semgrep's free tier; operating limits and offline determinism differ by design; and the paid lanes above stay out of scope on purpose.
+| Capability | ShipProof today | Suggested pairing |
+| :--- | :--- | :--- |
+| Cross-file interprocedural taint | shipped (`--cross-file`, JS/TS + Python) | - |
+| Secrets detection with redaction | shipped (50+ rules) | secret-history scanners for git history |
+| Live credential validation | not claimed (requires network) | secret-validation platforms |
+| SBOM / license compliance | not claimed | OSV-Scanner, Trivy |
+| Dependency reachability analysis | not claimed | supply-chain scanners |
+| Historical git scanning | not claimed (roadmap candidate) | git-history secret scanners |
 
 ## Limitations
 
@@ -92,7 +87,7 @@ In short: detection breadth overlaps semgrep's free tier; operating limits and o
 
 ## Planned next measurements
 
-1. Head-to-head against semgrep binary (Linux runner, identical corpora, caller-supplied ruleset already staged in [benchmarks/semgrep-comparison/](../benchmarks/semgrep-comparison/)).
+1. Head-to-head runtime and accuracy runs against another scanner on a Linux runner over identical corpora, using the caller-supplied ruleset staged in [benchmarks/semgrep-comparison/](../benchmarks/semgrep-comparison/).
 2. Line-level labels for the cross-file corpora so sink-line accuracy becomes measurable.
 3. Adoption of a standard third-party benchmark corpus (OWASP Benchmark style) after license review.
 4. Weekly workflow artifacts published as release checks once the first scheduled run completes.
