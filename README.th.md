@@ -1,8 +1,12 @@
-# ShipProof
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-logo.svg" width="152" alt="โลโก้ ShipProof: ตัว S สีน้ำเงินที่จบด้วยเครื่องหมายตรวจสอบสีเขียว" />
+</p>
 
-**ประตู evidence สำหรับ production แบบ local-first สำหรับซอฟต์แวร์ที่ AI ช่วยเขียน**
+<h1 align="center">ShipProof</h1>
 
-[English](README.md) · [ภาษาไทย](README.th.md)
+<p align="center"><strong>ประตู evidence สำหรับ production แบบ local-first สำหรับซอฟต์แวร์ที่ AI ช่วยเขียน</strong></p>
+
+<p align="center"><a href="README.md">English</a> · <a href="README.th.md">ภาษาไทย</a></p>
 
 ความปลอดภัย · ความถูกต้อง · สเกล · ประสิทธิภาพ · หลักฐานก่อน release
 
@@ -106,6 +110,15 @@ ShipProof จัด format findings เป็น review card ที่ actionabl
 
 ShipProof เปลี่ยนการพัฒนาให้เป็น verified feedback loop: AI เขียนโค้ด, ShipProof หาความเสี่ยง, AI แก้ตาม constraint ที่ชัดเจน แล้ว ShipProof ตรวจซ้ำ
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-workflow.png" width="100%" alt="ขั้นตอน ShipProof: เขียนโค้ด สแกน สร้างหลักฐาน แก้พร้อมเทส แล้วตรวจยืนยัน โดยงานที่ถูกบล็อกจะย้อนกลับไปแก้" />
+</p>
+
+ถ้าผลตรวจเป็น `BLOCK` หลักฐานจะย้อนกลับไปที่ขั้นแก้โค้ดและเพิ่มเทส ส่วน `PASS` หมายถึง gate ที่ตั้งไว้มีหลักฐานเพียงพอสำหรับขอบเขตที่ตรวจ ไม่ได้หมายความว่าซอฟต์แวร์ปราศจากช่องโหว่ทุกกรณี
+
+<details>
+<summary>ดู workflow ในรูปแบบข้อความ</summary>
+
 ```mermaid
 flowchart LR
     A["AI writes code"] --> B["ShipProof finds risks"]
@@ -113,6 +126,8 @@ flowchart LR
     C --> D["AI fixes code + regression tests"]
     D --> E["ShipProof verifies evidence"]
 ```
+
+</details>
 
 ```bash
 shipproof scan --fix-prompt        # handoff แบบ structured สำหรับ Codex/Claude Code/Cursor/Copilot

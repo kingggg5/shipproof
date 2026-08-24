@@ -7,8 +7,20 @@ Detailed usage for the ShipProof feedback loop, experimental labs commands, reso
 ShipProof turns development into a verified feedback loop: AI writes code, ShipProof finds risks, AI fixes with explicit constraints, and ShipProof re-verifies.
 
 <p align="center">
-  <img src="docs/assets/architecture-workflow.svg" width="100%" alt="ShipProof verification pipeline" />
+  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-workflow.png" width="100%" alt="ShipProof workflow: code, scan, evidence, fix and test, then verify; blocked changes return to the fix step" />
 </p>
+
+<details>
+<summary>Detailed architecture view</summary>
+
+<p align="center">
+  <img src="assets/architecture-workflow.svg" width="100%" alt="Detailed ShipProof verification pipeline architecture" />
+</p>
+
+</details>
+
+<details>
+<summary>Accessible workflow source</summary>
 
 ```mermaid
 flowchart LR
@@ -17,6 +29,8 @@ flowchart LR
     C --> D["AI fixes code + regression tests"]
     D --> E["ShipProof verifies evidence"]
 ```
+
+</details>
 
 ### Generate Prompts for AI Handoff
 

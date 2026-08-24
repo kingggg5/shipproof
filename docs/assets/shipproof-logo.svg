@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">ShipProof</title>
+  <desc id="desc">An abstract blue S-shaped shipping route completed by a green verification check.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path
+      d="M196 62C176 43 151 33 121 33H101C64 33 40 51 40 78C40 102 58 117 90 125L137 136C158 141 169 152 169 166C169 180 159 190 141 196"
+      stroke="#2563EB"
+      stroke-width="38"
+    />
+    <path d="M116 172L144 199L204 132" stroke="#22C55E" stroke-width="30" />
+  </g>
+</svg>

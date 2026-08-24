@@ -1,8 +1,12 @@
-# ShipProof
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-logo.svg" width="152" alt="ShipProof logo: an abstract blue S completed by a green verification check" />
+</p>
 
-**A local-first production evidence gate for AI-assisted software.**
+<h1 align="center">ShipProof</h1>
 
-[English](README.md) · [ภาษาไทย](README.th.md)
+<p align="center"><strong>A local-first production evidence gate for AI-assisted software.</strong></p>
+
+<p align="center"><a href="README.md">English</a> · <a href="README.th.md">ภาษาไทย</a></p>
 
 Security · Correctness · Scale · Performance · Release evidence
 
@@ -119,6 +123,15 @@ ShipProof formats findings as actionable review cards with source context, confi
 
 ShipProof turns development into a verified feedback loop: AI writes code, ShipProof finds risks, AI fixes with explicit constraints, and ShipProof re-verifies.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-workflow.png" width="100%" alt="ShipProof workflow: code, scan, evidence, fix and test, then verify; blocked changes return to the fix step" />
+</p>
+
+If verification blocks the change, the evidence goes back into the fix-and-test step. A pass means the configured gate has evidence for the reviewed scope—not that the software is universally vulnerability-free.
+
+<details>
+<summary>Accessible workflow source</summary>
+
 ```mermaid
 flowchart LR
     A["AI writes code"] --> B["ShipProof finds risks"]
@@ -126,6 +139,8 @@ flowchart LR
     C --> D["AI fixes code + regression tests"]
     D --> E["ShipProof verifies evidence"]
 ```
+
+</details>
 
 ```bash
 shipproof scan --fix-prompt        # structured handoff for Codex/Claude Code/Cursor/Copilot

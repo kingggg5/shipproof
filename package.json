@@ -14,6 +14,8 @@
     "action.yml",
     "bin",
     "docs",
+    "!docs/assets/shipproof-logo.svg",
+    "!docs/assets/shipproof-workflow.png",
     "examples/capacity/*.js",
     "examples/capacity/*.json",
     "examples/demo-api/README.md",
