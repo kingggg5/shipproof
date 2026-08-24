@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { internals as cliInternals } from "../../lib/cli.mjs";
+import { internals as cliInternals, runCli } from "../../lib/cli.mjs";
 import { internals as evidenceInternals } from "../../lib/evidence.mjs";
 import { buildScanArguments, internals as mcpInternals } from "../../lib/mcp-server.mjs";
 import { parsePolicyText, validatePolicy } from "../../lib/policy.mjs";
@@ -61,6 +61,29 @@ test("runPythonJsonCommand names the gate when JSON is invalid", () => {
     () => runPythonJsonCommand("skills/x/y.py", [], fakeSpawn({ stdout: "not-json" })),
     /skills\/x\/y\.py.*invalid JSON/,
   );
+});
+
+test("gate environment is parsed lazily and does not break informational commands", () => {
+  const previous = process.env.SHIPPROOF_GATE_TIMEOUT_MS;
+  process.env.SHIPPROOF_GATE_TIMEOUT_MS = "invalid";
+  try {
+    assert.equal(runCli(["--version"]), 0);
+    assert.throws(() => cliInternals.resolveGateLimits(), /SHIPPROOF_GATE_TIMEOUT_MS/);
+  } finally {
+    if (previous === undefined) delete process.env.SHIPPROOF_GATE_TIMEOUT_MS;
+    else process.env.SHIPPROOF_GATE_TIMEOUT_MS = previous;
+  }
+});
+
+test("MCP environment validation is lazy and bounded", () => {
+  const previous = process.env.SHIPPROOF_MCP_TIMEOUT_MS;
+  process.env.SHIPPROOF_MCP_TIMEOUT_MS = "invalid";
+  try {
+    assert.throws(() => mcpInternals.resolveMcpSettings(), /SHIPPROOF_MCP_TIMEOUT_MS/);
+  } finally {
+    if (previous === undefined) delete process.env.SHIPPROOF_MCP_TIMEOUT_MS;
+    else process.env.SHIPPROOF_MCP_TIMEOUT_MS = previous;
+  }
 });
 
 test("buildScanArguments supports exclude, confidence, and cross-file modes", () => {
@@ -151,5 +174,18 @@ test("action summary escapes table cells and caps rendered rows", () => {
   assert.match(summary, /Title with \\\| pipe and newline/);
   assert.match(summary, /…and 30 more findings/);
   assert.equal((summary.match(/\n/g) || []).length < 260, true);
+  rmSync(directory, { recursive: true, force: true });
+});
+
+test("action summary does not read oversized reports", () => {
+  const directory = mkdtempSync(join(tmpdir(), "shipproof-summary-large-"));
+  const reportPath = join(directory, "report.md");
+  writeFileSync(reportPath, "x".repeat(1_000_001));
+  const summary = formatActionSummary(reportPath, "markdown", {
+    exitCode: 1,
+    failOn: "high",
+  });
+  assert.match(summary, /Summary omitted/);
+  assert.equal(summary.includes("x".repeat(1_000)), false);
   rmSync(directory, { recursive: true, force: true });
 });

@@ -79,11 +79,11 @@ class StructureTests(unittest.TestCase):
         commands = (ROOT / "docs" / "commands.md").read_text(encoding="utf-8")
         mcp_source = (ROOT / "lib" / "mcp-server.mjs").read_text(encoding="utf-8")
 
-        self.assertIn('python-version: ["3.10", "3.12", "3.13", "3.14"]', ci)
+        self.assertIn('python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]', ci)
         self.assertIn('node-version: ["20", "22", "24"]', ci)
         for document in (readme, agents):
             self.assertRegex(document, r"Node(?:\.js)? 20/22/24")
-            self.assertRegex(document, r"Python 3\.10/3\.12/3\.13/3\.14")
+            self.assertRegex(document, r"Python 3\.10/3\.11/3\.12/3\.13/3\.14")
 
         count_match = re.search(r"- (\d+) deterministic rules", llms)
         self.assertIsNotNone(count_match)

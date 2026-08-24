@@ -152,8 +152,8 @@ def check_auth_dominance(fn: IRFunction) -> list[InvariantViolation]:
             GuardKind.ADMIN_CHECK,
         )
     ]
-    if privileged_effects and not auth_guards:
-        for e in privileged_effects:
+    for e in privileged_effects:
+        if not any(0 < guard.line < e.line for guard in auth_guards):
             violations.append(
                 InvariantViolation(
                     invariant_id="auth-dominance",
@@ -223,8 +223,6 @@ def check_timeout_propagation(fn: IRFunction) -> list[InvariantViolation]:
 ALL_INVARIANT_CHECKS = [
     check_auth_dominance,
     check_tenant_isolation,
-    check_retry_amplification,
-    check_timeout_propagation,
 ]
 
 

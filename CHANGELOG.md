@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Prepare the evidence-contract and analyzer-correctness fixes for the `0.9.0` release; see [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).
+
 - Add `scan --history`: scan git history for secrets that were added in past commits and may still exist in history even after removal from HEAD. Uses only stdlib subprocess + git commands; bounded to 500 commits by default; findings anchored to the introducing commit with redacted evidence.
 - Extend secrets detection quality: a demote-only Shannon entropy gate now covers all non-calibrated secret rules (45+ provider token patterns), dropping format-valid but obviously filler test tokens to low confidence while leaving structured high-entropy keys untouched.
 - Add four supply-chain detectors: `SP092` npm wildcard/latest ranges, `SP093` Maven SNAPSHOT versions, `SP094` Dockerfile ADD over remote URLs, `SP095` package lifecycle scripts fetching from network.

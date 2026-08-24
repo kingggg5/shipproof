@@ -38,7 +38,9 @@ jobs:
             fixtures/adversarial-node \
             fixtures/secure-node-api \
             fixtures/node-secure-crossfile \
-            --repeat 3 --format json | tee benchmark-detection.json
+            --repeat 3 --format json \
+            --min-file-precision 0.95 --min-file-recall 0.95 \
+            | tee benchmark-detection.json
           python benchmarks/head_to_head.py \
             fixtures/vulnerable-node-api \
             fixtures/vulnerable-python-api \
@@ -46,10 +48,12 @@ jobs:
             fixtures/adversarial-node \
             fixtures/secure-node-api \
             fixtures/node-secure-crossfile \
-            --repeat 3 | tee benchmark-detection.md
+            --repeat 3 --min-file-precision 0.95 --min-file-recall 0.95 \
+            | tee benchmark-detection.md
       - name: Throughput regression (1k files, 4 workers)
         run: |
           python scripts/benchmark-scanner.py --files 1000 --jobs 4 \
+            --max-seconds 15 \
             | tee benchmark-throughput.json
       - name: Real-world open-source evaluation
         if: ${{ inputs.run-realworld == true }}

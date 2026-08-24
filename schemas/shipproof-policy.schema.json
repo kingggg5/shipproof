@@ -19,7 +19,7 @@
         },
         "max_file_bytes": {
           "type": "integer",
-          "minimum": 1,
+          "minimum": 1024,
           "maximum": 100000000
         }
       }

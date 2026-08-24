@@ -1,6 +1,6 @@
 # Scanner benchmark
 
-ShipProof benchmarks its deterministic scanner against generated, finding-free Python repositories. The script warms the OS file cache with one untimed pass, then reports a cold-state and a warm-state scan (seconds and files/second each) plus process peak resident memory; fixture generation is excluded from timing. Pass `--jobs N` to measure worker-process scanning and `--no-warmup` for cold-cache numbers only.
+ShipProof benchmarks its deterministic scanner against generated, finding-free Python repositories. The script optionally warms the OS file cache with one untimed pass, then reports the first measured pass and a repeated warm pass (seconds and files/second each) plus process peak resident memory; fixture generation is excluded from timing. Pass `--jobs N` to measure worker-process scanning and `--no-warmup` for first-open numbers without the warmup pass.
 
 ```bash
 python scripts/benchmark-scanner.py --files 1000
@@ -18,25 +18,25 @@ Hardware, OS, filesystem, Python version, and cold/warm cache state materially a
 
 ```bash
 python benchmarks/head_to_head.py fixtures/vulnerable-node-api fixtures/node-taint-crossfile fixtures/node-secure-crossfile --repeat 3
-python benchmarks/head_to_head.py <corpus> --comparison-scanner-config ./your-rules.yml --format json
+python benchmarks/head_to_head.py <corpus> --semgrep-config ./your-rules.yml --format json
 ```
 
 Fairness rules, enforced by the harness design:
 
 - Both tools scan the same directories on the same machine, timed from process start to report; no warm-up runs are hidden.
 - ShipProof runs exactly as shipped (`scan_repo.py --format json`), never a cherry-picked rule subset.
-- The other tool runs only with rule files the caller supplies via `--comparison-scanner-config` (repeatable). ShipProof never bundles, downloads, or copies third-party rules — including the comparison scanner's — and the harness performs no network access, per the repository's license and offline guarantees.
+- The other tool runs only with rule files the caller supplies via `--semgrep-config` (repeatable). ShipProof never bundles, downloads, or copies third-party rules — including the comparison scanner's — and the harness performs no network access, per the repository's license and offline guarantees.
 - Scoring is file-level: `benchmarks/head-to-head-labels.json` marks which corpus files contain real issues, and every tool is scored against the same labels. Results describe exactly these corpora, configs, and machine; they are not a general superiority claim, and published comparisons must include the corpora, configs, labels, and environment.
 
-Without `--comparison-scanner-config` (or when the tool is not installed) the harness still reports the ShipProof leg, so it doubles as a repeatable self-benchmark on any repository.
+Without `--semgrep-config` (or when the tool is not installed) the harness still reports the ShipProof leg, so it doubles as a repeatable self-benchmark on any repository.
 
 ## Comparison ruleset and latest self-results
 
-`comparison-scanner-comparison/rules.yml` is an original minimal ruleset written for these corpora (no third-party rule text copied). Where the comparison scanner runs (Linux/macOS), compare with:
+`semgrep-comparison/rules.yml` is an original minimal ruleset written for these corpora (no third-party rule text copied). Where the comparison scanner runs (Linux/macOS), compare with:
 
 ```bash
 python benchmarks/head_to_head.py fixtures/node-taint-crossfile fixtures/node-secure-crossfile \
-    --comparison-scanner-config benchmarks/comparison-scanner-comparison/rules.yml --repeat 3
+    --semgrep-config benchmarks/semgrep-comparison/rules.yml --repeat 3
 ```
 
 Latest ShipProof self-leg over all shipped fixture corpora (Windows 11, Python 3.13, `--cross-file`, median of 3, 2026-08):

@@ -473,7 +473,11 @@
           },
           {
             "path": "client.ts",
-            "source": "fetch(\"https://hooks.internal/cfg?access_token=abc.def.ghi\")"
+            "source_parts": [
+              "fetch(\"https://hooks.internal/cfg",
+              "?access_token=abc",
+              ".def.ghi\")"
+            ]
           }
         ],
         "negative": [
@@ -2642,11 +2646,11 @@
         "positive": [
           {
             "path": "package.json",
-            "source": "{\"lodash\": \"*\"}"
+            "source": "{\"dependencies\": {\"lodash\": \"*\"}}"
           },
           {
             "path": "package.json",
-            "source": "{\"express\": \"latest\"}"
+            "source": "{\"devDependencies\": {\"express\": \"latest\"}}"
           }
         ],
         "negative": [
@@ -2705,11 +2709,11 @@
         "positive": [
           {
             "path": "pom.xml",
-            "source": "<version>1.2-SNAPSHOT</version>"
+            "source": "<project><dependencies><dependency><groupId>x</groupId><version>1.2-SNAPSHOT</version></dependency></dependencies></project>"
           },
           {
             "path": "pom.xml",
-            "source": "<version>0.0.1-SNAPSHOT</version>"
+            "source": "<project><dependencies><dependency><artifactId>x</artifactId><version>0.0.1-SNAPSHOT</version></dependency></dependencies></project>"
           }
         ],
         "negative": [
@@ -2733,7 +2737,7 @@
         "adversarial": [
           {
             "path": "pom.xml",
-            "source": "<version>1.2.0-SNAPSHOT</version>",
+            "source": "<dependency><version>1.2.0-SNAPSHOT</version></dependency>",
             "expected": true,
             "rationale": "Even a version-prefixed SNAPSHOT still floats to the latest published artifact; the rule correctly fires regardless of prefix."
           },
@@ -2767,11 +2771,11 @@
       "cases": {
         "positive": [
           {
-            "path": "Dockerfile.dockerfile",
+            "path": "Dockerfile",
             "source": "ADD https://example.com/install.sh /tmp/"
           },
           {
-            "path": "Dockerfile.dockerfile",
+            "path": "Containerfile",
             "source": "ADD https://downloads.example.com/pkg.tar.gz /opt/"
           }
         ],

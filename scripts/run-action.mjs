@@ -109,6 +109,7 @@ function findPython() {
 }
 
 const MAX_SUMMARY_ROWS = 200;
+const MAX_SUMMARY_INPUT_BYTES = 1_000_000;
 
 function markdownCell(value) {
   return String(value ?? "")
@@ -129,8 +130,12 @@ export function formatActionSummary(
 ) {
   try {
     if (!existsSync(reportPath)) return "";
-    const content = readFileSync(reportPath, "utf8");
     const heading = gateSummaryHeading(exitCode, failOn);
+    const reportBytes = statSync(reportPath).size;
+    if (reportBytes > MAX_SUMMARY_INPUT_BYTES) {
+      return `${heading}\n\nSummary omitted because the report exceeds the ${MAX_SUMMARY_INPUT_BYTES}-byte display limit. Download the full report artifact.`;
+    }
+    const content = readFileSync(reportPath, "utf8");
     if (format === "markdown") {
       return `${heading}\n\n${content}`;
     }

@@ -75,7 +75,7 @@ ShipProof is one layer of an application-security stack. It scans source code de
 | Live credential validation | not claimed (requires network) | secret-validation platforms |
 | SBOM / license compliance | not claimed | OSV-Scanner, Trivy |
 | Dependency reachability analysis | not claimed | supply-chain scanners |
-| Historical git scanning | not claimed (roadmap candidate) | git-history secret scanners |
+| Historical git scanning | shipped as bounded `scan --history` added-line evidence | Gitleaks for broader history validation and rotation workflows |
 
 ## Limitations
 

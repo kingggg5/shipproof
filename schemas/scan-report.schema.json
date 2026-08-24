@@ -23,6 +23,8 @@
             "changed_since": { "type": "string", "minLength": 1 },
             "cross_file_flows": { "type": "integer", "minimum": 0 },
             "cross_file_flows_unsanitized": { "type": "integer", "minimum": 0 },
+            "history_commits_scanned": { "type": "integer", "minimum": 0 },
+            "history_findings": { "type": "integer", "minimum": 0 },
             "by_severity": {
               "type": "object",
               "propertyNames": { "enum": ["critical", "high", "medium", "low"] },
@@ -49,7 +51,19 @@
               "scope": { "enum": ["app", "test"] }, "verification_status": { "type": "string" },
               "column": { "type": ["integer", "null"], "minimum": 1 },
               "end_line": { "type": ["integer", "null"], "minimum": 1 },
-              "end_column": { "type": ["integer", "null"], "minimum": 1 }
+              "end_column": { "type": ["integer", "null"], "minimum": 1 },
+              "history_commit": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
+              "fix_scaffold": {
+                "type": "object",
+                "required": ["summary", "before", "after", "review_note"],
+                "properties": {
+                  "summary": { "type": "string", "minLength": 1 },
+                  "before": { "type": "string", "minLength": 1 },
+                  "after": { "type": "string", "minLength": 1 },
+                  "review_note": { "type": "string", "minLength": 1 }
+                },
+                "additionalProperties": false
+              }
             },
             "additionalProperties": false
           }

@@ -40,9 +40,9 @@ class FileMetricsTests(unittest.TestCase):
 
 
 class LabelLoadingTests(unittest.TestCase):
-    def test_missing_label_file_yields_empty_labels(self):
-        labels = head_to_head.load_labels(ROOT / "does-not-exist.json", [ROOT / "fixtures"])
-        self.assertEqual(labels, {"fixtures": []})
+    def test_missing_label_file_fails_closed(self):
+        with self.assertRaises(FileNotFoundError):
+            head_to_head.load_labels(ROOT / "does-not-exist.json", [ROOT / "fixtures"])
 
     def test_default_labels_cover_the_fixture_corpora(self):
         labels = head_to_head.load_labels(
@@ -66,6 +66,16 @@ class ShipProofLegTests(unittest.TestCase):
         self.assertEqual(result["files_flagged"], ["app.py"])
         self.assertGreater(result["findings"], 0)
         self.assertGreater(result["median_seconds"], 0)
+
+
+class SemgrepLegTests(unittest.TestCase):
+    def test_command_uses_one_corpus_argument_and_absolute_configs(self):
+        corpus = ROOT / "fixtures" / "secure-node-api"
+        config = ROOT / "benchmarks" / "semgrep-comparison" / "rules.yml"
+        command = head_to_head.build_semgrep_command(corpus, [str(config)])
+        self.assertEqual(command[-1], corpus.name)
+        self.assertEqual(command.count(corpus.name), 1)
+        self.assertEqual(command[-3:-1], ["--config", str(config.resolve())])
 
 
 class RenderingTests(unittest.TestCase):

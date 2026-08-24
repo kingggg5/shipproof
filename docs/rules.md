@@ -29,8 +29,6 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 
 ## Detection Rules Reference
 
-Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected file artifact such as a SQLite header), and `L2` is reserved for the shipped intraprocedural Python taint engine. ShipProof does not claim cross-file reachability or runtime proof. Only the 571 entries in this table are executable rules; research catalogs are planning inputs and cannot emit findings.
-
 | Rule ID | Severity | Category | Rule Title & Target Problem | Detection Method |
 | :--- | :--- | :--- | :--- | :--- |
 | **`SP001`** | CRITICAL | Security | Private key committed | Regex |

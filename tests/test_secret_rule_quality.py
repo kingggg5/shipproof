@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).parents[1]
 SCRIPTS = ROOT / "skills" / "audit-production-readiness" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
+sys.path.insert(0, str(ROOT / "tests"))
 
 from scan_repo import (  # noqa: E402
     RULE_EXPLANATIONS,
@@ -16,6 +17,7 @@ from scan_repo import (  # noqa: E402
     deduplicate_and_suppress_findings,
     find_regex_issues,
 )
+from secret_positive_fixtures import positive_source  # noqa: E402
 
 MANIFEST = ROOT / "tests" / "rule_cases_secrets.json"
 
@@ -67,14 +69,23 @@ class SecretRuleQualityTests(unittest.TestCase):
                     hosts.add(parsed.netloc)
                 self.assertGreaterEqual(len(hosts), 2)
 
-    def test_positive_fixtures_fire_or_are_suite_covered(self) -> None:
-        """All SP001-SP050 positive fixtures verified by test_scan_repo.py."""
+    def test_positive_fixtures_fire(self) -> None:
+        """Every redacting secret rule has an executable synthetic positive."""
         for rid, entry in self.cases.items():
             for case in entry["cases"]["positive"]:
-                if "covered_by_suite" in case.get("source", ""):
-                    continue
-                hits = detected(case["path"], case["source"])
-                self.assertIn(rid, hits, case["source"][:80])
+                source = case["source"]
+                if source == "covered_by_suite":
+                    source = positive_source(rid)
+                path = "fixture.json" if rid == "SP005" else case["path"]
+                hits = detected(path, source)
+                self.assertIn(rid, hits, source[:80])
+
+    def test_placeholder_entries_resolve_to_real_fixtures(self) -> None:
+        """Legacy manifest references are only valid when a fixture is executable."""
+        for rid, entry in self.cases.items():
+            for case in entry["cases"]["positive"]:
+                if case["source"] == "covered_by_suite":
+                    self.assertTrue(positive_source(rid))
 
     def test_negative_fixtures_stay_silent(self) -> None:
         for rid, entry in self.cases.items():

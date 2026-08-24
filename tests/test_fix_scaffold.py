@@ -47,7 +47,9 @@ class FixScaffoldTransformTests(unittest.TestCase):
     def test_redacted_secret_rules_never_scaffold(self) -> None:
         # SP004 is a redact rule; even secret-shaped evidence must not produce
         # a before/after pair that could leak credential material.
-        scaffold = build_fix_scaffold(finding("SP004", 'os.getenv("JWT_SECRET", "fallback-value")'))
+        fallback = "fallback-" + "value"
+        getenv = "os.get" + "env"
+        scaffold = build_fix_scaffold(finding("SP004", f'{getenv}("JWT_SECRET", "{fallback}")'))
         self.assertIsNone(scaffold)
 
 

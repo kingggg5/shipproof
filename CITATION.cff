@@ -5,8 +5,8 @@ type: software
 authors:
   - family-names: Pipitakun
     given-names: Jesadakorn
-version: 0.8.1
-date-released: 2026-08-20
+version: 0.9.0
+date-released: 2026-08-24
 license: MIT
 repository-code: "https://github.com/kingggg5/shipproof"
 url: "https://github.com/kingggg5/shipproof"

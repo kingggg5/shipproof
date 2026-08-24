@@ -12,10 +12,11 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 571 | Versioned behavior; covered by structure and regression tests |
+| Executable scanner rules | 620 | Versioned behavior; covered by structure and regression tests |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
+| Reserved promotion slots | 1,000 | Deliberate namespace reservation; not catalog evidence |
 
 Candidate count measures catalog coverage, not detector quality. Candidates have no runtime effect, cannot emit a finding, and must not be presented as shipped product capability.
 

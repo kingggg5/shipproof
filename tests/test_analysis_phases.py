@@ -104,6 +104,28 @@ class AuthDominanceTests(unittest.TestCase):
         auth_v = [v for v in violations if v.invariant_id == "auth-dominance"]
         self.assertEqual(auth_v, [])
 
+    def test_auth_guard_after_effect_does_not_dominate(self) -> None:
+        fn = IRFunction(
+            name="delete_all",
+            file="admin.py",
+            params=[],
+            line_start=1,
+            line_end=10,
+            is_entrypoint=True,
+            entry_taint_vars=[],
+            sinks=[],
+            callees=[],
+            sanitized_params=set(),
+            aliases={},
+            effects=[IREffect(kind="db_write", target="users", line=2)],
+            guards=[IRGuard(kind="authorization", expression="requireAdmin(user)", line=9)],
+        )
+        violations = run_invariants(IRProgram(functions=[fn]))
+        self.assertEqual(
+            len([item for item in violations if item.invariant_id == "auth-dominance"]),
+            1,
+        )
+
 
 class TenantIsolationTests(unittest.TestCase):
     def test_tenant_context_without_scope_flagged(self) -> None:

@@ -8,7 +8,7 @@
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Release](https://img.shields.io/badge/release-v0.8.1-2563eb)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.9.0-2563eb)](CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -61,15 +61,15 @@ Node.js 20+ ทำหน้าที่ CLI ส่วน Python 3.10+ จำเ�
 
 ## ขอบเขตและสถานะโครงการ
 
-ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **576 deterministic rules** สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
+ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **620 deterministic rules** สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
 
 | หัวข้อ | Contract ปัจจุบัน |
 | :--- | :--- |
-| Release ล่าสุด | `v0.7.0` public beta |
+| Release ล่าสุด | `v0.9.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่ง scanner-backed |
-| Executable rules | 576 (`SP001`–`SP665`, มีช่องว่างสงวนไว้ตั้งใจ) |
+| Executable rules | 620 (`SP001`–`SP665`, มีช่องว่างสงวนไว้ตั้งใจ) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
-| Research backlog | 8,800 candidates แบบ research-only; ไม่มีอะไรเป็น finding จนกว่าจะ promote |
+| Research inventory | 7,800 catalogued candidates และ reserved promotion slots 1,000 รายการ; ไม่มีอะไรเป็น finding จนกว่าจะ promote |
 | Exit codes | `0` ผ่าน, `1` gate fail, `2` evidence ไม่ถูกต้อง/ไม่พร้อม |
 | Data flow เริ่มต้น | Local filesystem และ subprocesses เท่านั้น; ไม่มี telemetry หรือ upload ซอร์ส |
 
@@ -124,7 +124,7 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 ## กฎการตรวจจับ
 
-**576 deterministic executable rules** (`SP001`–`SP665`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
+**620 deterministic executable rules** (`SP001`–`SP665`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
 
 catalog ฉบับเต็ม, severity, category และวิธี detection ต่อกฎ พร้อม mapping ecosystem/framework ที่กำหนดว่า structural check แต่ละตัวรันที่ไหน: อยู่ที่ **[docs/rules.md](docs/rules.md)**
 
@@ -150,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.8.1
+      - uses: kingggg5/shipproof@v0.9.0
         with:
           fail-on: high
 ```
@@ -158,7 +158,10 @@ jobs:
 Action เขียน status card Markdown ลง GitHub Step Summary สำหรับ PR ที่แตะ repository ใหญ่ ให้ scan เฉพาะสิ่งที่เปลี่ยน:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.8.1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: kingggg5/shipproof@v0.9.0
         with:
           fail-on: high
           changed-since: origin/main
@@ -251,7 +254,7 @@ candidate จาก research จะกลายเป็น executable `SPxxx` r
 | [Expert candidate catalog](docs/rule-expansion-1000.md) | 1,000 hypotheses จาก model-assisted mapped กับ source | ไม่มี |
 | [2021–2026 annual catalog](docs/rule-expansion-2021-2026.md) | 1,800 CVE/CWE/community signals | ไม่มี |
 | [Language catalog](docs/rule-expansion-languages-5000.md) | 5,000 research slots แยก ecosystem/CWE | ไม่มี |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 576 detectors ผ่าน review | Emit versioned findings |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 620 detectors ผ่าน review | Emit versioned findings |
 
 ดู [production playbook](docs/production-playbook.md), [development plan](docs/next-development-plan.md) และ [delivery roadmap](docs/roadmap.md) สำหรับขอบเขต operational และ acceptance gates อ้างอิง release ด้วย [CITATION.cff](CITATION.cff)
 
@@ -268,7 +271,7 @@ npm run check
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 ```
 
-Core runtime ใช้แค่ Node กับ Python standard library; Ruff เป็น dev-only CI ทดสอบ Node 20/22/24 และ Python 3.10/3.12/3.13/3.14, ตรวจ package allowlist แบบเป๊ะ, smoke-test packed artifact และรัน CodeQL สำหรับ Python กับ JavaScript/TypeScript
+Core runtime ใช้แค่ Node กับ Python standard library; Ruff เป็น dev-only CI ทดสอบ Node 20/22/24 และ Python 3.10/3.11/3.12/3.13/3.14, ตรวจ package allowlist แบบเป๊ะ, smoke-test packed artifact และรัน CodeQL สำหรับ Python กับ JavaScript/TypeScript
 
 ดู [docs/releasing.md](docs/releasing.md) สำหรับ release discipline
 

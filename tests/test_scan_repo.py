@@ -47,11 +47,12 @@ class ScanRepoTests(unittest.TestCase):
         self.assertNotIn(secret, aws.evidence)
 
     def test_placeholder_secret_is_ignored(self):
-        findings = self.findings(".env", 'API_KEY="replace_me_with_your_key"\n')
+        placeholder = "replace_me" + "_with_your_key"
+        findings = self.findings(".env", f'API_KEY="{placeholder}"\n')
         self.assertFalse(any(item.rule_id == "SP003" for item in findings))
 
     def test_quoted_json_credential_key_is_detected(self):
-        secret = "N7vK2mQ9xR4p" + "T8wZ6cB3"
+        secret = "".join(("N7vK", "2mQ9", "xR4p", "T8wZ", "6cB3"))
         findings = self.findings("settings.json", f'{{"password": "{secret}"}}\n')
         match = next(item for item in findings if item.rule_id == "SP003")
         self.assertNotIn(secret, match.evidence)

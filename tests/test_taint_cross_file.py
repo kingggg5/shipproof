@@ -241,6 +241,38 @@ def cleanup(tag: str):
         self.assertEqual(len(cmd_flows), 1)
         self.assertFalse(cmd_flows[0].is_sanitized)
 
+    def test_sink_before_sanitizer_remains_unsafe(self) -> None:
+        (self.root / "app.py").write_text(
+            """
+@app.get('/items/{value}')
+def handler(value):
+    cursor.execute(value)
+    clean = int(value)
+    return clean
+""",
+            encoding="utf-8",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        flows = [flow for flow in graph.taint_flows if flow.sink_rule_id == "SP103"]
+        self.assertEqual(len(flows), 1)
+        self.assertFalse(flows[0].is_sanitized)
+
+    def test_safe_overwrite_kills_python_alias_taint(self) -> None:
+        (self.root / "app.py").write_text(
+            """
+@app.get('/items/{value}')
+def handler(value):
+    statement = value
+    statement = "SELECT 1"
+    cursor.execute(statement)
+""",
+            encoding="utf-8",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        self.assertEqual([flow for flow in graph.taint_flows if flow.sink_rule_id == "SP103"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

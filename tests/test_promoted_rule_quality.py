@@ -21,6 +21,13 @@ from scan_repo import (  # noqa: E402
 MANIFEST = ROOT / "tests" / "rule_cases_promoted.json"
 
 
+def fixture_source(case: dict[str, object]) -> str:
+    parts = case.get("source_parts")
+    if isinstance(parts, list):
+        return "".join(str(part) for part in parts)
+    return str(case["source"])
+
+
 def detected_rule_ids(path_value: str, source: str) -> set[str]:
     path = Path(path_value)
     findings = find_regex_issues(path, path.as_posix(), source)
@@ -87,33 +94,36 @@ class PromotedRuleQualityTests(unittest.TestCase):
     def test_positive_fixtures_fire(self) -> None:
         for rule_id, entry in self.cases.items():
             for case in entry["cases"]["positive"]:
+                source = fixture_source(case)
                 with self.subTest(rule_id=rule_id, polarity="positive"):
                     self.assertIn(
                         rule_id,
-                        detected_rule_ids(case["path"], case["source"]),
-                        case["source"],
+                        detected_rule_ids(case["path"], source),
+                        source,
                     )
 
     def test_negative_fixtures_stay_silent(self) -> None:
         for rule_id, entry in self.cases.items():
             for case in entry["cases"]["negative"]:
+                source = fixture_source(case)
                 with self.subTest(rule_id=rule_id, polarity="negative"):
                     self.assertNotIn(
                         rule_id,
-                        detected_rule_ids(case["path"], case["source"]),
-                        case["source"],
+                        detected_rule_ids(case["path"], source),
+                        source,
                     )
 
     def test_adversarial_cases_match_expected_outcomes(self) -> None:
         for rule_id, entry in self.cases.items():
             for case in entry["cases"]["adversarial"]:
+                source = fixture_source(case)
                 with self.subTest(rule_id=rule_id):
                     self.assertGreaterEqual(len(case["rationale"]), 40)
-                    detected = rule_id in detected_rule_ids(case["path"], case["source"])
+                    detected = rule_id in detected_rule_ids(case["path"], source)
                     self.assertEqual(
                         detected,
                         case["expected"],
-                        f"{case['source']} expected={case['expected']}",
+                        f"{source} expected={case['expected']}",
                     )
 
 

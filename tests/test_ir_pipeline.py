@@ -60,12 +60,24 @@ def process(value):
 """,
         )
         _, prog = self._build()
-        entry_fns = [f for f in prog.functions if f.is_entrypoint]
-        self.assertGreaterEqual(len(entry_fns), 0)
-        # At minimum, both functions should be in the program
         names = {f.name for f in prog.functions}
         self.assertIn("run", names)
         self.assertIn("process", names)
+
+    def test_ir_preserves_function_lines_and_sink_effects(self) -> None:
+        self._write(
+            "app.py",
+            """
+@app.get('/items/{value}')
+def handler(value):
+    cursor.execute(value)
+""",
+        )
+        _, prog = self._build()
+        handler = next(fn for fn in prog.functions if fn.name == "handler")
+        self.assertGreater(handler.line_start, 0)
+        self.assertGreaterEqual(handler.line_end, handler.line_start)
+        self.assertEqual([effect.kind for effect in handler.effects], ["db_read"])
 
     def test_propagate_taint_produces_flows(self) -> None:
         self._write(

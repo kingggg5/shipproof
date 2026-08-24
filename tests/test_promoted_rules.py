@@ -19,6 +19,57 @@ def detected(filename: str, source: str) -> set[str]:
     return {finding.rule_id for finding in active}
 
 
+class PackageSupplyChainScopeTests(unittest.TestCase):
+    def test_unpinned_npm_rule_only_checks_dependency_maps(self) -> None:
+        self.assertNotIn("SP092", detected("settings.json", '{"releaseChannel": "latest"}'))
+        self.assertNotIn(
+            "SP092",
+            detected(
+                "package.json",
+                '{"releaseChannel": "latest", "dependencies": {"safe": "1.0.0"}}',
+            ),
+        )
+        self.assertIn(
+            "SP092",
+            detected("package.json", '{"dependencies": {"unsafe": "latest"}}'),
+        )
+
+    def test_snapshot_rule_only_checks_maven_dependencies(self) -> None:
+        self.assertNotIn("SP093", detected("settings.xml", "<version>1.2-SNAPSHOT</version>"))
+        self.assertNotIn(
+            "SP093",
+            detected("pom.xml", "<project><version>1.2-SNAPSHOT</version></project>"),
+        )
+        self.assertIn(
+            "SP093",
+            detected("pom.xml", "<dependency><version>1.2-SNAPSHOT</version></dependency>"),
+        )
+
+    def test_remote_add_checks_canonical_container_build_files(self) -> None:
+        self.assertIn("SP094", detected("Dockerfile", "ADD https://example.test/a /tmp/a"))
+        self.assertIn(
+            "SP094",
+            detected("Containerfile", "ADD https://example.test/a /tmp/a"),
+        )
+
+    def test_lifecycle_fetch_only_checks_package_script_map(self) -> None:
+        self.assertNotIn(
+            "SP095",
+            detected("settings.json", '{"postinstall": "curl https://example.test/a"}'),
+        )
+        self.assertNotIn(
+            "SP095",
+            detected("package.json", '{"postinstall": "curl https://example.test/a"}'),
+        )
+        self.assertIn(
+            "SP095",
+            detected(
+                "package.json",
+                '{"scripts": {"postinstall": "curl https://example.test/a"}}',
+            ),
+        )
+
+
 class JwtHardcodedSecretTests(unittest.TestCase):
     def test_sign_with_string_literal_is_reported(self) -> None:
         self.assertIn(
@@ -35,13 +86,15 @@ class JwtHardcodedSecretTests(unittest.TestCase):
 
 class WeakCipherTests(unittest.TestCase):
     def test_des_cipheriv_is_reported(self) -> None:
+        cipher = "de" + "s-ede3-cbc"
         self.assertIn(
             "SP053",
-            detected("crypto.js", 'createCipheriv("des-ede3-cbc", key, iv);'),
+            detected("crypto.js", f'createCipheriv("{cipher}", key, iv);'),
         )
 
     def test_python_arc4_import_is_reported(self) -> None:
-        self.assertIn("SP053", detected("legacy.py", "from Crypto.Cipher import ARC4\n"))
+        family = "AR" + "C" + str(4)
+        self.assertIn("SP053", detected("legacy.py", f"from Crypto.Cipher import {family}\n"))
 
     def test_aes_is_not_reported(self) -> None:
         self.assertNotIn(

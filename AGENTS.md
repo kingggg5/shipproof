@@ -27,7 +27,7 @@ Both must pass with zero findings at the `high` gate. If your change adds findin
 - Scanner rules and engines: `skills/audit-production-readiness/scripts/scan_repo.py` (`RULES` tuple, `RULE_EXPLANATIONS`, regex + Python AST engines).
 - Node CLI, policy parser, evidence adapters, MCP server: `lib/*.mjs`.
 - Compatibility contract: `fixtures/golden-contract/` + `fixtures/expected-golden-scan.json` — identical findings and fingerprints through direct Python, the Node CLI, and SARIF. Update the expectation deliberately when a detection change is intended.
-- Tests: `tests/` (Python) and `tests/node/` (Node). Both run in CI across Python 3.10/3.12/3.13/3.14 and Node 20/22/24.
+- Tests: `tests/` (Python) and `tests/node/` (Node). Both run in CI across Python 3.10/3.11/3.12/3.13/3.14 and Node 20/22/24.
 
 ## Common tasks
 

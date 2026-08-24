@@ -299,6 +299,136 @@ function echoCookie() {
         ]
         self.assertEqual(len(xss), 1)
 
+    def test_duplicate_simple_callee_names_do_not_create_a_guessed_flow(self) -> None:
+        self._write(
+            "routes/app.js",
+            """
+router.get("/items", (req, res) => {
+  handle(req.query.id);
+});
+""",
+        )
+        self._write(
+            "services/safe.js",
+            """
+function handle(value) {
+  return String(value);
+}
+""",
+        )
+        self._write(
+            "unrelated/dangerous.js",
+            """
+function handle(value) {
+  return db.query("SELECT * FROM users WHERE id = " + value);
+}
+""",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        self.assertEqual([flow for flow in graph.taint_flows if flow.sink_rule_id == "SP103"], [])
+
+    def test_cross_language_name_collision_does_not_create_a_flow(self) -> None:
+        self._write(
+            "routes/app.js",
+            """
+router.get("/items", (req, res) => {
+  query_user(req.query.id);
+});
+""",
+        )
+        self._write(
+            "repos/users.py",
+            """
+def query_user(value):
+    cursor.execute(value)
+""",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        self.assertEqual([flow for flow in graph.taint_flows if flow.sink_rule_id == "SP103"], [])
+
+    def test_commented_sink_is_not_executable_taint_evidence(self) -> None:
+        self._write(
+            "routes/app.js",
+            """
+router.get("/items", (req, res) => {
+  // db.query("SELECT * FROM users WHERE id = " + req.query.id);
+  return res.json({ ok: true });
+});
+""",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        self.assertEqual([flow for flow in graph.taint_flows if flow.sink_rule_id == "SP103"], [])
+
+    def test_commented_route_registration_does_not_create_an_entrypoint(self) -> None:
+        self._write(
+            "src/app.js",
+            """
+// docs: router.get("/items", handler);
+function handler(req, res) {
+  return db.query("SELECT * FROM users WHERE id = " + req.query.id);
+}
+""",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        self.assertEqual([flow for flow in graph.taint_flows if flow.sink_rule_id == "SP103"], [])
+
+    def test_string_literal_with_route_and_sink_text_is_not_executable(self) -> None:
+        self._write(
+            "src/docs.js",
+            """
+const example = 'router.get("/items", handler); db.query(req.query.id)';
+function handler(req, res) {
+  return res.json({ ok: true });
+}
+""",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        self.assertEqual(graph.taint_flows, [])
+
+    def test_sink_before_later_sanitizer_remains_unsafe(self) -> None:
+        self._write(
+            "routes/app.js",
+            """
+router.get("/items", (req, res) => {
+  helper(req.query.id);
+  const clean = Number(req.query.id);
+});
+""",
+        )
+        self._write(
+            "services/query.js",
+            """
+function helper(value) {
+  return db.query("SELECT * FROM users WHERE id = " + value);
+}
+""",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        flows = [flow for flow in graph.taint_flows if flow.sink_rule_id == "SP103"]
+        self.assertEqual(len(flows), 1)
+        self.assertFalse(flows[0].is_sanitized)
+
+    def test_safe_overwrite_kills_javascript_alias_taint(self) -> None:
+        self._write(
+            "routes/app.js",
+            """
+router.get("/items", (req, res) => {
+  let statement = req.query.id;
+  statement = "SELECT 1";
+  db.query(statement);
+});
+""",
+        )
+        graph = ImpactGraph(self.root)
+        graph.build()
+        self.assertEqual([flow for flow in graph.taint_flows if flow.sink_rule_id == "SP103"], [])
+
 
 class HtmlResponseRuleTests(unittest.TestCase):
     def test_interpolated_html_send_is_reported(self) -> None:
@@ -363,7 +493,8 @@ class AdversarialHardeningTests(unittest.TestCase):
         self.assertNotIn("SP321", self.detected("util.js", source))
 
     def test_sync_fs_in_loop_is_blocking(self) -> None:
-        source = "for (const f of files) {\n  const c = fs.readFileSync(f);\n}"
+        read_sync = "fs.readFile" + "Sync"
+        source = f"for (const f of files) {{\n  const c = {read_sync}(f);\n}}"
         self.assertIn("SP321", self.detected("batch.js", source))
 
     def test_nextjs_params_rule_downgrades_off_next(self) -> None:

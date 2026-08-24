@@ -199,6 +199,7 @@ def propagate_taint(program: IRProgram) -> list[dict]:
                 if state_key in local_visited:
                     continue
                 local_visited.add(state_key)
+                was_sanitized = was_sanitized or carrier in fn.sanitized_params
 
                 # Check sinks within this function
                 for sink in fn.sinks:
@@ -227,7 +228,15 @@ def propagate_taint(program: IRProgram) -> list[dict]:
                 for callee in fn.callees:
                     if callee.param_name != carrier:
                         continue
-                    for target_fn in program.find_by_name(callee.callee_name):
+                    candidates = program.find_by_name(callee.callee_name)
+                    same_language = [
+                        target
+                        for target in candidates
+                        if Path(target.file).suffix.lower() == Path(fn.file).suffix.lower()
+                    ]
+                    if len(same_language) != 1:
+                        continue
+                    for target_fn in same_language:
                         next_idx = callee.arg_index
                         if next_idx < len(target_fn.params):
                             c_param = target_fn.params[next_idx]

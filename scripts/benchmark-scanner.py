@@ -125,7 +125,7 @@ def main() -> int:
         if not arguments.no_warmup:
             # The first scan of freshly written files pays OS-level first-open
             # cost (antivirus, directory metadata) that is not scanner work.
-            # Warm up once, then measure a cold (fresh-state) and a warm pass.
+            # Warm up once, then measure the first post-warmup pass and a repeated warm pass.
             scanner.scan_repository(fixture, jobs=arguments.jobs)
         started = perf_counter()
         findings, stats = scanner.scan_repository(fixture, jobs=arguments.jobs)

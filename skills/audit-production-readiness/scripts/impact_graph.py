@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.8.1"
+VERSION = "0.9.0"
 
 SKIP_DIRS = {
     ".git",
@@ -303,7 +303,10 @@ class PythonASTVisitor(ast.NodeVisitor):
             entrypoint_taint_params=self.entrypoint_taint_params,
             param_to_sinks=self.func_sinks,
             callee_calls=self.func_callee_calls,
-            sanitized_params=self.func_sanitized,
+            # Sink and call-site collection is statement ordered. A
+            # function-wide sanitizer bit would incorrectly clear flows that
+            # occur before the sanitizer.
+            sanitized_params=set(),
         )
 
         self.current_func = prev_func
@@ -318,15 +321,15 @@ class PythonASTVisitor(ast.NodeVisitor):
         self.entrypoint_taint_params = prev_taint_params
 
     def visit_Assign(self, node: ast.Assign) -> None:
+        target_names = [target.id for target in node.targets if isinstance(target, ast.Name)]
+        if self.current_func:
+            for target_name in target_names:
+                self.func_aliases.pop(target_name, None)
+                self.func_sanitized.discard(target_name)
         if self.current_func and isinstance(node.value, ast.Call):
             func_name = self._extract_call_name(node.value.func)
             if func_name and any(san in func_name.lower() for san in KNOWN_SANITIZERS):
-                for arg in node.value.args:
-                    if isinstance(arg, ast.Name) and arg.id in self.func_params:
-                        self.func_sanitized.add(arg.id)
-                        for target in node.targets:
-                            if isinstance(target, ast.Name):
-                                self.func_sanitized.add(target.id)
+                self.func_sanitized.update(target_names)
         # Alias tracking: a single target assigned from exactly one live
         # parameter (possibly through other aliases) carries that parameter's
         # taint into later statements (q = "SELECT" + uid; execute(q)).
@@ -401,8 +404,6 @@ class PythonASTVisitor(ast.NodeVisitor):
                         p_name = self._extract_tainted_param_in_expr(arg)
                         if p_name is None and isinstance(arg, ast.Name):
                             p_name = self._resolve_carrier(arg.id)
-                            if p_name is not None:
-                                self.func_aliases.pop(arg.id, None)
                         if p_name and p_name not in self.func_sanitized:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
@@ -420,8 +421,6 @@ class PythonASTVisitor(ast.NodeVisitor):
                         p_name = self._extract_tainted_param_in_expr(arg)
                         if p_name is None and isinstance(arg, ast.Name):
                             p_name = self._resolve_carrier(arg.id)
-                            if p_name is not None:
-                                self.func_aliases.pop(arg.id, None)
                         if p_name and p_name not in self.func_sanitized:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
@@ -439,8 +438,6 @@ class PythonASTVisitor(ast.NodeVisitor):
                         p_name = self._extract_tainted_param_in_expr(arg)
                         if p_name is None and isinstance(arg, ast.Name):
                             p_name = self._resolve_carrier(arg.id)
-                            if p_name is not None:
-                                self.func_aliases.pop(arg.id, None)
                         if p_name and p_name not in self.func_sanitized:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
@@ -619,6 +616,11 @@ class JsTsAnalyzer:
         r"|\bdocument\s*\.\s*cookie\b"
         r"|\bwindow\s*\.\s*name\b"
     )
+    CLIENT_SOURCE_ACCESS = re.compile(
+        r"\blocation\s*\.\s*(?:search|hash|href)\b"
+        r"|\bdocument\s*\.\s*cookie\b"
+        r"|\bwindow\s*\.\s*name\b"
+    )
     DECLARATION_LINE = re.compile(
         r"(?:const|let|var)\s+(?P<target>[^=\n]{1,120}?)\s*(?::[^=\n]+)?=(?!=)(?P<rhs>.*)"
     )
@@ -647,7 +649,7 @@ class JsTsAnalyzer:
     )
     IDENTIFIER_TOKEN = re.compile(r"[A-Za-z_$][\w$]*")
     CONTAINMENT_GUARD = re.compile(r"\b(?P<name>[A-Za-z_$][\w$]*)\s*\.\s*startsWith\s*\(")
-    ENTRYPOINT_FALLBACK_NAMES = frozenset({"main", "handler"})
+    ENTRYPOINT_FALLBACK_NAMES = frozenset({"main"})
     RESPONSE_SIDE_NAMES = frozenset({"res", "response", "next"})
     RESERVED_WORDS = frozenset(
         {"true", "false", "null", "undefined", "this", "new", "typeof", "await"}
@@ -657,8 +659,9 @@ class JsTsAnalyzer:
         """Return function summaries with entrypoint/taint evidence for one file."""
         if len(content) > self.MAX_FILE_CHARS:
             content = content[: self.MAX_FILE_CHARS]
-        spans = self._collect_named_spans(content)
-        route_handlers, inline_spans = self._collect_registrations(content)
+        masked_content = self._mask_noncode(content)
+        spans = self._collect_named_spans(masked_content)
+        route_handlers, inline_spans = self._collect_registrations(masked_content)
         spans.extend(inline_spans)
         spans.sort(key=lambda item: (item.decl_start, item.name))
         if len(spans) > self.MAX_FUNCTIONS_PER_FILE:
@@ -670,9 +673,88 @@ class JsTsAnalyzer:
                 span.name in route_handlers
                 or span.name.startswith("inline:")
                 or span.name in self.ENTRYPOINT_FALLBACK_NAMES
+                or (
+                    span.name == "handler"
+                    and re.search(
+                        r"\bexport\b",
+                        masked_content[span.decl_start : span.body_start],
+                    )
+                    is not None
+                )
             )
-            summaries.append(self._summarize(rel_path, content, span, is_entrypoint, spans))
+            summaries.append(
+                self._summarize(
+                    rel_path,
+                    content,
+                    masked_content,
+                    span,
+                    is_entrypoint,
+                    spans,
+                )
+            )
         return summaries
+
+    def _mask_noncode(self, content: str) -> str:
+        """Blank comments and string contents while preserving offsets.
+
+        Quote delimiters remain so route parsing can still recognize a literal
+        path. Template expressions are recursively retained as code while the
+        surrounding literal text is blanked.
+        """
+        chars = list(content)
+        index = 0
+        limit = len(content)
+
+        def blank(start: int, end: int) -> None:
+            for offset in range(start, min(end, limit)):
+                if chars[offset] != "\n":
+                    chars[offset] = " "
+
+        while index < limit:
+            if content.startswith("//", index):
+                end = content.find("\n", index + 2)
+                end = limit if end == -1 else end
+                blank(index, end)
+                index = end
+                continue
+            if content.startswith("/*", index):
+                closing = content.find("*/", index + 2)
+                end = limit if closing == -1 else closing + 2
+                blank(index, end)
+                index = end
+                continue
+            quote = content[index]
+            if quote in {"'", '"'}:
+                end = self._scan_past_string(content, index, limit)
+                blank(index + 1, max(index + 1, end - 1))
+                index = end
+                continue
+            if quote == "`":
+                cursor = index + 1
+                while cursor < limit:
+                    if content[cursor] == "\\":
+                        blank(cursor, min(cursor + 2, limit))
+                        cursor += 2
+                        continue
+                    if content.startswith("${", cursor):
+                        close = self._match_delim(content, cursor + 1, "{", "}")
+                        if close is None:
+                            blank(cursor, limit)
+                            cursor = limit
+                            break
+                        expression = self._mask_noncode(content[cursor + 2 : close])
+                        chars[cursor + 2 : close] = list(expression)
+                        cursor = close + 1
+                        continue
+                    if content[cursor] == "`":
+                        cursor += 1
+                        break
+                    blank(cursor, cursor + 1)
+                    cursor += 1
+                index = cursor
+                continue
+            index += 1
+        return "".join(chars)
 
     # ------------------------------------------------------------------
     # Span extraction
@@ -786,11 +868,12 @@ class JsTsAnalyzer:
         self,
         rel_path: str,
         content: str,
+        masked_content: str,
         span: _JsFunctionSpan,
         is_entrypoint: bool,
         all_spans: Sequence[_JsFunctionSpan],
     ) -> FunctionSummary:
-        raw_body = content[
+        raw_body = masked_content[
             span.body_start : min(span.body_end, span.body_start + self.MAX_BODY_CHARS)
         ]
         body = self._blank_nested_bodies(raw_body, span, all_spans)
@@ -801,33 +884,27 @@ class JsTsAnalyzer:
         code_lines = [line for line in body.splitlines() if not line.lstrip().startswith("//")]
         code_only_body = "\n".join(code_lines)
 
-        tainted: set[str] = set(params)
-        sanitized: set[str] = set()
+        initial_tainted: set[str] = set(params)
         has_source_access = self.REQUEST_SOURCE_ACCESS.search(code_only_body) is not None
         if is_entrypoint and has_source_access:
-            tainted.update({"req", "request"})
-        elif not is_entrypoint and has_source_access:
-            # Global request-derived reads (location.hash, document.cookie,
-            # req.headers inside middleware) make this function a taint root
-            # even without a route registration.
+            initial_tainted.update({"req", "request"})
+        elif not is_entrypoint and self.CLIENT_SOURCE_ACCESS.search(code_only_body):
+            # Browser globals are self-contained taint roots. Server request
+            # objects require an observed route registration; treating every
+            # helper parameter named req as public creates guessed flows.
             is_entrypoint = True
-            tainted.update({"req", "request"})
-        aliases = self._track_assignments(body, tainted, sanitized)
+            initial_tainted.update({"req", "request"})
 
-        # Carriers exclude response-side objects (never attacker-controlled).
-        # Sanitizer-cleared locals drop out through _track_assignments, so a
-        # fully sanitized chain produces no flow instead of a safe-marked one.
-        carriers = sorted(tainted - sanitized - self.RESPONSE_SIDE_NAMES)
-        sinks = self._collect_sinks(content, span.body_start, body, carriers, aliases)
+        sinks = self._collect_sinks(content, span.body_start, body, initial_tainted)
         if has_source_access:
             # DOM sinks are assignments rather than calls; scan them on the
             # same carrier set so client-side XSS chains reach the engine.
-            sinks.extend(self._collect_dom_sinks(content, span.body_start, body, carriers, aliases))
-        callees = self._collect_callees(content, span.body_start, body, carriers, aliases)
+            sinks.extend(self._collect_dom_sinks(content, span.body_start, body, initial_tainted))
+        callees = self._collect_callees(content, span.body_start, body, initial_tainted)
 
         entrypoint_taint_params: list[str] = []
         if is_entrypoint:
-            candidates = set(carriers)
+            candidates = initial_tainted - self.RESPONSE_SIDE_NAMES
             if not candidates:
                 candidates = {name for name in params if name not in self.RESPONSE_SIDE_NAMES}
             entrypoint_taint_params = sorted(candidates)[: self.MAX_PARAMS]
@@ -840,7 +917,7 @@ class JsTsAnalyzer:
             entrypoint_taint_params=entrypoint_taint_params,
             param_to_sinks=sinks,
             callee_calls=callees,
-            sanitized_params=sanitized,
+            sanitized_params=set(),
         )
 
     def _blank_nested_bodies(
@@ -894,35 +971,36 @@ class JsTsAnalyzer:
             targets = [name for name in targets if name.lower() not in self.RESERVED_WORDS][:8]
             if not targets:
                 continue
+            live_before = sorted(tainted - sanitized)
             cleaned_rhs = self.SANITIZER_WRAP.sub(" ", rhs)
             had_wrap = bool(self.SANITIZER_WRAP.search(rhs))
             req_derived = bool(self.REQUEST_SOURCE_ACCESS.search(rhs))
-            flowing = any(
-                self._contains_word(cleaned_rhs, name) for name in sorted(tainted - sanitized)
-            )
+            flowing = any(self._contains_word(cleaned_rhs, name) for name in live_before)
+            wrapped_sources = [name for name in live_before if self._contains_word(rhs, name)]
+            for target in targets:
+                tainted.discard(target)
+                sanitized.discard(target)
+                aliases.pop(target, None)
             if req_derived:
                 if had_wrap and not flowing and not self.REQUEST_SOURCE_ACCESS.search(cleaned_rhs):
                     sanitized.update(targets)
                 else:
                     tainted.update(targets)
+                    source_root = next(
+                        (name for name in ("req", "request") if self._contains_word(rhs, name)),
+                        "request",
+                    )
+                    if len(targets) == 1:
+                        aliases[targets[0]] = source_root
             elif flowing:
-                sources = [
-                    name
-                    for name in sorted(tainted - sanitized)
-                    if self._contains_word(cleaned_rhs, name)
-                ]
+                sources = [name for name in live_before if self._contains_word(cleaned_rhs, name)]
                 tainted.update(targets)
                 # Single-source aliasing lets sinks reached through the copy
                 # report under the parameter that carries the taint.
                 if len(sources) == 1 and len(targets) == 1:
                     aliases[targets[0]] = sources[0]
-            elif had_wrap:
-                wrapped_sources = [
-                    name for name in sorted(tainted - sanitized) if self._contains_word(rhs, name)
-                ]
-                if wrapped_sources:
-                    sanitized.update(wrapped_sources)
-                    sanitized.update(targets)
+            elif had_wrap and wrapped_sources:
+                sanitized.update(targets)
         # Containment guards: a value explicitly checked against a prefix
         # (reportPath.startsWith(BASE_DIR)) was reviewed for traversal, so its
         # flow is treated as sanitized downstream.
@@ -935,16 +1013,19 @@ class JsTsAnalyzer:
         content: str,
         base_offset: int,
         body: str,
-        carriers: Sequence[str],
-        aliases: dict[str, str] | None = None,
+        initial_tainted: set[str],
     ) -> list[TaintSinkOccurrence]:
         occurrences: list[TaintSinkOccurrence] = []
-        if not carriers:
+        if not initial_tainted:
             return occurrences
         limit = len(body)
-        carrier_list = list(carriers)
-        alias_map = aliases or {}
         for match in self.SINK_CALL.finditer(body):
+            tainted = set(initial_tainted)
+            sanitized: set[str] = set()
+            alias_map = self._track_assignments(body[: match.start()], tainted, sanitized)
+            carrier_list = sorted(tainted - sanitized - self.RESPONSE_SIDE_NAMES)
+            if not carrier_list:
+                continue
             method = (match.group("method") or "").lower()
             bare = (match.group("bare") or "").lower()
             http_method = (match.group("http_method") or "").lower()
@@ -973,6 +1054,7 @@ class JsTsAnalyzer:
             )
             if close_paren is None:
                 continue
+            original_args = content[base_offset + open_paren + 1 : base_offset + close_paren]
             cleaned_args = self.SANITIZER_WRAP.sub(" ", body[open_paren + 1 : close_paren])
             # Parameterized style passes values inside a placeholder array
             # (db.query(sql, [x])); the driver binds them safely, so drop
@@ -989,7 +1071,7 @@ class JsTsAnalyzer:
             if (
                 sink_info[0] == "xss"
                 and sink_info[1] == "SP080"
-                and not re.search(r"<[a-zA-Z]", cleaned_args)
+                and not re.search(r"<[a-zA-Z]", original_args)
             ):
                 continue
             # Resolve the derived variable back to the carrier that entered the
@@ -1007,7 +1089,9 @@ class JsTsAnalyzer:
                     rule_id=sink_info[1],
                     line=content.count("\n", 0, base_offset + match.start()) + 1,
                     param_name=root,
-                    call_snippet=body[match.start() : close_paren + 1][:160],
+                    call_snippet=content[
+                        base_offset + match.start() : base_offset + close_paren + 1
+                    ][:160],
                 )
             )
             if len(occurrences) >= self.MAX_SINKS_PER_FUNCTION:
@@ -1020,27 +1104,15 @@ class JsTsAnalyzer:
         content: str,
         base_offset: int,
         body: str,
-        carriers: Sequence[str],
-        aliases: dict[str, str] | None = None,
+        initial_tainted: set[str],
     ) -> list[TaintSinkOccurrence]:
         """DOM XSS sinks expressed as assignments (innerHTML/outerHTML/
         insertAdjacentHTML) and document.write calls. These never appear as
         ordinary call expressions, so they need their own bounded scan."""
         occurrences: list[TaintSinkOccurrence] = []
-        if not carriers:
+        if not initial_tainted:
             return occurrences
-        carrier_list = list(carriers)
-        alias_map = aliases or {}
         limit = len(body)
-
-        def resolve_root(name: str) -> str:
-            current = name
-            for _ in range(6):
-                if current in alias_map:
-                    current = alias_map[current]
-                else:
-                    return current
-            return current
 
         patterns = (
             (self.DOM_SINK_ASSIGNMENT, "xss", "SP147"),
@@ -1048,6 +1120,13 @@ class JsTsAnalyzer:
         )
         for pattern, sink_type, rule_id in patterns:
             for match in pattern.finditer(body):
+                tainted = set(initial_tainted)
+                sanitized: set[str] = set()
+                alias_map = self._track_assignments(body[: match.start()], tainted, sanitized)
+                carrier_list = sorted(tainted - sanitized - self.RESPONSE_SIDE_NAMES)
+                if not carrier_list:
+                    continue
+
                 line_end = body.find("\n", match.end())
                 if line_end == -1:
                     line_end = min(limit, match.end() + self.MAX_ARG_CHARS)
@@ -1059,12 +1138,18 @@ class JsTsAnalyzer:
                 )
                 if hit is None:
                     continue
+                root = hit
+                for _ in range(6):
+                    if root in alias_map:
+                        root = alias_map[root]
+                    else:
+                        break
                 occurrences.append(
                     TaintSinkOccurrence(
                         sink_type=sink_type,
                         rule_id=rule_id,
                         line=content.count("\n", 0, base_offset + match.start()) + 1,
-                        param_name=resolve_root(hit),
+                        param_name=root,
                         call_snippet=body[match.start() : line_end][:160],
                     )
                 )
@@ -1079,16 +1164,19 @@ class JsTsAnalyzer:
         content: str,
         base_offset: int,
         body: str,
-        carriers: Sequence[str],
-        aliases: dict[str, str] | None = None,
+        initial_tainted: set[str],
     ) -> list[CalleeCallSite]:
         call_sites: list[CalleeCallSite] = []
-        if not carriers:
+        if not initial_tainted:
             return call_sites
         limit = len(body)
-        carrier_list = list(carriers)
-        alias_map = aliases or {}
         for match in self.CALLEE_CALL.finditer(body):
+            tainted = set(initial_tainted)
+            sanitized: set[str] = set()
+            alias_map = self._track_assignments(body[: match.start()], tainted, sanitized)
+            carrier_list = sorted(tainted - sanitized - self.RESPONSE_SIDE_NAMES)
+            if not carrier_list:
+                continue
             callee = match.group("callee")
             if callee.lower() in JS_EXCLUDED_CALLEES:
                 continue
@@ -1255,12 +1343,22 @@ class JsTsAnalyzer:
 
 
 class ImpactGraph:
-    def __init__(self, root: Path):
+    def __init__(
+        self,
+        root: Path,
+        *,
+        allowed_paths: frozenset[str] | None = None,
+        max_file_bytes: int = 1_000_000,
+    ):
         self.root = root.resolve()
         if not self.root.exists():
             raise ValueError(f"path does not exist: {self.root}")
         if not self.root.is_dir():
             raise ValueError(f"not a directory: {self.root}")
+        if max_file_bytes < 1:
+            raise ValueError("max_file_bytes must be positive")
+        self.allowed_paths = allowed_paths
+        self.max_file_bytes = max_file_bytes
         self.symbols: dict[str, list[SymbolDef]] = defaultdict(list)
         self.file_to_symbols: dict[str, list[SymbolDef]] = defaultdict(list)
         self.summaries: dict[str, list[FunctionSummary]] = defaultdict(list)
@@ -1288,6 +1386,10 @@ class ImpactGraph:
 
                 try:
                     rel_path = path.relative_to(self.root).as_posix()
+                    if self.allowed_paths is not None and rel_path not in self.allowed_paths:
+                        continue
+                    if path.stat().st_size > self.max_file_bytes:
+                        continue
                     content = path.read_text(encoding="utf-8", errors="replace")
                 except OSError:
                     continue
@@ -1350,6 +1452,42 @@ class ImpactGraph:
         self.compute_reachability()
         self.taint_flows = self.propagate_interprocedural_taint()
 
+    @staticmethod
+    def _language_family(path: str) -> str:
+        return "python" if Path(path).suffix.lower() in PYTHON_SUFFIXES else "javascript"
+
+    def _resolve_summary_candidates(
+        self,
+        caller: FunctionSummary,
+        callee_name: str,
+    ) -> list[FunctionSummary]:
+        """Resolve only same-language, unambiguous static calls.
+
+        The lexical engine has no type checker or module resolver. Guessing among
+        duplicate simple names creates fabricated cross-file flows, so prefer a
+        same-file definition and otherwise require exactly one candidate.
+        """
+        candidates = self.summaries.get(callee_name, []) or self.summaries.get(
+            callee_name.split(".")[-1], []
+        )
+        family = self._language_family(caller.file)
+        compatible = [item for item in candidates if self._language_family(item.file) == family]
+        same_file = [item for item in compatible if item.file == caller.file]
+        if len(same_file) == 1:
+            return same_file
+        return compatible if len(compatible) == 1 else []
+
+    def _resolve_symbol_candidates(self, caller: SymbolDef, callee_name: str) -> list[SymbolDef]:
+        candidates = self.symbols.get(callee_name, []) or self.symbols.get(
+            callee_name.split(".")[-1], []
+        )
+        family = self._language_family(caller.file)
+        compatible = [item for item in candidates if self._language_family(item.file) == family]
+        same_file = [item for item in compatible if item.file == caller.file]
+        if len(same_file) == 1:
+            return same_file
+        return compatible if len(compatible) == 1 else []
+
     def compute_reachability(self) -> None:
         """Compute reachability from public route entrypoints."""
         entrypoints: set[str] = set()
@@ -1371,10 +1509,7 @@ class ImpactGraph:
             ]
             for sym in matching_syms:
                 for callee in sym.calls:
-                    callee_simple = callee.split(".")[-1]
-                    callee_syms = self.symbols.get(callee, []) or self.symbols.get(
-                        callee_simple, []
-                    )
+                    callee_syms = self._resolve_symbol_candidates(sym, callee)
                     for c_sym in callee_syms:
                         c_id = f"{c_sym.file}:{c_sym.name}"
                         c_sym.is_reachable = True
@@ -1436,9 +1571,9 @@ class ImpactGraph:
                     # Propagate to downstream callees
                     for call_site in curr_sum.callee_calls:
                         if call_site.param_name == curr_param:
-                            callee_sums = self.summaries.get(
-                                call_site.callee_name, []
-                            ) or self.summaries.get(call_site.callee_name.split(".")[-1], [])
+                            callee_sums = self._resolve_summary_candidates(
+                                curr_sum, call_site.callee_name
+                            )
                             for c_sum in callee_sums:
                                 if call_site.arg_index < len(c_sum.params):
                                     c_param = c_sum.params[call_site.arg_index]
@@ -1669,7 +1804,7 @@ if __name__ == "__main__":
 # ---------------------------------------------------------------------------
 
 
-def _summary_to_ir_function(summary, effects=None, guards=None):
+def _summary_to_ir_function(summary, effects=None, guards=None, line_start=0, line_end=0):
     """Convert a FunctionSummary (Python or JS/TS engine) into an IRFunction."""
     from ir import IRCallee, IRFunction, IRSink
 
@@ -1677,8 +1812,8 @@ def _summary_to_ir_function(summary, effects=None, guards=None):
         name=summary.name,
         file=summary.file,
         params=list(summary.params),
-        line_start=0,
-        line_end=0,
+        line_start=line_start,
+        line_end=line_end,
         is_entrypoint=summary.is_entrypoint,
         entry_taint_vars=list(summary.entrypoint_taint_params),
         sinks=[
@@ -1712,42 +1847,40 @@ def build_ir_program(graph, detected_frameworks=None):
     import json as _json
     from pathlib import Path as _Path
 
-    from ir import IRCallee, IRFunction, IRProgram, IRSink
+    from ir import EffectKind, IREffect, IRProgram
 
     functions = []
     for summary_list in graph.summaries.values():
         for summary in summary_list:
-            fn = IRFunction(
-                name=summary.name,
-                file=summary.file,
-                params=list(summary.params),
-                line_start=0,
-                line_end=0,
-                is_entrypoint=summary.is_entrypoint,
-                entry_taint_vars=list(summary.entrypoint_taint_params),
-                sinks=[
-                    IRSink(
-                        rule_id=s.rule_id,
-                        sink_type=s.sink_type,
-                        variable=s.param_name,
-                        call_expr=s.call_snippet[:120],
-                        line=s.line,
-                    )
-                    for s in summary.param_to_sinks
-                ],
-                callees=[
-                    IRCallee(
-                        callee_name=c.callee_name,
-                        arg_index=c.arg_index,
-                        param_name=c.param_name,
-                        line=c.line,
-                    )
-                    for c in summary.callee_calls
-                ],
-                sanitized_params=set(summary.sanitized_params),
-                aliases={},
-                effects=[],
-                guards=[],
+            symbol = next(
+                (
+                    item
+                    for item in graph.file_to_symbols.get(summary.file, [])
+                    if item.name == summary.name
+                ),
+                None,
+            )
+            effect_kinds = {
+                "sql_injection": EffectKind.DB_READ,
+                "command_injection": EffectKind.SUBPROCESS,
+                "code_execution": EffectKind.SUBPROCESS,
+                "ssrf": EffectKind.HTTP_CALL,
+                "path_traversal": EffectKind.FILE_READ,
+            }
+            effects = [
+                IREffect(
+                    kind=effect_kinds[sink.sink_type],
+                    target=sink.sink_type,
+                    line=sink.line,
+                )
+                for sink in summary.param_to_sinks
+                if sink.sink_type in effect_kinds
+            ]
+            fn = _summary_to_ir_function(
+                summary,
+                effects=effects,
+                line_start=symbol.line_start if symbol else 0,
+                line_end=symbol.line_end if symbol else 0,
             )
             functions.append(fn)
 

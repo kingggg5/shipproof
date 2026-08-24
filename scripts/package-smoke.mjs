@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -36,9 +36,8 @@ function npmCliPath() {
 
 function main() {
   const workDirectory = mkdtempSync(join(tmpdir(), "shipproof-package-smoke-"));
-  const localNodeModules = join(PACKAGE_ROOT, "node_modules");
-  mkdirSync(localNodeModules, { recursive: true });
-  const consumerDirectory = mkdtempSync(join(localNodeModules, ".shipproof-consumer-"));
+  const consumerDirectory = join(workDirectory, "consumer");
+  mkdirSync(consumerDirectory);
   try {
     const artifactsDirectory = join(workDirectory, "artifacts");
     mkdirSync(artifactsDirectory);
@@ -53,7 +52,16 @@ function main() {
     writeFileSync(join(consumerDirectory, "package.json"), JSON.stringify({ name: "consumer", private: true }), "utf8");
     const installed = runProcess(
       process.execPath,
-      [npmCliPath(), "install", tarballPath, "--ignore-scripts", "--no-audit", "--no-fund", "--no-save"],
+      [
+        npmCliPath(),
+        "install",
+        tarballPath,
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--no-save",
+        "--omit=optional",
+      ],
       { cwd: consumerDirectory },
     );
     assert.equal(installed.status, 0, installed.stderr);
@@ -127,25 +135,16 @@ function main() {
     assert.match(readFileSync(actionOutputPath, "utf8"), /report-path=/);
     assert.match(readFileSync(actionSummaryPath, "utf8"), /BLOCKED/);
 
-    const mcpHandshake = runProcess(
-      process.execPath,
-      [join(PACKAGE_ROOT, "tests", "node", "mcp-handshake.test.mjs")],
-      {
-        cwd: PACKAGE_ROOT,
-        env: {
-          ...process.env,
-          SHIPPROOF_MCP_SERVER_ENTRY: join(installedPackageRoot, "lib", "mcp-server.mjs"),
-        },
-      },
-    );
-    assert.equal(mcpHandshake.status, 0, `${mcpHandshake.stdout}\n${mcpHandshake.stderr}`);
-    assert.match(mcpHandshake.stdout, /pass 1/);
+    const mcpWithoutPeers = runProcess(process.execPath, [installedCli, "mcp"], {
+      cwd: consumerDirectory,
+    });
+    assert.equal(mcpWithoutPeers.status, 2, mcpWithoutPeers.stderr);
+    assert.match(mcpWithoutPeers.stderr, /MCP support is unavailable/);
 
     console.log(
-      `package smoke: PASS (tarball ${tarballName}, CLI, Action, MCP, 2 skills, ${VERSION})`,
+      `package smoke: PASS (tarball ${tarballName}, isolated CLI/Action, optional MCP failure, 2 skills, ${VERSION})`,
     );
   } finally {
-    rmSync(consumerDirectory, { recursive: true, force: true });
     rmSync(workDirectory, { recursive: true, force: true });
   }
 }

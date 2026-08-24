@@ -45,6 +45,8 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="JSON mapping corpus directory name to labeled vulnerable files",
     )
     parser.add_argument("--repeat", type=int, default=3, help="Timed runs per tool (median kept)")
+    parser.add_argument("--min-file-precision", type=float)
+    parser.add_argument("--min-file-recall", type=float)
     parser.add_argument(
         "--format",
         choices=("json", "markdown"),
@@ -103,12 +105,18 @@ def run_shipproof(corpus: Path, repeat: int) -> dict[str, object]:
     }
 
 
+def build_semgrep_command(corpus: Path, configs: Sequence[str]) -> list[str]:
+    command = ["semgrep", "scan", "--json", "--disable-nosem"]
+    for config in configs:
+        command.extend(["--config", str(Path(config).resolve())])
+    command.append(corpus.name)
+    return command
+
+
 def run_semgrep(corpus: Path, configs: Sequence[str], repeat: int) -> dict[str, object]:
     durations: list[float] = []
     file_rule_hits: set[tuple[str, str]] = set()
-    command = ["semgrep", "scan", "--json", "--disable-nosem", *corpus.name]
-    for config in configs:
-        command[4:4] = ["--config", config]
+    command = build_semgrep_command(corpus, configs)
     for _ in range(repeat):
         elapsed, process = timed_run(command, corpus.parent)
         if process.returncode not in (0, 1):
@@ -158,7 +166,7 @@ def compute_file_metrics(
 
 def load_labels(labels_path: Path, corpora: Sequence[Path]) -> dict[str, list[str]]:
     if not labels_path.is_file():
-        return {corpus.name: [] for corpus in corpora}
+        raise FileNotFoundError(f"label file does not exist: {labels_path}")
     payload = json.loads(labels_path.read_text(encoding="utf-8"))
     return {corpus.name: sorted(payload.get(corpus.name, [])) for corpus in corpora}
 
@@ -204,39 +212,88 @@ def main(argv: Sequence[str] | None = None) -> int:
     if arguments.repeat < 1:
         print("head-to-head: --repeat must be >= 1", file=sys.stderr)
         return 2
-    labels = load_labels(arguments.labels, corpora)
+    for name, value in (
+        ("--min-file-precision", arguments.min_file_precision),
+        ("--min-file-recall", arguments.min_file_recall),
+    ):
+        if value is not None and not 0 <= value <= 1:
+            print(f"head-to-head: {name} must be from 0 through 1", file=sys.stderr)
+            return 2
+    configs = [str(Path(value).resolve()) for value in arguments.semgrep_config]
+    for config in configs:
+        if not Path(config).is_file():
+            print(f"head-to-head: Semgrep config is not a file: {config}", file=sys.stderr)
+            return 2
+    try:
+        labels = load_labels(arguments.labels.resolve(), corpora)
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        print(f"head-to-head: {exc}", file=sys.stderr)
+        return 2
 
     results: list[dict[str, object]] = []
-    for corpus in corpora:
-        shipproof_result = run_shipproof(corpus, arguments.repeat)
-        results.append(
-            {
-                "tool": "shipproof",
-                "corpus": corpus.name,
-                "result": shipproof_result,
-                "metrics": compute_file_metrics(
-                    shipproof_result["files_flagged"], labels[corpus.name]
-                ),
-            }
-        )
-        if arguments.semgrep_config:
-            semgrep_result = run_semgrep(corpus, arguments.semgrep_config, arguments.repeat)
+    try:
+        for corpus in corpora:
+            shipproof_result = run_shipproof(corpus, arguments.repeat)
             results.append(
                 {
-                    "tool": "semgrep",
+                    "tool": "shipproof",
                     "corpus": corpus.name,
-                    "result": semgrep_result,
+                    "result": shipproof_result,
                     "metrics": compute_file_metrics(
-                        semgrep_result["files_flagged"], labels[corpus.name]
+                        shipproof_result["files_flagged"], labels[corpus.name]
                     ),
                 }
             )
+            if configs:
+                semgrep_result = run_semgrep(corpus, configs, arguments.repeat)
+                results.append(
+                    {
+                        "tool": "semgrep",
+                        "corpus": corpus.name,
+                        "result": semgrep_result,
+                        "metrics": compute_file_metrics(
+                            semgrep_result["files_flagged"], labels[corpus.name]
+                        ),
+                    }
+                )
+    except (OSError, RuntimeError, json.JSONDecodeError) as exc:
+        print(f"head-to-head: unavailable evidence: {exc}", file=sys.stderr)
+        return 2
+
+    threshold_failures: list[str] = []
+    for entry in results:
+        if entry["tool"] != "shipproof":
+            continue
+        metrics = entry["metrics"]
+        precision = metrics["file_precision"]
+        recall = metrics["file_recall"]
+        if (
+            arguments.min_file_precision is not None
+            and precision is not None
+            and precision < arguments.min_file_precision
+        ):
+            threshold_failures.append(f"{entry['corpus']}:precision={precision}")
+        if (
+            arguments.min_file_recall is not None
+            and recall is not None
+            and recall < arguments.min_file_recall
+        ):
+            threshold_failures.append(f"{entry['corpus']}:recall={recall}")
 
     if arguments.format == "json":
-        print(json.dumps({"labels": labels, "results": results}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "labels": labels,
+                    "results": results,
+                    "threshold_failures": threshold_failures,
+                },
+                indent=2,
+            )
+        )
     else:
         print(render_markdown(results))
-    return 0
+    return 1 if threshold_failures else 0
 
 
 if __name__ == "__main__":

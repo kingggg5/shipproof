@@ -8,7 +8,7 @@ Security · Correctness · Scale · Performance · Release evidence
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Release](https://img.shields.io/badge/release-v0.8.1-2563eb)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.9.0-2563eb)](CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -67,11 +67,11 @@ ShipProof applies the same review contract regardless of who wrote the code. Its
 
 | Property | Current contract |
 | :--- | :--- |
-| Current release | `v0.8.1` public beta |
+| Current release | `v0.9.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
 | Executable rules | 620 (`SP001`–`SP665`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
-| Research backlog | 8,800 research-only candidates; none are findings until promoted |
+| Research inventory | 7,800 catalogued candidates plus 1,000 reserved promotion slots; none are findings until promoted |
 | Exit codes | `0` pass, `1` policy gate failure, `2` invalid or unavailable evidence |
 | Default data flow | Local filesystem and subprocesses only; no telemetry or source upload |
 
@@ -163,17 +163,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.8.1
+      - uses: kingggg5/shipproof@v0.9.0
         with:
           fail-on: high
 ```
 
-The action writes a structured Markdown status card to the GitHub Step Summary. The example uses the `v0.8.1` release tag; pin the action to a reviewed full commit SHA when an immutable supply-chain reference is required.
+The action writes a structured Markdown status card to the GitHub Step Summary. The example uses the `v0.9.0` release tag; pin the action to a reviewed full commit SHA when an immutable supply-chain reference is required.
 
 For pull requests that touch a large repository, scan only what changed relative to the base branch:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.8.1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: kingggg5/shipproof@v0.9.0
         with:
           fail-on: high
           changed-since: origin/main
@@ -184,7 +187,7 @@ The scanner resolves the git diff (added, copied, modified, and renamed files, p
 The default report format is `sarif`, which the action writes into the workspace. To surface findings as inline Code Scanning alerts, upload that artifact with GitHub's official action after the gate step:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.8.1
+      - uses: kingggg5/shipproof@v0.9.0
         with:
           fail-on: high
           format: sarif
@@ -295,7 +298,7 @@ All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
 ## Research & evaluation status
 
-The scanner ships 620 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates, now fully triaged: 934 targets have a concrete local signature and are queued for promotion (wave 1 covers JavaScript/TypeScript, Python, and Go), 435 need dataflow evidence beyond today's engines and wait on analyzer work, and 1,595 are design, process, or hardware classes that a regex-based gate cannot catch. Each target keeps its source-catalog ids in [research/promotion-plan.json](research/promotion-plan.json).
+The scanner ships 620 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a concrete local signature (wave 1 covers JavaScript/TypeScript, Python, and Go), 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. Each target keeps its source-catalog ids in [research/promotion-plan.json](research/promotion-plan.json).
 
 Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
 
@@ -311,7 +314,7 @@ The adversarial corpus holds look-alikes inside comments and string literals tha
 
 A separate run clones express, flask, requests as clean baselines plus juice-shop, DVWA, and NodeGoat as intentionally vulnerable apps. Application-scope findings came out at 2 / 5 / 3 / 153 / 74 / 20 on the last snapshot, and the cross-file engine confirmed NodeGoat's documented `eval(req.body)` chain.
 
-Operating profile: no repository or contributor limits, fully offline against local files only, and interprocedural taint for JavaScript/TypeScript and Python in the open core. Capabilities we do not cover (secrets validation with live checks, git-history scanning, SBOM/licensing, AppSec management) are listed so you can pair dedicated tools where they fit ([layering guidance](docs/features.md)). Measurement methodology and current results: [docs/benchmarks.md](docs/benchmarks.md).
+Operating profile: no repository or contributor limits, fully offline against local files only, and interprocedural taint for JavaScript/TypeScript and Python in the open core. Bounded added-line git-history scanning is available with `--history`; live credential validation, SBOM/licensing, and AppSec management remain outside the core and should be paired with dedicated tools ([layering guidance](docs/features.md)). Measurement methodology and current results: [docs/benchmarks.md](docs/benchmarks.md).
 
 ## Research methodology and provenance
 
@@ -349,7 +352,7 @@ npm run check
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 ```
 
-The core runtime uses only Node and the Python standard library; Ruff is development-only. The optional MCP adapter uses the MCP SDK and Zod as explicitly installed peers. CI tests Node 20/22/24 and Python 3.10/3.12/3.13/3.14, verifies an exact package allowlist, smoke-tests the packed artifact, and runs CodeQL for Python and JavaScript/TypeScript.
+The core runtime uses only Node and the Python standard library; Ruff is development-only. The optional MCP adapter uses the MCP SDK and Zod as explicitly installed peers. CI tests Node 20/22/24 and Python 3.10/3.11/3.12/3.13/3.14, verifies an exact package allowlist, smoke-tests the packed artifact, and runs CodeQL for Python and JavaScript/TypeScript.
 
 The scoped npm manifest is ready for a future registry release. Until the owner configures npm trusted publishing, use the GitHub npm install shown above; this project does not claim an unpublished registry release. See [docs/releasing.md](docs/releasing.md).
 

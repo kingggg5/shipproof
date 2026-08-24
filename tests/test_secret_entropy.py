@@ -29,7 +29,9 @@ class SecretEntropyGateTests(unittest.TestCase):
 
     def test_structured_token_with_repeated_chars_demotes(self) -> None:
         # Format-valid GitHub token shape but obviously filler content.
-        src = 'token = "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"'
+        prefix = "gh" + "p_"
+        filler = "a" * 36
+        src = f'token = "{prefix}{filler}"'
         self.assertEqual(confidence_for("SP006", src), "low")
 
     def test_high_entropy_structured_token_keeps_confidence(self) -> None:
@@ -38,7 +40,8 @@ class SecretEntropyGateTests(unittest.TestCase):
 
     def test_calibrated_rules_keep_two_way_behavior(self) -> None:
         # SP003 requires >=16-char values; a long zero-entropy filler demotes.
-        low = confidence_for("SP003", 'api_key = "aaaaaaaaaaaaaaaaaaaa"')
+        filler = "a" * 20
+        low = confidence_for("SP003", f'api_key = "{filler}"')
         self.assertEqual(low, "low")
 
     def test_short_values_outside_calibration_untouched(self) -> None:

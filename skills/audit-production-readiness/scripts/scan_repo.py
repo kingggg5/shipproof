@@ -12,9 +12,11 @@ import json
 import math
 import os
 import re
+import shutil
 import stat as stat_module
 import subprocess
 import sys
+import threading
 
 try:  # Python 3.11+ ships the regex parser as a private re submodule.
     import re._constants as _sre_constants
@@ -29,7 +31,7 @@ from dataclasses import asdict, dataclass, replace
 from functools import lru_cache
 from pathlib import Path
 
-VERSION = "0.8.1"
+VERSION = "0.9.0"
 MAX_SNIPPET_BYTES = 200_000
 CONTEXT_LEVELS = ("summary", "overview", "full")
 
@@ -3970,6 +3972,7 @@ class Finding:
     column: int | None = None
     end_line: int | None = None
     end_column: int | None = None
+    history_commit: str | None = None
 
 
 PROOF_LEVELS = {
@@ -12771,7 +12774,7 @@ def build_rule_gates(rules: Sequence[Rule]) -> dict[str, LiteralGate]:
     for rule in rules:
         try:
             parsed = _sre_parser.parse(rule.pattern.pattern, rule.pattern.flags)
-        except Exception:  # noqa: S112 - unparsable patterns simply stay ungated
+        except (AttributeError, IndexError, KeyError, TypeError, ValueError, re.error):
             continue
         required, groups = _required_literals(parsed)
         if required or groups:
@@ -13098,6 +13101,7 @@ def make_finding(
     column: int | None = None,
     end_line: int | None = None,
     end_column: int | None = None,
+    history_commit: str | None = None,
 ) -> Finding:
     safe_evidence = clean_evidence(evidence, rule.redact)
     if rule.redact:
@@ -13134,6 +13138,7 @@ def make_finding(
         column,
         end_line,
         end_column,
+        history_commit,
     )
 
 
@@ -13187,7 +13192,11 @@ def applicable_line_rules(
         if rule.rule_id not in FILE_LEVEL_RULE_IDS
         and not (rule.rule_id == "SP202" and not is_manifest_name)
         and not (is_document and not rule.redact)
-        and not (rule.suffixes and suffix not in rule.suffixes)
+        and not (
+            rule.suffixes
+            and suffix not in rule.suffixes
+            and not (rule.rule_id == "SP094" and is_manifest_name)
+        )
     ]
     resolved = tuple(selected)
     APPLICABLE_RULES_CACHE[cache_key] = resolved
@@ -13210,6 +13219,39 @@ def find_regex_issues(
         "/.github/workflows/" in f"/{normalized_relative_path}"
     )
     lines = source_text.splitlines() if lines is None else lines
+    package_dependency_names: set[str] = set()
+    package_lifecycle_names: set[str] = set()
+    if path.name.lower() == "package.json":
+        try:
+            package_payload = json.loads(source_text)
+        except (json.JSONDecodeError, TypeError):
+            package_payload = None
+        if isinstance(package_payload, dict):
+            for section_name in (
+                "dependencies",
+                "devDependencies",
+                "peerDependencies",
+                "optionalDependencies",
+                "bundledDependencies",
+            ):
+                section = package_payload.get(section_name)
+                if isinstance(section, dict):
+                    package_dependency_names.update(
+                        name
+                        for name, value in section.items()
+                        if isinstance(name, str)
+                        and isinstance(value, str)
+                        and value.lower() in {"*", "latest"}
+                    )
+            scripts = package_payload.get("scripts")
+            if isinstance(scripts, dict):
+                package_lifecycle_names.update(
+                    name
+                    for name, value in scripts.items()
+                    if name in {"install", "preinstall", "postinstall"}
+                    and isinstance(value, str)
+                    and re.search(r"(?:curl\s|wget\s|node\s+-e|python\s+-c)", value)
+                )
     comment_prefixes = comment_line_prefixes(path)
     comment_flags = [is_pure_comment(line, path, comment_prefixes) for line in lines]
     if python_string_lines:
@@ -13230,6 +13272,10 @@ def find_regex_issues(
     for rule in applicable_rules:
         rule_is_secret = rule.redact
         rule_id = rule.rule_id
+        if rule_id in {"SP092", "SP095"} and path.name.lower() != "package.json":
+            continue
+        if rule_id == "SP093" and path.name.lower() != "pom.xml":
+            continue
         if rule_id in {"SP658", "SP659", "SP660"} and not is_github_workflow:
             continue
         gate = gates.get(rule_id)
@@ -13241,6 +13287,52 @@ def find_regex_issues(
         if gate is not None and len(lines) > 4 and not gate.allows(source_text):
             continue
         pattern_search = rule.pattern.search
+        if rule_id in {"SP092", "SP095"}:
+            allowed_names = (
+                package_dependency_names if rule_id == "SP092" else package_lifecycle_names
+            )
+            if not allowed_names:
+                continue
+            for index, line in enumerate(lines):
+                for match in rule.pattern.finditer(line):
+                    key_match = re.match(r"""["']([^"']+)["']""", match.group(0))
+                    if key_match is None or key_match.group(1) not in allowed_names:
+                        continue
+                    findings.append(
+                        make_finding(
+                            rule,
+                            relative_path,
+                            index + 1,
+                            line,
+                            column=match.start() + 1,
+                            end_column=match.end() + 1,
+                        )
+                    )
+            continue
+        if rule_id == "SP093":
+            for dependency in re.finditer(
+                r"<dependency\b[^>]*>[\s\S]*?</dependency\s*>",
+                source_text,
+                re.IGNORECASE,
+            ):
+                for match in rule.pattern.finditer(dependency.group(0)):
+                    absolute_start = dependency.start() + match.start()
+                    prefix = source_text[:absolute_start]
+                    if prefix.rfind("<!--") > prefix.rfind("-->"):
+                        continue
+                    line_number, column = offset_to_position(source_text, absolute_start)
+                    evidence = lines[line_number - 1] if line_number <= len(lines) else ""
+                    findings.append(
+                        make_finding(
+                            rule,
+                            relative_path,
+                            line_number,
+                            evidence,
+                            column=column,
+                            end_column=column + len(match.group(0)),
+                        )
+                    )
+            continue
         if r"[\s\S]" in rule.pattern.pattern or r"\n" in rule.pattern.pattern:
             for match in rule.pattern.finditer(source_text):
                 matched_text = match.group(0)
@@ -15109,7 +15201,12 @@ def load_impact_graph_module():
     return module
 
 
-def collect_cross_file_taint(root: Path) -> tuple[list[Finding], int, int]:
+def collect_cross_file_taint(
+    root: Path,
+    *,
+    allowed_paths: frozenset[str] | None = None,
+    max_file_bytes: int = 1_000_000,
+) -> tuple[list[Finding], int, int]:
     """Promote unsanitized interprocedural taint flows into L2 findings.
 
     Uses the offline impact-graph analyzer (route entrypoints -> helpers ->
@@ -15119,7 +15216,11 @@ def collect_cross_file_taint(root: Path) -> tuple[list[Finding], int, int]:
     unsanitized_flows).
     """
     module = load_impact_graph_module()
-    graph = module.ImpactGraph(root)
+    graph = module.ImpactGraph(
+        root,
+        allowed_paths=allowed_paths,
+        max_file_bytes=max_file_bytes,
+    )
     graph.build()
     flows = graph.propagate_interprocedural_taint()
     findings: list[Finding] = []
@@ -15269,7 +15370,9 @@ def scan_repository(
     if cross_file:
         try:
             cross_findings, flow_count, unsanitized_count = collect_cross_file_taint(
-                repository_root
+                repository_root,
+                allowed_paths=frozenset(task[1] for task in tasks),
+                max_file_bytes=max_file_bytes,
             )
         except (OSError, ValueError, RecursionError, MemoryError) as exc:
             raise ValueError(f"cross-file analysis failed: {exc}") from exc
@@ -15360,88 +15463,229 @@ def build_decision_trace(
     }
 
 
-def _scan_history_secrets(root: Path, max_commits: int = 500) -> tuple[list[Finding], int]:
-    """Scan git history for secrets in added lines that were later removed.
+MAX_HISTORY_OUTPUT_BYTES = 16_000_000
+MAX_HISTORY_FINDINGS = 5_000
 
-    Uses only stdlib subprocess + git commands. Bounded by max_commits.
-    Returns findings anchored to the commit that introduced the secret.
-    """
-    secret_rules = [r for r in RULES if r.redact]
-    if not secret_rules:
-        return [], 0
 
+def _run_git_bounded(
+    root: Path,
+    arguments: Sequence[str],
+    *,
+    timeout_seconds: int = 120,
+    max_output_bytes: int = MAX_HISTORY_OUTPUT_BYTES,
+) -> tuple[int, str, str]:
+    """Run trusted Git with bounded stdout+stderr and no project code execution."""
+    git_location = shutil.which("git")
+    if not git_location:
+        raise ValueError("git-history evidence is unavailable: git was not found")
+    git_binary = Path(git_location).resolve()
+    repository_root = root.resolve()
     try:
-        import shutil
+        git_binary.relative_to(repository_root)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("git-history evidence refused a git executable inside the scan root")
 
-        git_bin = shutil.which("git") or "git"
-        proc = subprocess.run(  # noqa: S603
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_PAGER": "cat",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+    )
+    try:
+        process = subprocess.Popen(  # noqa: S603
             [
-                git_bin,
+                str(git_binary),
+                "--no-pager",
+                "-c",
+                "core.quotePath=false",
                 "-C",
-                str(root),
-                "log",
-                "--all",
-                "-p",
-                f"--max-count={max_commits}",
-                "--format=%x00%H|%s",
+                str(repository_root),
+                *arguments,
             ],
-            capture_output=True,
-            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             shell=False,
-            check=False,
-            timeout=120,
-            encoding="utf-8",
-            errors="replace",
+            env=environment,
         )
-    except (OSError, subprocess.TimeoutExpired):
-        return [], 0
+    except OSError as exc:
+        raise ValueError(f"git-history evidence is unavailable: {exc}") from exc
 
-    raw_output = proc.stdout
-    commits = raw_output.split("\x00")
+    buffers = {"stdout": bytearray(), "stderr": bytearray()}
+    total_bytes = [0]
+    lock = threading.Lock()
+    exceeded = threading.Event()
+
+    def drain(name: str, stream: object) -> None:
+        read = stream.read
+        while True:
+            chunk = read(65_536)
+            if not chunk:
+                return
+            with lock:
+                total_bytes[0] += len(chunk)
+                if total_bytes[0] > max_output_bytes:
+                    exceeded.set()
+                    process.kill()
+                    return
+                buffers[name].extend(chunk)
+
+    threads = [
+        threading.Thread(target=drain, args=("stdout", process.stdout), daemon=True),
+        threading.Thread(target=drain, args=("stderr", process.stderr), daemon=True),
+    ]
+    for thread in threads:
+        thread.start()
+    try:
+        process.wait(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired as exc:
+        process.kill()
+        process.wait()
+        raise ValueError(
+            f"git-history evidence exceeded the {timeout_seconds}-second timeout"
+        ) from exc
+    finally:
+        for thread in threads:
+            thread.join(timeout=5)
+        if process.stdout is not None:
+            process.stdout.close()
+        if process.stderr is not None:
+            process.stderr.close()
+    if exceeded.is_set():
+        raise ValueError(f"git-history evidence exceeded the {max_output_bytes}-byte output limit")
+    return (
+        process.returncode,
+        buffers["stdout"].decode("utf-8", "replace"),
+        buffers["stderr"].decode("utf-8", "replace"),
+    )
+
+
+def _is_sensitive_env_path(relative_path: str) -> bool:
+    return (
+        re.fullmatch(
+            r"\.env(?:\.(?:local|production|secret|staging))?",
+            Path(relative_path).name,
+            re.IGNORECASE,
+        )
+        is not None
+    )
+
+
+def _scan_history_secrets(root: Path, max_commits: int = 500) -> tuple[list[Finding], int]:
+    """Scan bounded Git patches for secrets introduced on added lines."""
+    if max_commits < 1 or max_commits > 500:
+        raise ValueError("history max_commits must be from 1 through 500")
+    probe_status, probe_stdout, probe_stderr = _run_git_bounded(
+        root,
+        ["rev-parse", "--is-inside-work-tree"],
+        timeout_seconds=10,
+        max_output_bytes=65_536,
+    )
+    if probe_status != 0 or probe_stdout.strip() != "true":
+        detail = probe_stderr.strip().splitlines()[:1]
+        suffix = f": {detail[0]}" if detail else ""
+        raise ValueError(f"git-history evidence requires a Git worktree{suffix}")
+
+    status, raw_output, stderr = _run_git_bounded(
+        root,
+        [
+            "log",
+            "--all",
+            "--patch",
+            "--no-color",
+            "--no-renames",
+            "--no-textconv",
+            "--no-ext-diff",
+            "--unified=0",
+            f"--max-count={max_commits}",
+            "--format=%x00%H",
+        ],
+    )
+    if status != 0:
+        detail = stderr.strip().splitlines()[:1]
+        suffix = f": {detail[0]}" if detail else ""
+        raise ValueError(f"git-history evidence failed{suffix}")
+
     findings: list[Finding] = []
-    total_scanned = 0
-
-    for commit_block in commits:
+    commits_scanned = 0
+    hunk_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
+    for commit_block in raw_output.split("\x00"):
         if not commit_block.strip():
             continue
-        lines = commit_block.split("\n")
-        header = lines[0].strip()
-        if "|" not in header:
+        lines = commit_block.splitlines()
+        sha = lines[0].strip()
+        if re.fullmatch(r"[0-9a-f]{40,64}", sha) is None:
             continue
-        sha, subject = header.split("|", 1)
-        sha = sha.strip()
-
-        # Collect added lines from the diff
-        added_text: list[str] = []
+        commits_scanned += 1
         current_file = ""
-        for line in lines[1:]:
-            if line.startswith("+++ b/"):
-                current_file = line[6:]
-            elif line.startswith("+") and not line.startswith("+++"):
-                added_text.append(line[1:])
-
-        if not added_text:
-            continue
-        chunk = "\n".join(added_text)
-        total_scanned += 1
-
-        for rule in secret_rules:
-            for match in rule.pattern.finditer(chunk):
-                matched = match.group(0)
-                if is_placeholder_secret(matched):
-                    continue
-                evidence = f"commit {sha[:8]}: {subject[:60]} ({current_file})"
-                finding = make_finding(
-                    rule,
-                    current_file or "unknown",
-                    1,
-                    evidence,
-                    detection="history",
+        current_line: int | None = None
+        env_paths_reported: set[str] = set()
+        for diff_line in lines[1:]:
+            if diff_line.startswith("diff --git "):
+                current_file = ""
+                current_line = None
+                continue
+            if diff_line.startswith("+++ b/"):
+                current_file = diff_line[6:]
+                current_line = None
+                if current_file not in env_paths_reported and _is_sensitive_env_path(current_file):
+                    env_paths_reported.add(current_file)
+                    findings.append(
+                        make_finding(
+                            find_rule("SP220"),
+                            current_file,
+                            1,
+                            current_file,
+                            detection="history",
+                            history_commit=sha,
+                        )
+                    )
+                continue
+            hunk_match = hunk_pattern.match(diff_line)
+            if hunk_match:
+                current_line = int(hunk_match.group(1))
+                continue
+            if not current_file or current_line is None:
+                continue
+            if diff_line.startswith("+") and not diff_line.startswith("+++"):
+                added_line = diff_line[1:]
+                line_findings = find_regex_issues(
+                    Path(current_file),
+                    current_file,
+                    added_line,
+                    [added_line],
                 )
-                findings.append(finding)
-                break  # one finding per rule per commit
-
-    return findings, total_scanned
+                for candidate in line_findings:
+                    rule = RULE_INDEX[candidate.rule_id]
+                    if not rule.redact or rule.rule_id == "SP220":
+                        continue
+                    findings.append(
+                        make_finding(
+                            rule,
+                            current_file,
+                            current_line,
+                            added_line,
+                            detection="history",
+                            confidence=candidate.confidence,
+                            column=candidate.column,
+                            end_column=candidate.end_column,
+                            history_commit=sha,
+                        )
+                    )
+                    if len(findings) > MAX_HISTORY_FINDINGS:
+                        raise ValueError(
+                            f"git-history evidence exceeded {MAX_HISTORY_FINDINGS} findings"
+                        )
+                current_line += 1
+            elif diff_line.startswith("-") and not diff_line.startswith("---"):
+                continue
+            else:
+                current_line += 1
+    return findings, commits_scanned
 
 
 def build_json_report(
@@ -15453,6 +15697,16 @@ def build_json_report(
 ) -> dict[str, object]:
     app_findings = [f for f in findings if f.scope == "app"]
     test_findings = [f for f in findings if f.scope == "test"]
+    limitations = [
+        "Fast heuristic scan; confirm every finding.",
+        "No runtime reachability or dependency CVE database.",
+    ]
+    if "history_commits_scanned" in stats:
+        limitations.append(
+            "Git-history evidence covers bounded added patch lines; rotate confirmed credentials."
+        )
+    else:
+        limitations.append("No git-history scan was requested.")
     report: dict[str, object] = {
         "schema_version": "1.0",
         "tool": {"name": "ShipProof", "version": VERSION, "command": "scan"},
@@ -15466,10 +15720,7 @@ def build_json_report(
             "by_severity": dict(Counter(item.severity for item in findings)),
         },
         "findings": [_finding_payload(item) for item in findings],
-        "limitations": [
-            "Fast heuristic scan; confirm every finding.",
-            "No runtime reachability, dependency CVE database, or git-history scan.",
-        ],
+        "limitations": limitations,
     }
     if decision_trace is not None:
         report["decision_trace"] = decision_trace
@@ -16186,6 +16437,8 @@ def build_fix_scaffold(finding: Finding) -> dict[str, str] | None:
 
 def _finding_payload(item: Finding) -> dict[str, object]:
     payload: dict[str, object] = asdict(item)
+    if payload.get("history_commit") is None:
+        payload.pop("history_commit", None)
     scaffold = build_fix_scaffold(item)
     if scaffold is not None:
         payload["fix_scaffold"] = scaffold
@@ -16656,7 +16909,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         findings, stats = scan_repository(
             arguments.root,
             max_file_bytes=arguments.max_file_bytes,
-            baseline=baseline_fingerprints,
+            # History findings must participate in the same deduplication and
+            # baseline pass as live findings. Defer suppression until the two
+            # evidence streams have been combined.
+            baseline=None if arguments.history else baseline_fingerprints,
             exclude_patterns=arguments.exclude,
             include_paths=include_paths,
             cross_file=arguments.cross_file,
@@ -16667,6 +16923,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         if arguments.history:
             history_findings, history_commits = _scan_history_secrets(arguments.root)
             findings.extend(history_findings)
+            findings, history_suppressed = deduplicate_and_suppress_findings(
+                findings, baseline_fingerprints
+            )
+            stats["suppressed"] = int(stats["suppressed"]) + history_suppressed
             stats["history_commits_scanned"] = history_commits
             stats["history_findings"] = len(history_findings)
 

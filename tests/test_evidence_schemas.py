@@ -27,7 +27,12 @@ from check_budget import evaluate_resource_budget  # noqa: E402
 from cost_model import main as cost_main  # noqa: E402
 from impact_graph import main as impact_main  # noqa: E402
 from invariants import main as invariants_main  # noqa: E402
-from scan_repo import build_decision_trace, build_json_report  # noqa: E402
+from scan_repo import (  # noqa: E402
+    RULE_INDEX,
+    build_decision_trace,
+    build_json_report,
+    make_finding,
+)
 
 
 class EvidenceSchemaTests(unittest.TestCase):
@@ -111,6 +116,27 @@ class EvidenceSchemaTests(unittest.TestCase):
         self.assert_valid("scan-report.schema.json", scan_with_trace)
         self.assert_valid("budget-report.schema.json", budget)
         self.assert_valid("capacity-report.schema.json", capacity)
+
+    def test_scan_schema_accepts_real_scaffold_and_history_fields(self):
+        finding = make_finding(
+            RULE_INDEX["SP104"],
+            "src/client.py",
+            7,
+            "requests.get(url, verify=False)",
+        )
+        report = build_json_report(
+            ROOT,
+            [finding],
+            {
+                "files_scanned": 1,
+                "suppressed": 0,
+                "history_commits_scanned": 3,
+                "history_findings": 1,
+            },
+            include_tests=False,
+        )
+        self.assertIn("fix_scaffold", report["findings"][0])
+        self.assert_valid("scan-report.schema.json", report)
 
     def test_experimental_json_reports_match_versioned_schemas(self):
         with tempfile.TemporaryDirectory() as directory:

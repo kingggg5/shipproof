@@ -6,8 +6,8 @@
   "promotion_boundary": "No candidate is executable until it has ecosystem-specific semantics, positive, negative, and adversarial fixtures, false-positive analysis, and measured precision",
   "source_cwe_catalog_version": "4.20",
   "source_cwe_archive_sha256": "3976f599e5e5200219a3108bb896d06e2a88fbb293369e1883cb423a5e9d7d50",
-  "existing_scanner_version": "0.8.1",
-  "existing_rule_count": 616,
+  "existing_scanner_version": "0.9.0",
+  "existing_rule_count": 620,
   "candidate_count": 5000,
   "allocations": {
     "csharp": {

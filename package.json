@@ -1,6 +1,6 @@
 {
   "name": "@kingggg5/shipproof",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Zero-dependency production gate, resource budget, and capacity model for AI-written code",
   "type": "module",
   "bin": {
@@ -20,17 +20,21 @@
     "examples/demo-api/expected-findings.json",
     "examples/demo-api/fixtures/**/*.py",
     "examples/performance/*.json",
+    "frameworks/*.json",
     "lib",
     "prompts",
     "schemas",
     "benchmarks/README.md",
-    "benchmarks/*.py",
+    "benchmarks/benchmark_suite.py",
     "scripts/benchmark-scanner.py",
     "scripts/run-action.mjs",
     "skills/audit-production-readiness/SKILL.md",
     "skills/audit-production-readiness/agents",
     "skills/audit-production-readiness/references",
     "skills/audit-production-readiness/scripts/*.py",
+    "!skills/audit-production-readiness/scripts/analysis.py",
+    "!skills/audit-production-readiness/scripts/future_phases.py",
+    "!skills/audit-production-readiness/scripts/ir.py",
     "skills/engineer-production-systems/SKILL.md",
     "skills/engineer-production-systems/agents",
     "skills/engineer-production-systems/references",
@@ -69,8 +73,12 @@
     "zod": "3.25.76"
   },
   "peerDependenciesMeta": {
-    "@modelcontextprotocol/sdk": { "optional": true },
-    "zod": { "optional": true }
+    "@modelcontextprotocol/sdk": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",

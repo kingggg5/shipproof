@@ -1,6 +1,6 @@
 # ShipProof next development plan
 
-Last reviewed: 2026-08-20.
+Last reviewed: 2026-08-24.
 
 สถานะ: แผนหลักสำหรับเปลี่ยน research backlog ให้เป็น production evidence ที่เชื่อถือได้ โดยไม่เปิดกฎจำนวนมากแบบ big-bang และไม่ลดมาตรฐาน false-positive
 
@@ -18,12 +18,12 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 
 ข้อมูลต่อไปนี้เป็น snapshot ณ วันที่ทบทวน ไม่ใช่ตัวเลขรับประกันในอนาคต:
 
-- executable scanner rules: 571
-- research slots: 8,800 (`SP651–SP9450`)
+- executable scanner rules: 620
+- research inventory: 7,800 catalogued candidates plus 1,000 reserved promotion slots (`SP651–SP9450`)
 - language-specific research candidates: 5,000 (`SP4451–SP9450`)
-- project Python test cases ที่ discover ได้: 336 พร้อม Node, package และ end-to-end suites
+- project Python test cases ที่ discover ได้: 564 พร้อม Node, package และ end-to-end suites
 - self-scan: 0 active findings ที่ high gate
-- reference benchmark: 1,000 ไฟล์ใน 2.45 วินาที (407.6 files/s), peak RSS 23.22 MB บน Windows/Python 3.12
+- reference benchmark: 1,000 ไฟล์ใน 0.6813 วินาที (1,467.7 files/s), peak RSS 24.79 MB บน Windows/Python 3.12; warm pass 1,441.5 files/s
 - default path: read-only, offline และไม่มี dependency เพิ่ม
 
 Candidate ID ไม่ได้แปลว่ามี detector แล้ว จำนวน research slots จึงห้ามนำไปรวมกับ executable rule count ในเอกสารหรือการตลาด
