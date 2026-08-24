@@ -1,0 +1,390 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "python",
+  "rules": [
+    {
+      "rule_id": "SP107",
+      "title": "Credentialed wildcard CORS",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-942",
+      "frameworks": [],
+      "false_positive_analysis": "Rare. If you need credentials, you must specify exact allowed origins.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp107-positive-a/cors.py",
+            "source_hex": "616c6c6f775f6f726967696e733d5b222a225d0a616c6c6f775f63726564656e7469616c733d547275650a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "cd64d8b7a288ba838b0c80a6"
+          },
+          {
+            "path": "contract-fixtures/python/sp107-positive-b/cors.py",
+            "source_hex": "0a616c6c6f775f6f726967696e733d5b222a225d0a616c6c6f775f63726564656e7469616c733d547275650a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "aee1028ef78b3084fe2501b2"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp107-negative_a/cors.py",
+            "source_hex": "616c6c6f775f6f726967696e733d5b2268747470733a2f2f6170702e696e76616c6964225d0a616c6c6f775f63726564656e7469616c733d547275650a"
+          },
+          {
+            "path": "contract-fixtures/python/sp107-negative_b/cors.py",
+            "source_hex": "616c6c6f775f6f726967696e733d5b222a225d0a616c6c6f775f63726564656e7469616c733d46616c73650a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp107-adversarial-a/cors.py",
+            "source_hex": "636f72735f6f7074696f6e73203d207b226f726967696e73223a205b222a225d2c202263726564656e7469616c73223a20547275657d0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP115",
+      "title": "XXE-capable lxml parser without entity hardening",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-611",
+      "frameworks": [],
+      "false_positive_analysis": "Repositories that only parse trusted, internally generated XML, or that already configure a hardened parser elsewhere.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp115-positive-a/parser.py",
+            "source_hex": "66726f6d206c786d6c20696d706f72742065747265650a726f6f74203d2065747265652e66726f6d737472696e6728786d6c5f7061796c6f6164290a",
+            "expected_line": 2,
+            "expected_confidence": "low",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "2be647c7148c0ac586f1e409"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp115-negative_a/parser.py",
+            "source_hex": "66726f6d206c786d6c20696d706f72742065747265650a706172736572203d2065747265652e584d4c506172736572287265736f6c76655f656e7469746965733d46616c7365290a726f6f74203d2065747265652e66726f6d737472696e6728786d6c5f7061796c6f61642c20706172736572290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp115-negative_b/parser.py",
+            "source_hex": "696d706f727420786d6c2e65747265652e456c656d656e74547265652061732065747265650a726f6f74203d2065747265652e66726f6d737472696e6728786d6c5f7061796c6f6164290a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp115-adversarial-a/parser.py",
+            "source_hex": "66726f6d206c786d6c20696d706f72742065747265652061732045540a726f6f74203d2045542e66726f6d737472696e6728786d6c5f7061796c6f6164290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP303",
+      "title": "Blocking sleep in async code",
+      "category": "correctness",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Sync worker functions executed via run_in_executor or background thread pools.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp303-positive-a/jobs.py",
+            "source_hex": "696d706f72742074696d650a6173796e63206465662072756e28293a0a2020202074696d652e736c6565702831290a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "2d80de362e1d262c4b27ea6f"
+          },
+          {
+            "path": "contract-fixtures/python/sp303-positive-b/jobs.py",
+            "source_hex": "0a696d706f72742074696d650a6173796e63206465662072756e28293a0a2020202074696d652e736c6565702831290a",
+            "expected_line": 4,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "df2787eb136de33d9e41c822"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp303-negative_a/jobs.py",
+            "source_hex": "696d706f72742074696d650a6465662072756e28293a0a2020202074696d652e736c6565702831290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp303-negative_b/jobs.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e63206465662072756e28293a0a202020206177616974206173796e63696f2e736c6565702831290a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp303-adversarial-a/jobs.py",
+            "source_hex": "696d706f72742074696d650a736c656570203d2074696d652e736c6565700a6173796e63206465662072756e28293a0a20202020736c6565702831290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP304",
+      "title": "Outbound request without timeout",
+      "category": "correctness",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Requests wrapped in an external timeout mechanism (e.g., asyncio.wait_for, signal-based timeout).",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp304-positive-a/client.py",
+            "source_hex": "696d706f72742072657175657374730a726573706f6e7365203d2072657175657374732e676574282768747470733a2f2f6170692e696e76616c696427290a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "c4cef345be28b6eebd75ac1b"
+          },
+          {
+            "path": "contract-fixtures/python/sp304-positive-b/client.py",
+            "source_hex": "0a696d706f72742072657175657374730a726573706f6e7365203d2072657175657374732e676574282768747470733a2f2f6170692e696e76616c696427290a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "402dbc742333a0a35db63e1f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp304-negative_a/client.py",
+            "source_hex": "696d706f72742072657175657374730a726573706f6e7365203d2072657175657374732e676574282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d32290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp304-negative_b/client.py",
+            "source_hex": "726573706f6e7365203d2063616368652e67657428276865616c746827290a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp304-adversarial-a/client.py",
+            "source_hex": "696d706f72742072657175657374730a676574203d2072657175657374732e6765740a726573706f6e7365203d20676574282768747470733a2f2f6170692e696e76616c696427290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP307",
+      "title": "N+1 database query in loop",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Loops with statically guaranteed iteration counts of 1 or 2 items.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp307-positive-a/service.py",
+            "source_hex": "666f72207573657220696e2075736572733a0a2020202070726f66696c65203d2064622e71756572792850726f66696c65292e66696c7465725f627928757365725f69643d757365722e6964292e666972737428290a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "3c30b7d63954f84393b88be1"
+          },
+          {
+            "path": "contract-fixtures/python/sp307-positive-b/service.py",
+            "source_hex": "0a666f72207573657220696e2075736572733a0a2020202070726f66696c65203d2064622e71756572792850726f66696c65292e66696c7465725f627928757365725f69643d757365722e6964292e666972737428290a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "1444bd038018b0b36b0bee02"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp307-negative_a/service.py",
+            "source_hex": "70726f66696c6573203d2064622e71756572792850726f66696c65292e66696c7465722850726f66696c652e757365725f69642e696e5f28757365725f69647329292e616c6c28290a666f722070726f66696c6520696e2070726f66696c65733a0a202020207573652870726f66696c65290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp307-negative_b/service.py",
+            "source_hex": "666f72207573657220696e2075736572733a0a2020202075736528757365722e6361636865645f70726f66696c65290a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp307-adversarial-a/service.py",
+            "source_hex": "646566206c6f61645f70726f66696c652875736572293a0a2020202072657475726e2064622e71756572792850726f66696c65292e66696c7465725f627928757365725f69643d757365722e6964292e666972737428290a666f72207573657220696e2075736572733a0a2020202070726f66696c65203d206c6f61645f70726f66696c652875736572290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP316",
+      "title": "Outbound HTTP call inside database transaction",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "In-memory test mocks or sub-millisecond local network calls.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp316-positive-a/billing.py",
+            "source_hex": "776974682064622e7472616e73616374696f6e28293a0a2020202072657175657374732e706f7374282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d35290a",
+            "expected_line": 2,
+            "expected_confidence": "medium",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "156999f933aeb9602deca56d"
+          },
+          {
+            "path": "contract-fixtures/python/sp316-positive-b/billing.py",
+            "source_hex": "0a776974682064622e7472616e73616374696f6e28293a0a2020202072657175657374732e706f7374282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d35290a",
+            "expected_line": 3,
+            "expected_confidence": "medium",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "64bb3e7d0b7748e0ab4d8ed2"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp316-negative_a/billing.py",
+            "source_hex": "726573706f6e7365203d2072657175657374732e706f7374282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d35290a776974682064622e7472616e73616374696f6e28293a0a202020207361766528726573706f6e7365290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp316-negative_b/billing.py",
+            "source_hex": "776974682064622e7472616e73616374696f6e28293a0a2020202064622e657865637574652827555044415445206a6f62732053455420646f6e65203d207472756527290a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp316-adversarial-a/billing.py",
+            "source_hex": "7472616e73616374696f6e203d2064622e7472616e73616374696f6e0a77697468207472616e73616374696f6e28293a0a2020202072657175657374732e706f7374282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d35290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP317",
+      "title": "Blocking call in async def coroutine",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Sub-millisecond CPU operations or explicit multi-threading wrappers (asyncio.to_thread).",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp317-positive-a/api.py",
+            "source_hex": "6173796e6320646566206765745f6461746128293a0a2020202072657475726e2072657175657374732e676574282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d35290a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "7b4c7eb753c93ebf2be1698b"
+          },
+          {
+            "path": "contract-fixtures/python/sp317-positive-b/api.py",
+            "source_hex": "0a6173796e6320646566206765745f6461746128293a0a2020202072657475726e2072657175657374732e676574282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d35290a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "bb909e6b9c93d55277de09b1"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp317-negative_a/api.py",
+            "source_hex": "646566206765745f6461746128293a0a2020202072657475726e2072657175657374732e676574282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d35290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp317-negative_b/api.py",
+            "source_hex": "6173796e6320646566206765745f6461746128636c69656e74293a0a2020202072657475726e20617761697420636c69656e742e676574282768747470733a2f2f6170692e696e76616c696427290a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp317-adversarial-a/api.py",
+            "source_hex": "626c6f636b696e675f676574203d2072657175657374732e6765740a6173796e6320646566206765745f6461746128293a0a2020202072657475726e20626c6f636b696e675f676574282768747470733a2f2f6170692e696e76616c6964272c2074696d656f75743d35290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP318",
+      "title": "Retry policy without a stop condition",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-770",
+      "frameworks": [],
+      "false_positive_analysis": "Retry wrappers that already pass an explicit stop condition or attempt bound.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp318-positive-a/client.py",
+            "source_hex": "66726f6d2074656e616369747920696d706f72742072657472792c20776169745f66697865640a40726574727928776169743d776169745f6669786564283129290a6465662063616c6c5f757073747265616d28293a202e2e2e0a",
+            "expected_line": 2,
+            "expected_confidence": "medium",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "8fe8061a328685c4659dcbbc"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp318-negative_a/client.py",
+            "source_hex": "66726f6d2074656e616369747920696d706f72742072657472792c2073746f705f61667465725f617474656d70740a4072657472792873746f703d73746f705f61667465725f617474656d7074283329290a6465662063616c6c5f757073747265616d28293a202e2e2e0a"
+          },
+          {
+            "path": "contract-fixtures/python/sp318-negative_b/client.py",
+            "source_hex": "6465662063616c6c5f757073747265616d28293a202e2e2e0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp318-adversarial-a/client.py",
+            "source_hex": "7768696c6520547275653a0a202020207472793a0a202020202020202063616c6c5f757073747265616d28290a2020202020202020627265616b0a2020202065786365707420526574727961626c654572726f723a0a2020202020202020736c6565702831290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    }
+  ]
+}

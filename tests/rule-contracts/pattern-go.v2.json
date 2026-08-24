@@ -1,0 +1,1122 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "go",
+  "rules": [
+    {
+      "rule_id": "SP136",
+      "title": "Go error explicitly discarded",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-754",
+      "frameworks": [],
+      "false_positive_analysis": "Deliberate discards of non-error values with a comment explaining why.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp136-positive-a.go",
+            "source_hex": "5f2c205f203a3d",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "594fb0542c7959ea41daa768"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp136-negative-a.go",
+            "source_hex": "212c205f203a3d"
+          },
+          {
+            "path": "contract-fixtures/go/sp136-negative-b.go",
+            "source_hex": "202c205f203a3d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp136-adversarial-a.go",
+            "source_hex": "582c205f203a3d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP188",
+      "title": "Go html/template unescaped HTML type conversion",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-79",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp188-positive-a.go",
+            "source_hex": "74656d706c6174652e48544d4c092809722e466f726d56616c7565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c07091490f0d8c161c5a7611"
+          },
+          {
+            "path": "contract-fixtures/go/sp188-positive-b.go",
+            "source_hex": "74656d706c6174652e48544d4c2009282009632e51756572793b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f9d77e5f90cea9b799dead75"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp188-negative-a.go",
+            "source_hex": "21656d706c6174652e48544d4c092809722e466f726d56616c7565"
+          },
+          {
+            "path": "contract-fixtures/go/sp188-negative-b.go",
+            "source_hex": "20656d706c6174652e48544d4c092809722e466f726d56616c7565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp188-adversarial-a.go",
+            "source_hex": "58656d706c6174652e48544d4c092809722e466f726d56616c7565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP189",
+      "title": "WebSocket server accepting arbitrary origin without check",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-346",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp189-positive-a.go",
+            "source_hex": "436865636b4f726967696e093a0966756e6328202909626f6f6c207b2072657475726e0974727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "82347943d5a1d10373ec789c"
+          },
+          {
+            "path": "contract-fixtures/go/sp189-positive-b.go",
+            "source_hex": "436865636b4f726967696e20093a200966756e63282020292009626f6f6c09207b092072657475726e2009747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "384e4349f38135fa12cf9d81"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp189-negative-a.go",
+            "source_hex": "216865636b4f726967696e093a0966756e6328202909626f6f6c207b2072657475726e0974727565"
+          },
+          {
+            "path": "contract-fixtures/go/sp189-negative-b.go",
+            "source_hex": "206865636b4f726967696e093a0966756e6328202909626f6f6c207b2072657475726e0974727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp189-adversarial-a.go",
+            "source_hex": "586865636b4f726967696e093a0966756e6328202909626f6f6c207b2072657475726e0974727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP309",
+      "title": "Goroutine spawned without context",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-772",
+      "frameworks": [],
+      "false_positive_analysis": "Background worker daemons explicitly tied to the application shutdown context.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp309-positive-a.go",
+            "source_hex": "676f0966756e6320282029207b",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "97fe9d27798077716f8c296d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp309-negative-a.go",
+            "source_hex": "216f0966756e6320282029207b"
+          },
+          {
+            "path": "contract-fixtures/go/sp309-negative-b.go",
+            "source_hex": "206f0966756e6320282029207b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp309-adversarial-a.go",
+            "source_hex": "586f0966756e6320282029207b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP315",
+      "title": "Go HTTP request missing response body close",
+      "category": "correctness",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Custom HTTP client wrappers that close the response body internally.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp315-positive-a.go",
+            "source_hex": "7265732c09657272093a3d20687474702e506f73740928",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7c3d3e6cfa9a295f750dc82d"
+          },
+          {
+            "path": "contract-fixtures/go/sp315-positive-b.go",
+            "source_hex": "7265732c200965727220093a3d0920687474702e4765742009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0b7bfbbafc32f2208ed81cef"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp315-negative-a.go",
+            "source_hex": "2165732c09657272093a3d20687474702e506f73740928"
+          },
+          {
+            "path": "contract-fixtures/go/sp315-negative-b.go",
+            "source_hex": "2065732c09657272093a3d20687474702e506f73740928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp315-adversarial-a.go",
+            "source_hex": "5865732c09657272093a3d20687474702e506f73740928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP331",
+      "title": "Go HTTP client missing idle connection limits",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "One-off CLI utilities with single outbound requests.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp331-positive-a.go",
+            "source_hex": "26687474702e436c69656e747b0954696d656f75743a20097d092f2f206e6f2d7472616e73706f7274",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8a364be19f45584fbb821509"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp331-negative-a.go",
+            "source_hex": "21687474702e436c69656e747b0954696d656f75743a20097d092f2f206e6f2d7472616e73706f7274"
+          },
+          {
+            "path": "contract-fixtures/go/sp331-negative-b.go",
+            "source_hex": "20687474702e436c69656e747b0954696d656f75743a20097d092f2f206e6f2d7472616e73706f7274"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp331-adversarial-a.go",
+            "source_hex": "58687474702e436c69656e747b0954696d656f75743a20097d092f2f206e6f2d7472616e73706f7274",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP332",
+      "title": "Go unbuffered channel send without consumer",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-772",
+      "frameworks": [],
+      "false_positive_analysis": "Channels with guaranteed synchronizing consumers.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp332-positive-a.go",
+            "source_hex": "676f2066756e632829207b206368203c2d2076616c7565202f2f20756e62756666657265640a7d2829",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "838b8479ac72069baa92c2af"
+          },
+          {
+            "path": "contract-fixtures/go/sp332-positive-b.go",
+            "source_hex": "676f2066756e632829207b206368203c2d2076616c7565202f2f20756e62756666657265640a7d28293b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "851a63dbd4d1538037be22bb"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp332-negative-a.go",
+            "source_hex": "216f2066756e632829207b206368203c2d2076616c7565202f2f20756e62756666657265640a7d2829"
+          },
+          {
+            "path": "contract-fixtures/go/sp332-negative-b.go",
+            "source_hex": "206f2066756e632829207b206368203c2d2076616c7565202f2f20756e62756666657265640a7d2829"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp332-adversarial-a.go",
+            "source_hex": "586f2066756e632829207b206368203c2d2076616c7565202f2f20756e62756666657265640a7d2829",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP333",
+      "title": "Go sync.WaitGroup counter incremented in goroutine",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-662",
+      "frameworks": [],
+      "false_positive_analysis": "None; wg.Add() must always be called before starting the goroutine.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp333-positive-a.go",
+            "source_hex": "676f2066756e6309280929097b2077672e416464202820312029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ff2cabfa4cebc19db4411160"
+          },
+          {
+            "path": "contract-fixtures/go/sp333-positive-b.go",
+            "source_hex": "676f092066756e6320092820092920097b202077672e4164640920280920310920293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "33b07cfaafeb446997ae7282"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp333-negative-a.go",
+            "source_hex": "216f2066756e6309280929097b2077672e416464202820312029"
+          },
+          {
+            "path": "contract-fixtures/go/sp333-negative-b.go",
+            "source_hex": "206f2066756e6309280929097b2077672e416464202820312029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp333-adversarial-a.go",
+            "source_hex": "586f2066756e6309280929097b2077672e416464202820312029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP371",
+      "title": "Go goroutine spawning inside loop capturing loop variable",
+      "category": "correctness",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-362",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp371-positive-a.go",
+            "source_hex": "666f7220692c206974656d203a3d2072616e6765206974656d73207b0a20202020676f2066756e632829207b20757365286974656d29207d0a7d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "abbadbd4836482fe53e8b638"
+          },
+          {
+            "path": "contract-fixtures/go/sp371-positive-b.go",
+            "source_hex": "666f7220692c206974656d203a3d2072616e6765206974656d73207b0a20202020676f2066756e632829207b20757365286974656d29207d0a7d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "958c5fa709ad737c8d6a59ed"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp371-negative-a.go",
+            "source_hex": "216f7220692c206974656d203a3d2072616e6765206974656d73207b0a20202020676f2066756e632829207b20757365286974656d29207d0a7d"
+          },
+          {
+            "path": "contract-fixtures/go/sp371-negative-b.go",
+            "source_hex": "206f7220692c206974656d203a3d2072616e6765206974656d73207b0a20202020676f2066756e632829207b20757365286974656d29207d0a7d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp371-adversarial-a.go",
+            "source_hex": "586f7220692c206974656d203a3d2072616e6765206974656d73207b0a20202020676f2066756e632829207b20757365286974656d29207d0a7d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP372",
+      "title": "Go unbuffered channel receive without context cancellation select",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp372-positive-a.go",
+            "source_hex": "3c2d414368616e",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a3a86bab994b76d170e99896"
+          },
+          {
+            "path": "contract-fixtures/go/sp372-positive-b.go",
+            "source_hex": "3c2d414368616e",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "bf946e1160c4cae763cf6756"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp372-negative-a.go",
+            "source_hex": "212d414368616e"
+          },
+          {
+            "path": "contract-fixtures/go/sp372-negative-b.go",
+            "source_hex": "202d414368616e"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp372-adversarial-a.go",
+            "source_hex": "582d414368616e",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP373",
+      "title": "Go time.Tick called inside function scope causing memory leak",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp373-positive-a.go",
+            "source_hex": "666f720972616e67650974696d652e5469636b0928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "17b398729676a42324aee588"
+          },
+          {
+            "path": "contract-fixtures/go/sp373-positive-b.go",
+            "source_hex": "666f72200972616e6765200974696d652e5469636b2009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f91d3d72d95fb7870726e409"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp373-negative-a.go",
+            "source_hex": "216f720972616e67650974696d652e5469636b0928"
+          },
+          {
+            "path": "contract-fixtures/go/sp373-negative-b.go",
+            "source_hex": "206f720972616e67650974696d652e5469636b0928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp373-adversarial-a.go",
+            "source_hex": "586f720972616e67650974696d652e5469636b0928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP374",
+      "title": "Go sync.WaitGroup Wait called inside spawned goroutine causing deadlock",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-833",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp374-positive-a.go",
+            "source_hex": "676f2066756e6309280929097b7177672e5761697409280929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "912930bbd831a1d1683d6346"
+          },
+          {
+            "path": "contract-fixtures/go/sp374-positive-b.go",
+            "source_hex": "676f092066756e6320092820092920097b207177672e576169742009282009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "376c53d4fdb59b30935500e9"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp374-negative-a.go",
+            "source_hex": "216f2066756e6309280929097b7177672e5761697409280929"
+          },
+          {
+            "path": "contract-fixtures/go/sp374-negative-b.go",
+            "source_hex": "206f2066756e6309280929097b7177672e5761697409280929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp374-adversarial-a.go",
+            "source_hex": "586f2066756e6309280929097b7177672e5761697409280929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP375",
+      "title": "Go sql.DB connection pool configured with unbounded connections",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp375-positive-a.go",
+            "source_hex": "64622e5365744d617849646c65436f6e6e73202820302029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "037eaed106498b1ef131b543"
+          },
+          {
+            "path": "contract-fixtures/go/sp375-positive-b.go",
+            "source_hex": "64622e5365744d617849646c65436f6e6e732009282009302009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "cf36743ef73bd9f007e8106f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp375-negative-a.go",
+            "source_hex": "21622e5365744d617849646c65436f6e6e73202820302029"
+          },
+          {
+            "path": "contract-fixtures/go/sp375-negative-b.go",
+            "source_hex": "20622e5365744d617849646c65436f6e6e73202820302029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp375-adversarial-a.go",
+            "source_hex": "58622e5365744d617849646c65436f6e6e73202820302029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP376",
+      "title": "Go HTTP client using zero-timeout DefaultClient",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp376-positive-a.go",
+            "source_hex": "687474702e44656661756c74436c69656e742e4765742028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c060cca982afff1034e1248d"
+          },
+          {
+            "path": "contract-fixtures/go/sp376-positive-b.go",
+            "source_hex": "687474702e44656661756c74436c69656e742e446f0920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9b63aa9289b52e0ac116eb1b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp376-negative-a.go",
+            "source_hex": "217474702e44656661756c74436c69656e742e4765742028"
+          },
+          {
+            "path": "contract-fixtures/go/sp376-negative-b.go",
+            "source_hex": "207474702e44656661756c74436c69656e742e4765742028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp376-adversarial-a.go",
+            "source_hex": "587474702e44656661756c74436c69656e742e4765742028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP377",
+      "title": "Go http.Server missing ReadHeaderTimeout causing Slowloris vulnerability",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp377-positive-a.go",
+            "source_hex": "26687474702e536572766572207b20207d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "bef21c2cf97b1bd94b8f0c21"
+          },
+          {
+            "path": "contract-fixtures/go/sp377-positive-b.go",
+            "source_hex": "26687474702e53657276657209207b202020207d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f819ba015484c9cc305c1697"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp377-negative-a.go",
+            "source_hex": "21687474702e536572766572207b20207d"
+          },
+          {
+            "path": "contract-fixtures/go/sp377-negative-b.go",
+            "source_hex": "20687474702e536572766572207b20207d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp377-adversarial-a.go",
+            "source_hex": "58687474702e536572766572207b20207d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP378",
+      "title": "Go context.WithCancel or WithTimeout missing defer cancel call",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp378-positive-a.go",
+            "source_hex": "6374782c2039203a3d09636f6e746578742e5769746854696d656f757409282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "fcb65842ab40c2ea220693d1"
+          },
+          {
+            "path": "contract-fixtures/go/sp378-positive-b.go",
+            "source_hex": "6374782c0920415a09203a3d2009636f6e746578742e5769746843616e63656c2009282020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ad00f465492e1521eb72f142"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp378-negative-a.go",
+            "source_hex": "2174782c2039203a3d09636f6e746578742e5769746854696d656f757409282029"
+          },
+          {
+            "path": "contract-fixtures/go/sp378-negative-b.go",
+            "source_hex": "2074782c2039203a3d09636f6e746578742e5769746854696d656f757409282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp378-adversarial-a.go",
+            "source_hex": "5874782c2039203a3d09636f6e746578742e5769746854696d656f757409282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP379",
+      "title": "Go Mutex lock acquired without immediate defer Unlock",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-833",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp379-positive-a.go",
+            "source_hex": "612e4c6f636b20282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9b80eab649eeee8314069e09"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp379-negative-a.go",
+            "source_hex": "212e4c6f636b20282029"
+          },
+          {
+            "path": "contract-fixtures/go/sp379-negative-b.go",
+            "source_hex": "202e4c6f636b20282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp379-adversarial-a.go",
+            "source_hex": "2e4c6f636b20282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP447",
+      "title": "Gin framework router missing Recovery panic middleware",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp447-positive-a.go",
+            "source_hex": "726f75746572203a3d0967696e2e4e657709280929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2a029cab9d3ef659cc5fbdca"
+          },
+          {
+            "path": "contract-fixtures/go/sp447-positive-b.go",
+            "source_hex": "726f7574657209203a3d200967696e2e4e65772009282009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "30d7d1b5c47a4212a00249ad"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp447-negative-a.go",
+            "source_hex": "216f75746572203a3d0967696e2e4e657709280929"
+          },
+          {
+            "path": "contract-fixtures/go/sp447-negative-b.go",
+            "source_hex": "206f75746572203a3d0967696e2e4e657709280929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp447-adversarial-a.go",
+            "source_hex": "586f75746572203a3d0967696e2e4e657709280929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP448",
+      "title": "Fiber framework App initialized without Recover middleware",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp448-positive-a.go",
+            "source_hex": "617070093a3d2066696265722e4e657720282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b658324e920282ffe0db786a"
+          },
+          {
+            "path": "contract-fixtures/go/sp448-positive-b.go",
+            "source_hex": "61707020093a3d092066696265722e4e65770920282020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "81c346c162bfeed6d332e51e"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp448-negative-a.go",
+            "source_hex": "217070093a3d2066696265722e4e657720282029"
+          },
+          {
+            "path": "contract-fixtures/go/sp448-negative-b.go",
+            "source_hex": "207070093a3d2066696265722e4e657720282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp448-adversarial-a.go",
+            "source_hex": "587070093a3d2066696265722e4e657720282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP482",
+      "title": "Gin framework c.BindJSON ignoring binding validation error",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp482-positive-a.go",
+            "source_hex": "632e42696e644a534f4e20282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "4033ed43dd8c8b9b47e2fd09"
+          },
+          {
+            "path": "contract-fixtures/go/sp482-positive-b.go",
+            "source_hex": "632e42696e644a534f4e0920282020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6ba8711d8d77f32ab44b88ba"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp482-negative-a.go",
+            "source_hex": "212e42696e644a534f4e20282029"
+          },
+          {
+            "path": "contract-fixtures/go/sp482-negative-b.go",
+            "source_hex": "202e42696e644a534f4e20282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp482-adversarial-a.go",
+            "source_hex": "582e42696e644a534f4e20282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP483",
+      "title": "Fiber framework c.BodyParser ignoring returned error",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp483-positive-a.go",
+            "source_hex": "632e426f647950617273657220282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0b449b4db2095837c48f8e6f"
+          },
+          {
+            "path": "contract-fixtures/go/sp483-positive-b.go",
+            "source_hex": "632e426f64795061727365720920282020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "043d706708667d9dcd0af786"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp483-negative-a.go",
+            "source_hex": "212e426f647950617273657220282029"
+          },
+          {
+            "path": "contract-fixtures/go/sp483-negative-b.go",
+            "source_hex": "202e426f647950617273657220282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp483-adversarial-a.go",
+            "source_hex": "582e426f647950617273657220282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP484",
+      "title": "Echo framework c.Bind ignoring deserialization error",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp484-positive-a.go",
+            "source_hex": "632e42696e6420282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "50adf73fe55c31ef1bfcc460"
+          },
+          {
+            "path": "contract-fixtures/go/sp484-positive-b.go",
+            "source_hex": "632e42696e640920282020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c1b13338525a8363d8b8102b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp484-negative-a.go",
+            "source_hex": "212e42696e6420282029"
+          },
+          {
+            "path": "contract-fixtures/go/sp484-negative-b.go",
+            "source_hex": "202e42696e6420282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp484-adversarial-a.go",
+            "source_hex": "582e42696e6420282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP622",
+      "title": "Go deferred file or response Close in write operation without error check",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-755",
+      "frameworks": [],
+      "false_positive_analysis": "Read-only file operations where close errors do not indicate data loss.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp622-positive-a.go",
+            "source_hex": "6465666572097772697465722e436c6f73652829",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c2f55b593485c666ca09ada9"
+          },
+          {
+            "path": "contract-fixtures/go/sp622-positive-b.go",
+            "source_hex": "6465666572200966696c652e436c6f736528293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5f509724ece87ddd858a15d5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp622-negative-a.go",
+            "source_hex": "2165666572097772697465722e436c6f73652829"
+          },
+          {
+            "path": "contract-fixtures/go/sp622-negative-b.go",
+            "source_hex": "2065666572097772697465722e436c6f73652829"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp622-adversarial-a.go",
+            "source_hex": "5865666572097772697465722e436c6f73652829",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

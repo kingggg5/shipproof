@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
+import math
+import os
 import platform
 import shutil
+import statistics
 import sys
 from pathlib import Path
 from time import perf_counter
@@ -79,19 +83,71 @@ def peak_rss_mb() -> float | None:
         return None
 
 
-def write_fixture(root: Path, file_count: int) -> None:
+def fixture_source(index: int, profile: str, bytes_per_file: int) -> str:
+    if profile == "clean":
+        prefix = f"def normalize_{index}(value: str) -> str:\n    return value.strip()\n"
+        padding = "# bounded benchmark padding\n"
+    else:
+        prefix = f"def parse_{index}(value: str) -> str:\n    return value\n"
+        # Exercise long near-miss regex input without embedding a vulnerable
+        # sink, target, credential, or environment-specific value.
+        padding = "# ((([[{{??++** aa_AA_00 :: // near-miss boundary\n"
+    if len(prefix.encode("utf-8")) >= bytes_per_file:
+        return prefix
+    repetitions = (bytes_per_file - len(prefix.encode("utf-8"))) // len(padding.encode("utf-8")) + 1
+    return (
+        (prefix + padding * repetitions)
+        .encode("utf-8")[:bytes_per_file]
+        .decode("utf-8", errors="ignore")
+    )
+
+
+def write_fixture(
+    root: Path, file_count: int, profile: str, bytes_per_file: int
+) -> tuple[str, int]:
+    digest = hashlib.sha256()
+    total_bytes = 0
     for index in range(file_count):
         bucket = root / f"module-{index // 250:04d}"
         bucket.mkdir(exist_ok=True)
-        (bucket / f"service-{index:06d}.py").write_text(
-            f"def normalize_{index}(value: str) -> str:\n    return value.strip()\n",
-            encoding="utf-8",
-        )
+        path = bucket / f"service-{index:06d}.py"
+        source = fixture_source(index, profile, bytes_per_file)
+        path.write_text(source, encoding="utf-8")
+        source_bytes = source.encode("utf-8")
+        total_bytes += len(source_bytes)
+        digest.update(path.relative_to(root).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(source_bytes)
+        digest.update(b"\0")
+    return digest.hexdigest(), total_bytes
+
+
+def nearest_rank_percentile(values: list[float], percentile: float) -> float:
+    if not values:
+        raise ValueError("percentile requires at least one value")
+    if not 0 < percentile <= 100:
+        raise ValueError("percentile must be greater than 0 and at most 100")
+    ordered = sorted(values)
+    rank = math.ceil(len(ordered) * percentile / 100)
+    return ordered[min(rank - 1, len(ordered) - 1)]
 
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--files", type=int, default=1_000)
+    parser.add_argument("--samples", type=int, default=3, help="Measured scan samples")
+    parser.add_argument(
+        "--profile",
+        choices=("clean", "adversarial-regex"),
+        default="clean",
+        help="Generated finding-free workload shape",
+    )
+    parser.add_argument(
+        "--bytes-per-file",
+        type=int,
+        default=128,
+        help="Approximate generated source bytes per file",
+    )
     parser.add_argument("--workdir", type=Path, default=ROOT / "benchmarks" / ".work")
     parser.add_argument("--max-seconds", type=float)
     parser.add_argument("--max-memory-mb", type=float)
@@ -115,46 +171,83 @@ def main() -> int:
         raise ValueError("--files must be from 1 through 100000")
     if arguments.jobs < 1:
         raise ValueError("--jobs must be at least 1")
+    if not 1 <= arguments.samples <= 30:
+        raise ValueError("--samples must be from 1 through 30")
+    if not 64 <= arguments.bytes_per_file <= 1_000_000:
+        raise ValueError("--bytes-per-file must be from 64 through 1000000")
     workdir = arguments.workdir.resolve()
     workdir.mkdir(parents=True, exist_ok=True)
     scanner = load_scanner()
     fixture = workdir / f"scanner-{uuid4().hex}"
     fixture.mkdir()
     try:
-        write_fixture(fixture, arguments.files)
+        fixture_digest, fixture_bytes = write_fixture(
+            fixture,
+            arguments.files,
+            arguments.profile,
+            arguments.bytes_per_file,
+        )
         if not arguments.no_warmup:
             # The first scan of freshly written files pays OS-level first-open
             # cost (antivirus, directory metadata) that is not scanner work.
             # Warm up once, then measure the first post-warmup pass and a repeated warm pass.
             scanner.scan_repository(fixture, jobs=arguments.jobs)
-        started = perf_counter()
-        findings, stats = scanner.scan_repository(fixture, jobs=arguments.jobs)
-        duration = perf_counter() - started
-        started = perf_counter()
-        findings, stats = scanner.scan_repository(fixture, jobs=arguments.jobs)
-        warm_duration = perf_counter() - started
+        durations = []
+        finding_counts = []
+        file_counts = []
+        findings = []
+        stats = {"files_scanned": 0}
+        for _ in range(arguments.samples):
+            started = perf_counter()
+            findings, stats = scanner.scan_repository(fixture, jobs=arguments.jobs)
+            durations.append(perf_counter() - started)
+            finding_counts.append(len(findings))
+            file_counts.append(int(stats["files_scanned"]))
     finally:
         if fixture.parent != workdir:
             raise RuntimeError("refusing to remove a benchmark path outside the work directory")
         shutil.rmtree(fixture)
     memory = peak_rss_mb()
+    median_duration = statistics.median(durations)
+    p95_duration = nearest_rank_percentile(durations, 95)
     report = {
         "schema_version": "1.0",
         "tool": {"name": "ShipProof", "version": scanner.VERSION, "command": "benchmark"},
         "platform": platform.platform(),
         "python": platform.python_version(),
+        "cpu_count": os.cpu_count(),
         "jobs": arguments.jobs,
+        "profile": arguments.profile,
+        "bytes_per_file": arguments.bytes_per_file,
+        "fixture_bytes": fixture_bytes,
+        "fixture_sha256": fixture_digest,
+        "warmup_passes": 0 if arguments.no_warmup else 1,
+        "sample_count": arguments.samples,
+        "samples_seconds": [round(value, 4) for value in durations],
+        "sample_finding_counts": finding_counts,
+        "sample_file_counts": file_counts,
         "files": stats["files_scanned"],
-        "seconds": round(duration, 4),
-        "warm_seconds": round(warm_duration, 4),
-        "files_per_second": round(arguments.files / duration, 1),
-        "warm_files_per_second": round(arguments.files / warm_duration, 1),
+        "seconds": round(durations[0], 4),
+        "warm_seconds": round(durations[-1], 4),
+        "median_seconds": round(median_duration, 4),
+        "p95_seconds": round(p95_duration, 4),
+        "files_per_second": round(arguments.files / durations[0], 1),
+        "warm_files_per_second": round(arguments.files / durations[-1], 1),
+        "median_files_per_second": round(arguments.files / median_duration, 1),
         "peak_rss_mb": round(memory, 2) if memory is not None else None,
-        "findings": len(findings),
+        "findings": finding_counts[-1],
     }
     failures = []
     unavailable = []
-    if arguments.max_seconds is not None and duration > arguments.max_seconds:
+    if len(set(finding_counts)) != 1:
+        failures.append("nondeterministic_findings")
+    if len(set(file_counts)) != 1:
+        failures.append("nondeterministic_file_count")
+    if file_counts[-1] != arguments.files:
+        failures.append("unexpected_file_count")
+    if any(finding_counts):
+        failures.append("unexpected_findings")
+    if arguments.max_seconds is not None and p95_duration > arguments.max_seconds:
         failures.append("duration")
     if arguments.max_memory_mb is not None:
         if memory is None:

@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "graphql",
+  "rules": [
+    {
+      "rule_id": "SP612",
+      "title": "GraphQL server configured without query depth or complexity limits",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Internal gateway proxies with trusted upstream query allowlists.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/graphql/sp612-positive-a/graphql.ts",
+            "source_hex": "636f6e737420736572766572203d206e65772041706f6c6c6f536572766572287b2074797065446566732c207265736f6c76657273207d293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "b3da839c20ba3c297ac0d208"
+          },
+          {
+            "path": "contract-fixtures/graphql/sp612-positive-b/graphql.ts",
+            "source_hex": "0a636f6e737420736572766572203d206e65772041706f6c6c6f536572766572287b2074797065446566732c207265736f6c76657273207d293b0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "e86958321fdab3c7d769df98"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/graphql/sp612-negative_a/graphql.ts",
+            "source_hex": "636f6e737420736572766572203d206e65772041706f6c6c6f536572766572287b2074797065446566732c207265736f6c766572732c2076616c69646174696f6e52756c65733a205b64657074684c696d6974283130295d207d293b0a"
+          },
+          {
+            "path": "contract-fixtures/graphql/sp612-negative_b/graphql.ts",
+            "source_hex": "636f6e737420736368656d61203d206275696c64536368656d61287479706544656673293b0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/graphql/sp612-adversarial-a/graphql.ts",
+            "source_hex": "696d706f7274207b206372656174654772617068536572766572207d2066726f6d20272e2f7365727665722d666163746f7279273b0a636f6e737420736572766572203d206372656174654772617068536572766572287b2074797065446566732c207265736f6c76657273207d293b0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    }
+  ]
+}

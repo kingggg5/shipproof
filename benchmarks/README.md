@@ -1,14 +1,15 @@
 # Scanner benchmark
 
-ShipProof benchmarks its deterministic scanner against generated, finding-free Python repositories. The script optionally warms the OS file cache with one untimed pass, then reports the first measured pass and a repeated warm pass (seconds and files/second each) plus process peak resident memory; fixture generation is excluded from timing. Pass `--jobs N` to measure worker-process scanning and `--no-warmup` for first-open numbers without the warmup pass.
+ShipProof benchmarks its deterministic scanner against generated, finding-free Python repositories. The script optionally warms the OS file cache with one untimed pass, then records every measured sample, median, p95, throughput, fixture digest, workload bytes, runtime identity, and process peak resident memory; fixture generation is excluded from timing. Pass `--jobs N` to measure worker-process scanning and `--no-warmup` for first-open numbers without the warmup pass.
 
 ```bash
-python scripts/benchmark-scanner.py --files 1000
+python scripts/benchmark-scanner.py --files 1000 --samples 3
 python scripts/benchmark-scanner.py --files 1000 --jobs 4
 python scripts/benchmark-scanner.py --files 10000
+python scripts/benchmark-scanner.py --files 250 --profile adversarial-regex --bytes-per-file 4096
 ```
 
-Reference numbers (Windows 11, 12 cores, Python 3.12): 1,000 files run at ~1,300–1,450 warm files/s sequentially and ~2,600 warm files/s with `--jobs 4` at 5,000 files (≈2x). The first scan of freshly written files additionally pays OS-level first-open cost (antivirus and directory metadata) that is not scanner work — that is why the harness reports warm numbers separately.
+Current local reference (Windows 11, 12 logical CPUs, Python 3.12.10, 2026-08-24): 1,000 clean 128-byte files had median 0.9747 s and p95 0.9879 s at 25.57 MB peak RSS. Machine, filesystem, antivirus, profile, bytes, sample count, finding/file-count samples, and digest are part of the evidence; these figures are not universal throughput promises.
 
 Hardware, OS, filesystem, Python version, and cold/warm cache state materially affect results. Published numbers must include the generated JSON and environment instead of being presented as universal promises. CI runs a deliberately broad regression budget; maintainers review tighter budgets on stable runners.
 
@@ -39,40 +40,25 @@ python benchmarks/head_to_head.py fixtures/node-taint-crossfile fixtures/node-se
     --semgrep-config benchmarks/semgrep-comparison/rules.yml --repeat 3
 ```
 
-Latest ShipProof self-leg over all shipped fixture corpora (Windows 11, Python 3.13, `--cross-file`, median of 3, 2026-08):
+Latest ShipProof self-leg over all shipped fixture corpora (Windows 11, Python 3.12.10, `--cross-file`, median of 3, 2026-08-24). The v2 label contract separates expected finding locations from context-only chain files:
 
-| Corpus | Findings | Files flagged | Precision | Recall | F1 |
-| :--- | ---: | ---: | ---: | ---: | ---: |
-| vulnerable-node-api | 2 | 1 | 1.0 | 1.0 | 1.0 |
-| vulnerable-python-api | 3 | 1 | 1.0 | 1.0 | 1.0 |
-| node-taint-crossfile | 6 | 4 | 1.0 | 0.8 | 0.889 |
-| adversarial-node | 4 | 4 | 1.0 | 0.667 | 0.8 |
-| secure-node-api | 0 | 0 | n/a | n/a | n/a |
-| node-secure-crossfile | 0 | 0 | n/a | n/a | n/a |
+| Corpus | Findings | TP | FP | FN | TN | Context only | Precision | Recall | F1 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| vulnerable-node-api | 2 | 1 | 0 | 0 | 0 | 0 | 1.0 | 1.0 | 1.0 |
+| vulnerable-python-api | 3 | 1 | 0 | 0 | 0 | 0 | 1.0 | 1.0 | 1.0 |
+| node-taint-crossfile | 6 | 4 | 0 | 0 | 1 | 1 | 1.0 | 1.0 | 1.0 |
+| adversarial-node | 4 | 4 | 0 | 0 | 3 | 2 | 1.0 | 1.0 | 1.0 |
+| secure-node-api | 0 | 0 | 0 | 0 | 1 | 0 | n/a | n/a | n/a |
+| node-secure-crossfile | 0 | 0 | 0 | 0 | 6 | 0 | n/a | n/a | n/a |
 
-`adversarial-node` stress-tests precision under hostile conditions: vulnerable-looking code confined to comments and string literals, method look-alikes (`snackBar.open`), sync I/O outside loops, and hardened Express/DOM patterns must all stay silent — while two-hop aliasing, destructured params, cookie-to-innerHTML chains, and a three-file taint chain must all fire. Both clean traps and all recall probes behave as labeled.
+`adversarial-node` stress-tests precision under hostile conditions: vulnerable-looking code confined to comments and string literals, method look-alikes (`snackBar.open`), sync I/O outside loops, and hardened Express/DOM patterns must all stay silent—while two-hop aliasing, destructured params, cookie-to-innerHTML chains, and a three-file taint chain must all fire. Version-2 labels score expected sink/root-cause locations and retain source/helper chain files separately as `context_only_files`.
 
-Scanner throughput is unchanged by the taint engine: ~1,400 warm files/s sequential and ~2,100 files/s with `--jobs 4` at small scale (`scripts/benchmark-scanner.py`), matching the reference budget above.
+The 1,000-file clean reference remains below the 5-second release budget. Separate adversarial-regex profiles exercise large and many-file behavior so a benign microbenchmark cannot hide regex scaling limits.
 
-The two unlabeled-as-flagged files in `node-taint-crossfile` are pure taint sources (`routes/orders.js`) and the traversal sink helper is flagged via L2; source-only files produce no finding by design, matching how sink-based taint tools report.
+Source-only/helper chain files produce no finding by design and are not counted as false negatives; they remain named in the label artifact and included in its digest.
 
 ## Real-world open-source evaluation
 
-`python scripts/eval-realworld.py` clones well-known repositories (depth 1) into a gitignored scratch area and reports findings split by scope. Application-scope numbers are the decision-relevant ones: the release gate ignores test-scope findings. Reference run (Windows 11, Python 3.13):
+`python scripts/eval-realworld.py` is an opt-in network workflow driven by [realworld-repositories.json](realworld-repositories.json). Every repository URL, full commit, classification, SPDX identifier, and license permalink is reviewed and checked before scanning. Output includes revision/license/corpus digests and marks finding review as `unreviewed`; it cannot turn a repository-wide “clean” or “vulnerable” label into per-alert precision automatically.
 
-| Repo | Type | Files | App findings | Notes |
-| :--- | :--- | ---: | ---: | :--- |
-| express | clean baseline | 162 | 2 | Library repo; test-suite noise stays out of the gate |
-| flask | clean baseline | 221 | 5 | Tutorial example code accounts for the highs |
-| requests | clean baseline | 93 | 3 | Remaining highs are mock-free timeout gaps in library internals |
-| juice-shop | vulnerable app | 1023 | 153 | 29 critical + ~99 high; string-literal and method-look-alike noise removed by hardening pass |
-| dvwa | vulnerable app | 225 | 74 | PHP ruleset: weak hash (SP140), SQLi interpolation (SP128) |
-| nodegoat | vulnerable app | 81 | 20 | L2 taint confirms the documented `eval(req.body.*)` chain (SP101 x3) |
-
-Hardening fixes discovered by this evaluation, each covered by regression tests:
-SP109 now requires request-call context around loopback/metadata URLs; the Python
-taint engine no longer treats bound-parameter tuples as SQL text; SP110 ignores
-`.open(` method look-alikes; SP321 requires loop context; code-shaped matches
-inside string literals are suppressed while content rules (OAuth URLs) stay exempt.
-
-Cross-file taint (`--cross-file`) adds verified interprocedural evidence on top: NodeGoat's three `eval()` sinks and zero false flows on Flask's parameterized tutorial queries after the bind-parameter fix.
+The reviewed 2026-08-24 run completed all six pinned repositories (1,805 files, 732 findings, 310 application-scope findings). Those counts confirm evaluator/corpus availability only; no OSS precision claim is made until maintainers check in per-finding labels.

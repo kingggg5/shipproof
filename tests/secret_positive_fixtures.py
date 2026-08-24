@@ -1,4 +1,4 @@
-"""Runtime-built positive fixtures for the redacting secret rules.
+"""Runtime-built contract fixtures for the redacting secret rules.
 
 The values are deliberately assembled at runtime so the quality corpus does not
 put credential-shaped literals into the repository being scanned by ShipProof.
@@ -75,3 +75,36 @@ def positive_source(rule_id: str) -> str:
     if token is None:
         raise KeyError(rule_id)
     return token + "\n"
+
+
+SECRET_CASE_IDS = frozenset(
+    {
+        "positive_a",
+        "positive_b",
+        "negative_prefix_fragment",
+        "negative_suffix_fragment",
+        "adversarial_split_literal",
+    }
+)
+
+
+def contract_source(rule_id: str, case_id: str) -> str:
+    """Resolve one deterministic secret-rule fixture without storing the token in JSON."""
+
+    if case_id not in SECRET_CASE_IDS:
+        raise KeyError(case_id)
+    token = positive_source(rule_id).rstrip("\n")
+    # Keep the prefix below provider minimum lengths while preserving a
+    # recognizable prefix/suffix boundary for near-miss and split-literal cases.
+    split_at = max(1, len(token) // 4)
+    prefix = token[:split_at]
+    suffix = token[split_at:]
+    if case_id == "positive_a":
+        return token + "\n"
+    if case_id == "positive_b":
+        return "\n" + token + "\n"
+    if case_id == "negative_prefix_fragment":
+        return f"provider_prefix_fragment = {prefix!r}\n"
+    if case_id == "negative_suffix_fragment":
+        return f"provider_suffix_fragment = {suffix!r}\n"
+    return f"provider_token = {prefix!r} + {suffix!r}\n"

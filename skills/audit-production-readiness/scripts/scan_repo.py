@@ -31,7 +31,7 @@ from dataclasses import asdict, dataclass, replace
 from functools import lru_cache
 from pathlib import Path
 
-VERSION = "0.9.0"
+VERSION = "0.10.0"
 MAX_SNIPPET_BYTES = 200_000
 CONTEXT_LEVELS = ("summary", "overview", "full")
 

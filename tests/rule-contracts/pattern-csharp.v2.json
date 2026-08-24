@@ -1,0 +1,631 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "csharp",
+  "rules": [
+    {
+      "rule_id": "SP132",
+      "title": ".NET sync-over-async blocking",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-667",
+      "frameworks": [],
+      "false_positive_analysis": "Console tools and startup paths without a synchronization context.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp132-positive-a.cs",
+            "source_hex": "4765744177616974657220282029202e20476574526573756c742028",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c61b560c764af0aec3c78be0"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp132-negative-a.cs",
+            "source_hex": "2165744177616974657220282029202e20476574526573756c742028"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp132-negative-b.cs",
+            "source_hex": "2065744177616974657220282029202e20476574526573756c742028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp132-adversarial-a.cs",
+            "source_hex": "5865744177616974657220282029202e20476574526573756c742028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP133",
+      "title": "ASP.NET debug compilation enabled",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-489",
+      "frameworks": [],
+      "false_positive_analysis": "Developer-machine configs never used for deployment.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp133-positive-a.config",
+            "source_hex": "6465627567093d09227472756527",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a08f3ec360f31ad028da87ef"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp133-negative-a.config",
+            "source_hex": "2165627567093d09227472756527"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp133-negative-b.config",
+            "source_hex": "2065627567093d09227472756527"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp133-adversarial-a.config",
+            "source_hex": "5865627567093d09227472756527",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP186",
+      "title": "Insecure .NET BinaryFormatter deserialization",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-502",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp186-positive-a.cs",
+            "source_hex": "42696e617279466f726d6174746572202e446573657269616c697a652028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e69670f1fc5a9aee2ebdde62"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp186-positive-b.cs",
+            "source_hex": "42696e617279466f726d617474657220202e446573657269616c697a650920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c41cd0468feadf546d37f8bb"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp186-negative-a.cs",
+            "source_hex": "21696e617279466f726d6174746572202e446573657269616c697a652028"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp186-negative-b.cs",
+            "source_hex": "20696e617279466f726d6174746572202e446573657269616c697a652028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp186-adversarial-a.cs",
+            "source_hex": "58696e617279466f726d6174746572202e446573657269616c697a652028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP187",
+      "title": "ASP.NET Request Validation explicitly disabled",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-79",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp187-positive-a.cs",
+            "source_hex": "76616c696461746552657175657374093d092266616c736522",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "89b2559bb339e145919236e9"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp187-positive-b.cs",
+            "source_hex": "76616c69646174655265717565737409203d09202766616c7365273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "556e1964e1642d8aeb023c10"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp187-negative-a.cs",
+            "source_hex": "21616c696461746552657175657374093d092266616c736522"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp187-negative-b.cs",
+            "source_hex": "20616c696461746552657175657374093d092266616c736522"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp187-adversarial-a.cs",
+            "source_hex": "58616c696461746552657175657374093d092266616c736522",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP385",
+      "title": "C# async void method declaration masking unhandled exceptions",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp385-positive-a.cs",
+            "source_hex": "7075626c6963206173796e6320766f696409300928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d2b2042b4b2fa49904d47eea"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp385-positive-b.cs",
+            "source_hex": "7075626c696309206173796e630920766f69642009617a2009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0a3ffa949d8f04eadc6ebca3"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp385-negative-a.cs",
+            "source_hex": "2175626c6963206173796e6320766f696409300928"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp385-negative-b.cs",
+            "source_hex": "2075626c6963206173796e6320766f696409300928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp385-adversarial-a.cs",
+            "source_hex": "5875626c6963206173796e6320766f696409300928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP386",
+      "title": "C# synchronous Task.Result or Task.Wait causing deadlock",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-833",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp386-positive-a.cs",
+            "source_hex": "2e7a4173796e63092820292e5761697420282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b0cdac5ea8212484d6f64475"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp386-positive-b.cs",
+            "source_hex": "2e395f4173796e630920282020292e576169742009282009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a71ae2d131e2d6d15984bd2d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp386-negative-a.cs",
+            "source_hex": "217a4173796e63092820292e5761697420282029"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp386-negative-b.cs",
+            "source_hex": "207a4173796e63092820292e5761697420282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp386-adversarial-a.cs",
+            "source_hex": "587a4173796e63092820292e5761697420282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP387",
+      "title": "C# HttpClient instantiated directly causing socket exhaustion",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp387-positive-a.cs",
+            "source_hex": "7573696e67092809766172095a093d096e65770948747470436c69656e742028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "dd33a8f27242a3cde49e6c48"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp387-positive-b.cs",
+            "source_hex": "7573696e67200928200976617220095f6120093d20096e6577200948747470436c69656e740920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "dc87cb09a8bb4f59cfe246fb"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp387-negative-a.cs",
+            "source_hex": "2173696e67092809766172095a093d096e65770948747470436c69656e742028"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp387-negative-b.cs",
+            "source_hex": "2073696e67092809766172095a093d096e65770948747470436c69656e742028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp387-adversarial-a.cs",
+            "source_hex": "5873696e67092809766172095a093d096e65770948747470436c69656e742028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP388",
+      "title": "C# Entity Framework DbContext shared across concurrent threads",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-362",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp388-positive-a.cs",
+            "source_hex": "73746174696320614462436f6e746578740930",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6adfd6cc54001eadfebd32a8"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp388-positive-b.cs",
+            "source_hex": "737461746963200930394462436f6e7465787409207a413b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7c5b6c5ec2ccb42687405e51"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp388-negative-a.cs",
+            "source_hex": "21746174696320614462436f6e746578740930"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp388-negative-b.cs",
+            "source_hex": "20746174696320614462436f6e746578740930"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp388-adversarial-a.cs",
+            "source_hex": "58746174696320614462436f6e746578740930",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP389",
+      "title": "C# async database query ignoring CancellationToken",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp389-positive-a.cs",
+            "source_hex": "546f4c6973744173796e6309280929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "889c65f03dc1902cd8f3330b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp389-negative-a.cs",
+            "source_hex": "216f4c6973744173796e6309280929"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp389-negative-b.cs",
+            "source_hex": "206f4c6973744173796e6309280929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp389-adversarial-a.cs",
+            "source_hex": "586f4c6973744173796e6309280929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP418",
+      "title": "ASP.NET Core UseDeveloperExceptionPage in production",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-209",
+      "frameworks": [],
+      "false_positive_analysis": "Development environment configuration pipelines.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp418-positive-a.cs",
+            "source_hex": "6170702e557365446576656c6f706572457863657074696f6e5061676509280929093b092f2f20756e636f6e646974696f6e616c",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "742e0d24e4f141ea4189abdd"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp418-positive-b.cs",
+            "source_hex": "6170702e557365446576656c6f706572457863657074696f6e5061676520092820092920093b20092f2f0920756e636f6e646974696f6e616c3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "66e074e3671c39f5df9f410c"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp418-negative-a.cs",
+            "source_hex": "2170702e557365446576656c6f706572457863657074696f6e5061676509280929093b092f2f20756e636f6e646974696f6e616c"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp418-negative-b.cs",
+            "source_hex": "2070702e557365446576656c6f706572457863657074696f6e5061676509280929093b092f2f20756e636f6e646974696f6e616c"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp418-adversarial-a.cs",
+            "source_hex": "5870702e557365446576656c6f706572457863657074696f6e5061676509280929093b092f2f20756e636f6e646974696f6e616c",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP453",
+      "title": "ASP.NET Core DeveloperExceptionPage enabled in non-development",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-209",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp453-positive-a.cs",
+            "source_hex": "6170702e557365446576656c6f706572457863657074696f6e5061676509280929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f372d41f37c3b28eb6b3af90"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp453-positive-b.cs",
+            "source_hex": "6170702e557365446576656c6f706572457863657074696f6e506167652009282009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "89f6d858591fecad0a7e5013"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp453-negative-a.cs",
+            "source_hex": "2170702e557365446576656c6f706572457863657074696f6e5061676509280929"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp453-negative-b.cs",
+            "source_hex": "2070702e557365446576656c6f706572457863657074696f6e5061676509280929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp453-adversarial-a.cs",
+            "source_hex": "5870702e557365446576656c6f706572457863657074696f6e5061676509280929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP454",
+      "title": "ASP.NET Core AllowAnonymous attribute on administrative controller",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-862",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp454-positive-a.cs",
+            "source_hex": "5b416c6c6f77416e6f6e796d6f75735d200a207075626c696309636c6173730941646d696e41436f6e74726f6c6c6572",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0ea85a8022bd0a19597bdb70"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp454-positive-b.cs",
+            "source_hex": "5b416c6c6f77416e6f6e796d6f75735d09200a09207075626c69632009636c617373200941646d696e395f436f6e74726f6c6c65723b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "399b30da15f0ed8bcad6cba6"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp454-negative-a.cs",
+            "source_hex": "21416c6c6f77416e6f6e796d6f75735d200a207075626c696309636c6173730941646d696e41436f6e74726f6c6c6572"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp454-negative-b.cs",
+            "source_hex": "20416c6c6f77416e6f6e796d6f75735d200a207075626c696309636c6173730941646d696e41436f6e74726f6c6c6572"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp454-adversarial-a.cs",
+            "source_hex": "58416c6c6f77416e6f6e796d6f75735d200a207075626c696309636c6173730941646d696e41436f6e74726f6c6c6572",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP625",
+      "title": "Unawaited async task invoked in ASP.NET request handler swallowing exceptions",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-664",
+      "frameworks": [],
+      "false_positive_analysis": "Tasks explicitly wrapped in HostingEnvironment.QueueBackgroundWorkItem or IHostedService.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/csharp/sp625-positive-a.cs",
+            "source_hex": "5f093d095461736b2e52756e28",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7b6e9748bd0740caa4e12927"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp625-positive-b.cs",
+            "source_hex": "5f20093d20095461736b2e52756e283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "53d1f1c3a6015689a0145482"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/csharp/sp625-negative-a.cs",
+            "source_hex": "21093d095461736b2e52756e28"
+          },
+          {
+            "path": "contract-fixtures/csharp/sp625-negative-b.cs",
+            "source_hex": "20093d095461736b2e52756e28"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/csharp/sp625-adversarial-a.cs",
+            "source_hex": "58093d095461736b2e52756e28",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

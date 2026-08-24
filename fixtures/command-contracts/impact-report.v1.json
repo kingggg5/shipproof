@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "tool": {
+    "name": "ShipProof",
+    "version": "0.10.0",
+    "command": "impact"
+  },
+  "verdict": "CONDITIONAL",
+  "root": "<ROOT>",
+  "target_file": "server.py",
+  "target_line": null,
+  "target_symbols": [
+    "health"
+  ],
+  "direct_callers": [],
+  "transitive_callers": [],
+  "tables_touched": [],
+  "relevant_tests": [],
+  "total_files_analyzed": 2,
+  "blast_radius_score": "LOW",
+  "reachability_status": "REACHABLE (Hot Path from API Entrypoint)",
+  "cross_file_taint_flows": [],
+  "limitations": [
+    "Impact is inferred from static symbols and references; dynamic dispatch may be absent.",
+    "Selected tests are candidates, not proof that all affected behavior is covered."
+  ]
+}

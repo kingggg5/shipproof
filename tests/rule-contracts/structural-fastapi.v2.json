@@ -1,0 +1,108 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "fastapi",
+  "rules": [
+    {
+      "rule_id": "SP108",
+      "title": "Sensitive route lacks visible authorization",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-862",
+      "frameworks": [
+        "django",
+        "express",
+        "fastapi",
+        "fastify",
+        "flask",
+        "hono",
+        "koa",
+        "nestjs"
+      ],
+      "false_positive_analysis": "Authorization might be handled by middleware not visible in the route decorator. Verify and document.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/fastapi/sp108-positive-a/app.py",
+            "source_hex": "66726f6d206661737461706920696d706f727420466173744150490a617070203d204661737441504928290a406170702e67657428272f61646d696e2f757365727327290a646566206c6973745f757365727328293a202e2e2e0a",
+            "expected_line": 3,
+            "expected_confidence": "medium",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "1873522495405cdcea55c934"
+          },
+          {
+            "path": "contract-fixtures/fastapi/sp108-positive-b/app.py",
+            "source_hex": "0a66726f6d206661737461706920696d706f727420466173744150490a617070203d204661737441504928290a406170702e67657428272f61646d696e2f757365727327290a646566206c6973745f757365727328293a202e2e2e0a",
+            "expected_line": 4,
+            "expected_confidence": "medium",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "9359fe036773d25b941e1a04"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/fastapi/sp108-negative_a/app.py",
+            "source_hex": "66726f6d206661737461706920696d706f727420446570656e64732c20466173744150490a617070203d204661737441504928290a64656620726571756972655f61646d696e28293a202e2e2e0a406170702e67657428272f61646d696e2f7573657273272c20646570656e64656e636965733d5b446570656e647328726571756972655f61646d696e295d290a646566206c6973745f757365727328293a202e2e2e0a"
+          },
+          {
+            "path": "contract-fixtures/fastapi/sp108-negative_b/app.py",
+            "source_hex": "66726f6d206661737461706920696d706f727420466173744150490a617070203d204661737441504928290a406170702e67657428272f6865616c746827290a646566206865616c746828293a202e2e2e0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/fastapi/sp108-adversarial-a/app.py",
+            "source_hex": "66726f6d206661737461706920696d706f727420466173744150490a617070203d204661737441504928290a61646d696e5f70617468203d20272f61646d696e2f7573657273270a406170702e6765742861646d696e5f70617468290a646566206c6973745f757365727328293a202e2e2e0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP305",
+      "title": "Unbounded pagination input",
+      "category": "scale",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Validation performed in custom validator functions not visible in the parameter declaration.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/fastapi/sp305-positive-a/app.py",
+            "source_hex": "66726f6d206661737461706920696d706f727420466173744150490a617070203d204661737441504928290a406170702e67657428272f6974656d7327290a646566206974656d73286c696d69743a20696e74203d203530293a202e2e2e0a",
+            "expected_line": 4,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "7a78dc17a829d5027e8757f4"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/fastapi/sp305-negative_a/app.py",
+            "source_hex": "66726f6d206661737461706920696d706f727420466173744150492c2051756572790a617070203d204661737441504928290a406170702e67657428272f6974656d7327290a646566206974656d73286c696d69743a20696e74203d2051756572792835302c2067653d312c206c653d31303029293a202e2e2e0a"
+          },
+          {
+            "path": "contract-fixtures/fastapi/sp305-negative_b/app.py",
+            "source_hex": "64656620696e7465726e616c5f6261746368286c696d69743a20696e74203d203530293a202e2e2e0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/fastapi/sp305-adversarial-a/app.py",
+            "source_hex": "66726f6d206661737461706920696d706f727420466173744150490a617070203d204661737441504928290a406170702e67657428272f6974656d7327290a646566206974656d73282a2a706172616d73293a0a202020206c696d6974203d20706172616d732e67657428276c696d6974272c203530290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    }
+  ]
+}

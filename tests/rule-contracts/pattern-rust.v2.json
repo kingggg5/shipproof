@@ -1,0 +1,540 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "rust",
+  "rules": [
+    {
+      "rule_id": "SP229",
+      "title": "Dockerfile executing untrusted curl piped to shell",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-829",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp229-positive-a.sh",
+            "source_hex": "6375726c202d4173610968747470733a2f2f5a097c097368",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "88bdda9a4ec3e55ebed00334"
+          },
+          {
+            "path": "contract-fixtures/rust/sp229-positive-b.sh",
+            "source_hex": "6375726c09202d7a41735a61200968747470733a2f2f5a5a20097c2009626173683b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "565d309380690750d86eb9b9"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp229-negative-a.sh",
+            "source_hex": "2175726c202d4173610968747470733a2f2f5a097c097368"
+          },
+          {
+            "path": "contract-fixtures/rust/sp229-negative-b.sh",
+            "source_hex": "2075726c202d4173610968747470733a2f2f5a097c097368"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp229-adversarial-a.sh",
+            "source_hex": "5875726c202d4173610968747470733a2f2f5a097c097368",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP390",
+      "title": "Rust unwrap or expect on fallible network operation",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp390-positive-a.rs",
+            "source_hex": "72657177657374202e6578706563742028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "bcf1ee7e5d9eb4ec38d43517"
+          },
+          {
+            "path": "contract-fixtures/rust/sp390-positive-b.rs",
+            "source_hex": "746f6b696f3a3a6e657420202e6578706563740920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "dd8ca7088bbbea5d7a9be1d4"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp390-negative-a.rs",
+            "source_hex": "21657177657374202e6578706563742028"
+          },
+          {
+            "path": "contract-fixtures/rust/sp390-negative-b.rs",
+            "source_hex": "20657177657374202e6578706563742028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp390-adversarial-a.rs",
+            "source_hex": "58657177657374202e6578706563742028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP391",
+      "title": "Rust tokio spawn without error handling or JoinHandle storage",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp391-positive-a.rs",
+            "source_hex": "746f6b696f3a3a737061776e0928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5e520aa6365b8096167f2552"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp391-negative-a.rs",
+            "source_hex": "216f6b696f3a3a737061776e0928"
+          },
+          {
+            "path": "contract-fixtures/rust/sp391-negative-b.rs",
+            "source_hex": "206f6b696f3a3a737061776e0928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp391-adversarial-a.rs",
+            "source_hex": "586f6b696f3a3a737061776e0928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP392",
+      "title": "Rust std Mutex held across await point blocking tokio runtime",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp392-positive-a.rs",
+            "source_hex": "7374643a3a73796e633a3a4d75746578202e6c6f636b2829202e6177616974",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9190e8b7e5cf4f0ac856175e"
+          },
+          {
+            "path": "contract-fixtures/rust/sp392-positive-b.rs",
+            "source_hex": "7374643a3a73796e633a3a4d7574657871202e6c6f636b282971202e61776169743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "aca1dd5590436c35984766b2"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp392-negative-a.rs",
+            "source_hex": "2174643a3a73796e633a3a4d75746578202e6c6f636b2829202e6177616974"
+          },
+          {
+            "path": "contract-fixtures/rust/sp392-negative-b.rs",
+            "source_hex": "2074643a3a73796e633a3a4d75746578202e6c6f636b2829202e6177616974"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp392-adversarial-a.rs",
+            "source_hex": "5874643a3a73796e633a3a4d75746578202e6c6f636b2829202e6177616974",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP393",
+      "title": "Rust unbounded mpsc channel causing memory exhaustion",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp393-positive-a.rs",
+            "source_hex": "746f6b696f3a3a73796e633a3a6d7073633a3a756e626f756e6465645f6368616e6e656c2028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f4954048a738dd44bc03ecdd"
+          },
+          {
+            "path": "contract-fixtures/rust/sp393-positive-b.rs",
+            "source_hex": "746f6b696f3a3a73796e633a3a6d7073633a3a756e626f756e6465645f6368616e6e656c0920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "df6cf93638067520651263cd"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp393-negative-a.rs",
+            "source_hex": "216f6b696f3a3a73796e633a3a6d7073633a3a756e626f756e6465645f6368616e6e656c2028"
+          },
+          {
+            "path": "contract-fixtures/rust/sp393-negative-b.rs",
+            "source_hex": "206f6b696f3a3a73796e633a3a6d7073633a3a756e626f756e6465645f6368616e6e656c2028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp393-adversarial-a.rs",
+            "source_hex": "586f6b696f3a3a73796e633a3a6d7073633a3a756e626f756e6465645f6368616e6e656c2028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP394",
+      "title": "Rust blocking std fs operations inside async context",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp394-positive-a.rs",
+            "source_hex": "6173796e6309666e2041207374643a3a66733a3a726561645f746f5f737472696e670928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b93cdd35e93c4b326a70380c"
+          },
+          {
+            "path": "contract-fixtures/rust/sp394-positive-b.rs",
+            "source_hex": "6173796e632009666e0920395f71207374643a3a66733a3a77726974652009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "973b6eedc66b363380910ce8"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp394-negative-a.rs",
+            "source_hex": "2173796e6309666e2041207374643a3a66733a3a726561645f746f5f737472696e670928"
+          },
+          {
+            "path": "contract-fixtures/rust/sp394-negative-b.rs",
+            "source_hex": "2073796e6309666e2041207374643a3a66733a3a726561645f746f5f737472696e670928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp394-adversarial-a.rs",
+            "source_hex": "5873796e6309666e2041207374643a3a66733a3a726561645f746f5f737472696e670928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP425",
+      "title": "Vue v-html directive rendering untrusted content",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-79",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp425-positive-a.html",
+            "source_hex": "762d68746d6c203d2027757365722e3927",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0ea7aa3aa8ed445e8950ef7a"
+          },
+          {
+            "path": "contract-fixtures/rust/sp425-positive-b.html",
+            "source_hex": "762d68746d6c09203d092027636f6d6d656e742e7a41273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "cc4994aae164e2c21df759c1"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp425-negative-a.html",
+            "source_hex": "212d68746d6c203d2027757365722e3927"
+          },
+          {
+            "path": "contract-fixtures/rust/sp425-negative-b.html",
+            "source_hex": "202d68746d6c203d2027757365722e3927"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp425-adversarial-a.html",
+            "source_hex": "582d68746d6c203d2027757365722e3927",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP464",
+      "title": "Express app trust proxy configured insecurely with true",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-345",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp464-positive-a.ts",
+            "source_hex": "6170702e7365740928092774727573742070726f787927092c09747275652029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8b1ab21a854738409a62fb24"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp464-negative-a.ts",
+            "source_hex": "2170702e7365740928092774727573742070726f787927092c09747275652029"
+          },
+          {
+            "path": "contract-fixtures/rust/sp464-negative-b.ts",
+            "source_hex": "2070702e7365740928092774727573742070726f787927092c09747275652029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp464-adversarial-a.ts",
+            "source_hex": "5870702e7365740928092774727573742070726f787927092c09747275652029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP546",
+      "title": "Payment line item price taken directly from untrusted client payload",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-602",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp546-positive-a.py",
+            "source_hex": "616d6f756e74093a097265712e626f64792e616d6f756e74",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "387d81f29d1af510cb1cbd77"
+          },
+          {
+            "path": "contract-fixtures/rust/sp546-positive-b.py",
+            "source_hex": "707269636520093a20097265712e626f64792e616d6f756e743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ba1c04d861945f6adcc22d01"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp546-negative-a.py",
+            "source_hex": "216d6f756e74093a097265712e626f64792e616d6f756e74"
+          },
+          {
+            "path": "contract-fixtures/rust/sp546-negative-b.py",
+            "source_hex": "206d6f756e74093a097265712e626f64792e616d6f756e74"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp546-adversarial-a.py",
+            "source_hex": "586d6f756e74093a097265712e626f64792e616d6f756e74",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP621",
+      "title": "Rust unwrap or expect invoked in HTTP route handler risking thread panic",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-754",
+      "frameworks": [],
+      "false_positive_analysis": "Initialization code before starting the HTTP server listener.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp621-positive-a.rs",
+            "source_hex": "2e6578706563742829",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "adb658bca9269261f0712c55"
+          },
+          {
+            "path": "contract-fixtures/rust/sp621-positive-b.rs",
+            "source_hex": "2e65787065637428293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0446223f6e9c592d62e56933"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp621-negative-a.rs",
+            "source_hex": "216578706563742829"
+          },
+          {
+            "path": "contract-fixtures/rust/sp621-negative-b.rs",
+            "source_hex": "206578706563742829"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp621-adversarial-a.rs",
+            "source_hex": "586578706563742829",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP646",
+      "title": "iOS URLSession configured to unconditionally trust all SSL certificates",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-295",
+      "frameworks": [],
+      "false_positive_analysis": "Local debug builds behind explicit #if DEBUG compilation flags.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp646-positive-a.m",
+            "source_hex": "55524c43726564656e7469616c282074727573743a0973657276657254727573740929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "26b5c3bf11e52424b6c18cb4"
+          },
+          {
+            "path": "contract-fixtures/rust/sp646-positive-b.m",
+            "source_hex": "55524c43726564656e7469616c28092074727573743a200973657276657254727573742009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "644819f06ccbeceef28b3169"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp646-negative-a.m",
+            "source_hex": "21524c43726564656e7469616c282074727573743a0973657276657254727573740929"
+          },
+          {
+            "path": "contract-fixtures/rust/sp646-negative-b.m",
+            "source_hex": "20524c43726564656e7469616c282074727573743a0973657276657254727573740929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp646-adversarial-a.m",
+            "source_hex": "58524c43726564656e7469616c282074727573743a0973657276657254727573740929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "quality_contract_version": 2,
+  "scope": "Legacy executable-rule contracts split by engine and ecosystem",
+  "manifests": [
+    {
+      "path": "pattern-common.v2.json",
+      "engine": "pattern",
+      "ecosystem": "common",
+      "rule_count": 258,
+      "sha256": "101e727d427800b117bd2918d5cff4afab38a6dfcbb9d844a4397ad7f00a19b5"
+    },
+    {
+      "path": "pattern-container.v2.json",
+      "engine": "pattern",
+      "ecosystem": "container",
+      "rule_count": 8,
+      "sha256": "258792d721321d74f9221b9fc64333b0c3195d671d5b7ed7639509df6c330e09"
+    },
+    {
+      "path": "pattern-cpp.v2.json",
+      "engine": "pattern",
+      "ecosystem": "cpp",
+      "rule_count": 1,
+      "sha256": "6eadc54235939dd68729cf9ec32a56008916fc1d844fc49cff8605efef15463c"
+    },
+    {
+      "path": "pattern-csharp.v2.json",
+      "engine": "pattern",
+      "ecosystem": "csharp",
+      "rule_count": 13,
+      "sha256": "64f8931cfc65df7cd274390f5cd2499b0f9cd4bc88e3c09c37e34c5f10401ace"
+    },
+    {
+      "path": "pattern-django.v2.json",
+      "engine": "pattern",
+      "ecosystem": "django",
+      "rule_count": 1,
+      "sha256": "d7cf1de68591633a9af375a1205d958e87ec011915310e1af9a34a9ad830ba6e"
+    },
+    {
+      "path": "pattern-go.v2.json",
+      "engine": "pattern",
+      "ecosystem": "go",
+      "rule_count": 23,
+      "sha256": "744f168b45feeaec0bea469b8d586472e066573ba3132dc106e175c21e052546"
+    },
+    {
+      "path": "pattern-infrastructure.v2.json",
+      "engine": "pattern",
+      "ecosystem": "infrastructure",
+      "rule_count": 60,
+      "sha256": "9c0688c7cf961097242ef3dceba5f3c1b5ce186c799f060da8dcaf0949eb2aa5"
+    },
+    {
+      "path": "pattern-java.v2.json",
+      "engine": "pattern",
+      "ecosystem": "java",
+      "rule_count": 14,
+      "sha256": "603f398c8f40daea1d628ccc4e7c6a1a225bdb0fa67a6417a394a480761ae119"
+    },
+    {
+      "path": "pattern-javascript.v2.json",
+      "engine": "pattern",
+      "ecosystem": "javascript",
+      "rule_count": 16,
+      "sha256": "498876938d126ded8a678ee84e98e4c159d4344f586f0206ed27f42aece918c6"
+    },
+    {
+      "path": "pattern-nextjs.v2.json",
+      "engine": "pattern",
+      "ecosystem": "nextjs",
+      "rule_count": 1,
+      "sha256": "f4d568aca6afa7a493056d6c23b6c4a457aeb1739268d6025b1b2ba6f4900355"
+    },
+    {
+      "path": "pattern-php.v2.json",
+      "engine": "pattern",
+      "ecosystem": "php",
+      "rule_count": 14,
+      "sha256": "e33c129876a081dc1cb916a5901f9d08f0098e21980302ac17a0aa7fea76faf6"
+    },
+    {
+      "path": "pattern-python.v2.json",
+      "engine": "pattern",
+      "ecosystem": "python",
+      "rule_count": 57,
+      "sha256": "f3d2a95e93d6b30f0ef9a2a613217a426a65c4da69dee43dfeef25a07cd91713"
+    },
+    {
+      "path": "pattern-rust.v2.json",
+      "engine": "pattern",
+      "ecosystem": "rust",
+      "rule_count": 11,
+      "sha256": "c4507f1284356a92679138b0dceaa22ff714cc002e6115177d696415e2add493"
+    },
+    {
+      "path": "pattern-sql.v2.json",
+      "engine": "pattern",
+      "ecosystem": "sql",
+      "rule_count": 2,
+      "sha256": "ef70989eca9c679b80b33823acdb6102710c81e8c89c43d99342de84ec8ba8dd"
+    },
+    {
+      "path": "pattern-typescript.v2.json",
+      "engine": "pattern",
+      "ecosystem": "typescript",
+      "rule_count": 5,
+      "sha256": "464518f2952b617d6a4205d469f97b117d508a675fd8813ea063591129620316"
+    }
+  ]
+}

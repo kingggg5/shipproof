@@ -1,0 +1,99 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "sql",
+  "rules": [
+    {
+      "rule_id": "SP302",
+      "title": "Unbounded SQL result",
+      "category": "scale",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Queries on tables with guaranteed small row counts (e.g., system settings, lookup tables with < 10 rows).",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/sql/sp302-positive-a.sql",
+            "source_hex": "53454c454354092a0946524f4d",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f18c3d2c47f4b15a57481b61"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/sql/sp302-negative-a.sql",
+            "source_hex": "21454c454354092a0946524f4d"
+          },
+          {
+            "path": "contract-fixtures/sql/sp302-negative-b.sql",
+            "source_hex": "20454c454354092a0946524f4d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/sql/sp302-adversarial-a.sql",
+            "source_hex": "58454c454354092a0946524f4d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP649",
+      "title": "Multitenant database query missing tenant scope filter",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-863",
+      "frameworks": [],
+      "false_positive_analysis": "Global administrative queries executed by superadmin background workers.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/sql/sp649-positive-a.sql",
+            "source_hex": "46524f4d095f095748455245096964203d203f",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "499c0e4ecb949c247ed666b5"
+          },
+          {
+            "path": "contract-fixtures/sql/sp649-positive-b.sql",
+            "source_hex": "46524f4d2009415a200957484552452009696409203d09203a69643b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5bae8c3e780e5795ac98600d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/sql/sp649-negative-a.sql",
+            "source_hex": "21524f4d095f095748455245096964203d203f"
+          },
+          {
+            "path": "contract-fixtures/sql/sp649-negative-b.sql",
+            "source_hex": "20524f4d095f095748455245096964203d203f"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/sql/sp649-adversarial-a.sql",
+            "source_hex": "58524f4d095f095748455245096964203d203f",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

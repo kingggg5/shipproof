@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "tool": {
+    "name": "ShipProof",
+    "version": "0.10.0",
+    "command": "capacity"
+  },
+  "verdict": "CONDITIONAL",
+  "inputs": {
+    "users": 100000,
+    "dau_ratio": 0.25,
+    "peak_hour_ratio": 0.2,
+    "actions_per_session": 8,
+    "requests_per_action": 1,
+    "burst_multiplier": 2,
+    "read_ratio": 0.85,
+    "cache_hit_ratio": 0.7,
+    "queries_per_read": 1.5,
+    "queries_per_write": 2,
+    "p95_latency_ms": 300,
+    "db_time_ms": 40,
+    "instance_rps": 200,
+    "cpu_ms_per_request": 5,
+    "memory_mb_per_instance": 512,
+    "headroom": 1.5
+  },
+  "derived": {
+    "daily_active_users": 25000,
+    "users_in_peak_hour": 5000,
+    "average_peak_rps": 11.11,
+    "design_peak_rps": 22.22,
+    "read_rps": 18.89,
+    "write_rps": 3.33,
+    "database_query_rps_after_cache": 15.17,
+    "estimated_in_flight_requests_at_p95": 6.67,
+    "estimated_in_flight_database_work": 0.61,
+    "minimum_app_instances_with_headroom": 1,
+    "estimated_cpu_cores_with_headroom": 0.17,
+    "estimated_app_memory_mb": 512,
+    "estimated_db_connections_with_headroom": 2
+  },
+  "load_test_stages": [
+    {
+      "name": "smoke",
+      "target_rps": 1.11,
+      "purpose": "Validate script and telemetry"
+    },
+    {
+      "name": "average",
+      "target_rps": 11.11,
+      "purpose": "Establish steady-state baseline"
+    },
+    {
+      "name": "peak",
+      "target_rps": 22.22,
+      "purpose": "Prove SLO at design peak"
+    },
+    {
+      "name": "stress",
+      "target_rps": 33.33,
+      "purpose": "Find the first bottleneck"
+    },
+    {
+      "name": "spike",
+      "target_rps": 44.44,
+      "purpose": "Verify shedding and recovery"
+    },
+    {
+      "name": "soak",
+      "target_rps": 22.22,
+      "purpose": "Detect leaks and queue growth"
+    }
+  ],
+  "required_evidence": [
+    "Measured sustainable RPS per instance at the latency and error SLO",
+    "CPU time per request and peak RSS per instance from a production-shaped benchmark",
+    "Endpoint-level traffic mix, payload sizes, and think time from analytics",
+    "Database CPU, locks, slow queries, pool wait time, and storage IOPS at each stage",
+    "Queue depth, retry volume, dependency latency, and rate-limit behavior",
+    "Recovery after overload, instance loss, cache loss, and dependency failure"
+  ],
+  "warning": "This is a workload hypothesis, not proof of capacity. Replace assumptions and run authorized tests in a production-like environment.",
+  "limitations": [
+    "Capacity is estimated from declared assumptions rather than observed production traffic.",
+    "The model does not discover dependency quotas, database limits, or load-generator limits."
+  ]
+}

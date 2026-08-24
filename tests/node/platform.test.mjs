@@ -15,6 +15,7 @@ import test from "node:test";
 
 import { buildPythonInvocation, internals as mcpInternals, resolveRepositoryPath } from "../../lib/mcp-server.mjs";
 import { discoverEvidenceAdapters, internals as evidenceInternals, runEvidenceAdapter } from "../../lib/evidence.mjs";
+import { VERSION } from "../../lib/package-info.mjs";
 import { buildScannerArguments, validateActionInputs } from "../../scripts/run-action.mjs";
 
 const evidenceEnvelopeSchema = JSON.parse(
@@ -121,18 +122,35 @@ test("evidence adapters are marker-driven and fixed", () => {
   try {
     mkdirSync(join(root, "node_modules", "typescript", "bin"), { recursive: true });
     writeFileSync(join(root, "tsconfig.json"), "{}", "utf8");
-    writeFileSync(join(root, "node_modules", "typescript", "bin", "tsc"), "", "utf8");
+    const probeMarker = join(root, "probe-ran");
+    writeFileSync(
+      join(root, "node_modules", "typescript", "bin", "tsc"),
+      `if (process.argv.includes("--version")) { require("node:fs").writeFileSync(${JSON.stringify(probeMarker)}, "yes"); console.log("Version 5.9.2"); }\n`,
+      "utf8",
+    );
     writeFileSync(join(root, "Cargo.toml"), "[package]\nname='safe'\nversion='0.1.0'\n", "utf8");
     const adapters = discoverEvidenceAdapters(root);
-    assert.equal(adapters.find((adapter) => adapter.name === "typescript").available, true);
+    const unapprovedTypescript = adapters.find((adapter) => adapter.name === "typescript");
+    assert.equal(unapprovedTypescript.available, false);
+    assert.equal(unapprovedTypescript.approval_required, true);
+    assert.equal(unapprovedTypescript.analyzer_version, null);
+    assert.equal(existsSync(probeMarker), false);
+    const approvedTypescript = discoverEvidenceAdapters(root, { allowProjectCode: true })
+      .find((adapter) => adapter.name === "typescript");
+    assert.equal(approvedTypescript.available, true);
+    assert.equal(approvedTypescript.approval_required, false);
+    assert.equal(approvedTypescript.analyzer_version, "Version 5.9.2");
+    assert.equal(existsSync(probeMarker), true);
     assert.equal(adapters.find((adapter) => adapter.name === "typescript").requires_project_code_approval, true);
     assert.throws(() => runEvidenceAdapter(root, "typescript"), /allow-project-code/);
     const evidenceReport = runEvidenceAdapter(root, "typescript", { allowProjectCode: true });
     assert.equal(evidenceReport.verdict, "PASS_WITH_EVIDENCE");
+    assert.equal(evidenceReport.analyzer_version, "Version 5.9.2");
+    assert.equal(evidenceReport.diagnostics_truncated, false);
     assertEvidenceReportTopLevel(evidenceReport);
     writeFileSync(
       join(root, "node_modules", "typescript", "bin", "tsc"),
-      "process.exit(1);\n",
+      'if (process.argv.includes("--version")) console.log("Version 5.9.2"); else process.exit(1);\n',
       "utf8",
     );
     assert.throws(
@@ -143,8 +161,92 @@ test("evidence adapters are marker-driven and fixed", () => {
     assert.throws(() => runEvidenceAdapter(root, "shell"), /unsupported/);
     assert.throws(() => runEvidenceAdapter(root, "go"), /did not find go\.mod/);
     assert.deepEqual(evidenceInternals.ADAPTERS.go.environment, { GOPROXY: "off", GOTOOLCHAIN: "local" });
-    assert.deepEqual(evidenceInternals.ADAPTERS.go.versionArguments, ["version"]);
+    assert.deepEqual(evidenceInternals.ADAPTERS.go.build(".").versionArguments, ["version"]);
     assert.deepEqual(evidenceInternals.ADAPTERS.go.build(".").argumentsList, ["vet", "./..."]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("evidence adapters classify findings, timeout, crash, output cap, and unavailable separately", () => {
+  const root = mkdtempSync(join(tmpdir(), "shipproof-evidence-states-"));
+  const compilerDirectory = join(root, "node_modules", "typescript", "bin");
+  const compiler = join(compilerDirectory, "tsc");
+  const versionBranch = 'if (process.argv.includes("--version")) { console.log("Version 5.9.2"); } else ';
+  try {
+    mkdirSync(compilerDirectory, { recursive: true });
+    writeFileSync(join(root, "tsconfig.json"), "{}", "utf8");
+
+    const sensitiveName = "api_" + "key";
+    const sensitiveValue = "fixture-value-that-must-not-escape";
+    writeFileSync(
+      compiler,
+      `${versionBranch}{ console.error(${JSON.stringify(`src/app.ts:1: error: ${sensitiveName}=${sensitiveValue}`)}); process.exit(1); }`,
+      "utf8",
+    );
+    const blocked = runEvidenceAdapter(root, "typescript", { allowProjectCode: true });
+    assert.equal(blocked.verdict, "BLOCK");
+    assert.equal(blocked.process_exit_code, 1);
+    assert.equal(blocked.severity_counts.error, 1);
+    assert.match(blocked.diagnostics[0], /\[REDACTED\]/);
+    assert.equal(blocked.diagnostics[0].includes(sensitiveValue), false);
+
+    writeFileSync(compiler, `${versionBranch}{ setTimeout(() => {}, 5_000); }`, "utf8");
+    assert.throws(
+      () => runEvidenceAdapter(root, "typescript", { allowProjectCode: true, timeoutMs: 50 }),
+      /timed out without usable evidence/,
+    );
+
+    writeFileSync(compiler, `${versionBranch}{ process.exit(3); }`, "utf8");
+    assert.throws(
+      () => runEvidenceAdapter(root, "typescript", { allowProjectCode: true }),
+      /failed with exit code 3/,
+    );
+
+    writeFileSync(
+      compiler,
+      `${versionBranch}{ process.stdout.write("x".repeat(100_000)); }`,
+      "utf8",
+    );
+    assert.throws(
+      () => runEvidenceAdapter(root, "typescript", {
+        allowProjectCode: true,
+        maxBufferBytes: 1_024,
+      }),
+      /exceeded the output cap without usable evidence/,
+    );
+
+    writeFileSync(compiler, "process.exit(1);", "utf8");
+    assert.equal(
+      discoverEvidenceAdapters(root, { allowProjectCode: true })
+        .find((adapter) => adapter.name === "typescript").available,
+      false,
+    );
+    assert.throws(
+      () => runEvidenceAdapter(root, "typescript", { allowProjectCode: true }),
+      /not installed or not available offline/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("evidence diagnostics enforce line-count and per-line bounds", () => {
+  const root = mkdtempSync(join(tmpdir(), "shipproof-evidence-bounds-"));
+  const compilerDirectory = join(root, "node_modules", "typescript", "bin");
+  const compiler = join(compilerDirectory, "tsc");
+  try {
+    mkdirSync(compilerDirectory, { recursive: true });
+    writeFileSync(join(root, "tsconfig.json"), "{}", "utf8");
+    writeFileSync(
+      compiler,
+      'if (process.argv.includes("--version")) console.log("Version 5.9.2"); else { console.error(("x".repeat(5000) + "\\n").repeat(205)); process.exit(1); }',
+      "utf8",
+    );
+    const report = runEvidenceAdapter(root, "typescript", { allowProjectCode: true });
+    assert.equal(report.diagnostics.length, evidenceInternals.bounds.max_diagnostic_lines);
+    assert.equal(report.diagnostics_truncated, true);
+    assert.ok(report.diagnostics.every((line) => line.length <= 4_110));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -278,7 +380,7 @@ test("release metadata rejects branches and accepts only the exact package tag",
       encoding: "utf8",
       env: {
         ...process.env,
-        GITHUB_REF_NAME: "v0.9.0",
+        GITHUB_REF_NAME: `v${VERSION}`,
         GITHUB_REF_TYPE: "tag",
         GITHUB_OUTPUT: outputPath,
       },
@@ -286,7 +388,7 @@ test("release metadata rejects branches and accepts only the exact package tag",
       windowsHide: true,
     });
     assert.equal(tag.status, 0, tag.stderr);
-    assert.match(readFileSync(outputPath, "utf8"), /version=0\.9\.0/);
+    assert.ok(readFileSync(outputPath, "utf8").includes(`version=${VERSION}\n`));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

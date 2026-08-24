@@ -1,0 +1,25 @@
+{
+	"schema_version": 2,
+	"state_revision": 8,
+	"memory_revision_seen": 0,
+	"project_id": "project-25bc2383-ce85-49b1-b32b-49387e479288",
+	"run_id": "RUN-ff934524c3ec446b9b01047596b5d8d1",
+	"operation": "resume",
+	"requested_scale": "auto",
+	"selected_scale": "full",
+	"selection_reason": "Release-readiness, security-contract, rule-quality, and performance/scale work are full-mode triggers.",
+	"state": "WAITING_ACCEPTANCE",
+	"next_action": "Await human acceptance of the reviewed local 0.10.0 commit; tag, push, and public publication remain explicitly excluded.",
+	"active_blocker_id": null,
+	"attempts_for_active_blocker": 0,
+	"discovery_cycles": 1,
+	"total_transitions": 9,
+	"approvals": {
+		"plan": "APPROVED",
+		"design": "NOT_REQUIRED",
+		"decision": "NOT_REQUIRED",
+		"acceptance": "PENDING"
+	},
+	"created_at": "2026-08-24T06:57:24Z",
+	"updated_at": "2026-08-24T09:17:12Z"
+}

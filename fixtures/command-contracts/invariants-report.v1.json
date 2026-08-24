@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "tool": {
+    "name": "ShipProof",
+    "version": "0.10.0",
+    "command": "invariants"
+  },
+  "verdict": "PASS_WITH_EVIDENCE",
+  "root": "<ROOT>",
+  "status": "PASS",
+  "total_violations": 0,
+  "violations": [],
+  "limitations": [
+    "Invariant checks use explicit static evidence and do not prove runtime enforcement.",
+    "Dynamic routes, generated queries, and framework-specific authorization may be absent."
+  ]
+}

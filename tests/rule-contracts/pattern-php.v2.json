@@ -1,0 +1,690 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "php",
+  "rules": [
+    {
+      "rule_id": "SP113",
+      "title": "PHP object injection via unserialize",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-502",
+      "frameworks": [],
+      "false_positive_analysis": "Strictly authenticated, signature-verified cryptographic payloads.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp113-positive-a.php",
+            "source_hex": "756e73657269616c697a652028205f",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5985c17b4682721726d78b89"
+          },
+          {
+            "path": "contract-fixtures/php/sp113-positive-b.php",
+            "source_hex": "756e73657269616c697a650920280920415a3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d875b5f7b76901abdc9fb2b9"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp113-negative-a.php",
+            "source_hex": "216e73657269616c697a652028205f"
+          },
+          {
+            "path": "contract-fixtures/php/sp113-negative-b.php",
+            "source_hex": "206e73657269616c697a652028205f"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp113-adversarial-a.php",
+            "source_hex": "586e73657269616c697a652028205f",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP127",
+      "title": "PHP loose comparison on credential",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-480",
+      "frameworks": [],
+      "false_positive_analysis": "Comparisons on validated, non-security values.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp127-positive-a.php",
+            "source_hex": "2470617373776441093d3d",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "24a7dfcad1e01cfed9e9b6f0"
+          },
+          {
+            "path": "contract-fixtures/php/sp127-positive-b.php",
+            "source_hex": "24746f6b656e714120093d3d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7cd29b6ecd32351ef7d4cabf"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp127-negative-a.php",
+            "source_hex": "2170617373776441093d3d"
+          },
+          {
+            "path": "contract-fixtures/php/sp127-negative-b.php",
+            "source_hex": "2070617373776441093d3d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp127-adversarial-a.php",
+            "source_hex": "5870617373776441093d3d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP128",
+      "title": "PHP SQL with interpolated variables",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-89",
+      "frameworks": [],
+      "false_positive_analysis": "Query fragments assembled from server-side constants only.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp128-positive-a.php",
+            "source_hex": "6d7973716c695f7175657279092820245f474554",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6ad60abe705977c9d3b57338"
+          },
+          {
+            "path": "contract-fixtures/php/sp128-positive-b.php",
+            "source_hex": "2d3e707265706172650920282020245f4745543b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ab20e5dffb762a7f3bbf4f19"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp128-negative-a.php",
+            "source_hex": "217973716c695f7175657279092820245f474554"
+          },
+          {
+            "path": "contract-fixtures/php/sp128-negative-b.php",
+            "source_hex": "207973716c695f7175657279092820245f474554"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp128-adversarial-a.php",
+            "source_hex": "587973716c695f7175657279092820245f474554",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP129",
+      "title": "PHP reflected XSS via echoed superglobal",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-79",
+      "frameworks": [],
+      "false_positive_analysis": "Values already escaped upstream.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp129-positive-a.php",
+            "source_hex": "6563686f09245f504f5354095b",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "51d2fa4d4f275f371fa70584"
+          },
+          {
+            "path": "contract-fixtures/php/sp129-positive-b.php",
+            "source_hex": "6563686f2009245f47455420095b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "1fd02698fca47edf42b1422f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp129-negative-a.php",
+            "source_hex": "2163686f09245f504f5354095b"
+          },
+          {
+            "path": "contract-fixtures/php/sp129-negative-b.php",
+            "source_hex": "2063686f09245f504f5354095b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp129-adversarial-a.php",
+            "source_hex": "5863686f09245f504f5354095b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP130",
+      "title": "PHP open redirect via Location header",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-601",
+      "frameworks": [],
+      "false_positive_analysis": "Targets validated against a strict allowlist.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp130-positive-a.php",
+            "source_hex": "686561646572202820274c6f636174696f6e203a20245f52455155455354",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "376ec5d749b2dda350da3bbb"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp130-negative-a.php",
+            "source_hex": "216561646572202820274c6f636174696f6e203a20245f52455155455354"
+          },
+          {
+            "path": "contract-fixtures/php/sp130-negative-b.php",
+            "source_hex": "206561646572202820274c6f636174696f6e203a20245f52455155455354"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp130-adversarial-a.php",
+            "source_hex": "586561646572202820274c6f636174696f6e203a20245f52455155455354",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP155",
+      "title": "PHP dynamic evaluation via preg_replace /e",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-95",
+      "frameworks": [],
+      "false_positive_analysis": "None; /e modifier is deprecated and dangerous.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp155-positive-a.php",
+            "source_hex": "707265675f7265706c616365202820272f412f7a657a22",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7e3088fb46078cea1a78c853"
+          },
+          {
+            "path": "contract-fixtures/php/sp155-positive-b.php",
+            "source_hex": "707265675f7265706c6163650920280920272f41412f617a65617a223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "84e6efcd47f077674120608e"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp155-negative-a.php",
+            "source_hex": "217265675f7265706c616365202820272f412f7a657a22"
+          },
+          {
+            "path": "contract-fixtures/php/sp155-negative-b.php",
+            "source_hex": "207265675f7265706c616365202820272f412f7a657a22"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp155-adversarial-a.php",
+            "source_hex": "587265675f7265706c616365202820272f412f7a657a22",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP184",
+      "title": "PHP extract on untrusted input enabling variable overwrite",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-621",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp184-positive-a.php",
+            "source_hex": "65787472616374202820245f504f5354",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f72cd01a436fe63e710a098f"
+          },
+          {
+            "path": "contract-fixtures/php/sp184-positive-b.php",
+            "source_hex": "657874726163740920280920245f434f4f4b49453b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2ea94e20cc87a148203663ba"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp184-negative-a.php",
+            "source_hex": "21787472616374202820245f504f5354"
+          },
+          {
+            "path": "contract-fixtures/php/sp184-negative-b.php",
+            "source_hex": "20787472616374202820245f504f5354"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp184-adversarial-a.php",
+            "source_hex": "58787472616374202820245f504f5354",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP185",
+      "title": "PHP dangerous assert with string expression",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-95",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp185-positive-a.php",
+            "source_hex": "617373657274092809245f474554",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "928d9973529fcb7bac26ee2f"
+          },
+          {
+            "path": "contract-fixtures/php/sp185-positive-b.php",
+            "source_hex": "6173736572742009282009245f524551554553543b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "75e5a93edaab4b0bdccce619"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp185-negative-a.php",
+            "source_hex": "217373657274092809245f474554"
+          },
+          {
+            "path": "contract-fixtures/php/sp185-negative-b.php",
+            "source_hex": "207373657274092809245f474554"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp185-adversarial-a.php",
+            "source_hex": "587373657274092809245f474554",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP395",
+      "title": "PHP PDO error mode silent masking database query failures",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp395-positive-a.php",
+            "source_hex": "50444f3a3a415454525f4552524d4f4445093d3e2050444f3a3a4552524d4f44455f53494c454e54",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2c4b92596b9616fed3a926c1"
+          },
+          {
+            "path": "contract-fixtures/php/sp395-positive-b.php",
+            "source_hex": "50444f3a3a415454525f4552524d4f444520093d3e092050444f3a3a4552524d4f44455f53494c454e543b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "87c6deb923df6c8bfe3d17da"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp395-negative-a.php",
+            "source_hex": "21444f3a3a415454525f4552524d4f4445093d3e2050444f3a3a4552524d4f44455f53494c454e54"
+          },
+          {
+            "path": "contract-fixtures/php/sp395-negative-b.php",
+            "source_hex": "20444f3a3a415454525f4552524d4f4445093d3e2050444f3a3a4552524d4f44455f53494c454e54"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp395-adversarial-a.php",
+            "source_hex": "58444f3a3a415454525f4552524d4f4445093d3e2050444f3a3a4552524d4f44455f53494c454e54",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP396",
+      "title": "PHP file_get_contents on remote URL without timeout context",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp396-positive-a.php",
+            "source_hex": "66696c655f6765745f636f6e74656e74730928092768747470733a2f2f5a270929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7945f6cda9b7c9cb2847833c"
+          },
+          {
+            "path": "contract-fixtures/php/sp396-positive-b.php",
+            "source_hex": "66696c655f6765745f636f6e74656e747320092820092768747470733a2f2f5a5a272009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c7be13b16fccc6cbf31cb5fe"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp396-negative-a.php",
+            "source_hex": "21696c655f6765745f636f6e74656e74730928092768747470733a2f2f5a270929"
+          },
+          {
+            "path": "contract-fixtures/php/sp396-negative-b.php",
+            "source_hex": "20696c655f6765745f636f6e74656e74730928092768747470733a2f2f5a270929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp396-adversarial-a.php",
+            "source_hex": "58696c655f6765745f636f6e74656e74730928092768747470733a2f2f5a270929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP451",
+      "title": "Laravel Eloquent model guarded set to empty array",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-915",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp451-positive-a.php",
+            "source_hex": "70726f746563746564092467756172646564203d205b205d3b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f5a8f2feeed2f6270035fdca"
+          },
+          {
+            "path": "contract-fixtures/php/sp451-positive-b.php",
+            "source_hex": "70726f7465637465642009246775617264656409203d09205b09205d3b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "4dc7cfc7be3f28f0fd018986"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp451-negative-a.php",
+            "source_hex": "21726f746563746564092467756172646564203d205b205d3b"
+          },
+          {
+            "path": "contract-fixtures/php/sp451-negative-b.php",
+            "source_hex": "20726f746563746564092467756172646564203d205b205d3b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp451-adversarial-a.php",
+            "source_hex": "58726f746563746564092467756172646564203d205b205d3b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP452",
+      "title": "Laravel DB::raw query constructed with string concatenation",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-89",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp452-positive-a.php",
+            "source_hex": "44423a3a726177092809275a24",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "dbaf99dd4a47adf181b44c02"
+          },
+          {
+            "path": "contract-fixtures/php/sp452-positive-b.php",
+            "source_hex": "44423a3a7261770920280920225a5a2e3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2a9927d4eb732e6778938d79"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp452-negative-a.php",
+            "source_hex": "21423a3a726177092809275a24"
+          },
+          {
+            "path": "contract-fixtures/php/sp452-negative-b.php",
+            "source_hex": "20423a3a726177092809275a24"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp452-adversarial-a.php",
+            "source_hex": "58423a3a726177092809275a24",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP469",
+      "title": "Symfony controller missing IsGranted security attribute",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-862",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp469-positive-a.php",
+            "source_hex": "235b526f757465092809272f61646d696e200a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0c8d3d7bee0a3e6fd3668c26"
+          },
+          {
+            "path": "contract-fixtures/php/sp469-positive-b.php",
+            "source_hex": "235b526f7574652009282009272f61646d696e20203b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2cbe71d0e95b356f00fc56d5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp469-negative-a.php",
+            "source_hex": "215b526f757465092809272f61646d696e200a"
+          },
+          {
+            "path": "contract-fixtures/php/sp469-negative-b.php",
+            "source_hex": "205b526f757465092809272f61646d696e200a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp469-adversarial-a.php",
+            "source_hex": "585b526f757465092809272f61646d696e200a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP480",
+      "title": "Laravel route definition without rate limiting middleware",
+      "category": "scale",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-307",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/php/sp480-positive-a.php",
+            "source_hex": "526f7574653a3a706f7374092809276f747020",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "afc03d759e30d5705912ea78"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/php/sp480-negative-a.php",
+            "source_hex": "216f7574653a3a706f7374092809276f747020"
+          },
+          {
+            "path": "contract-fixtures/php/sp480-negative-b.php",
+            "source_hex": "206f7574653a3a706f7374092809276f747020"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/php/sp480-adversarial-a.php",
+            "source_hex": "586f7574653a3a706f7374092809276f747020",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

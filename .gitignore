@@ -20,3 +20,7 @@ shipproof.sarif
 shipproof-self-scan.json
 .DS_Store
 Thumbs.db
+
+# harness local-only data
+.harness/.cache/
+.harness/local-capabilities.md

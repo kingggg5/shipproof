@@ -1,0 +1,363 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "container",
+  "rules": [
+    {
+      "rule_id": "SP205",
+      "title": "Dockerfile running container as root",
+      "category": "supply-chain",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Build stages that intentionally need root before dropping privileges in runtime stages.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/container/sp205-positive-a.dockerfile",
+            "source_hex": "46524f4d20200a41",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3aa443637810be5191347712"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/container/sp205-negative-a.dockerfile",
+            "source_hex": "21524f4d20200a41"
+          },
+          {
+            "path": "contract-fixtures/container/sp205-negative-b.dockerfile",
+            "source_hex": "20524f4d20200a41"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/container/sp205-adversarial-a.dockerfile",
+            "source_hex": "58524f4d20200a41",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP206",
+      "title": "Dockerfile package install via curl piped to shell",
+      "category": "supply-chain",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-829",
+      "frameworks": [],
+      "false_positive_analysis": "Internal scripts served over verified local infrastructure.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/container/sp206-positive-a.dockerfile",
+            "source_hex": "6375726c095a7c2062617368",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2d3cc3f2986dc680460df082"
+          },
+          {
+            "path": "contract-fixtures/container/sp206-positive-b.dockerfile",
+            "source_hex": "6375726c20095a5a7c0920626173683b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "64d52fb6ab61af4e081a8c1c"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/container/sp206-negative-a.dockerfile",
+            "source_hex": "2175726c095a7c2062617368"
+          },
+          {
+            "path": "contract-fixtures/container/sp206-negative-b.dockerfile",
+            "source_hex": "2075726c095a7c2062617368"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/container/sp206-adversarial-a.dockerfile",
+            "source_hex": "5875726c095a7c2062617368",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP207",
+      "title": "Dockerfile copying sensitive environment files",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-200",
+      "frameworks": [],
+      "false_positive_analysis": "Dummy .env.example files.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/container/sp207-positive-a.dockerfile",
+            "source_hex": "434f5059205a2e6e706d7263",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9961ce1d4a8e187e2231d366"
+          },
+          {
+            "path": "contract-fixtures/container/sp207-positive-b.dockerfile",
+            "source_hex": "434f505909205a5a2e6177733b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2868bad97009b297a3f9d196"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/container/sp207-negative-a.dockerfile",
+            "source_hex": "214f5059205a2e6e706d7263"
+          },
+          {
+            "path": "contract-fixtures/container/sp207-negative-b.dockerfile",
+            "source_hex": "204f5059205a2e6e706d7263"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/container/sp207-adversarial-a.dockerfile",
+            "source_hex": "584f5059205a2e6e706d7263",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP208",
+      "title": "Dockerfile exposing privileged ports",
+      "category": "security",
+      "expected_severity": "low",
+      "expected_confidence": "low",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Dedicated reverse proxy containers.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/container/sp208-positive-a.dockerfile",
+            "source_hex": "4558504f5345203231",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c06dc9b0d771880179551d3b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/container/sp208-negative-a.dockerfile",
+            "source_hex": "2158504f5345203231"
+          },
+          {
+            "path": "contract-fixtures/container/sp208-negative-b.dockerfile",
+            "source_hex": "2058504f5345203231"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/container/sp208-adversarial-a.dockerfile",
+            "source_hex": "5858504f5345203231",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP226",
+      "title": "Dockerfile container missing non-root USER directive",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/container/sp226-positive-a.dockerfile",
+            "source_hex": "46524f4d0920",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3e5a78ed615719e7797e468f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/container/sp226-negative-a.dockerfile",
+            "source_hex": "21524f4d0920"
+          },
+          {
+            "path": "contract-fixtures/container/sp226-negative-b.dockerfile",
+            "source_hex": "20524f4d0920"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/container/sp226-adversarial-a.dockerfile",
+            "source_hex": "58524f4d0920",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP227",
+      "title": "Dockerfile container missing HEALTHCHECK instruction",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/container/sp227-positive-a.dockerfile",
+            "source_hex": "46524f4d0920",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "260eda84b54949c48f9edf3b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/container/sp227-negative-a.dockerfile",
+            "source_hex": "21524f4d0920"
+          },
+          {
+            "path": "contract-fixtures/container/sp227-negative-b.dockerfile",
+            "source_hex": "20524f4d0920"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/container/sp227-adversarial-a.dockerfile",
+            "source_hex": "58524f4d0920",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP228",
+      "title": "Dockerfile using unpinned latest base image tag",
+      "category": "correctness",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-1104",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/container/sp228-positive-a.dockerfile",
+            "source_hex": "46524f4d095f3a6c6174657374",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0da03dd66540716d7e0a5274"
+          },
+          {
+            "path": "contract-fixtures/container/sp228-positive-b.dockerfile",
+            "source_hex": "46524f4d20092d613a6c61746573743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "142e193625bc0a9df80f56a8"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/container/sp228-negative-a.dockerfile",
+            "source_hex": "21524f4d095f3a6c6174657374"
+          },
+          {
+            "path": "contract-fixtures/container/sp228-negative-b.dockerfile",
+            "source_hex": "20524f4d095f3a6c6174657374"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/container/sp228-adversarial-a.dockerfile",
+            "source_hex": "58524f4d095f3a6c6174657374",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP231",
+      "title": "Dockerfile blanket host copy without .dockerignore",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-200",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/container/sp231-positive-a.dockerfile",
+            "source_hex": "434f5059092e092e09",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6f15189cd296aaf3f9baf16f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/container/sp231-negative-a.dockerfile",
+            "source_hex": "214f5059092e092e09"
+          },
+          {
+            "path": "contract-fixtures/container/sp231-negative-b.dockerfile",
+            "source_hex": "204f5059092e092e09"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/container/sp231-adversarial-a.dockerfile",
+            "source_hex": "584f5059092e092e09",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

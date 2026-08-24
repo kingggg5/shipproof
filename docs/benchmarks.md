@@ -12,9 +12,11 @@ python benchmarks/head_to_head.py fixtures/vulnerable-node-api \
   fixtures/node-secure-crossfile --repeat 3
 
 # Throughput
-python scripts/benchmark-scanner.py --files 1000 --jobs 4
+python scripts/benchmark-scanner.py --files 1000 --samples 3 --jobs 4
+python scripts/benchmark-scanner.py --files 250 --samples 3 --profile adversarial-regex --bytes-per-file 4096
+python scripts/benchmark-scanner.py --files 8 --samples 3 --profile adversarial-regex --bytes-per-file 524288
 
-# Open-source battery (network required; clones depth-1 into benchmarks/.work)
+# Open-source battery (network required; fetches reviewed immutable commits into benchmarks/.work)
 python scripts/eval-realworld.py
 ```
 
@@ -24,43 +26,32 @@ CI runs the fixture battery and throughput check weekly ([.github/workflows/benc
 
 Six small repositories serve as executable contracts: two intentionally vulnerable single-file APIs, one multi-file Node corpus whose taint crosses three files, one adversarial suite of precision traps, and two secure counterparts that must produce zero findings. Labels mark which files genuinely contain issues; scoring is file-level against those labels.
 
-Latest run (Windows 11, Python 3.13, `--cross-file`, median of 3):
+Latest controlled-corpus run (Windows 11, Python 3.12.10, `--cross-file`, median of 3, 2026-08-24):
 
-| Corpus | Findings | Files flagged | Precision | Recall | F1 |
-| :--- | ---: | ---: | ---: | ---: | ---: |
-| vulnerable-node-api | 2 | 1 | 1.0 | 1.0 | 1.0 |
-| vulnerable-python-api | 3 | 1 | 1.0 | 1.0 | 1.0 |
-| node-taint-crossfile | 6 | 4 | 1.0 | 0.8 | 0.889 |
-| adversarial-node | 4 | 4 | 1.0 | 0.667 | 0.8 |
-| secure-node-api | 0 | 0 |: |: |: |
-| node-secure-crossfile | 0 | 0 |: |: |: |
+| Corpus | Findings | TP | FP | FN | TN | Context only | Precision | Recall | F1 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| vulnerable-node-api | 2 | 1 | 0 | 0 | 0 | 0 | 1.0 | 1.0 | 1.0 |
+| vulnerable-python-api | 3 | 1 | 0 | 0 | 0 | 0 | 1.0 | 1.0 | 1.0 |
+| node-taint-crossfile | 6 | 4 | 0 | 0 | 1 | 1 | 1.0 | 1.0 | 1.0 |
+| adversarial-node | 4 | 4 | 0 | 0 | 3 | 2 | 1.0 | 1.0 | 1.0 |
+| secure-node-api | 0 | 0 | 0 | 0 | 1 | 0 | n/a | n/a | n/a |
+| node-secure-crossfile | 0 | 0 | 0 | 0 | 6 | 0 | n/a | n/a | n/a |
 
-Two caveats. The adversarial corpus contains vulnerable-looking code confined to comments and string literals; detectors must stay silent there while still catching disguised chains elsewhere - both directions are asserted in tests. And `routes/orders.js` in the taint corpus is labeled vulnerable even though no sink-based tool flags pure sources; the label stays even though it costs recall.
+Two caveats. The adversarial corpus contains vulnerable-looking code confined to comments and string literals; detectors must stay silent there while still catching disguised chains elsewhere—both directions are asserted in tests. The version-2 labels separately list source/helper files that participate in vulnerable chains but are not expected finding locations. They stay in the hashed artifact as `context_only_files` instead of being mislabeled as false negatives for a sink-reporting engine.
 
 ## Open-source battery
 
-`eval-realworld.py` clones six public repositories at depth 1 and reports findings split by scope (application vs test). Application scope is what the release gate acts on.
+`eval-realworld.py` now reads [a reviewed manifest](../benchmarks/realworld-repositories.json), fetches full immutable commits with isolated Git configuration, an empty hook template, non-interactive credentials, and a per-command timeout, verifies the declared license file, and records revision, license and corpus digests. A failed fetch, timeout, revision mismatch, or missing license is invalid evidence (exit `2`), never a skipped pass. The output deliberately marks every finding `unreviewed`; repository-level labels such as “clean baseline” or “intentionally vulnerable” do not prove that an individual alert is a true or false positive. Historical moving-HEAD counts were removed because they were not reproducible evidence.
 
-| Repository | Character | Files | App findings |
-| :--- | :--- | ---: | ---: |
-| expressjs/express | clean baseline (library) | 162 | 2 |
-| pallets/flask | clean baseline | 221 | 5 |
-| psf/requests | clean baseline | 93 | 3 |
-| juice-shop/juice-shop | intentionally vulnerable | 1023 | ~153-180* |
-| digininja/DVWA | intentionally vulnerable (PHP) | 225 | 74 |
-| OWASP/NodeGoat | intentionally vulnerable | 81 | 20 |
-
-\* juice-shop drifts between runs because upstream moves between clones; the range above brackets observed snapshots. Within every snapshot, secure corpora stay at zero and NodeGoat's documented `eval(req.body)` chain is confirmed by L2 taint evidence.
-
-Clean baselines are the FP story: express lands at 2 application findings on 162 files because test-scope noise never reaches the gate verdict, and the fixes that got flask from 27 highs to 3 each carry their own regression tests.
+The 2026-08-24 manifest run fetched and scanned all six pinned revisions successfully: 1,805 files, 732 total findings, and 310 application-scope findings. These are inventory counts only. In particular, findings in the three clean-baseline repositories still require human review, so this run supplies no real-world precision or false-positive claim.
 
 ## Performance
 
-Measured by [scripts/benchmark-scanner.py](../scripts/benchmark-scanner.py) over generated Python repositories (warm-cache pass reported separately):
+Measured by [scripts/benchmark-scanner.py](../scripts/benchmark-scanner.py), which now records every sample, median, p95, fixture digest, workload bytes, warmup count, runtime identity, and peak RSS. A 2026-08-24 Windows/Python 3.12 local run measured:
 
-- Sequential: ~1,400 warm files/s at 1,000 files
-- `--jobs 4`: ~2,100 files/s
-- Peak RSS stays around 24 MB for the generated corpus shape
+- 1,000 clean 128-byte files: median 0.9747 s, p95 0.9879 s, peak RSS 25.57 MB (5-second reference budget passed).
+- 250 adversarial-regex 4 KiB files: median 2.3894 s, p95 2.4173 s, peak RSS 25.18 MB (5-second stress budget passed).
+- 8 adversarial-regex 512 KiB files: median 8.3898 s, p95 8.4919 s, peak RSS 27.53 MB (10-second large-file stress budget; the stricter 5-second exploratory target did not pass).
 
 Throughput is re-checked after engine changes; the JS/TS analyzer and SARIF enrichment did not move it measurably.
 
@@ -79,9 +70,9 @@ ShipProof is one layer of an application-security stack. It scans source code de
 
 ## Limitations
 
-- Labels are file-level, not line-level, so a file flagged for any reason counts as a true positive; finer-grained labels are planned.
+- Labels are file-level, not line-level, so a positive file flagged for any reason counts as a true positive; context-only files are explicitly excluded from that confusion matrix.
 - Fixture corpora are authored in this repository. They prevent regressions and document intent, but they cannot substitute for third-party benchmark suites.
-- The OSS battery uses upstream snapshots, so counts drift as projects evolve. Ranges are reported where drift was observed.
+- The OSS battery is immutable by commit, but its findings still need manual per-alert review before precision claims.
 - No runtime numbers for other scanners appear here yet. A Linux CI job running semgrep with a caller-supplied config on these same corpora is the next planned measurement; until then we make no comparative speed or accuracy claims.
 - Backlog triage uses keyword classification; individual targets get re-tiered on close inspection.
 

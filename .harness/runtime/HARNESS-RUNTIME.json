@@ -1,0 +1,7 @@
+{
+	"schema_version": 1,
+	"source_version": "0.3.1",
+	"source_digest": "sha256:a1200026aaccb61687760089cfca82fc2ccab212f2af29c76a6baabf1896149a",
+	"created_at": "2026-08-24T06:56:01Z",
+	"update_policy": "pinned; replace only after human-reviewed package update"
+}

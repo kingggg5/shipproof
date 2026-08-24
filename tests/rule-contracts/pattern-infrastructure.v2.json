@@ -1,0 +1,2918 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "infrastructure",
+  "rules": [
+    {
+      "rule_id": "SP203",
+      "title": "Unpinned GitHub Action",
+      "category": "supply-chain",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-829",
+      "frameworks": [],
+      "false_positive_analysis": "Very unlikely. Always pin to a full 40-character commit SHA.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp203-positive-a.yaml",
+            "source_hex": "092d09757365733a095a405a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "84e4c815b47258b5b693021d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp203-positive-b.yaml",
+            "source_hex": "20092d2009757365733a20095a5a405a5a3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "07be36b5917a42af109337ae"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp203-negative-a.yaml",
+            "source_hex": "212d09757365733a095a405a"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp203-negative-b.yaml",
+            "source_hex": "582d09757365733a095a405a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp203-adversarial-a.yaml",
+            "source_hex": "202f2a20696e646972656374202a2f20092d09757365733a095a405a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP209",
+      "title": "GitHub Actions pull_request_target checkout of PR head",
+      "category": "supply-chain",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-829",
+      "frameworks": [],
+      "false_positive_analysis": "Workflows that checkout base repository and only inspect PR metadata.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp209-positive-a.yaml",
+            "source_hex": "70756c6c5f726571756573745f7461726765743a200a41757365733a20616374696f6e732f636865636b6f757440200a20776974683a200a207265663a09247b7b096769746875622e6576656e742e70756c6c5f726571756573742e686561642e736861207d7d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c16204989ab25fc97d265f62"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp209-positive-b.yaml",
+            "source_hex": "70756c6c5f726571756573745f7461726765743a09200a4141757365733a0920616374696f6e732f636865636b6f75744020200a0920776974683a09200a09207265663a2009247b7b20096769746875622e6576656e742e70756c6c5f726571756573742e686561642e73686109207d7d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "947ed00c99ce769849fe707d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp209-negative-a.yaml",
+            "source_hex": "21756c6c5f726571756573745f7461726765743a200a41757365733a20616374696f6e732f636865636b6f757440200a20776974683a200a207265663a09247b7b096769746875622e6576656e742e70756c6c5f726571756573742e686561642e736861207d7d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp209-negative-b.yaml",
+            "source_hex": "20756c6c5f726571756573745f7461726765743a200a41757365733a20616374696f6e732f636865636b6f757440200a20776974683a200a207265663a09247b7b096769746875622e6576656e742e70756c6c5f726571756573742e686561642e736861207d7d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp209-adversarial-a.yaml",
+            "source_hex": "58756c6c5f726571756573745f7461726765743a200a41757365733a20616374696f6e732f636865636b6f757440200a20776974683a200a207265663a09247b7b096769746875622e6576656e742e70756c6c5f726571756573742e686561642e736861207d7d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP210",
+      "title": "GitHub Actions workflow script injection",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-78",
+      "frameworks": [],
+      "false_positive_analysis": "Expressions used inside GitHub Action input parameters (with:) rather than inline shell scripts.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp210-positive-a.yaml",
+            "source_hex": "247b7b096769746875622e6576656e742e70756c6c5f726571756573742e7469746c65207d7d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "22d4cde6f1ad0b79226db77b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp210-positive-b.yaml",
+            "source_hex": "247b7b20096769746875622e6576656e742e69737375652e626f647909207d7d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7f6865ac06dc5c2c78e62267"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp210-negative-a.yaml",
+            "source_hex": "217b7b096769746875622e6576656e742e70756c6c5f726571756573742e7469746c65207d7d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp210-negative-b.yaml",
+            "source_hex": "207b7b096769746875622e6576656e742e70756c6c5f726571756573742e7469746c65207d7d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp210-adversarial-a.yaml",
+            "source_hex": "587b7b096769746875622e6576656e742e70756c6c5f726571756573742e7469746c65207d7d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP211",
+      "title": "GitHub Actions workflow missing explicit permissions",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Workflows where permissions are defined granularly at each individual job.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp211-positive-a.yaml",
+            "source_hex": "6e616d653a200a6f6e3a200a6a6f62733a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b80071892fb11b939b4e635b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp211-negative-a.yaml",
+            "source_hex": "21616d653a200a6f6e3a200a6a6f62733a"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp211-negative-b.yaml",
+            "source_hex": "20616d653a200a6f6e3a200a6a6f62733a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp211-adversarial-a.yaml",
+            "source_hex": "58616d653a200a6f6e3a200a6a6f62733a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP212",
+      "title": "CI/CD step printing environment variables to console",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-532",
+      "frameworks": [],
+      "false_positive_analysis": "Commands setting specific variables like env: FOO=BAR.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp212-positive-a.yaml",
+            "source_hex": "72756e3a207072696e74656e76",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "94ae7ed2da9e503fb8ed6e24"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp212-positive-b.yaml",
+            "source_hex": "72756e3a207072696e74656e763b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5f431d428f17662609930fc9"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp212-negative-a.yaml",
+            "source_hex": "21756e3a207072696e74656e76"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp212-negative-b.yaml",
+            "source_hex": "20756e3a207072696e74656e76"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp212-adversarial-a.yaml",
+            "source_hex": "58756e3a207072696e74656e76",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP215",
+      "title": "Terraform AWS S3 bucket with public ACL",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-732",
+      "frameworks": [],
+      "false_positive_analysis": "Static asset hosting buckets explicitly designed for public assets (e.g. CDN origins).",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp215-positive-a.tf",
+            "source_hex": "61636c093d09227075626c69632d7265616427",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b5df6146775fc3f6e00f5bc5"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp215-positive-b.tf",
+            "source_hex": "61636c20093d2009227075626c69632d72656164273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "105938d8102bb62bbc42329f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp215-negative-a.tf",
+            "source_hex": "21636c093d09227075626c69632d7265616427"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp215-negative-b.tf",
+            "source_hex": "20636c093d09227075626c69632d7265616427"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp215-adversarial-a.tf",
+            "source_hex": "58636c093d09227075626c69632d7265616427",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP216",
+      "title": "Terraform security group with unrestricted ingress",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Public web ports (80, 443) on internet-facing load balancers.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp216-positive-a.tf",
+            "source_hex": "636964725f626c6f636b73093d095b27302e302e302e302f30275d2066726f6d5f706f7274093d093237303137",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e02809af47bf220819b672b8"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp216-positive-b.tf",
+            "source_hex": "636964725f626c6f636b7320093d20095b27302e302e302e302f30275d202066726f6d5f706f727420093d200932323b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "876d89dfe567a3beb8cdb651"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp216-negative-a.tf",
+            "source_hex": "216964725f626c6f636b73093d095b27302e302e302e302f30275d2066726f6d5f706f7274093d093237303137"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp216-negative-b.tf",
+            "source_hex": "206964725f626c6f636b73093d095b27302e302e302e302f30275d2066726f6d5f706f7274093d093237303137"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp216-adversarial-a.tf",
+            "source_hex": "586964725f626c6f636b73093d095b27302e302e302e302f30275d2066726f6d5f706f7274093d093237303137",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP217",
+      "title": "Kubernetes pod configured with privileged mode",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Low-level infrastructure networking plugins (CNI) or daemonsets.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp217-positive-a.yaml",
+            "source_hex": "70726976696c65676564203a2074727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2330dc4eb857bf67817a07be"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp217-positive-b.yaml",
+            "source_hex": "686f73744e6574776f726b09203a0920747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e91d773b4429a0f2e26c006c"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp217-negative-a.yaml",
+            "source_hex": "21726976696c65676564203a2074727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp217-negative-b.yaml",
+            "source_hex": "20726976696c65676564203a2074727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp217-adversarial-a.yaml",
+            "source_hex": "58726976696c65676564203a2074727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP218",
+      "title": "Kubernetes container missing resource limits",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Temporary ephemeral batch jobs.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp218-positive-a.yaml",
+            "source_hex": "636f6e7461696e6572733a090a41",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "346496bf6abc038e13933608"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp218-negative-a.yaml",
+            "source_hex": "216f6e7461696e6572733a090a41"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp218-negative-b.yaml",
+            "source_hex": "206f6e7461696e6572733a090a41"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp218-adversarial-a.yaml",
+            "source_hex": "586f6e7461696e6572733a090a41",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP219",
+      "title": "Kubernetes service exposing unauthenticated NodePort",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Specialized bare-metal ingress gateways.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp219-positive-a.yaml",
+            "source_hex": "74797065203a204e6f6465506f7274",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a3658b1b4d52fde6d2177072"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp219-positive-b.yaml",
+            "source_hex": "7479706509203a09204e6f6465506f72743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "93a4e9527a1a4acbc8692130"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp219-negative-a.yaml",
+            "source_hex": "21797065203a204e6f6465506f7274"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp219-negative-b.yaml",
+            "source_hex": "20797065203a204e6f6465506f7274"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp219-adversarial-a.yaml",
+            "source_hex": "58797065203a204e6f6465506f7274",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP222",
+      "title": "Docker Compose mounting Docker socket",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Docker-in-Docker CI runners explicitly configured with dedicated security controls.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp222-positive-a.yaml",
+            "source_hex": "2f7661722f72756e2f646f636b65722e736f636b203a202f7661722f72756e2f646f636b65722e736f636b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "39c8bb4de69efb3059e7b23f"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp222-positive-b.yaml",
+            "source_hex": "2f7661722f72756e2f646f636b65722e736f636b09203a09202f7661722f72756e2f646f636b65722e736f636b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a89e8b3b99f70cff9941222e"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp222-negative-a.yaml",
+            "source_hex": "217661722f72756e2f646f636b65722e736f636b203a202f7661722f72756e2f646f636b65722e736f636b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp222-negative-b.yaml",
+            "source_hex": "207661722f72756e2f646f636b65722e736f636b203a202f7661722f72756e2f646f636b65722e736f636b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp222-adversarial-a.yaml",
+            "source_hex": "587661722f72756e2f646f636b65722e736f636b203a202f7661722f72756e2f646f636b65722e736f636b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP230",
+      "title": "Docker daemon socket exposed in container compose",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp230-positive-a.yaml",
+            "source_hex": "2f7661722f72756e2f646f636b65722e736f636b203a202f7661722f72756e2f646f636b65722e736f636b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9b96515fcb05a6886ead3b14"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp230-positive-b.yaml",
+            "source_hex": "2f7661722f72756e2f646f636b65722e736f636b09203a09202f7661722f72756e2f646f636b65722e736f636b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "051ebc7b557b3c59c406ca64"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp230-negative-a.yaml",
+            "source_hex": "217661722f72756e2f646f636b65722e736f636b203a202f7661722f72756e2f646f636b65722e736f636b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp230-negative-b.yaml",
+            "source_hex": "207661722f72756e2f646f636b65722e736f636b203a202f7661722f72756e2f646f636b65722e736f636b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp230-adversarial-a.yaml",
+            "source_hex": "587661722f72756e2f646f636b65722e736f636b203a202f7661722f72756e2f646f636b65722e736f636b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP232",
+      "title": "Docker compose container running in privileged mode",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp232-positive-a.yaml",
+            "source_hex": "70726976696c65676564203a2074727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "31d01ab3214e4ffa8e9df884"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp232-positive-b.yaml",
+            "source_hex": "70726976696c6567656409203a0920747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "73e5640b9abaf647c58462a9"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp232-negative-a.yaml",
+            "source_hex": "21726976696c65676564203a2074727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp232-negative-b.yaml",
+            "source_hex": "20726976696c65676564203a2074727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp232-adversarial-a.yaml",
+            "source_hex": "58726976696c65676564203a2074727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP233",
+      "title": "Docker compose container sharing host network namespace",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp233-positive-a.yaml",
+            "source_hex": "6e6574776f726b5f6d6f6465203a2027686f737422",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7c45b8795b6b7a59fd1232f0"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp233-positive-b.yaml",
+            "source_hex": "6e6574776f726b5f6d6f646509203a092022686f7374273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a4cd5f59d73faf08cc36de87"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp233-negative-a.yaml",
+            "source_hex": "216574776f726b5f6d6f6465203a2027686f737422"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp233-negative-b.yaml",
+            "source_hex": "206574776f726b5f6d6f6465203a2027686f737422"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp233-adversarial-a.yaml",
+            "source_hex": "586574776f726b5f6d6f6465203a2027686f737422",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP234",
+      "title": "Docker compose container sharing host PID namespace",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp234-positive-a.yaml",
+            "source_hex": "706964093a0922686f737427",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a5e1c35a4b6edccf34ea0c2c"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp234-positive-b.yaml",
+            "source_hex": "70696420093a200927686f7374223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "bc104ff70a95510ad1f4c628"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp234-negative-a.yaml",
+            "source_hex": "216964093a0922686f737427"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp234-negative-b.yaml",
+            "source_hex": "206964093a0922686f737427"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp234-adversarial-a.yaml",
+            "source_hex": "586964093a0922686f737427",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP235",
+      "title": "Docker compose mounting host root filesystem",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp235-positive-a.yaml",
+            "source_hex": "2d09222f3a5a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7a9a53a78380c75ef64bd968"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp235-positive-b.yaml",
+            "source_hex": "2d2009272f3a5a5a3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "4a94c132a24a2a1ccdf36e23"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp235-negative-a.yaml",
+            "source_hex": "2109222f3a5a"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp235-negative-b.yaml",
+            "source_hex": "2009222f3a5a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp235-adversarial-a.yaml",
+            "source_hex": "5809222f3a5a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP236",
+      "title": "Kubernetes privileged container execution enabled",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp236-positive-a.yaml",
+            "source_hex": "7365637572697479436f6e746578743a200a2070726976696c656765643a2074727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "088d32f3f68f4aeb9afb66c6"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp236-positive-b.yaml",
+            "source_hex": "7365637572697479436f6e746578743a09200a092070726976696c656765643a0920747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0db4fb3d2268a0e0f8cbd335"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp236-negative-a.yaml",
+            "source_hex": "2165637572697479436f6e746578743a200a2070726976696c656765643a2074727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp236-negative-b.yaml",
+            "source_hex": "2065637572697479436f6e746578743a200a2070726976696c656765643a2074727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp236-adversarial-a.yaml",
+            "source_hex": "5865637572697479436f6e746578743a200a2070726976696c656765643a2074727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP237",
+      "title": "Kubernetes allowPrivilegeEscalation permitted",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp237-positive-a.yaml",
+            "source_hex": "616c6c6f7750726976696c656765457363616c6174696f6e3a0974727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "4a509528648094d6d73e8e06"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp237-positive-b.yaml",
+            "source_hex": "616c6c6f7750726976696c656765457363616c6174696f6e3a2009747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c5d05f797762fbaab67c3771"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp237-negative-a.yaml",
+            "source_hex": "216c6c6f7750726976696c656765457363616c6174696f6e3a0974727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp237-negative-b.yaml",
+            "source_hex": "206c6c6f7750726976696c656765457363616c6174696f6e3a0974727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp237-adversarial-a.yaml",
+            "source_hex": "586c6c6f7750726976696c656765457363616c6174696f6e3a0974727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP238",
+      "title": "Kubernetes container missing CPU or memory limit",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp238-positive-a.yaml",
+            "source_hex": "636f6e7461696e6572733a090a092d096e616d653a20",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ba22d442bced32b1982580b3"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp238-positive-b.yaml",
+            "source_hex": "636f6e7461696e6572733a20090a20092d20096e616d653a20203b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c0650f4b03359e048ea3d90e"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp238-negative-a.yaml",
+            "source_hex": "216f6e7461696e6572733a090a092d096e616d653a20"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp238-negative-b.yaml",
+            "source_hex": "206f6e7461696e6572733a090a092d096e616d653a20"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp238-adversarial-a.yaml",
+            "source_hex": "586f6e7461696e6572733a090a092d096e616d653a20",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP239",
+      "title": "Kubernetes container missing resource requests",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp239-positive-a.yaml",
+            "source_hex": "636f6e7461696e6572733a090a092d096e616d653a20",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "fffbd94c172f5105309a0eff"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp239-positive-b.yaml",
+            "source_hex": "636f6e7461696e6572733a20090a20092d20096e616d653a20203b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e1becaddddff9b49d271f6d5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp239-negative-a.yaml",
+            "source_hex": "216f6e7461696e6572733a090a092d096e616d653a20"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp239-negative-b.yaml",
+            "source_hex": "206f6e7461696e6572733a090a092d096e616d653a20"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp239-adversarial-a.yaml",
+            "source_hex": "586f6e7461696e6572733a090a092d096e616d653a20",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP240",
+      "title": "Kubernetes container root filesystem writable",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-732",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp240-positive-a.yaml",
+            "source_hex": "726561644f6e6c79526f6f7446696c6573797374656d3a0966616c7365",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "429af52fe7a0b45a46494279"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp240-negative-a.yaml",
+            "source_hex": "216561644f6e6c79526f6f7446696c6573797374656d3a0966616c7365"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp240-negative-b.yaml",
+            "source_hex": "206561644f6e6c79526f6f7446696c6573797374656d3a0966616c7365"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp240-adversarial-a.yaml",
+            "source_hex": "586561644f6e6c79526f6f7446696c6573797374656d3a0966616c7365",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP241",
+      "title": "Kubernetes container configured to run as root",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp241-positive-a.yaml",
+            "source_hex": "72756e4173557365723a2030",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3cea5c04dff9c0b9ca131d8c"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp241-positive-b.yaml",
+            "source_hex": "72756e4173557365723a2009303b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d50bff68e78471be5e255b0c"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp241-negative-a.yaml",
+            "source_hex": "21756e4173557365723a2030"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp241-negative-b.yaml",
+            "source_hex": "20756e4173557365723a2030"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp241-adversarial-a.yaml",
+            "source_hex": "58756e4173557365723a2030",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP242",
+      "title": "Kubernetes Pod running on hostNetwork",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp242-positive-a.yaml",
+            "source_hex": "686f73744e6574776f726b3a2074727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "da181b691600ad7a3d1c89f8"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp242-positive-b.yaml",
+            "source_hex": "686f73744e6574776f726b3a0920747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "4e28337886888e3114828a13"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp242-negative-a.yaml",
+            "source_hex": "216f73744e6574776f726b3a2074727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp242-negative-b.yaml",
+            "source_hex": "206f73744e6574776f726b3a2074727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp242-adversarial-a.yaml",
+            "source_hex": "586f73744e6574776f726b3a2074727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP243",
+      "title": "Kubernetes Pod running with hostPID or hostIPC",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp243-positive-a.yaml",
+            "source_hex": "686f73745049443a2074727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2cdc2140102260cf94b05a72"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp243-positive-b.yaml",
+            "source_hex": "686f73745049443a2009747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b9683604ef01ff49935fa9bc"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp243-negative-a.yaml",
+            "source_hex": "216f73745049443a2074727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp243-negative-b.yaml",
+            "source_hex": "206f73745049443a2074727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp243-adversarial-a.yaml",
+            "source_hex": "586f73745049443a2074727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP244",
+      "title": "Kubernetes Pod mounting docker.sock hostPath volume",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp244-positive-a.yaml",
+            "source_hex": "686f7374506174683a090a09706174683a092f7661722f72756e2f646f636b65722e736f636b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e3e7a2b38abcb0d11e36a871"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp244-positive-b.yaml",
+            "source_hex": "686f7374506174683a20090a2009706174683a20092f7661722f72756e2f646f636b65722e736f636b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b73854b013469ed9af24f154"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp244-negative-a.yaml",
+            "source_hex": "216f7374506174683a090a09706174683a092f7661722f72756e2f646f636b65722e736f636b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp244-negative-b.yaml",
+            "source_hex": "206f7374506174683a090a09706174683a092f7661722f72756e2f646f636b65722e736f636b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp244-adversarial-a.yaml",
+            "source_hex": "586f7374506174683a090a09706174683a092f7661722f72756e2f646f636b65722e736f636b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP245",
+      "title": "Kubernetes ServiceAccount automatic token mounting enabled",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp245-positive-a.yaml",
+            "source_hex": "6175746f6d6f756e74536572766963654163636f756e74546f6b656e3a0974727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "360f1a9b07ad516477240197"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp245-negative-a.yaml",
+            "source_hex": "2175746f6d6f756e74536572766963654163636f756e74546f6b656e3a0974727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp245-negative-b.yaml",
+            "source_hex": "2075746f6d6f756e74536572766963654163636f756e74546f6b656e3a0974727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp245-adversarial-a.yaml",
+            "source_hex": "5875746f6d6f756e74536572766963654163636f756e74546f6b656e3a0974727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP246",
+      "title": "Kubernetes Ingress missing TLS configuration",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-319",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp246-positive-a.yaml",
+            "source_hex": "6b696e643a09496e677265737320",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "71018bbb30f577b9875131fa"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp246-positive-b.yaml",
+            "source_hex": "6b696e643a2009496e677265737320203b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3dab8542027df5df1069a062"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp246-negative-a.yaml",
+            "source_hex": "21696e643a09496e677265737320"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp246-negative-b.yaml",
+            "source_hex": "20696e643a09496e677265737320"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp246-adversarial-a.yaml",
+            "source_hex": "58696e643a09496e677265737320",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP247",
+      "title": "Kubernetes namespace missing default deny NetworkPolicy",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp247-positive-a.yaml",
+            "source_hex": "6b696e643a094e6574776f726b506f6c69637920706f6c69637954797065733a200a202d20496e677265737320",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a2d78beaea6b34d2b9e6c3f9"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp247-negative-a.yaml",
+            "source_hex": "21696e643a094e6574776f726b506f6c69637920706f6c69637954797065733a200a202d20496e677265737320"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp247-negative-b.yaml",
+            "source_hex": "20696e643a094e6574776f726b506f6c69637920706f6c69637954797065733a200a202d20496e677265737320"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp247-adversarial-a.yaml",
+            "source_hex": "58696e643a094e6574776f726b506f6c69637920706f6c69637954797065733a200a202d20496e677265737320",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP248",
+      "title": "Terraform S3 bucket missing server-side encryption",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-311",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp248-positive-a.tf",
+            "source_hex": "7265736f7572636520276177735f73335f6275636b657427207b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c5a973d78d3c1dbbebf31629"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp248-positive-b.tf",
+            "source_hex": "7265736f757263650920276177735f73335f6275636b65742720207b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a94c303053e12a955e05b291"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp248-negative-a.tf",
+            "source_hex": "2165736f7572636520276177735f73335f6275636b657427207b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp248-negative-b.tf",
+            "source_hex": "2065736f7572636520276177735f73335f6275636b657427207b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp248-adversarial-a.tf",
+            "source_hex": "5865736f7572636520276177735f73335f6275636b657427207b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP249",
+      "title": "Terraform S3 bucket configured with public ACL",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-732",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp249-positive-a.tf",
+            "source_hex": "61636c093d09227075626c69632d726561642d777269746522",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7fc7ef6be742ccc63b33dc0f"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp249-positive-b.tf",
+            "source_hex": "61636c20093d2009227075626c69632d72656164223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3b856f37ed06020a4dafd58a"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp249-negative-a.tf",
+            "source_hex": "21636c093d09227075626c69632d726561642d777269746522"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp249-negative-b.tf",
+            "source_hex": "20636c093d09227075626c69632d726561642d777269746522"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp249-adversarial-a.tf",
+            "source_hex": "58636c093d09227075626c69632d726561642d777269746522",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP250",
+      "title": "Terraform S3 bucket missing public access block",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-732",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp250-positive-a.tf",
+            "source_hex": "7265736f7572636520276177735f73335f6275636b657427207b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7783031a51a680193f880d16"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp250-positive-b.tf",
+            "source_hex": "7265736f757263650920276177735f73335f6275636b65742720207b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "945489474543655b894e651e"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp250-negative-a.tf",
+            "source_hex": "2165736f7572636520276177735f73335f6275636b657427207b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp250-negative-b.tf",
+            "source_hex": "2065736f7572636520276177735f73335f6275636b657427207b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp250-adversarial-a.tf",
+            "source_hex": "5865736f7572636520276177735f73335f6275636b657427207b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP251",
+      "title": "Terraform EBS volume created without encryption",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-311",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp251-positive-a.tf",
+            "source_hex": "7265736f7572636520276177735f6562735f766f6c756d6522207b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7edad361f1995396e372a41e"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp251-positive-b.tf",
+            "source_hex": "7265736f757263652009226177735f6562735f766f6c756d652720207b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0a821486ad720140a108af90"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp251-negative-a.tf",
+            "source_hex": "2165736f7572636520276177735f6562735f766f6c756d6522207b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp251-negative-b.tf",
+            "source_hex": "2065736f7572636520276177735f6562735f766f6c756d6522207b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp251-adversarial-a.tf",
+            "source_hex": "5865736f7572636520276177735f6562735f766f6c756d6522207b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP252",
+      "title": "Terraform RDS instance missing storage encryption",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-311",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp252-positive-a.tf",
+            "source_hex": "7265736f7572636520276177735f64625f696e7374616e636527207b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "29abc68371636c9a609decb1"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp252-positive-b.tf",
+            "source_hex": "7265736f757263652009226177735f64625f696e7374616e63652220207b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3dd8c99baca1f08490fc7ee8"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp252-negative-a.tf",
+            "source_hex": "2165736f7572636520276177735f64625f696e7374616e636527207b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp252-negative-b.tf",
+            "source_hex": "2065736f7572636520276177735f64625f696e7374616e636527207b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp252-adversarial-a.tf",
+            "source_hex": "5865736f7572636520276177735f64625f696e7374616e636527207b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP253",
+      "title": "Terraform RDS database instance publicly accessible",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp253-positive-a.tf",
+            "source_hex": "7075626c69636c795f61636365737369626c65093d0974727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2fb8a121553a6569a5332a42"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp253-positive-b.tf",
+            "source_hex": "7075626c69636c795f61636365737369626c6520093d2009747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2f2c6cb260bd58dc1c6dac2a"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp253-negative-a.tf",
+            "source_hex": "2175626c69636c795f61636365737369626c65093d0974727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp253-negative-b.tf",
+            "source_hex": "2075626c69636c795f61636365737369626c65093d0974727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp253-adversarial-a.tf",
+            "source_hex": "5875626c69636c795f61636365737369626c65093d0974727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP254",
+      "title": "Terraform Security Group open SSH ingress from 0.0.0.0/0",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp254-positive-a.tf",
+            "source_hex": "66726f6d5f706f7274093d09323220636964725f626c6f636b73203d205b22302e302e302e302f30225d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a4d7e50a480bdcffdb7c5d77"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp254-positive-b.tf",
+            "source_hex": "66726f6d5f706f727420093d200932327120636964725f626c6f636b7309203d09205b22302e302e302e302f30225d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "12bd5637c64d18bb009a9568"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp254-negative-a.tf",
+            "source_hex": "21726f6d5f706f7274093d09323220636964725f626c6f636b73203d205b22302e302e302e302f30225d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp254-negative-b.tf",
+            "source_hex": "20726f6d5f706f7274093d09323220636964725f626c6f636b73203d205b22302e302e302e302f30225d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp254-adversarial-a.tf",
+            "source_hex": "58726f6d5f706f7274093d09323220636964725f626c6f636b73203d205b22302e302e302e302f30225d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP255",
+      "title": "Terraform Security Group open RDP ingress from 0.0.0.0/0",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp255-positive-a.tf",
+            "source_hex": "66726f6d5f706f7274093d093333383920636964725f626c6f636b73203d205b22302e302e302e302f30225d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f2581e704a85aa01ac9d8ad9"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp255-positive-b.tf",
+            "source_hex": "66726f6d5f706f727420093d2009333338397120636964725f626c6f636b7309203d09205b22302e302e302e302f30225d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "75ac486679ca44a99dd1ebc0"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp255-negative-a.tf",
+            "source_hex": "21726f6d5f706f7274093d093333383920636964725f626c6f636b73203d205b22302e302e302e302f30225d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp255-negative-b.tf",
+            "source_hex": "20726f6d5f706f7274093d093333383920636964725f626c6f636b73203d205b22302e302e302e302f30225d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp255-adversarial-a.tf",
+            "source_hex": "58726f6d5f706f7274093d093333383920636964725f626c6f636b73203d205b22302e302e302e302f30225d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP256",
+      "title": "Terraform IAM policy granting full administrator wildcard",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp256-positive-a.json",
+            "source_hex": "22416374696f6e27203a20272a2720275265736f7572636522093a09222a22",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8f7870cdf09eb64834d9d9a6"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp256-positive-b.json",
+            "source_hex": "22416374696f6e2709203a0920272a277120275265736f757263652220093a2009222a223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0374a0e4981affd80f1950bc"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp256-negative-a.json",
+            "source_hex": "21416374696f6e27203a20272a2720275265736f7572636522093a09222a22"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp256-negative-b.json",
+            "source_hex": "20416374696f6e27203a20272a2720275265736f7572636522093a09222a22"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp256-adversarial-a.json",
+            "source_hex": "58416374696f6e27203a20272a2720275265736f7572636522093a09222a22",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP257",
+      "title": "Terraform CloudFront distribution viewer_protocol_policy allow-all",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-319",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp257-positive-a.tf",
+            "source_hex": "7669657765725f70726f746f636f6c5f706f6c696379203d2027616c6c6f772d616c6c27",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "48660b42e06a18500e98aa09"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp257-positive-b.tf",
+            "source_hex": "7669657765725f70726f746f636f6c5f706f6c69637909203d092027616c6c6f772d616c6c273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e11b1fd00dc992cb53c0030f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp257-negative-a.tf",
+            "source_hex": "2169657765725f70726f746f636f6c5f706f6c696379203d2027616c6c6f772d616c6c27"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp257-negative-b.tf",
+            "source_hex": "2069657765725f70726f746f636f6c5f706f6c696379203d2027616c6c6f772d616c6c27"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp257-adversarial-a.tf",
+            "source_hex": "5869657765725f70726f746f636f6c5f706f6c696379203d2027616c6c6f772d616c6c27",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP258",
+      "title": "Terraform DynamoDB table point-in-time recovery disabled",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp258-positive-a.tf",
+            "source_hex": "706f696e745f696e5f74696d655f7265636f76657279207b20656e61626c6564203d2066616c7365",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d2cff08a0038502cfddd9f22"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp258-negative-a.tf",
+            "source_hex": "216f696e745f696e5f74696d655f7265636f76657279207b20656e61626c6564203d2066616c7365"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp258-negative-b.tf",
+            "source_hex": "206f696e745f696e5f74696d655f7265636f76657279207b20656e61626c6564203d2066616c7365"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp258-adversarial-a.tf",
+            "source_hex": "586f696e745f696e5f74696d655f7265636f76657279207b20656e61626c6564203d2066616c7365",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP259",
+      "title": "Terraform EKS cluster public endpoint access unrestricted",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp259-positive-a.tf",
+            "source_hex": "656e64706f696e745f7075626c69635f616363657373203d2074727565717075626c69635f6163636573735f6369647273093d095b27302e302e302e302f30275d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "326b1f8520bb79c48bac7891"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp259-positive-b.tf",
+            "source_hex": "656e64706f696e745f7075626c69635f61636365737309203d09207472756520717075626c69635f6163636573735f636964727320093d20095b27302e302e302e302f30275d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5e9ad8048211b4eb6a0c64cf"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp259-negative-a.tf",
+            "source_hex": "216e64706f696e745f7075626c69635f616363657373203d2074727565717075626c69635f6163636573735f6369647273093d095b27302e302e302e302f30275d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp259-negative-b.tf",
+            "source_hex": "206e64706f696e745f7075626c69635f616363657373203d2074727565717075626c69635f6163636573735f6369647273093d095b27302e302e302e302f30275d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp259-adversarial-a.tf",
+            "source_hex": "586e64706f696e745f7075626c69635f616363657373203d2074727565717075626c69635f6163636573735f6369647273093d095b27302e302e302e302f30275d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP260",
+      "title": "GitHub Actions inline script injection from untrusted event context",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-78",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp260-positive-a.yaml",
+            "source_hex": "72756e3a2020247b7b096769746875622e6576656e742e686561645f636f6d6d69742e6d657373616765",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7499d05af4282d3e4e98e410"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp260-positive-b.yaml",
+            "source_hex": "72756e3a09202020247b7b20096769746875622e6576656e742e69737375652e626f64793b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5cc1943f18a110545acf4d68"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp260-negative-a.yaml",
+            "source_hex": "21756e3a2020247b7b096769746875622e6576656e742e686561645f636f6d6d69742e6d657373616765"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp260-negative-b.yaml",
+            "source_hex": "20756e3a2020247b7b096769746875622e6576656e742e686561645f636f6d6d69742e6d657373616765"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp260-adversarial-a.yaml",
+            "source_hex": "58756e3a2020247b7b096769746875622e6576656e742e686561645f636f6d6d69742e6d657373616765",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP261",
+      "title": "GitHub Actions pull_request_target checking out untrusted pull request code",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-829",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp261-positive-a.yaml",
+            "source_hex": "6f6e3a090a0970756c6c5f726571756573745f7461726765743a2020757365733a20616374696f6e732f636865636b6f7574",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c2377c301fe8d2321a67a023"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp261-positive-b.yaml",
+            "source_hex": "6f6e3a20090a200970756c6c5f726571756573745f7461726765743a20207120757365733a0920616374696f6e732f636865636b6f75743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "baa3eafded70df1322a74fcc"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp261-negative-a.yaml",
+            "source_hex": "216e3a090a0970756c6c5f726571756573745f7461726765743a2020757365733a20616374696f6e732f636865636b6f7574"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp261-negative-b.yaml",
+            "source_hex": "206e3a090a0970756c6c5f726571756573745f7461726765743a2020757365733a20616374696f6e732f636865636b6f7574"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp261-adversarial-a.yaml",
+            "source_hex": "586e3a090a0970756c6c5f726571756573745f7461726765743a2020757365733a20616374696f6e732f636865636b6f7574",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP262",
+      "title": "GitHub Actions third-party action referenced without immutable commit SHA",
+      "category": "correctness",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-829",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp262-positive-a.yaml",
+            "source_hex": "757365733a092d2f61407637",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d8b007d53e84548e2e899294"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp262-negative-a.yaml",
+            "source_hex": "217365733a092d2f61407637"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp262-negative-b.yaml",
+            "source_hex": "207365733a092d2f61407637"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp262-adversarial-a.yaml",
+            "source_hex": "587365733a092d2f61407637",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP263",
+      "title": "GitHub Actions echo statement printing secret token",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-532",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp263-positive-a.yaml",
+            "source_hex": "6563686f202720247b7b20736563726574732e39207d7d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5392fed71f6110fdc423fc64"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp263-positive-b.yaml",
+            "source_hex": "6563686f0920222020247b7b0920736563726574732e5a6109207d7d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "1a834445a4119c164acc8ba6"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp263-negative-a.yaml",
+            "source_hex": "2163686f202720247b7b20736563726574732e39207d7d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp263-negative-b.yaml",
+            "source_hex": "2063686f202720247b7b20736563726574732e39207d7d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp263-adversarial-a.yaml",
+            "source_hex": "5863686f202720247b7b20736563726574732e39207d7d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP264",
+      "title": "GitHub Actions workflow granting broad write-all permissions",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp264-positive-a.yaml",
+            "source_hex": "7065726d697373696f6e733a2077726974652d616c6c",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ff82e1df60ec35d34abe52ac"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp264-positive-b.yaml",
+            "source_hex": "7065726d697373696f6e733a092077726974652d616c6c3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "1176146fc0d3a13238e19b67"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp264-negative-a.yaml",
+            "source_hex": "2165726d697373696f6e733a2077726974652d616c6c"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp264-negative-b.yaml",
+            "source_hex": "2065726d697373696f6e733a2077726974652d616c6c"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp264-adversarial-a.yaml",
+            "source_hex": "5865726d697373696f6e733a2077726974652d616c6c",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP265",
+      "title": "GitHub Actions public repository using self-hosted runner",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-829",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp265-positive-a.yaml",
+            "source_hex": "72756e732d6f6e3a205b73656c662d686f737465645d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "10842618b92c862ffb4846c7"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp265-positive-b.yaml",
+            "source_hex": "72756e732d6f6e3a09205b73656c662d686f737465645d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "430514b725ed883c46e05ff5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp265-negative-a.yaml",
+            "source_hex": "21756e732d6f6e3a205b73656c662d686f737465645d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp265-negative-b.yaml",
+            "source_hex": "20756e732d6f6e3a205b73656c662d686f737465645d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp265-adversarial-a.yaml",
+            "source_hex": "58756e732d6f6e3a205b73656c662d686f737465645d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP266",
+      "title": "Helm values file containing hardcoded plaintext database password",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-798",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp266-positive-a.yaml",
+            "source_hex": "64617461626173655f70617373776f7264203a20275a5a5a5a5a5a27",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ba67d9812e41852d1f30e582"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp266-positive-b.yaml",
+            "source_hex": "64625f7061737309203a0920275a5a5a5a5a5a5a273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d4d1ef4a77ed9498f8c0af15"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp266-negative-a.yaml",
+            "source_hex": "21617461626173655f70617373776f7264203a20275a5a5a5a5a5a27"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp266-negative-b.yaml",
+            "source_hex": "20617461626173655f70617373776f7264203a20275a5a5a5a5a5a27"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp266-adversarial-a.yaml",
+            "source_hex": "58617461626173655f70617373776f7264203a20275a5a5a5a5a5a27",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP269",
+      "title": "Systemd unit service running as root without User directive",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/systemd/sp269-positive-a.service",
+            "source_hex": "5b536572766963655d090a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "555443d00d3dfde01fdbc6c5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/systemd/sp269-negative-a.service",
+            "source_hex": "21536572766963655d090a"
+          },
+          {
+            "path": "contract-fixtures/systemd/sp269-negative-b.service",
+            "source_hex": "20536572766963655d090a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/systemd/sp269-adversarial-a.service",
+            "source_hex": "58536572766963655d090a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP270",
+      "title": "Systemd unit service configured with unrestricted Restart=always",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp270-positive-a.service",
+            "source_hex": "52657374617274093d09616c77617973",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6f846d139414da4630646c70"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp270-negative-a.service",
+            "source_hex": "21657374617274093d09616c77617973"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp270-negative-b.service",
+            "source_hex": "20657374617274093d09616c77617973"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp270-adversarial-a.service",
+            "source_hex": "58657374617274093d09616c77617973",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP551",
+      "title": "AWS SNS topic subscriber without subscription filter policy",
+      "category": "scale",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp551-positive-a.tf",
+            "source_hex": "7265736f7572636520276177735f736e735f746f7069635f737562736372697074696f6e22207b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "08b5a67527dd62c576cfdf27"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp551-negative-a.tf",
+            "source_hex": "2165736f7572636520276177735f736e735f746f7069635f737562736372697074696f6e22207b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp551-negative-b.tf",
+            "source_hex": "2065736f7572636520276177735f736e735f746f7069635f737562736372697074696f6e22207b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp551-adversarial-a.tf",
+            "source_hex": "5865736f7572636520276177735f736e735f746f7069635f737562736372697074696f6e22207b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP552",
+      "title": "AWS EventBridge rule target missing Dead Letter Queue (DLQ)",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp552-positive-a.tf",
+            "source_hex": "7265736f7572636520276177735f636c6f756477617463685f6576656e745f74617267657427207b",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ae3a47708d0011a461370d69"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp552-positive-b.tf",
+            "source_hex": "7265736f757263650920276177735f636c6f756477617463685f6576656e745f7461726765742720207b3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9552a03d915104a525fc3016"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp552-negative-a.tf",
+            "source_hex": "2165736f7572636520276177735f636c6f756477617463685f6576656e745f74617267657427207b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp552-negative-b.tf",
+            "source_hex": "2065736f7572636520276177735f636c6f756477617463685f6576656e745f74617267657427207b"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp552-adversarial-a.tf",
+            "source_hex": "5865736f7572636520276177735f636c6f756477617463685f6576656e745f74617267657427207b",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP606",
+      "title": "Kubernetes container definition without CPU or memory resource limits",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Namespace-level LimitRange defaults.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp606-positive-a.yaml",
+            "source_hex": "7265736f7572636573093a097b097d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a2383a4ba425536ceeb2b5e3"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp606-positive-b.yaml",
+            "source_hex": "7265736f757263657320093a20097b20097d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0ed8a3d25bae47bd44bde482"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp606-negative-a.yaml",
+            "source_hex": "2165736f7572636573093a097b097d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp606-negative-b.yaml",
+            "source_hex": "2065736f7572636573093a097b097d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp606-adversarial-a.yaml",
+            "source_hex": "5865736f7572636573093a097b097d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP607",
+      "title": "Kubernetes container configured with privileged securityContext",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-250",
+      "frameworks": [],
+      "false_positive_analysis": "Low-level node infrastructure daemons explicitly required to manage networking.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp607-positive-a.yaml",
+            "source_hex": "70726976696c65676564203a2074727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b2e084624eab2a0ee117a423"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp607-positive-b.yaml",
+            "source_hex": "70726976696c6567656409203a0920747275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "1fff20dba23696678cde9cd5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp607-negative-a.yaml",
+            "source_hex": "21726976696c65676564203a2074727565"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp607-negative-b.yaml",
+            "source_hex": "20726976696c65676564203a2074727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp607-adversarial-a.yaml",
+            "source_hex": "58726976696c65676564203a2074727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP608",
+      "title": "Kubernetes container root filesystem configured as writable",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-732",
+      "frameworks": [],
+      "false_positive_analysis": "Ephemeral scratch containers using temporary memory mounts for temporary files.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp608-positive-a.yaml",
+            "source_hex": "726561644f6e6c79526f6f7446696c6573797374656d203a2066616c7365",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6ea6a20858a906870aa9a600"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp608-positive-b.yaml",
+            "source_hex": "726561644f6e6c79526f6f7446696c6573797374656d09203a092066616c73653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c61173e81e78a6062cdac161"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp608-negative-a.yaml",
+            "source_hex": "216561644f6e6c79526f6f7446696c6573797374656d203a2066616c7365"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp608-negative-b.yaml",
+            "source_hex": "206561644f6e6c79526f6f7446696c6573797374656d203a2066616c7365"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp608-adversarial-a.yaml",
+            "source_hex": "586561644f6e6c79526f6f7446696c6573797374656d203a2066616c7365",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP610",
+      "title": "Kubernetes pod volume configured with direct host filesystem mount",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-59",
+      "frameworks": [],
+      "false_positive_analysis": "Node monitoring agents explicitly approved by security policies.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp610-positive-a.yaml",
+            "source_hex": "686f737450617468093a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "996a71e7f8942abd852d3c44"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp610-positive-b.yaml",
+            "source_hex": "686f73745061746820093a3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a129ca6d78aae9918d1a38cf"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp610-negative-a.yaml",
+            "source_hex": "216f737450617468093a"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp610-negative-b.yaml",
+            "source_hex": "206f737450617468093a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp610-adversarial-a.yaml",
+            "source_hex": "586f737450617468093a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP626",
+      "title": "AWS S3 bucket policy allowing public wildcard principal",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Explicitly public static asset CDN buckets or public documentation hosting.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp626-positive-a.yaml",
+            "source_hex": "225072696e636970616c22093a09222a22",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "85f5e36b71d0886b3f1dc02b"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp626-positive-b.yaml",
+            "source_hex": "227072696e636970616c2220093a2009222a223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "006962b718d7453978854cd0"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp626-negative-a.yaml",
+            "source_hex": "215072696e636970616c22093a09222a22"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp626-negative-b.yaml",
+            "source_hex": "205072696e636970616c22093a09222a22"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp626-adversarial-a.yaml",
+            "source_hex": "585072696e636970616c22093a09222a22",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP627",
+      "title": "AWS storage resource created without encryption at rest",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-311",
+      "frameworks": [],
+      "false_positive_analysis": "Ephemeral temporary scratch volumes or local development emulation.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp627-positive-a.yaml",
+            "source_hex": "73746f726167655f656e63727970746564203d2066616c7365",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0ad30a2bfc54c3859ea3a97c"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp627-positive-b.yaml",
+            "source_hex": "73746f726167655f656e6372797074656409203d092066616c73653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e4e8c29630e0f02bfa11e007"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp627-negative-a.yaml",
+            "source_hex": "21746f726167655f656e63727970746564203d2066616c7365"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp627-negative-b.yaml",
+            "source_hex": "20746f726167655f656e63727970746564203d2066616c7365"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp627-adversarial-a.yaml",
+            "source_hex": "58746f726167655f656e63727970746564203d2066616c7365",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP628",
+      "title": "Security group ingress rule allowing 0.0.0.0/0 on administrative ports",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Bastion host or VPN endpoint with external MFA proxy.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp628-positive-a.yaml",
+            "source_hex": "636964725f626c6f636b73093d095b0922302e302e302e302f3022095d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d9a384550004cca4bb07d2f7"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp628-positive-b.yaml",
+            "source_hex": "636964725f626c6f636b7320093d20095b200922302e302e302e302f302220095d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "dd806a4fd5fac3ce0a1ea46d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp628-negative-a.yaml",
+            "source_hex": "216964725f626c6f636b73093d095b0922302e302e302e302f3022095d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp628-negative-b.yaml",
+            "source_hex": "206964725f626c6f636b73093d095b0922302e302e302e302f3022095d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp628-adversarial-a.yaml",
+            "source_hex": "586964725f626c6f636b73093d095b0922302e302e302e302f3022095d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP629",
+      "title": "IAM policy granting wildcard actions or resources",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-732",
+      "frameworks": [],
+      "false_positive_analysis": "Root admin bootstrap role in dedicated isolated accounts.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp629-positive-a.yaml",
+            "source_hex": "22416374696f6e22093a095b09222a22095d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b8fe98ff4ad1cd865ead3440"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp629-positive-b.yaml",
+            "source_hex": "225265736f757263652220093a20095b2009222a2220095d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3a2352c45849bb6eb95bd141"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp629-negative-a.yaml",
+            "source_hex": "21416374696f6e22093a095b09222a22095d"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp629-negative-b.yaml",
+            "source_hex": "20416374696f6e22093a095b09222a22095d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp629-adversarial-a.yaml",
+            "source_hex": "58416374696f6e22093a095b09222a22095d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP630",
+      "title": "CloudFront distribution or ALB listener allowing unencrypted HTTP",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-319",
+      "frameworks": [],
+      "false_positive_analysis": "Internal non-routed VPC load balancers terminated behind mutual TLS proxies.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/infrastructure/sp630-positive-a.yaml",
+            "source_hex": "7669657765725f70726f746f636f6c5f706f6c696379203d2027616c6c6f772d616c6c27",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8c644e64c09766724fc67a1a"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp630-positive-b.yaml",
+            "source_hex": "7669657765725f70726f746f636f6c5f706f6c69637909203d092027616c6c6f772d616c6c273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "73c9e657e2878c699345812d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/infrastructure/sp630-negative-a.yaml",
+            "source_hex": "2169657765725f70726f746f636f6c5f706f6c696379203d2027616c6c6f772d616c6c27"
+          },
+          {
+            "path": "contract-fixtures/infrastructure/sp630-negative-b.yaml",
+            "source_hex": "2069657765725f70726f746f636f6c5f706f6c696379203d2027616c6c6f772d616c6c27"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/infrastructure/sp630-adversarial-a.yaml",
+            "source_hex": "5869657765725f70726f746f636f6c5f706f6c696379203d2027616c6c6f772d616c6c27",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

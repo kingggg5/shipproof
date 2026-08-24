@@ -1,0 +1,60 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "django",
+  "rules": [
+    {
+      "rule_id": "SP404",
+      "title": "Django SECRET_KEY hardcoded",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-798",
+      "frameworks": [
+        "django"
+      ],
+      "false_positive_analysis": "Development-only settings files with non-production keys.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/django/sp404-positive-a.py",
+            "source_hex": "5345435245545f4b4559203d20275a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a27",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "cfddb6e14e09b7be904aa5c1"
+          },
+          {
+            "path": "contract-fixtures/django/sp404-positive-b.py",
+            "source_hex": "5345435245545f4b455909203d0920275a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a273b0a",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2fa93bbce7d81cccc41965f1"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/django/sp404-negative-a.py",
+            "source_hex": "2145435245545f4b4559203d20275a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a27"
+          },
+          {
+            "path": "contract-fixtures/django/sp404-negative-b.py",
+            "source_hex": "2045435245545f4b4559203d20275a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a27"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/django/sp404-adversarial-a.py",
+            "source_hex": "5845435245545f4b4559203d20275a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a27",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,6 +1,10 @@
 import "./cli.test.mjs";
 import "./platform.test.mjs";
 import "./policy.test.mjs";
+import "./golden-parity.test.mjs";
+import "./command-contracts.test.mjs";
+import "./k6-determinism.test.mjs";
 import "./e2e.test.mjs";
 import "./mcp-handshake.test.mjs";
 import "./package-manifest.test.mjs";
+import "./hardening.test.mjs";

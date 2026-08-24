@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "javascript",
+  "rules": [
+    {
+      "rule_id": "SP120",
+      "title": "Unsafe JS deserialization via node-serialize",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-502",
+      "frameworks": [],
+      "false_positive_analysis": "None: this library cannot be used safely on untrusted input.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/javascript/sp120-positive-a/legacy.js",
+            "source_hex": "636f6e737420736572203d207265717569726528276e6f64652d73657269616c697a6527293b0a636f6e7374206f626a203d207365722e756e73657269616c697a65287061796c6f6164293b0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "5a4e4a2a40fc4effdd8266d5"
+          },
+          {
+            "path": "contract-fixtures/javascript/sp120-positive-b/legacy.js",
+            "source_hex": "0a636f6e737420736572203d207265717569726528276e6f64652d73657269616c697a6527293b0a636f6e7374206f626a203d207365722e756e73657269616c697a65287061796c6f6164293b0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "97bed1a9bbcdd11e647e559c"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/javascript/sp120-negative_a/legacy.js",
+            "source_hex": "636f6e7374206f626a203d204a534f4e2e7061727365287061796c6f6164293b0a"
+          },
+          {
+            "path": "contract-fixtures/javascript/sp120-negative_b/legacy.js",
+            "source_hex": "636f6e737420736572203d207265717569726528276e6f64652d73657269616c697a6527293b0a636f6e7374206f626a203d207365722e73657269616c697a65287061796c6f6164293b0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/javascript/sp120-adversarial-a/legacy.js",
+            "source_hex": "636f6e737420736572203d207265717569726528276e6f64652d27202b202773657269616c697a6527293b0a636f6e7374206f626a203d207365722e756e73657269616c697a65287061796c6f6164293b0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    }
+  ]
+}

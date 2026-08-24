@@ -1,6 +1,6 @@
 {
   "name": "@kingggg5/shipproof",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Zero-dependency production gate, resource budget, and capacity model for AI-written code",
   "type": "module",
   "bin": {
@@ -54,11 +54,11 @@
     "benchmark:scanner": "python scripts/benchmark-scanner.py --files 1000",
     "check": "npm run lint && npm run test && npm run pack:check && npm run test:package",
     "lint": "npm run lint:node && npm run lint:python",
-    "lint:node": "node --check bin/shipproof.mjs && node --check lib/cli.mjs && node --check lib/evidence.mjs && node --check lib/mcp-server.mjs && node --check lib/package-info.mjs && node --check lib/policy.mjs && node --check lib/runtime.mjs && node --check lib/safe-path.mjs && node --check scripts/check-package-manifest.mjs && node --check scripts/release-info.mjs && node --check scripts/run-action.mjs && node --check scripts/package-smoke.mjs && node --check tests/node/cli.test.mjs && node --check tests/node/platform.test.mjs && node --check tests/node/policy.test.mjs && node --check tests/node/golden-parity.test.mjs && node --check tests/node/k6-determinism.test.mjs && node --check tests/node/e2e.test.mjs && node --check tests/node/mcp-handshake.test.mjs && node --check tests/node/package-manifest.test.mjs && node --check tests/node/hardening.test.mjs",
+    "lint:node": "node --check bin/shipproof.mjs && node --check lib/cli.mjs && node --check lib/evidence.mjs && node --check lib/mcp-server.mjs && node --check lib/package-info.mjs && node --check lib/policy.mjs && node --check lib/runtime.mjs && node --check lib/safe-path.mjs && node --check scripts/check-package-manifest.mjs && node --check scripts/release-info.mjs && node --check scripts/run-action.mjs && node --check scripts/package-smoke.mjs && node --check tests/node/cli.test.mjs && node --check tests/node/platform.test.mjs && node --check tests/node/policy.test.mjs && node --check tests/node/golden-parity.test.mjs && node --check tests/node/command-contracts.test.mjs && node --check tests/node/k6-determinism.test.mjs && node --check tests/node/e2e.test.mjs && node --check tests/node/mcp-handshake.test.mjs && node --check tests/node/package-manifest.test.mjs && node --check tests/node/hardening.test.mjs",
     "lint:python": "ruff check . && ruff format --check .",
     "pack:check": "node scripts/check-package-manifest.mjs",
     "test": "npm run test:node && npm run test:python",
-    "test:node": "node tests/node/cli.test.mjs && node tests/node/platform.test.mjs && node tests/node/policy.test.mjs && node tests/node/golden-parity.test.mjs && node tests/node/k6-determinism.test.mjs && node tests/node/e2e.test.mjs && node tests/node/mcp-handshake.test.mjs && node tests/node/package-manifest.test.mjs && node tests/node/hardening.test.mjs",
+    "test:node": "node tests/node/cli.test.mjs && node tests/node/platform.test.mjs && node tests/node/policy.test.mjs && node tests/node/golden-parity.test.mjs && node tests/node/command-contracts.test.mjs && node tests/node/k6-determinism.test.mjs && node tests/node/e2e.test.mjs && node tests/node/mcp-handshake.test.mjs && node tests/node/package-manifest.test.mjs && node tests/node/hardening.test.mjs",
     "test:mcp": "node tests/node/mcp-handshake.test.mjs",
     "test:node:coverage": "node --experimental-test-coverage --test-coverage-include=lib/policy.mjs --test-coverage-include=lib/safe-path.mjs --test-coverage-include=lib/cli.mjs --test-coverage-include=lib/evidence.mjs --test-coverage-include=lib/runtime.mjs --test-coverage-include=scripts/run-action.mjs --test-coverage-lines=70 tests/node/all.test.mjs",
     "test:python": "python -m unittest discover -s tests -p test_*.py -v && python -m unittest discover -s examples/demo-api/fixtures/after/tests -v",

@@ -1,0 +1,699 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "java",
+  "rules": [
+    {
+      "rule_id": "SP154",
+      "title": "Java insecure ObjectInputStream deserialization",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-502",
+      "frameworks": [],
+      "false_positive_analysis": "Filtered streams with strict ClassLoader allowlists.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp154-positive-a.java",
+            "source_hex": "6e6577094f626a656374496e70757453747265616d092820292e726561644f626a6563742028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "24056d4d789825e033057ab7"
+          },
+          {
+            "path": "contract-fixtures/java/sp154-positive-b.java",
+            "source_hex": "6e657720094f626a656374496e70757453747265616d2009282020292e726561644f626a6563740920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "1dad96af60d3c83a68de5762"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp154-negative-a.java",
+            "source_hex": "216577094f626a656374496e70757453747265616d092820292e726561644f626a6563742028"
+          },
+          {
+            "path": "contract-fixtures/java/sp154-negative-b.java",
+            "source_hex": "206577094f626a656374496e70757453747265616d092820292e726561644f626a6563742028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp154-adversarial-a.java",
+            "source_hex": "586577094f626a656374496e70757453747265616d092820292e726561644f626a6563742028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP179",
+      "title": "Dynamic class instantiation from user input",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-470",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp179-positive-a.java",
+            "source_hex": "436c6173732e666f724e616d650928097265712e676574506172616d65746572",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9e3f817e5ab95a5d620fb734"
+          },
+          {
+            "path": "contract-fixtures/java/sp179-positive-b.java",
+            "source_hex": "436c6173732e666f724e616d652009282009726571756573743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3d8ecc01c464c4a567a668af"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp179-negative-a.java",
+            "source_hex": "216c6173732e666f724e616d650928097265712e676574506172616d65746572"
+          },
+          {
+            "path": "contract-fixtures/java/sp179-negative-b.java",
+            "source_hex": "206c6173732e666f724e616d650928097265712e676574506172616d65746572"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp179-adversarial-a.java",
+            "source_hex": "586c6173732e666f724e616d650928097265712e676574506172616d65746572",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP182",
+      "title": "Spring Expression Language (SpEL) expression injection",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-95",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp182-positive-a.java",
+            "source_hex": "5370656c45787072657373696f6e506172736572202e706172736545787072657373696f6e092809706172616d73",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0d4ec06fa0ed29f038cf7a82"
+          },
+          {
+            "path": "contract-fixtures/java/sp182-positive-b.java",
+            "source_hex": "5370656c45787072657373696f6e50617273657220202e706172736545787072657373696f6e2009282009726571756573743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d8a7992305382b92ce20b8c5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp182-negative-a.java",
+            "source_hex": "2170656c45787072657373696f6e506172736572202e706172736545787072657373696f6e092809706172616d73"
+          },
+          {
+            "path": "contract-fixtures/java/sp182-negative-b.java",
+            "source_hex": "2070656c45787072657373696f6e506172736572202e706172736545787072657373696f6e092809706172616d73"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp182-adversarial-a.java",
+            "source_hex": "5870656c45787072657373696f6e506172736572202e706172736545787072657373696f6e092809706172616d73",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP380",
+      "title": "Java Executors newCachedThreadPool unbounded thread creation",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp380-positive-a.java",
+            "source_hex": "4578656375746f72732e6e6577436163686564546872656164506f6f6c09280929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "014d725081afe31fec044954"
+          },
+          {
+            "path": "contract-fixtures/java/sp380-positive-b.java",
+            "source_hex": "4578656375746f72732e6e6577436163686564546872656164506f6f6c2009282009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8e50844fb91bf71609c69403"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp380-negative-a.java",
+            "source_hex": "2178656375746f72732e6e6577436163686564546872656164506f6f6c09280929"
+          },
+          {
+            "path": "contract-fixtures/java/sp380-negative-b.java",
+            "source_hex": "2078656375746f72732e6e6577436163686564546872656164506f6f6c09280929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp380-adversarial-a.java",
+            "source_hex": "5878656375746f72732e6e6577436163686564546872656164506f6f6c09280929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP381",
+      "title": "Java CompletableFuture join called on main thread",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp381-positive-a.java",
+            "source_hex": "436f6d706c657461626c65467574757265202e392820292e6a6f696e20282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b197e9f17763ab2b0f3c02e6"
+          },
+          {
+            "path": "contract-fixtures/java/sp381-positive-b.java",
+            "source_hex": "436f6d706c657461626c6546757475726520202e7a41282020292e6a6f696e0920280920293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "95187c39556b6383a7e67cb6"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp381-negative-a.java",
+            "source_hex": "216f6d706c657461626c65467574757265202e392820292e6a6f696e20282029"
+          },
+          {
+            "path": "contract-fixtures/java/sp381-negative-b.java",
+            "source_hex": "206f6d706c657461626c65467574757265202e392820292e6a6f696e20282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp381-adversarial-a.java",
+            "source_hex": "586f6d706c657461626c65467574757265202e392820292e6a6f696e20282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP382",
+      "title": "Java SimpleDateFormat shared across multiple threads",
+      "category": "correctness",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-362",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp382-positive-a.java",
+            "source_hex": "7075626c6963207374617469632053696d706c6544617465466f726d6174",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "193a777f0bf27ae123b271b0"
+          },
+          {
+            "path": "contract-fixtures/java/sp382-positive-b.java",
+            "source_hex": "7075626c69632009737461746963202053696d706c6544617465466f726d61743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3cc07b3e7c119071f71bf631"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp382-negative-a.java",
+            "source_hex": "2175626c6963207374617469632053696d706c6544617465466f726d6174"
+          },
+          {
+            "path": "contract-fixtures/java/sp382-negative-b.java",
+            "source_hex": "2075626c6963207374617469632053696d706c6544617465466f726d6174"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp382-adversarial-a.java",
+            "source_hex": "5875626c6963207374617469632053696d706c6544617465466f726d6174",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP383",
+      "title": "Java unclosed JDBC Connection in try block without try-with-resources",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp383-positive-a.java",
+            "source_hex": "436f6e6e656374696f6e2030203d204472697665724d616e616765722e676574436f6e6e656374696f6e20282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "583b5ea5c75a7b4fe1869305"
+          },
+          {
+            "path": "contract-fixtures/java/sp383-positive-b.java",
+            "source_hex": "436f6e6e656374696f6e0920617a09203d09204472697665724d616e616765722e676574436f6e6e656374696f6e0920282020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2a710330b1a8158468b66d0f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp383-negative-a.java",
+            "source_hex": "216f6e6e656374696f6e2030203d204472697665724d616e616765722e676574436f6e6e656374696f6e20282029"
+          },
+          {
+            "path": "contract-fixtures/java/sp383-negative-b.java",
+            "source_hex": "206f6e6e656374696f6e2030203d204472697665724d616e616765722e676574436f6e6e656374696f6e20282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp383-adversarial-a.java",
+            "source_hex": "586f6e6e656374696f6e2030203d204472697665724d616e616765722e676574436f6e6e656374696f6e20282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP384",
+      "title": "Java HikariCP connection pool missing maximumPoolSize setting",
+      "category": "scale",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp384-positive-a.java",
+            "source_hex": "6e65770948696b617269436f6e6669672028202920",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "fd3470347d4a7c2659d828ff"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp384-negative-a.java",
+            "source_hex": "2165770948696b617269436f6e6669672028202920"
+          },
+          {
+            "path": "contract-fixtures/java/sp384-negative-b.java",
+            "source_hex": "2065770948696b617269436f6e6669672028202920"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp384-adversarial-a.java",
+            "source_hex": "5865770948696b617269436f6e6669672028202920",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP445",
+      "title": "Spring Security CSRF protection explicitly disabled",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-352",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp445-positive-a.java",
+            "source_hex": "2e6373726628292e64697361626c652829",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a86456ce6022c38b8bcd4ee1"
+          },
+          {
+            "path": "contract-fixtures/java/sp445-positive-b.java",
+            "source_hex": "2e6373726628292e64697361626c6528293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7650ac0bedc389fecbe8df11"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp445-negative-a.java",
+            "source_hex": "216373726628292e64697361626c652829"
+          },
+          {
+            "path": "contract-fixtures/java/sp445-negative-b.java",
+            "source_hex": "206373726628292e64697361626c652829"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp445-adversarial-a.java",
+            "source_hex": "586373726628292e64697361626c652829",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP446",
+      "title": "Spring Security permitAll on administrative path pattern",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-862",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp446-positive-a.java",
+            "source_hex": "2e726571756573744d61746368657273202820222f61646d696e2f2a2a2220292e7065726d6974416c6c2829",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e2d0e2a69c22653fb1c0d4a9"
+          },
+          {
+            "path": "contract-fixtures/java/sp446-positive-b.java",
+            "source_hex": "2e726571756573744d617463686572730920280920222f61646d696e2f2a2a220920292e7065726d6974416c6c28293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "dad36bf91257185fb8a1d4f8"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp446-negative-a.java",
+            "source_hex": "21726571756573744d61746368657273202820222f61646d696e2f2a2a2220292e7065726d6974416c6c2829"
+          },
+          {
+            "path": "contract-fixtures/java/sp446-negative-b.java",
+            "source_hex": "20726571756573744d61746368657273202820222f61646d696e2f2a2a2220292e7065726d6974416c6c2829"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp446-adversarial-a.java",
+            "source_hex": "58726571756573744d61746368657273202820222f61646d696e2f2a2a2220292e7065726d6974416c6c2829",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP468",
+      "title": "Ktor HTTP client engine missing timeout configuration",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp468-positive-a.kt",
+            "source_hex": "48747470436c69656e7420282029207b20",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "85fa5edf66a97d2c3bf17e0b"
+          },
+          {
+            "path": "contract-fixtures/java/sp468-positive-b.kt",
+            "source_hex": "48747470436c69656e7409202820202909207b20203b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "653b7d15d17b59918985de23"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp468-negative-a.kt",
+            "source_hex": "21747470436c69656e7420282029207b20"
+          },
+          {
+            "path": "contract-fixtures/java/sp468-negative-b.kt",
+            "source_hex": "20747470436c69656e7420282029207b20"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp468-adversarial-a.kt",
+            "source_hex": "58747470436c69656e7420282029207b20",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP474",
+      "title": "Spring Boot WebMvcConfigurer addCorsMappings wildcard credentials",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-942",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp474-positive-a.java",
+            "source_hex": "2e616c6c6f7765644f726967696e73092809272a270929712e616c6c6f7743726564656e7469616c73092809747275652029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "64c6c3b2e1fa8ef26c80174b"
+          },
+          {
+            "path": "contract-fixtures/java/sp474-positive-b.java",
+            "source_hex": "2e616c6c6f7765644f726967696e732009282009272a2720092920712e616c6c6f7743726564656e7469616c732009282009747275650920293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c60ab8d274067aa4a5da27bd"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp474-negative-a.java",
+            "source_hex": "21616c6c6f7765644f726967696e73092809272a270929712e616c6c6f7743726564656e7469616c73092809747275652029"
+          },
+          {
+            "path": "contract-fixtures/java/sp474-negative-b.java",
+            "source_hex": "20616c6c6f7765644f726967696e73092809272a270929712e616c6c6f7743726564656e7469616c73092809747275652029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp474-adversarial-a.java",
+            "source_hex": "58616c6c6f7765644f726967696e73092809272a270929712e616c6c6f7743726564656e7469616c73092809747275652029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP481",
+      "title": "Spring Boot Jackson deserialization default typing enabled",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-502",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp481-positive-a.java",
+            "source_hex": "6f626a6563744d61707065722e656e61626c6544656661756c74547970696e672028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "78e51d88fce6bc104f1d4d2c"
+          },
+          {
+            "path": "contract-fixtures/java/sp481-positive-b.java",
+            "source_hex": "6f626a6563744d61707065722e656e61626c6544656661756c74547970696e670920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e8a3651aadf4e69a900386a4"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp481-negative-a.java",
+            "source_hex": "21626a6563744d61707065722e656e61626c6544656661756c74547970696e672028"
+          },
+          {
+            "path": "contract-fixtures/java/sp481-negative-b.java",
+            "source_hex": "20626a6563744d61707065722e656e61626c6544656661756c74547970696e672028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp481-adversarial-a.java",
+            "source_hex": "58626a6563744d61707065722e656e61626c6544656661756c74547970696e672028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP645",
+      "title": "Android WebView configured with JavaScript and file URL access enabled",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-200",
+      "frameworks": [],
+      "false_positive_analysis": "WebView loading only signed offline assets packaged in app APK.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/java/sp645-positive-a.java",
+            "source_hex": "736574416c6c6f7746696c6541636365737346726f6d46696c6555524c732809747275652029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f937f7d5fbaf4b58e8b4805d"
+          },
+          {
+            "path": "contract-fixtures/java/sp645-positive-b.java",
+            "source_hex": "736574416c6c6f7746696c6541636365737346726f6d46696c6555524c73282009747275650920293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6af106e525be825cefa03369"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/java/sp645-negative-a.java",
+            "source_hex": "216574416c6c6f7746696c6541636365737346726f6d46696c6555524c732809747275652029"
+          },
+          {
+            "path": "contract-fixtures/java/sp645-negative-b.java",
+            "source_hex": "206574416c6c6f7746696c6541636365737346726f6d46696c6555524c732809747275652029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/java/sp645-adversarial-a.java",
+            "source_hex": "586574416c6c6f7746696c6541636365737346726f6d46696c6555524c732809747275652029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

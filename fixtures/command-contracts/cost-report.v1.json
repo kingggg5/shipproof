@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "tool": {
+    "name": "ShipProof",
+    "version": "0.10.0",
+    "command": "cost"
+  },
+  "verdict": "CONDITIONAL",
+  "root": "<ROOT>",
+  "model": "claude-3-5-sonnet",
+  "iterations": 3,
+  "context_tokens": 1000,
+  "output_tokens_per_iteration": 1200,
+  "total_input_tokens": 3000,
+  "total_output_tokens": 3600,
+  "cached_input_tokens": 2000,
+  "fresh_input_tokens": 1000,
+  "estimated_cost_usd_single_run": 0.0576,
+  "cadence": "once",
+  "monthly_estimated_cost_usd": 0.0576,
+  "budget_usd": null,
+  "budget_status": "UNSET",
+  "savings_from_caching_usd": 0.0054,
+  "limitations": [
+    "Costs are estimates based on declared token counts and versioned price assumptions.",
+    "Provider discounts, batch pricing, tool calls, and future price changes may differ."
+  ]
+}

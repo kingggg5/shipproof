@@ -1,0 +1,60 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "nextjs",
+  "rules": [
+    {
+      "rule_id": "SP593",
+      "title": "Next.js 15 route segment params accessed without await Promise resolution",
+      "category": "correctness",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-840",
+      "frameworks": [
+        "nextjs"
+      ],
+      "false_positive_analysis": "Next.js 14 and earlier codebases before async params migration.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/nextjs/sp593-positive-a.ts",
+            "source_hex": "636f6e73740941093d09706172616d732e7a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d268f870a2e85ab096fc6ef7"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp593-positive-b.ts",
+            "source_hex": "7661722009395f20093d2009706172616d732e30393b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "14ad19fbd5744af45c2faf20"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/nextjs/sp593-negative-a.ts",
+            "source_hex": "216f6e73740941093d09706172616d732e7a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp593-negative-b.ts",
+            "source_hex": "206f6e73740941093d09706172616d732e7a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/nextjs/sp593-adversarial-a.ts",
+            "source_hex": "586f6e73740941093d09706172616d732e7a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

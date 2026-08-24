@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "artifact",
+  "ecosystem": "sqlite",
+  "rules": [
+    {
+      "rule_id": "SP314",
+      "title": "Committed SQLite database file",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-200",
+      "frameworks": [],
+      "false_positive_analysis": "Empty test fixture schema templates.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/artifact/sp314-positive-a.db",
+            "content_hex": "53514c69746520666f726d61742033000000000000000000000000000000000000000000000000000000000000000000",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "artifact",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "7b5d6257a1acbd901aab9a4a"
+          },
+          {
+            "path": "contract-fixtures/artifact/sp314-positive-b.sqlite",
+            "content_hex": "",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "artifact",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "8273023a70f5b3a60d17a626"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/artifact/sp314-negative-a.db",
+            "content_hex": "6e6f742061206461746162617365"
+          },
+          {
+            "path": "contract-fixtures/artifact/sp314-negative-b.bin",
+            "content_hex": "53514c69746520666f726d61742033000000000000000000"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/artifact/sp314-adversarial-a.db",
+            "content_hex": "5853514c69746520666f726d61742033000000000000000000",
+            "expected": false,
+            "rationale": "A database signature shifted by one byte is not recognized by the current artifact header check; the fixture records that binary-container evasion without claiming content inspection beyond the first bytes."
+          }
+        ]
+      }
+    }
+  ]
+}

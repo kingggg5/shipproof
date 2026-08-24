@@ -21,6 +21,30 @@ class BenchmarkScannerTests(unittest.TestCase):
         self.assertIsNotNone(memory)
         self.assertGreater(memory, 0)
 
+    def test_fixture_generation_is_deterministic_and_profiled(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            first_digest, first_bytes = benchmark_scanner.write_fixture(
+                Path(first), 4, "adversarial-regex", 256
+            )
+            second_digest, second_bytes = benchmark_scanner.write_fixture(
+                Path(second), 4, "adversarial-regex", 256
+            )
+            self.assertEqual(first_digest, second_digest)
+            self.assertEqual(first_bytes, second_bytes)
+            self.assertEqual(first_bytes, 4 * 256)
+            self.assertEqual(
+                sorted(path.relative_to(first).as_posix() for path in Path(first).rglob("*.py")),
+                sorted(path.relative_to(second).as_posix() for path in Path(second).rglob("*.py")),
+            )
+
+    def test_nearest_rank_percentile_is_deterministic(self):
+        self.assertEqual(benchmark_scanner.nearest_rank_percentile([4, 1, 3, 2], 95), 4)
+        self.assertEqual(benchmark_scanner.nearest_rank_percentile([4, 1, 3, 2], 50), 2)
+        with self.assertRaises(ValueError):
+            benchmark_scanner.nearest_rank_percentile([1], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

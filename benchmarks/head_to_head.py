@@ -16,7 +16,10 @@ Fairness rules baked into the protocol:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
+import platform
 import statistics
 import subprocess
 import sys
@@ -27,6 +30,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCANNER = ROOT / "skills" / "audit-production-readiness" / "scripts" / "scan_repo.py"
 DEFAULT_LABELS = ROOT / "benchmarks" / "head-to-head-labels.json"
+
+
+def sha256_tree(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(
+        (
+            candidate
+            for candidate in root.rglob("*")
+            if candidate.is_symlink() or candidate.is_file()
+        ),
+        key=lambda candidate: candidate.relative_to(root).as_posix(),
+    ):
+        relative = path.relative_to(root)
+        if ".git" in relative.parts:
+            continue
+        digest.update(relative.as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        if path.is_symlink():
+            digest.update(b"SYMLINK\0")
+            digest.update(os.readlink(path).encode("utf-8", errors="surrogateescape"))
+        else:
+            digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
 
 
 def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -70,7 +97,8 @@ def timed_run(command: list[str], cwd: Path) -> tuple[float, subprocess.Complete
 
 def run_shipproof(corpus: Path, repeat: int) -> dict[str, object]:
     durations: list[float] = []
-    file_rule_hits: set[tuple[str, str]] = set()
+    file_rule_hits: set[tuple[str, str]] | None = None
+    files_scanned: int | None = None
     for _ in range(repeat):
         elapsed, process = timed_run(
             [
@@ -91,14 +119,26 @@ def run_shipproof(corpus: Path, repeat: int) -> dict[str, object]:
             raise RuntimeError(f"shipproof exited {process.returncode}: {process.stderr[:400]}")
         durations.append(elapsed)
         report = json.loads(process.stdout)
+        current_files_scanned = int(report["summary"]["files_scanned"])
+        if files_scanned is not None and current_files_scanned != files_scanned:
+            raise RuntimeError("shipproof file count changed between repeated runs")
+        files_scanned = current_files_scanned
         prefix = f"{corpus.name}/"
+        current_hits: set[tuple[str, str]] = set()
         for finding in report["findings"]:
             path = finding["path"].removeprefix(prefix)
-            file_rule_hits.add((path, finding["rule_id"]))
+            current_hits.add((path, finding["rule_id"]))
+        if file_rule_hits is not None and current_hits != file_rule_hits:
+            raise RuntimeError("shipproof findings changed between repeated runs")
+        file_rule_hits = current_hits
+    if file_rule_hits is None:
+        raise RuntimeError("shipproof benchmark did not execute")
     files_flagged = sorted({path for path, _ in file_rule_hits})
     return {
         "tool": "shipproof",
         "median_seconds": round(statistics.median(durations), 3),
+        "samples_seconds": [round(value, 3) for value in durations],
+        "files_scanned": files_scanned,
         "findings": len(file_rule_hits),
         "files_flagged": files_flagged,
         "rule_hits": sorted(f"{path}:{rule}" for path, rule in file_rule_hits),
@@ -115,7 +155,7 @@ def build_semgrep_command(corpus: Path, configs: Sequence[str]) -> list[str]:
 
 def run_semgrep(corpus: Path, configs: Sequence[str], repeat: int) -> dict[str, object]:
     durations: list[float] = []
-    file_rule_hits: set[tuple[str, str]] = set()
+    file_rule_hits: set[tuple[str, str]] | None = None
     command = build_semgrep_command(corpus, configs)
     for _ in range(repeat):
         elapsed, process = timed_run(command, corpus.parent)
@@ -123,13 +163,20 @@ def run_semgrep(corpus: Path, configs: Sequence[str], repeat: int) -> dict[str, 
             raise RuntimeError(f"semgrep exited {process.returncode}: {process.stderr[:400]}")
         durations.append(elapsed)
         payload = json.loads(process.stdout)
+        current_hits: set[tuple[str, str]] = set()
         for result in payload.get("results", []):
             path = str(result.get("path", "")).removeprefix(f"{corpus.name}/")
-            file_rule_hits.add((path, str(result.get("check_id", "semgrep"))))
+            current_hits.add((path, str(result.get("check_id", "semgrep"))))
+        if file_rule_hits is not None and current_hits != file_rule_hits:
+            raise RuntimeError("semgrep findings changed between repeated runs")
+        file_rule_hits = current_hits
+    if file_rule_hits is None:
+        raise RuntimeError("semgrep benchmark did not execute")
     files_flagged = sorted({path for path, _ in file_rule_hits})
     return {
         "tool": "semgrep",
         "median_seconds": round(statistics.median(durations), 3),
+        "samples_seconds": [round(value, 3) for value in durations],
         "findings": len(file_rule_hits),
         "files_flagged": files_flagged,
         "rule_hits": sorted(f"{path}:{rule}" for path, rule in file_rule_hits),
@@ -139,13 +186,23 @@ def run_semgrep(corpus: Path, configs: Sequence[str], repeat: int) -> dict[str, 
 def compute_file_metrics(
     files_flagged: Sequence[str],
     labeled_files: Sequence[str],
+    total_files: int | None = None,
+    context_only_files: Sequence[str] = (),
 ) -> dict[str, object]:
     """File-level scoring: identical labels for every tool, no rule mapping needed."""
-    flagged = set(files_flagged)
+    context_only = set(context_only_files)
+    flagged = set(files_flagged) - context_only
     labeled = set(labeled_files)
+    if labeled & context_only:
+        raise ValueError("positive and context-only labels must be disjoint")
     true_positives = len(flagged & labeled)
     false_positives = len(flagged - labeled)
     false_negatives = len(labeled - flagged)
+    observed_files = len(flagged | labeled)
+    universe_size = observed_files if total_files is None else total_files - len(context_only)
+    if universe_size < observed_files:
+        raise ValueError("total_files is smaller than the observed label/finding universe")
+    true_negatives = universe_size - true_positives - false_positives - false_negatives
     precision = true_positives / (true_positives + false_positives) if flagged else None
     recall = true_positives / (true_positives + false_negatives) if labeled else None
     if precision is not None and recall is not None and precision + recall > 0:
@@ -158,17 +215,43 @@ def compute_file_metrics(
         "true_positives": true_positives,
         "false_positives": false_positives,
         "false_negatives": false_negatives,
+        "true_negatives": true_negatives,
+        "total_files": universe_size,
+        "context_only_files": len(context_only),
         "file_precision": round(precision, 3) if precision is not None else None,
         "file_recall": round(recall, 3) if recall is not None else None,
         "file_f1": round(f1, 3) if f1 is not None else None,
     }
 
 
-def load_labels(labels_path: Path, corpora: Sequence[Path]) -> dict[str, list[str]]:
+def load_labels(labels_path: Path, corpora: Sequence[Path]) -> dict[str, dict[str, list[str]]]:
     if not labels_path.is_file():
         raise FileNotFoundError(f"label file does not exist: {labels_path}")
     payload = json.loads(labels_path.read_text(encoding="utf-8"))
-    return {corpus.name: sorted(payload.get(corpus.name, [])) for corpus in corpora}
+    if payload.get("schema_version") != 2 or not isinstance(payload.get("corpora"), dict):
+        raise ValueError("label file must use schema_version 2 with a corpora object")
+    labels: dict[str, dict[str, list[str]]] = {}
+    for corpus in corpora:
+        entry = payload["corpora"].get(corpus.name)
+        if not isinstance(entry, dict):
+            raise ValueError(f"label file is missing corpus {corpus.name}")
+        positive = entry.get("positive_files")
+        context_only = entry.get("context_only_files")
+        if not isinstance(positive, list) or not isinstance(context_only, list):
+            raise ValueError(f"{corpus.name}: labels must be arrays")
+        if any(not isinstance(value, str) or not value for value in [*positive, *context_only]):
+            raise ValueError(f"{corpus.name}: labels must be non-empty strings")
+        if set(positive) & set(context_only):
+            raise ValueError(f"{corpus.name}: positive and context-only labels overlap")
+        for relative_path in [*positive, *context_only]:
+            path = Path(relative_path)
+            if path.is_absolute() or ".." in path.parts or not (corpus / path).is_file():
+                raise ValueError(f"{corpus.name}: invalid or missing labeled file {relative_path}")
+        labels[corpus.name] = {
+            "positive_files": sorted(set(positive)),
+            "context_only_files": sorted(set(context_only)),
+        }
+    return labels
 
 
 def render_markdown(results: Sequence[dict[str, object]]) -> str:
@@ -179,19 +262,22 @@ def render_markdown(results: Sequence[dict[str, object]]) -> str:
         "File-level scoring uses the shared label file; it describes these",
         "corpora and configs only, not general superiority.",
         "",
-        "| Tool | Corpus | Median seconds | Findings | Files flagged | Precision | Recall | F1 |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Tool | Corpus | Median seconds | Findings | TP | FP | FN | TN | Precision | Recall | F1 |",
+        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for entry in results:
         metrics = entry["metrics"]
         lines.append(
-            "| {tool} | {corpus} | {seconds} | {findings} | {flagged} | "
+            "| {tool} | {corpus} | {seconds} | {findings} | {tp} | {fp} | {fn} | {tn} | "
             "{precision} | {recall} | {f1} |".format(
                 tool=entry["tool"],
                 corpus=entry["corpus"],
                 seconds=entry["result"]["median_seconds"],
                 findings=entry["result"]["findings"],
-                flagged=metrics["files_flagged"],
+                tp=metrics["true_positives"],
+                fp=metrics["false_positives"],
+                fn=metrics["false_negatives"],
+                tn=metrics["true_negatives"],
                 precision=metrics["file_precision"]
                 if metrics["file_precision"] is not None
                 else "n/a",
@@ -234,13 +320,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         for corpus in corpora:
             shipproof_result = run_shipproof(corpus, arguments.repeat)
+            total_files = int(shipproof_result["files_scanned"])
+            corpus_labels = labels[corpus.name]
             results.append(
                 {
                     "tool": "shipproof",
                     "corpus": corpus.name,
                     "result": shipproof_result,
                     "metrics": compute_file_metrics(
-                        shipproof_result["files_flagged"], labels[corpus.name]
+                        shipproof_result["files_flagged"],
+                        corpus_labels["positive_files"],
+                        total_files,
+                        corpus_labels["context_only_files"],
                     ),
                 }
             )
@@ -252,7 +343,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "corpus": corpus.name,
                         "result": semgrep_result,
                         "metrics": compute_file_metrics(
-                            semgrep_result["files_flagged"], labels[corpus.name]
+                            semgrep_result["files_flagged"],
+                            corpus_labels["positive_files"],
+                            total_files,
+                            corpus_labels["context_only_files"],
                         ),
                     }
                 )
@@ -284,6 +378,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(
             json.dumps(
                 {
+                    "schema_version": "1.0",
+                    "tool": {"name": "ShipProof", "command": "head-to-head"},
+                    "environment": {
+                        "platform": platform.platform(),
+                        "python": platform.python_version(),
+                        "repeat": arguments.repeat,
+                    },
+                    "labels_sha256": hashlib.sha256(
+                        arguments.labels.resolve().read_bytes()
+                    ).hexdigest(),
+                    "corpus_sha256": {corpus.name: sha256_tree(corpus) for corpus in corpora},
                     "labels": labels,
                     "results": results,
                     "threshold_failures": threshold_failures,

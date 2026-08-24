@@ -210,6 +210,18 @@ test("in-process dispatch covers stable, grouped, retired, and legacy commands",
   }
 });
 
+test("1.0 migration gate rejects every hidden legacy alias with a replacement", () => {
+  assert.equal(internals.legacyAliasesEnabled("0.10.0"), true);
+  assert.equal(internals.legacyAliasesEnabled("1.0.0"), false);
+  for (const [commandName, replacement] of internals.LEGACY_COMMAND_REPLACEMENTS) {
+    assert.ok(replacement.length > 5);
+    assert.throws(
+      () => internals.assertLegacyCommandAvailable(commandName, "1.0.0"),
+      new RegExp(`removed in 1\\.0\\.0.*${commandName === "benchmark" ? "npm run benchmark" : ""}`),
+    );
+  }
+});
+
 test("cost command supports latest 2026 AI models and budget gates", () => {
   const prefix = ["labs", "cost"];
   assert.equal(runCli([...prefix, "--context-tokens", "5000", "--model", "claude-sonnet-5", "--budget-usd", "1.0"]), 0);

@@ -23,7 +23,7 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 - language-specific research candidates: 5,000 (`SP4451–SP9450`)
 - project Python test cases ที่ discover ได้: 564 พร้อม Node, package และ end-to-end suites
 - self-scan: 0 active findings ที่ high gate
-- reference benchmark: 1,000 ไฟล์ใน 0.6813 วินาที (1,467.7 files/s), peak RSS 24.79 MB บน Windows/Python 3.12; warm pass 1,441.5 files/s
+- reference benchmark: 1,000 clean files, 3 samples, median 0.9747 วินาที, p95 0.9879 วินาที, peak RSS 25.57 MB บน Windows/Python 3.12.10; fixture/config digest อยู่ใน report
 - default path: read-only, offline และไม่มี dependency เพิ่ม
 
 Candidate ID ไม่ได้แปลว่ามี detector แล้ว จำนวน research slots จึงห้ามนำไปรวมกับ executable rule count ในเอกสารหรือการตลาด
@@ -74,10 +74,10 @@ Acceptance gate:
 ### P0.2 Command evidence schemas
 
 - [x] สร้าง schema เฉพาะสำหรับ `scan`, `check`, `budget`, `capacity`, `cost`, `impact`, `invariants` และ evidence adapters
-- [ ] เพิ่ม golden JSON fixture ต่อคำสั่ง
+- [x] เพิ่ม golden JSON fixture ต่อคำสั่ง
 - [x] ตรวจ output จริงกับ schema ใน CI ไม่ใช่ตรวจเพียงว่าไฟล์ schema parse ได้
 - [x] ระบุ schema version, tool version, verdict, limitations, root และ artifact identity ให้สม่ำเสมอ
-- [ ] เพิ่ม compatibility fixture ก่อนเปลี่ยนชื่อหรือลบ field
+- [x] เพิ่ม compatibility fixture ก่อนเปลี่ยนชื่อหรือลบ field
 
 Acceptance gate:
 
@@ -126,10 +126,10 @@ Acceptance gate:
 
 ### P1.1 Rule inventory
 
-- [ ] สร้างรายงาน rule ID ที่ขาด positive, negative, adversarial, CWE, remediation หรือ false-positive analysis
-- [ ] ขยาย `tests/rule_cases_v2.json` หรือ successor ให้ครอบคลุมทุก executable ID
-- [ ] แยก fixture ตาม ecosystem และ engine: regex, AST, structural, artifact และ taint
-- [ ] ทำ structure test ให้ fail เมื่อเพิ่ม rule โดยไม่มีสอง polarity
+- [x] สร้างรายงาน rule ID ที่ขาด positive, negative, adversarial, CWE, remediation หรือ false-positive analysis
+- [x] ขยาย successor manifests ใต้ `tests/rule-contracts/` และ runtime secret fixtures ให้ครอบคลุมทุก executable ID
+- [x] แยก fixture ตาม ecosystem และ engine: pattern, AST/structural, artifact และ runtime-secret พร้อม index/digest
+- [x] ทำ structure test ให้ fail เมื่อเพิ่ม rule โดยไม่มีสอง polarity (ใช้ transitional debt baseline ที่เพิ่มไม่ได้โดยเงียบและต้องลดลงเมื่อเติม contract สำเร็จ)
 
 ### P1.2 Minimum fixture contract
 
@@ -212,6 +212,14 @@ Candidate ชุดแรกต้องผ่านทุกข้อ:
 
 หลัง batch A อยู่ใน shadow และไม่มี regression จึงพิจารณา Python, Java, Rust, Kotlin และ Swift รวมไม่เกิน 25 กฎ โดย Kotlin/Swift ต้องมี Android/Apple semantics โดยตรงก่อนเสมอ
 
+สถานะ batch A ณ 2026-08-24: ตรวจครบ 25 candidates ตามเพดานทั้ง 9 ecosystem แล้วใน
+[`research/promotion-batch-a.json`](../research/promotion-batch-a.json) — 3 รายการอยู่ที่
+`fixture_ready`, 22 รายการถูกปฏิเสธจาก batch เพราะซ้ำกับ detector เดิม, ต้องใช้ data-flow/lifetime
+analysis, ขาด framework semantics หรือวาง ecosystem ผิด และ 0 รายการถูก promote. ชุด prototype
+ทั้งสามมี executable positive/negative/adversarial cases แต่ยังห้ามเข้า `RULES` จนกว่าจะมี
+representative-repository shadow metrics และ benchmark delta. ดังนั้น batch B ยังไม่เริ่มตาม gate
+ข้างต้น; นี่เป็น evidence dependency ไม่ใช่จำนวนกฎที่ต้องฝืนเติม.
+
 ### P2.5 Promotion gate ต่อกฎ
 
 - source links และวันที่ทบทวน
@@ -249,6 +257,11 @@ Adapter acceptance gate:
 - crash, timeout, unavailable และ findings แยกสถานะกัน
 - output ถูก bound และ redact
 
+สถานะ ณ 2026-08-24: acceptance gate ข้างต้นถูกทำเป็น executable contract แล้วสำหรับ
+TypeScript, Go และ Rust adapters โดยรายงาน tool version, แยก unavailable/timeout/output-limit/
+crash/findings, จำกัด diagnostics และ redact credential-shaped output. Default scanner ยังไม่เรียก
+analyzer หรือ network เอง และ compiler ที่อยู่ใน project ต้องใช้ `--allow-project-code` เสมอ.
+
 ## P4 — Scale and performance evidence
 
 Security source findings, capacity estimates และ measured performance ต้องไม่ถูกรวมเป็นคำตัดสินเดียว
@@ -277,6 +290,12 @@ Security source findings, capacity estimates และ measured performance ต�
 - SLO หรือ budget ที่ผู้ใช้กำหนด
 - artifact digest และ deterministic configuration
 - ไม่มี credential หรือ production target ใน generated script
+
+สถานะ ณ 2026-08-24: benchmark harness บันทึก warmup, samples, median, p95, peak RSS,
+runtime/platform, workload bytes และ deterministic digests แล้ว. Clean 1,000-file profile มี p95
+0.9879 วินาที; adversarial-regex 250-file profile มี p95 2.4173 วินาที; large-file profile 8 x
+512 KiB มี p95 8.4919 วินาทีและใช้ budget แยก 10 วินาที. ตัวเลขนี้เป็นผลบน Windows/Python
+3.12.10 ของเครื่องที่ระบุ ไม่ใช่คำรับรองทุกเครื่อง.
 
 ## P5 — Real-world evaluation and release readiness
 
@@ -311,6 +330,14 @@ Blocking high/critical ต้องมี zero observed false positives ใน c
 - report ordering และ fingerprints ต้อง deterministic
 - large-file, many-file และ adversarial-regex corpus ต้องมี timeout/memory bounds
 
+สถานะ ณ 2026-08-24: controlled head-to-head labels แยก sink ที่ต้องรายงานออกจาก
+context-only source/helper files และรายงาน TP/FP/FN/TN พร้อม corpus digest. Manifest สำหรับ
+real-world evaluator มี clean baseline 3 ชุดและ intentionally vulnerable 3 ชุด โดย pin full commit
+และ license permalink; evaluator fail closed เมื่อ fetch/revision/license ไม่พร้อม และทุก finding
+ยังเป็น `unreviewed` จนกว่าจะมี human labels จึงห้ามใช้ผลดิบกล่าวอ้าง precision. รอบ reviewed
+manifest วันที่ 2026-08-24 fetch/verify/scan ผ่านครบ 6 revisions รวม 1,805 files, 732 findings
+และ 310 application-scope findings โดยตัวเลขเหล่านี้เป็น inventory ไม่ใช่ precision metric.
+
 ## CLI 1.0 cleanup
 
 ### คงไว้เป็น public surface
@@ -338,6 +365,9 @@ Migration gate ก่อน 1.0:
 - parser tests ยืนยันว่า 1.0 ปฏิเสธคำสั่งที่ถอดด้วย exit `2`
 - release notes มี replacement command ทุกตัว
 
+สถานะ ณ 2026-08-24: parser มี major-version gate และ test ครบทุก hidden alias แล้ว. รุ่น 0.x
+ยังแสดง migration warning; การถอดจริงจะเกิดเมื่อออก 1.0 หลัง Milestone C–F ผ่านครบเท่านั้น.
+
 ## Milestones และ dependency
 
 | Milestone | Includes | เริ่มได้เมื่อ | Exit evidence |
@@ -351,29 +381,29 @@ Migration gate ก่อน 1.0:
 
 ## ลำดับงานสามชุดถัดไป
 
-### ชุดที่ 1 — Contract closure
+### ชุดที่ 1 — Shadow evidence ของ prototype
 
-1. MCP per-tool schemas และ bounded stdin
-2. per-command JSON schemas/golden fixtures
-3. secret-safe k6 body
-4. package manifest allowlist
-5. docs-derived structure tests
+1. เปิด advisory-only lane ให้ `SP5301`, `SP5951` และ `SP6309`
+2. รันเฉพาะ revision-pinned representative repositories
+3. label findings และ negative files โดยมนุษย์
+4. บันทึก duplicate/runtime delta แยกต่อ candidate
+5. promote หรือ reject ตามหลักฐาน ห้ามเติมกฎทดแทนเพื่อให้ครบโควตา
 
-### ชุดที่ 2 — Existing rule assurance
+### ชุดที่ 2 — Representative corpus review
 
-1. inventory executable IDs เทียบกับ fixture manifest
-2. เติม polarity ให้ high/critical ก่อน
-3. เติม walker/suffix/multiline/secret/autofix contracts
-4. รัน real negative corpus
-5. publish coverage report ที่ derive ได้
+1. รัน opt-in evaluator จาก reviewed manifest
+2. เก็บ corpus/license/tool/environment digests
+3. label TP/FP/FN/TN แยก ecosystem, severity และ engine
+4. เพิ่ม generated/polyglot/framework-version corpora ที่ยังขาด
+5. publish observed metrics พร้อม sample count และ known evasions
 
-### ชุดที่ 3 — Promotion batch A
+### ชุดที่ 3 — 1.0 release gate
 
-1. คัด direct candidates ที่ไม่ซ้ำ
-2. เขียน ecosystem semantics และ false-positive analysis
-3. สร้าง fixtures ก่อนเขียน detector
-4. implement engine ที่เล็กที่สุดซึ่งพิสูจน์เงื่อนไขได้
-5. เปิด shadow, วัดผล แล้วจึงตัดสิน promote/reject
+1. ปิด Milestone C–E ด้วย shadow, benchmark และ representative labels
+2. ทดสอบ consumer matrix และ packed artifact บนทุก runtime ที่รองรับ
+3. ถอด legacy aliases และตรวจ replacement ทุกคำสั่ง
+4. freeze schema/exit-code compatibility boundary
+5. cut 1.0 เฉพาะเมื่อ release proof, migration และ external evidence ครบ
 
 ## Candidate review record
 

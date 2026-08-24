@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "cpp",
+  "rules": [
+    {
+      "rule_id": "SP135",
+      "title": "Unbounded C string function",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-120",
+      "frameworks": [],
+      "false_positive_analysis": "Fixed-size, compile-time-constant inputs; even then bounded APIs are safer.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/cpp/sp135-positive-a.cpp",
+            "source_hex": "7374726361742028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "37129de648164676d99d95de"
+          },
+          {
+            "path": "contract-fixtures/cpp/sp135-positive-b.cpp",
+            "source_hex": "676574730920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "37be9aaeed2b9ceb6899143e"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/cpp/sp135-negative-a.cpp",
+            "source_hex": "2174726361742028"
+          },
+          {
+            "path": "contract-fixtures/cpp/sp135-negative-b.cpp",
+            "source_hex": "2074726361742028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/cpp/sp135-adversarial-a.cpp",
+            "source_hex": "5874726361742028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

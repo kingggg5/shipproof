@@ -17,26 +17,29 @@ SPEC.loader.exec_module(head_to_head)
 
 class FileMetricsTests(unittest.TestCase):
     def test_perfect_detection(self):
-        metrics = head_to_head.compute_file_metrics(["app.js"], ["app.js"])
+        metrics = head_to_head.compute_file_metrics(["app.js"], ["app.js"], 3)
         self.assertEqual(metrics["true_positives"], 1)
         self.assertEqual(metrics["false_positives"], 0)
         self.assertEqual(metrics["file_precision"], 1.0)
         self.assertEqual(metrics["file_recall"], 1.0)
         self.assertEqual(metrics["file_f1"], 1.0)
+        self.assertEqual(metrics["true_negatives"], 2)
 
     def test_partial_and_clean_corpus_scoring(self):
-        metrics = head_to_head.compute_file_metrics(["app.js", "util.js"], ["app.py", "util.js"])
+        metrics = head_to_head.compute_file_metrics(["app.js", "util.js"], ["app.py", "util.js"], 4)
         self.assertEqual(metrics["true_positives"], 1)
         self.assertEqual(metrics["false_positives"], 1)
         self.assertEqual(metrics["false_negatives"], 1)
         self.assertEqual(metrics["file_precision"], 0.5)
         self.assertEqual(metrics["file_recall"], 0.5)
+        self.assertEqual(metrics["true_negatives"], 1)
 
     def test_clean_corpus_needs_no_labels(self):
-        metrics = head_to_head.compute_file_metrics([], [])
+        metrics = head_to_head.compute_file_metrics([], [], 5)
         self.assertIsNone(metrics["file_precision"])
         self.assertIsNone(metrics["file_recall"])
         self.assertEqual(metrics["false_positives"], 0)
+        self.assertEqual(metrics["true_negatives"], 5)
 
 
 class LabelLoadingTests(unittest.TestCase):
@@ -53,9 +56,15 @@ class LabelLoadingTests(unittest.TestCase):
                 ROOT / "fixtures" / "secure-node-api",
             ],
         )
-        self.assertEqual(labels["vulnerable-node-api"], ["app.js"])
-        self.assertEqual(labels["vulnerable-python-api"], ["app.py"])
-        self.assertEqual(labels["secure-node-api"], [])
+        self.assertEqual(labels["vulnerable-node-api"]["positive_files"], ["app.js"])
+        self.assertEqual(labels["vulnerable-python-api"]["positive_files"], ["app.py"])
+        self.assertEqual(labels["secure-node-api"]["positive_files"], [])
+
+    def test_context_only_files_do_not_reduce_sink_location_recall(self):
+        metrics = head_to_head.compute_file_metrics(["sink.js"], ["sink.js"], 3, ["source.js"])
+        self.assertEqual(metrics["file_recall"], 1.0)
+        self.assertEqual(metrics["true_negatives"], 1)
+        self.assertEqual(metrics["context_only_files"], 1)
 
 
 class ShipProofLegTests(unittest.TestCase):
@@ -66,6 +75,8 @@ class ShipProofLegTests(unittest.TestCase):
         self.assertEqual(result["files_flagged"], ["app.py"])
         self.assertGreater(result["findings"], 0)
         self.assertGreater(result["median_seconds"], 0)
+        self.assertEqual(len(result["samples_seconds"]), 1)
+        self.assertGreater(result["files_scanned"], 0)
 
 
 class SemgrepLegTests(unittest.TestCase):
@@ -86,12 +97,16 @@ class RenderingTests(unittest.TestCase):
                     "tool": "shipproof",
                     "corpus": "demo",
                     "result": {"median_seconds": 1.5, "findings": 3, "files_flagged": ["a.py"]},
-                    "metrics": head_to_head.compute_file_metrics(["a.py"], ["a.py"]),
+                    "metrics": head_to_head.compute_file_metrics(["a.py"], ["a.py"], 2),
                 }
             ]
         )
         self.assertIn("| Tool | Corpus | Median seconds |", markdown)
-        self.assertIn("| shipproof | demo | 1.5 | 3 | 1 |", markdown)
+        self.assertIn("| shipproof | demo | 1.5 | 3 | 1 | 0 | 0 | 1 |", markdown)
+
+    def test_tree_digest_is_stable_for_the_same_corpus(self):
+        corpus = ROOT / "fixtures" / "secure-node-api"
+        self.assertEqual(head_to_head.sha256_tree(corpus), head_to_head.sha256_tree(corpus))
 
 
 class MainTests(unittest.TestCase):

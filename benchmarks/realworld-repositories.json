@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-08-24",
+  "policy": "Every repository is fetched at an immutable full commit and its declared license file is verified before scanning. Finding counts are unreviewed observations, not automatic true/false-positive labels.",
+  "repositories": [
+    {
+      "name": "express",
+      "url": "https://github.com/expressjs/express.git",
+      "revision": "023767fe9872e029271df1418f73401bff20ff40",
+      "classification": "clean_baseline",
+      "license_spdx": "MIT",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/expressjs/express/blob/023767fe9872e029271df1418f73401bff20ff40/LICENSE"
+    },
+    {
+      "name": "flask",
+      "url": "https://github.com/pallets/flask.git",
+      "revision": "d318b683471101618febed18996405ad26462110",
+      "classification": "clean_baseline",
+      "license_spdx": "BSD-3-Clause",
+      "license_path": "LICENSE.txt",
+      "license_url": "https://github.com/pallets/flask/blob/d318b683471101618febed18996405ad26462110/LICENSE.txt"
+    },
+    {
+      "name": "requests",
+      "url": "https://github.com/psf/requests.git",
+      "revision": "8f8b212de8c2129d7954c6cd373762880375620a",
+      "classification": "clean_baseline",
+      "license_spdx": "Apache-2.0",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/psf/requests/blob/8f8b212de8c2129d7954c6cd373762880375620a/LICENSE"
+    },
+    {
+      "name": "juice-shop",
+      "url": "https://github.com/juice-shop/juice-shop.git",
+      "revision": "1618a611b173b4bf114028e6e02549950606e29d",
+      "classification": "intentionally_vulnerable",
+      "license_spdx": "MIT",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/juice-shop/juice-shop/blob/1618a611b173b4bf114028e6e02549950606e29d/LICENSE"
+    },
+    {
+      "name": "dvwa",
+      "url": "https://github.com/digininja/DVWA.git",
+      "revision": "5d5c76cced604e54462b13723f5c69af58e78748",
+      "classification": "intentionally_vulnerable",
+      "license_spdx": "GPL-3.0-or-later",
+      "license_path": "README.md",
+      "license_url": "https://github.com/digininja/DVWA/blob/5d5c76cced604e54462b13723f5c69af58e78748/README.md#license"
+    },
+    {
+      "name": "nodegoat",
+      "url": "https://github.com/OWASP/NodeGoat.git",
+      "revision": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+      "classification": "intentionally_vulnerable",
+      "license_spdx": "Apache-2.0",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/LICENSE"
+    }
+  ]
+}

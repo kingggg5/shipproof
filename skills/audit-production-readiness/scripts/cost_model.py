@@ -10,7 +10,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "0.9.0"
+VERSION = "0.10.0"
 
 # 2026 Model Pricing catalog (USD per 1 Million tokens)
 # Format: input_per_m, output_per_m, cache_read_per_m, cache_write_per_m

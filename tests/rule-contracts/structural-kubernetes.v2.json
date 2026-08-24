@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "kubernetes",
+  "rules": [
+    {
+      "rule_id": "SP609",
+      "title": "Kubernetes container spec missing liveness or readiness probe",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-664",
+      "frameworks": [],
+      "false_positive_analysis": "One-off batch jobs or cronjobs where long-running loops are expected.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/kubernetes/sp609-positive-a/deployment.yaml",
+            "source_hex": "61706956657273696f6e3a20617070732f76310a6b696e643a204465706c6f796d656e740a737065633a0a202074656d706c6174653a0a20202020737065633a0a202020202020636f6e7461696e6572733a0a2020202020202d206e616d653a207765620a2020202020202020696d6167653a206e67696e780a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "9e96316d3e2cc9edc6d5ec87"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/kubernetes/sp609-negative_a/deployment.yaml",
+            "source_hex": "61706956657273696f6e3a20617070732f76310a6b696e643a204465706c6f796d656e740a737065633a0a202074656d706c6174653a0a20202020737065633a0a202020202020636f6e7461696e6572733a0a2020202020202d206e616d653a207765620a2020202020202020696d6167653a206e67696e780a202020202020202072656164696e65737350726f62653a0a20202020202020202020687474704765743a0a202020202020202020202020706174683a202f6865616c74680a202020202020202020202020706f72743a2038300a"
+          },
+          {
+            "path": "contract-fixtures/kubernetes/sp609-negative_b/deployment.yaml",
+            "source_hex": "61706956657273696f6e3a2076310a6b696e643a20436f6e6669674d61700a6d657461646174613a0a20206e616d653a2073657474696e67730a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/kubernetes/sp609-adversarial-a/deployment.yaml",
+            "source_hex": "61706956657273696f6e3a20617070732f76310a6b696e643a204465706c6f796d656e740a737065633a0a202074656d706c6174653a0a20202020737065633a0a202020202020776f726b6c6f6164436f6e7461696e6572733a0a2020202020202d206e616d653a207765620a2020202020202020696d6167653a206e67696e780a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    }
+  ]
+}

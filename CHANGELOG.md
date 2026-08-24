@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.10.0 - 2026-08-24
+
+- Complete machine-readable assurance contracts for all 620 executable rules: positive, negative, adversarial, CWE/control, remediation, and false-positive boundaries now fail closed through a derived inventory.
+- Triage the first 25-candidate polyglot promotion batch without inflating the executable catalog: three research-only prototypes reached `fixture_ready`, 22 were rejected as duplicates or unsupported semantic claims, and none were promoted without shadow evidence.
+- Harden optional TypeScript, Go, and Rust evidence adapters with repository-contained executable resolution, tool-specific version probes, explicit project-code consent, bounded/redacted diagnostics, and distinct unavailable, timeout, output-limit, crash, and finding states.
+- Make performance evidence reproducible with multi-sample median/p95 reports, deterministic workload digests, clean/adversarial/large-file profiles, explicit memory and time budgets, and weekly CI coverage.
+- Correct controlled-corpus labels to distinguish reportable sinks from context-only source/helper files; head-to-head reports now include TP, FP, FN, TN, digests, environment identity, and repeat timings.
+- Add an opt-in, fail-closed real-world evaluator backed by a license-reviewed manifest of six public repositories pinned to full commit revisions. Findings remain explicitly unreviewed until maintainers label them.
+- Add a tested 1.0 migration gate that removes every hidden legacy alias when the package major reaches 1 while retaining warning-only compatibility in 0.x.
+- Close evaluator empty-selection and cross-repository license-permalink gaps, refresh every versioned command contract, and publish the 0.10.0 release boundary.
+
+## 0.9.0 - 2026-08-24
+
 - Prepare the evidence-contract and analyzer-correctness fixes for the `0.9.0` release; see [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).
 
 - Add `scan --history`: scan git history for secrets that were added in past commits and may still exist in history even after removal from HEAD. Uses only stdlib subprocess + git commands; bounded to 500 commits by default; findings anchored to the introducing commit with redacted evidence.

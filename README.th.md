@@ -8,7 +8,7 @@
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Release](https://img.shields.io/badge/release-v0.9.0-2563eb)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.10.0-2563eb)](CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -65,7 +65,7 @@ ShipProof บังคับ review contract เดียวกันไม่�
 
 | หัวข้อ | Contract ปัจจุบัน |
 | :--- | :--- |
-| Release ล่าสุด | `v0.9.0` reviewed release |
+| Release ล่าสุด | `v0.10.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่ง scanner-backed |
 | Executable rules | 620 (`SP001`–`SP665`, มีช่องว่างสงวนไว้ตั้งใจ) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
@@ -150,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.9.0
+      - uses: kingggg5/shipproof@v0.10.0
         with:
           fail-on: high
 ```
@@ -161,7 +161,7 @@ Action เขียน status card Markdown ลง GitHub Step Summary สำห
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: kingggg5/shipproof@v0.9.0
+      - uses: kingggg5/shipproof@v0.10.0
         with:
           fail-on: high
           changed-since: origin/main

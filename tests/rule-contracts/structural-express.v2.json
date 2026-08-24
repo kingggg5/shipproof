@@ -1,0 +1,137 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "express",
+  "rules": [
+    {
+      "rule_id": "SP401",
+      "title": "Express app without helmet",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-693",
+      "frameworks": [
+        "express"
+      ],
+      "false_positive_analysis": "Security headers set at a reverse proxy (nginx, Cloudflare) rather than in Express middleware.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/express/sp401-positive-a/server.js",
+            "source_hex": "636f6e73742065787072657373203d207265717569726528276578707265737327293b0a636f6e737420617070203d206578707265737328293b0a6170702e6c697374656e2833303030293b0a",
+            "expected_line": 2,
+            "expected_confidence": "medium",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "a08ac71eee0ff4161932a09b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/express/sp401-negative_a/server.js",
+            "source_hex": "636f6e73742065787072657373203d207265717569726528276578707265737327293b0a636f6e73742068656c6d6574203d2072657175697265282768656c6d657427293b0a636f6e737420617070203d206578707265737328293b0a6170702e7573652868656c6d65742829293b0a"
+          },
+          {
+            "path": "contract-fixtures/express/sp401-negative_b/server.js",
+            "source_hex": "636f6e737420617070203d20637265617465496e7465726e616c41707028293b0a6170702e6c697374656e2833303030293b0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/express/sp401-adversarial-a/server.js",
+            "source_hex": "636f6e7374206672616d65776f726b203d207265717569726528276578707265737327293b0a636f6e737420617070203d206672616d65776f726b28293b0a6170702e6c697374656e2833303030293b0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP402",
+      "title": "Express auth route without rate limiting",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-307",
+      "frameworks": [
+        "express"
+      ],
+      "false_positive_analysis": "Rate limiting handled by a reverse proxy, API gateway, or CDN in front of Express.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/express/sp402-positive-a/server.js",
+            "source_hex": "636f6e737420617070203d206578707265737328293b0a6170702e706f737428272f6170692f617574682f6c6f67696e272c207369676e496e293b0a",
+            "expected_line": 2,
+            "expected_confidence": "low",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "d9fa1fffc4fc04cb5c911c4c"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/express/sp402-negative_a/server.js",
+            "source_hex": "636f6e737420617070203d206578707265737328293b0a636f6e7374206c696d69746572203d20726571756972652827657870726573732d726174652d6c696d697427293b0a6170702e75736528272f6170692f617574682f6c6f67696e272c206c696d69746572293b0a6170702e706f737428272f6170692f617574682f6c6f67696e272c207369676e496e293b0a"
+          },
+          {
+            "path": "contract-fixtures/express/sp402-negative_b/server.js",
+            "source_hex": "636f6e737420617070203d206578707265737328293b0a6170702e706f737428272f6974656d73272c206372656174654974656d293b0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/express/sp402-adversarial-a/server.js",
+            "source_hex": "636f6e737420617070203d206578707265737328293b0a636f6e7374206175746850617468203d20272f6170692f617574682f6c6f67696e273b0a6170702e706f73742861757468506174682c207369676e496e293b0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP407",
+      "title": "Cookie session routes without CSRF protection",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-352",
+      "frameworks": [
+        "express"
+      ],
+      "false_positive_analysis": "API-only services using token auth (not cookies). SPA apps with CORS + token auth.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/express/sp407-positive-a/server.js",
+            "source_hex": "636f6e737420617070203d206578707265737328293b0a6170702e75736528636f6f6b69655061727365722829293b0a6170702e706f737428272f70726f66696c65272c2075706461746550726f66696c65293b0a",
+            "expected_line": 3,
+            "expected_confidence": "low",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "dc35d5c8a899777fe50683bd"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/express/sp407-negative_a/server.js",
+            "source_hex": "636f6e737420617070203d206578707265737328293b0a6170702e75736528636f6f6b69655061727365722829293b0a6170702e7573652872657175697265282763737572662729287b20636f6f6b69653a2074727565207d29293b0a6170702e706f737428272f70726f66696c65272c2075706461746550726f66696c65293b0a"
+          },
+          {
+            "path": "contract-fixtures/express/sp407-negative_b/server.js",
+            "source_hex": "636f6e737420617070203d206578707265737328293b0a6170702e706f737428272f70726f66696c65272c2075706461746550726f66696c65293b0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/express/sp407-adversarial-a/server.js",
+            "source_hex": "636f6e737420617070203d206578707265737328293b0a636f6e73742073657373696f6e526561646572203d207265717569726528272e2f73657373696f6e2d72656164657227293b0a6170702e7573652873657373696f6e5265616465722829293b0a6170702e706f737428272f70726f66696c65272c2075706461746550726f66696c65293b0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    }
+  ]
+}

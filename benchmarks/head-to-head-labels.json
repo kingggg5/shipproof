@@ -1,21 +1,43 @@
 {
-  "vulnerable-node-api": ["app.js"],
-  "vulnerable-python-api": ["app.py"],
-  "secure-node-api": [],
-  "node-taint-crossfile": [
-    "routes/orders.js",
-    "routes/admin.js",
-    "routes/files.js",
-    "services/order-service.js",
-    "utils/storage.js"
-  ],
-  "node-secure-crossfile": [],
-  "adversarial-node": [
-    "vuln-two-hop.js",
-    "vuln-destructure-fs.js",
-    "routes/vuln-chain.js",
-    "services/chain.js",
-    "db/raw.js",
-    "vuln-cookie-dom.js"
-  ]
+  "schema_version": 2,
+  "label_contract": "positive_files are expected finding locations. context_only_files participate in a vulnerable chain but are intentionally excluded from file-level recall because ShipProof reports at the sink/root-cause location.",
+  "corpora": {
+    "vulnerable-node-api": {
+      "positive_files": ["app.js"],
+      "context_only_files": []
+    },
+    "vulnerable-python-api": {
+      "positive_files": ["app.py"],
+      "context_only_files": []
+    },
+    "secure-node-api": {
+      "positive_files": [],
+      "context_only_files": []
+    },
+    "node-taint-crossfile": {
+      "positive_files": [
+        "routes/admin.js",
+        "routes/files.js",
+        "services/order-service.js",
+        "utils/storage.js"
+      ],
+      "context_only_files": ["routes/orders.js"]
+    },
+    "node-secure-crossfile": {
+      "positive_files": [],
+      "context_only_files": []
+    },
+    "adversarial-node": {
+      "positive_files": [
+        "db/raw.js",
+        "vuln-cookie-dom.js",
+        "vuln-destructure-fs.js",
+        "vuln-two-hop.js"
+      ],
+      "context_only_files": [
+        "routes/vuln-chain.js",
+        "services/chain.js"
+      ]
+    }
+  }
 }

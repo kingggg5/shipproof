@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "go",
+  "rules": [
+    {
+      "rule_id": "SP131",
+      "title": "Go HTTP server without timeouts",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-1088",
+      "frameworks": [],
+      "false_positive_analysis": "Servers behind proxies that enforce their own timeouts.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/go/sp131-positive-a/server.go",
+            "source_hex": "737276203a3d2026687474702e5365727665727b416464723a20223a38303830227d0a",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "d4449853c1cbaff103662236"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/go/sp131-negative_a/server.go",
+            "source_hex": "737276203a3d2026687474702e5365727665727b416464723a20223a38303830222c205265616454696d656f75743a2035202a2074696d652e5365636f6e647d0a"
+          },
+          {
+            "path": "contract-fixtures/go/sp131-negative_b/server.go",
+            "source_hex": "687474702e4c697374656e416e64536572766528223a38303830222c2068616e646c6572290a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/go/sp131-adversarial-a/server.go",
+            "source_hex": "636f6e666967203a3d20736572766572436f6e6669677b416464723a20223a38303830227d0a737276203a3d2026687474702e53657276657228636f6e666967290a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+	"schema_version": 2,
+	"state_revision": 0,
+	"memory_revision_seen": 0,
+	"project_id": "",
+	"run_id": "",
+	"operation": "start",
+	"requested_scale": "auto",
+	"selected_scale": null,
+	"selection_reason": "",
+	"state": "INTAKE",
+	"next_action": "",
+	"active_blocker_id": null,
+	"attempts_for_active_blocker": 0,
+	"discovery_cycles": 0,
+	"total_transitions": 0,
+	"approvals": {
+		"plan": "NOT_REQUIRED",
+		"design": "NOT_REQUIRED",
+		"decision": "NOT_REQUIRED",
+		"acceptance": "PENDING"
+	},
+	"created_at": "",
+	"updated_at": ""
+}

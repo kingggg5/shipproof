@@ -12,9 +12,11 @@
         "root": { "type": "string", "minLength": 1 },
         "adapter": { "enum": ["typescript", "go", "rust"] },
         "analyzer": { "type": "string", "minLength": 1 },
+        "analyzer_version": { "type": "string", "minLength": 1, "maxLength": 256 },
         "process_exit_code": { "type": "integer", "minimum": 0 },
         "passed": { "type": "boolean" },
         "diagnostics": { "type": "array", "items": { "type": "string" } },
+        "diagnostics_truncated": { "type": "boolean" },
         "severity_counts": {
           "type": "object",
           "required": ["error", "warning", "other"],

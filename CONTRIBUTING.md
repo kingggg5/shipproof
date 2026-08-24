@@ -51,6 +51,20 @@ Before submitting, verify that the detector:
 - does not claim reachability, exploitability, or runtime state beyond its proof level;
 - updates both README rule tables and all versioned contract fixtures.
 
+Run the machine-derived rule assurance gate from a source checkout before requesting review:
+
+```bash
+python scripts/rule_assurance_report.py --format json --check
+```
+
+The checked-in legacy debt baseline is empty and may never expand. A new executable rule must supply enough real positive, negative, and adversarial cases to satisfy the current minimum. Placeholder-only look-alikes do not count as polarity evidence. Regenerate and verify the applicable v2 contract partition with:
+
+```bash
+python scripts/build_secret_rule_contracts.py --check
+python scripts/build_legacy_pattern_contracts.py --check
+python scripts/build_legacy_structural_contracts.py --check
+```
+
 ## Changing engineering guidance or budgets
 
 Keep the two skills consistent and update the relevant reference rather than duplicating advice. A new performance metric needs a defined unit, direction, workload, variance expectation, relative threshold, absolute limit when applicable, and a test for missing/invalid evidence. Do not weaken a threshold merely to make CI pass.

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "created_for_version": "0.10.0",
+  "policy": "Transitional debt only. New executable rules must satisfy the minimum contract; remove IDs as coverage is completed and never add IDs merely to make the gate pass.",
+  "partial_contract_ids": [],
+  "uncontracted_ids": []
+}

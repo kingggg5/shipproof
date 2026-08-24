@@ -154,6 +154,16 @@ test("evidence diagnostics are classified by severity", () => {
   );
 });
 
+test("evidence diagnostics redact common credential forms", () => {
+  const { redactDiagnosticLine } = evidenceInternals;
+  const name = "api_" + "key";
+  const value = "fixture-value-that-must-not-escape";
+  const redacted = redactDiagnosticLine(`src/app.ts:1: error: ${name}=${value}`);
+  assert.match(redacted, /\[REDACTED\]/);
+  assert.equal(redacted.includes(value), false);
+  assert.equal(redactDiagnosticLine("https://user:pass@example.invalid"), "https://[REDACTED]@example.invalid");
+});
+
 test("policy parser still accepts quoted strings containing colons in sequences", () => {
   const policy = parsePolicyText('version: 1\nscan:\n  exclude:\n    - "01-intro:/**"\n');
   assert.deepEqual(policy.scan.exclude, ["01-intro:/**"]);

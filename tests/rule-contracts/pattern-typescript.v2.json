@@ -1,0 +1,249 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "typescript",
+  "rules": [
+    {
+      "rule_id": "SP432",
+      "title": "NestJS controller administrative endpoint missing UseGuards decorator",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-862",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/typescript/sp432-positive-a.ts",
+            "source_hex": "40436f6e74726f6c6c65720928092761646d696e200a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "222c2509d2bf9b6fc7422746"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp432-positive-b.ts",
+            "source_hex": "40436f6e74726f6c6c657220092820092761646d696e20203b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f5fec01aeb5e547689e312e4"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/typescript/sp432-negative-a.ts",
+            "source_hex": "21436f6e74726f6c6c65720928092761646d696e200a"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp432-negative-b.ts",
+            "source_hex": "20436f6e74726f6c6c65720928092761646d696e200a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/typescript/sp432-adversarial-a.ts",
+            "source_hex": "58436f6e74726f6c6c65720928092761646d696e200a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP455",
+      "title": "Angular bypassSecurityTrustHtml called with dynamic input",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-79",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/typescript/sp455-positive-a.ts",
+            "source_hex": "746869732e73616e6974697a65722e6279706173735365637572697479547275737448746d6c20282075736572",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2df2a058e4be1b8f146ae8f2"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp455-positive-b.ts",
+            "source_hex": "746869732e73616e6974697a65722e6279706173735365637572697479547275737448746d6c0920280920636f6e74656e743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "368a7ef1da0a93392e3d7a25"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/typescript/sp455-negative-a.ts",
+            "source_hex": "216869732e73616e6974697a65722e6279706173735365637572697479547275737448746d6c20282075736572"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp455-negative-b.ts",
+            "source_hex": "206869732e73616e6974697a65722e6279706173735365637572697479547275737448746d6c20282075736572"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/typescript/sp455-adversarial-a.ts",
+            "source_hex": "586869732e73616e6974697a65722e6279706173735365637572697479547275737448746d6c20282075736572",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP457",
+      "title": "tRPC mutation procedure declared without input validation schema",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-20",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/typescript/sp457-positive-a.ts",
+            "source_hex": "7075626c696350726f636564757265202e6d75746174696f6e0928096173796e630928097b20696e707574207d0929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "967c7ef2f8c5d14df5a71418"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/typescript/sp457-negative-a.ts",
+            "source_hex": "2175626c696350726f636564757265202e6d75746174696f6e0928096173796e630928097b20696e707574207d0929"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp457-negative-b.ts",
+            "source_hex": "2075626c696350726f636564757265202e6d75746174696f6e0928096173796e630928097b20696e707574207d0929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/typescript/sp457-adversarial-a.ts",
+            "source_hex": "5875626c696350726f636564757265202e6d75746174696f6e0928096173796e630928097b20696e707574207d0929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP592",
+      "title": "Next.js mutating route handler or action casting request body directly to any",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-20",
+      "frameworks": [],
+      "false_positive_analysis": "Internal mock endpoints in unit test suites.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/typescript/sp592-positive-a.ts",
+            "source_hex": "636f6e737420626f6479203d20286177616974207265712e6a736f6e28292920617320616e79",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "1c0b17090271b2cf1c3d635e"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp592-positive-b.ts",
+            "source_hex": "636f6e737420626f6479203d20286177616974207265712e6a736f6e28292920617320616e793b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "64c6175130da816e39d1079a"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/typescript/sp592-negative-a.ts",
+            "source_hex": "636f6e737420626f6479203d20286177616974202165712e6a736f6e28292920617320616e79"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp592-negative-b.ts",
+            "source_hex": "636f6e737420626f6479203d20286177616974202065712e6a736f6e28292920617320616e79"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/typescript/sp592-adversarial-a.ts",
+            "source_hex": "636f6e737420626f6479203d20286177616974205865712e6a736f6e28292920617320616e79",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP599",
+      "title": "TypeScript non-null assertion used on dynamic API response payload",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-476",
+      "frameworks": [],
+      "false_positive_analysis": "Variables with prior explicit if (data.field == null) guard checks.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/typescript/sp599-positive-a.ts",
+            "source_hex": "726573706f6e73652e5a21",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "dc69c3eb0e935e07eeaf443e"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp599-positive-b.ts",
+            "source_hex": "7061796c6f61642e617a213b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f5f685535d4c477ac4aea521"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/typescript/sp599-negative-a.ts",
+            "source_hex": "202f2a20696e646972656374202a2f20726573706f6e73652e5a21"
+          },
+          {
+            "path": "contract-fixtures/typescript/sp599-negative-b.ts",
+            "source_hex": "726573706f6e7365215a21"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/typescript/sp599-adversarial-a.ts",
+            "source_hex": "726573706f6e7365205a21",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,2734 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "pattern",
+  "ecosystem": "python",
+  "rules": [
+    {
+      "rule_id": "SP134",
+      "title": "Assertion used as authorization",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-863",
+      "frameworks": [],
+      "false_positive_analysis": "Test-suite assertions, which are the intended use of assert.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp134-positive-a.py",
+            "source_hex": "617373657274205a6861735f726f6c65",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "51d5e70ef6e563d7494488c9"
+          },
+          {
+            "path": "contract-fixtures/python/sp134-positive-b.py",
+            "source_hex": "61737365727409205a5a617574686f72697a65643b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "143e1cdd02696eeaac2e6d4b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp134-negative-a.py",
+            "source_hex": "217373657274205a6861735f726f6c65"
+          },
+          {
+            "path": "contract-fixtures/python/sp134-negative-b.py",
+            "source_hex": "207373657274205a6861735f726f6c65"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp134-adversarial-a.py",
+            "source_hex": "587373657274205a6861735f726f6c65",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP137",
+      "title": "Server-side template injection",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-1336",
+      "frameworks": [],
+      "false_positive_analysis": "Static template strings with no user input embedded.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp137-positive-a.py",
+            "source_hex": "6a696e6a61322e54656d706c617465202820202e666f726d617428",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "51ba60126f819ca19b61b8ac"
+          },
+          {
+            "path": "contract-fixtures/python/sp137-positive-b.py",
+            "source_hex": "6a696e6a61322e54656d706c6174650920280920225a5a25283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c0ab4f6eadbf8ee77cbf75e2"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp137-negative-a.py",
+            "source_hex": "21696e6a61322e54656d706c617465202820202e666f726d617428"
+          },
+          {
+            "path": "contract-fixtures/python/sp137-negative-b.py",
+            "source_hex": "20696e6a61322e54656d706c617465202820202e666f726d617428"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp137-adversarial-a.py",
+            "source_hex": "58696e6a61322e54656d706c617465202820202e666f726d617428",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP139",
+      "title": "Insecure temporary file creation",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-377",
+      "frameworks": [],
+      "false_positive_analysis": "None; deprecated temporary filename generation should never be used.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp139-positive-a.py",
+            "source_hex": "74656d7066696c652e6d6b74656d702028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f5bd91a7880e1a7a2be10649"
+          },
+          {
+            "path": "contract-fixtures/python/sp139-positive-b.py",
+            "source_hex": "74656d7066696c652e6d6b74656d700920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "762d3684745160138f7ee96c"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp139-negative-a.py",
+            "source_hex": "21656d7066696c652e6d6b74656d702028"
+          },
+          {
+            "path": "contract-fixtures/python/sp139-negative-b.py",
+            "source_hex": "20656d7066696c652e6d6b74656d702028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp139-adversarial-a.py",
+            "source_hex": "58656d7066696c652e6d6b74656d702028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP149",
+      "title": "XML entity resolution enabled in standard parser",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-611",
+      "frameworks": [],
+      "false_positive_analysis": "Parsing internal trusted XML.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp149-positive-a.py",
+            "source_hex": "786d6c2e646f6d2e6d696e69646f6d2e70617273650928",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "4bd9b40557b02655f67dee6a"
+          },
+          {
+            "path": "contract-fixtures/python/sp149-positive-b.py",
+            "source_hex": "786d6c2e646f6d2e6d696e69646f6d2e70617273652009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3b8a2007fbd643b6525de1b5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp149-negative-a.py",
+            "source_hex": "216d6c2e646f6d2e6d696e69646f6d2e70617273650928"
+          },
+          {
+            "path": "contract-fixtures/python/sp149-negative-b.py",
+            "source_hex": "206d6c2e646f6d2e6d696e69646f6d2e70617273650928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp149-adversarial-a.py",
+            "source_hex": "6d6c2e646f6d2e6d696e69646f6d2e70617273650928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP151",
+      "title": "Python subprocess execution with shell execution",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-78",
+      "frameworks": [],
+      "false_positive_analysis": "Fixed static commands with no variable input.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp151-positive-a.py",
+            "source_hex": "73756270726f636573732e636865636b5f6f75747075742028207368656c6c203d2054727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d70901c48e8fa91dba3c7075"
+          },
+          {
+            "path": "contract-fixtures/python/sp151-positive-b.py",
+            "source_hex": "73756270726f636573732e72756e09202820207368656c6c09203d0920547275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9e17f49334b151f7c1f4dac8"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp151-negative-a.py",
+            "source_hex": "21756270726f636573732e636865636b5f6f75747075742028207368656c6c203d2054727565"
+          },
+          {
+            "path": "contract-fixtures/python/sp151-negative-b.py",
+            "source_hex": "20756270726f636573732e636865636b5f6f75747075742028207368656c6c203d2054727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp151-adversarial-a.py",
+            "source_hex": "58756270726f636573732e636865636b5f6f75747075742028207368656c6c203d2054727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP163",
+      "title": "Bypassed SSL context with unverified context",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-295",
+      "frameworks": [],
+      "false_positive_analysis": "Testing against local self-signed certificates.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp163-positive-a.py",
+            "source_hex": "73736c2e756e76657269666965645f636f6e746578745f6372656174696f6e0928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3cb9b9fe424554a66ede82a0"
+          },
+          {
+            "path": "contract-fixtures/python/sp163-positive-b.py",
+            "source_hex": "73736c2e756e76657269666965645f636f6e746578745f6372656174696f6e2009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "562e3caa088ebd120fa853db"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp163-negative-a.py",
+            "source_hex": "21736c2e756e76657269666965645f636f6e746578745f6372656174696f6e0928"
+          },
+          {
+            "path": "contract-fixtures/python/sp163-negative-b.py",
+            "source_hex": "20736c2e756e76657269666965645f636f6e746578745f6372656174696f6e0928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp163-adversarial-a.py",
+            "source_hex": "58736c2e756e76657269666965645f636f6e746578745f6372656174696f6e0928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP164",
+      "title": "Flask debug toolbar enabled in route setup",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-489",
+      "frameworks": [],
+      "false_positive_analysis": "Dedicated development configuration files.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp164-positive-a.py",
+            "source_hex": "4465627567546f6f6c626172457874656e73696f6e0928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9b483f03922e693cbf2297b0"
+          },
+          {
+            "path": "contract-fixtures/python/sp164-positive-b.py",
+            "source_hex": "4465627567546f6f6c626172457874656e73696f6e0920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0490de936656131fbb782d96"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp164-negative-a.py",
+            "source_hex": "2165627567546f6f6c626172457874656e73696f6e0928"
+          },
+          {
+            "path": "contract-fixtures/python/sp164-negative-b.py",
+            "source_hex": "2065627567546f6f6c626172457874656e73696f6e0928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp164-adversarial-a.py",
+            "source_hex": "5865627567546f6f6c626172457874656e73696f6e0928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP165",
+      "title": "Django raw query with string interpolation",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-89",
+      "frameworks": [],
+      "false_positive_analysis": "Static queries without variables.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp165-positive-a.py",
+            "source_hex": "2e726177202820275a2573",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8cc448e8ccc46e83278ca16a"
+          },
+          {
+            "path": "contract-fixtures/python/sp165-positive-b.py",
+            "source_hex": "2e726177092028092066273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "78161656675d6ff9a89f2738"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp165-negative-a.py",
+            "source_hex": "21726177202820275a2573"
+          },
+          {
+            "path": "contract-fixtures/python/sp165-negative-b.py",
+            "source_hex": "20726177202820275a2573"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp165-adversarial-a.py",
+            "source_hex": "58726177202820275a2573",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP181",
+      "title": "Django raw SQL query with f-string interpolation",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-89",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp181-positive-a.py",
+            "source_hex": "2e7261772028206627",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c0aed242a561819b369c61ca"
+          },
+          {
+            "path": "contract-fixtures/python/sp181-positive-b.py",
+            "source_hex": "2e726177200928200966223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "3f84603b0c5690015508c5cf"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp181-negative-a.py",
+            "source_hex": "217261772028206627"
+          },
+          {
+            "path": "contract-fixtures/python/sp181-negative-b.py",
+            "source_hex": "207261772028206627"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp181-adversarial-a.py",
+            "source_hex": "587261772028206627",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP335",
+      "title": "Python asyncio task created without reference",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-772",
+      "frameworks": [],
+      "false_positive_analysis": "Fire-and-forget tasks in short-lived scripts.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp335-positive-a.py",
+            "source_hex": "7461736b203d204e6f6e65093b096173796e63696f2e6372656174655f7461736b0928",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c6802e913fbaf9339f352020"
+          },
+          {
+            "path": "contract-fixtures/python/sp335-positive-b.py",
+            "source_hex": "7461736b09203d09204e6f6e6520093b20096173796e63696f2e6372656174655f7461736b2009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "76472b209222ac0ed3a58db4"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp335-negative-a.py",
+            "source_hex": "2161736b203d204e6f6e65093b096173796e63696f2e6372656174655f7461736b0928"
+          },
+          {
+            "path": "contract-fixtures/python/sp335-negative-b.py",
+            "source_hex": "2061736b203d204e6f6e65093b096173796e63696f2e6372656174655f7461736b0928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp335-adversarial-a.py",
+            "source_hex": "5861736b203d204e6f6e65093b096173796e63696f2e6372656174655f7461736b0928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP344",
+      "title": "ThreadPoolExecutor instantiated per request",
+      "category": "scale",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "CLI tools or batch scripts that execute once.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp344-positive-a.py",
+            "source_hex": "64656609302820293a200a097769746820546872656164506f6f6c4578656375746f720928",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d0c6f0b2642ca126c31ca3e2"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp344-negative-a.py",
+            "source_hex": "21656609302820293a200a097769746820546872656164506f6f6c4578656375746f720928"
+          },
+          {
+            "path": "contract-fixtures/python/sp344-negative-b.py",
+            "source_hex": "20656609302820293a200a097769746820546872656164506f6f6c4578656375746f720928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp344-adversarial-a.py",
+            "source_hex": "58656609302820293a200a097769746820546872656164506f6f6c4578656375746f720928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP346",
+      "title": "Python asyncio create_task reference dropped causing garbage collection",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp346-positive-a.py",
+            "source_hex": "096177616974096173796e63696f2e6372656174655f7461736b2028202920",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b55cce3f1ce4e64955c845ff"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-positive-b.py",
+            "source_hex": "096177616974096173796e63696f2e6372656174655f7461736b2028202920",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "dacbdd765b8c74bde70bc5d0"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp346-negative-a.py",
+            "source_hex": "216177616974096173796e63696f2e6372656174655f7461736b2028202920"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-negative-b.py",
+            "source_hex": "586177616974096173796e63696f2e6372656174655f7461736b2028202920"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp346-adversarial-a.py",
+            "source_hex": "202f2a20696e646972656374202a2f20096177616974096173796e63696f2e6372656174655f7461736b2028202920",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP347",
+      "title": "Python asyncio gather without return_exceptions handling",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-755",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp347-positive-a.py",
+            "source_hex": "6173796e63696f2e67617468657220282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7c38c2d43f4583ef4a23b832"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp347-negative-a.py",
+            "source_hex": "2173796e63696f2e67617468657220282029"
+          },
+          {
+            "path": "contract-fixtures/python/sp347-negative-b.py",
+            "source_hex": "2073796e63696f2e67617468657220282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp347-adversarial-a.py",
+            "source_hex": "5873796e63696f2e67617468657220282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP348",
+      "title": "Python ThreadPoolExecutor instantiated without max_workers limit",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp348-positive-a.py",
+            "source_hex": "546872656164506f6f6c4578656375746f7220282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2807bd113ac053368edc6429"
+          },
+          {
+            "path": "contract-fixtures/python/sp348-positive-b.py",
+            "source_hex": "546872656164506f6f6c4578656375746f720920280920293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a499c6af033578291711ff45"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp348-negative-a.py",
+            "source_hex": "216872656164506f6f6c4578656375746f7220282029"
+          },
+          {
+            "path": "contract-fixtures/python/sp348-negative-b.py",
+            "source_hex": "206872656164506f6f6c4578656375746f7220282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp348-adversarial-a.py",
+            "source_hex": "586872656164506f6f6c4578656375746f7220282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP349",
+      "title": "Python ProcessPoolExecutor created inside async request handler",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp349-positive-a.py",
+            "source_hex": "6173796e6309646566095a200a7150726f63657373506f6f6c4578656375746f720928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "64b685b2f1301fc38e050513"
+          },
+          {
+            "path": "contract-fixtures/python/sp349-positive-b.py",
+            "source_hex": "6173796e63200964656620095f6120200a207150726f63657373506f6f6c4578656375746f722009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "76c1d336f90a11be47e8a69d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp349-negative-a.py",
+            "source_hex": "2173796e6309646566095a200a7150726f63657373506f6f6c4578656375746f720928"
+          },
+          {
+            "path": "contract-fixtures/python/sp349-negative-b.py",
+            "source_hex": "2073796e6309646566095a200a7150726f63657373506f6f6c4578656375746f720928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp349-adversarial-a.py",
+            "source_hex": "5873796e6309646566095a200a7150726f63657373506f6f6c4578656375746f720928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP350",
+      "title": "Python SQLAlchemy engine created without pool_size and max_overflow bounds",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp350-positive-a.py",
+            "source_hex": "6372656174655f656e67696e650928202029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6dd8a9271b9477b98188e975"
+          },
+          {
+            "path": "contract-fixtures/python/sp350-positive-b.py",
+            "source_hex": "6372656174655f656e67696e6520092820202020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8eca6d8c78f07fad4ba0e94e"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp350-negative-a.py",
+            "source_hex": "2172656174655f656e67696e650928202029"
+          },
+          {
+            "path": "contract-fixtures/python/sp350-negative-b.py",
+            "source_hex": "2072656174655f656e67696e650928202029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp350-adversarial-a.py",
+            "source_hex": "5872656174655f656e67696e650928202029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP351",
+      "title": "Python SQLAlchemy session created without scoped session or context manager",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp351-positive-a.py",
+            "source_hex": "73657373696f6e6d616b657220282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8bb89a7a9cbe2573a3c1cb73"
+          },
+          {
+            "path": "contract-fixtures/python/sp351-positive-b.py",
+            "source_hex": "73636f7065645f73657373696f6e2009282009293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "024693e9dae1d51db89379ed"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp351-negative-a.py",
+            "source_hex": "21657373696f6e6d616b657220282029"
+          },
+          {
+            "path": "contract-fixtures/python/sp351-negative-b.py",
+            "source_hex": "20657373696f6e6d616b657220282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp351-adversarial-a.py",
+            "source_hex": "58657373696f6e6d616b657220282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP352",
+      "title": "Python Redis client created without socket timeout",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp352-positive-a.py",
+            "source_hex": "72656469732e52656469730928202029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "749ecead47de77a05cc31416"
+          },
+          {
+            "path": "contract-fixtures/python/sp352-positive-b.py",
+            "source_hex": "72656469732e526564697320092820202020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "40cd752fefec385faa71d5bb"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp352-negative-a.py",
+            "source_hex": "21656469732e52656469730928202029"
+          },
+          {
+            "path": "contract-fixtures/python/sp352-negative-b.py",
+            "source_hex": "20656469732e52656469730928202029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp352-adversarial-a.py",
+            "source_hex": "58656469732e52656469730928202029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP353",
+      "title": "Python Redis pub/sub listener without reconnect loop",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp353-positive-a.py",
+            "source_hex": "2e70756273756209280929712e6c697374656e09280929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "85c3e738c0daf47c26e5bb5b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp353-negative-a.py",
+            "source_hex": "2170756273756209280929712e6c697374656e09280929"
+          },
+          {
+            "path": "contract-fixtures/python/sp353-negative-b.py",
+            "source_hex": "2070756273756209280929712e6c697374656e09280929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp353-adversarial-a.py",
+            "source_hex": "5870756273756209280929712e6c697374656e09280929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP354",
+      "title": "Python Celery task missing explicit time_limit or soft_time_limit",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp354-positive-a.py",
+            "source_hex": "4063656c6572792e7461736b0928202029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "85f004503c93603c7965114a"
+          },
+          {
+            "path": "contract-fixtures/python/sp354-positive-b.py",
+            "source_hex": "4063656c6572792e7461736b20092820202020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "cb48e337910e944d63143b9a"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp354-negative-a.py",
+            "source_hex": "2163656c6572792e7461736b0928202029"
+          },
+          {
+            "path": "contract-fixtures/python/sp354-negative-b.py",
+            "source_hex": "2063656c6572792e7461736b0928202029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp354-adversarial-a.py",
+            "source_hex": "5863656c6572792e7461736b0928202029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP355",
+      "title": "Python Celery task with bind=True mutating global state",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-362",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp355-positive-a.py",
+            "source_hex": "4063656c6572792e7461736b09282062696e64203d20547275652029090a646566207a202820293a090a71676c6f62616c205a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "0a66bca5bdc391b9e60ad9d3"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp355-negative-a.py",
+            "source_hex": "2163656c6572792e7461736b09282062696e64203d20547275652029090a646566207a202820293a090a71676c6f62616c205a"
+          },
+          {
+            "path": "contract-fixtures/python/sp355-negative-b.py",
+            "source_hex": "2063656c6572792e7461736b09282062696e64203d20547275652029090a646566207a202820293a090a71676c6f62616c205a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp355-adversarial-a.py",
+            "source_hex": "5863656c6572792e7461736b09282062696e64203d20547275652029090a646566207a202820293a090a71676c6f62616c205a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP356",
+      "title": "Python Pydantic model string field without max_length constraint",
+      "category": "scale",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp356-positive-a.py",
+            "source_hex": "636c617373095f0928536368656d61293a200a207a203a20737472203d204669656c642028202029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f6815abf1fcd82768d92667b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp356-negative-a.py",
+            "source_hex": "216c617373095f0928536368656d61293a200a207a203a20737472203d204669656c642028202029"
+          },
+          {
+            "path": "contract-fixtures/python/sp356-negative-b.py",
+            "source_hex": "206c617373095f0928536368656d61293a200a207a203a20737472203d204669656c642028202029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp356-adversarial-a.py",
+            "source_hex": "586c617373095f0928536368656d61293a200a207a203a20737472203d204669656c642028202029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP357",
+      "title": "Python naive datetime comparison with datetime.now without timezone",
+      "category": "correctness",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-682",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp357-positive-a.py",
+            "source_hex": "6461746574696d652e6e6f7720282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e2b37c251ef6441b88f28ab6"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp357-negative-a.py",
+            "source_hex": "2161746574696d652e6e6f7720282029"
+          },
+          {
+            "path": "contract-fixtures/python/sp357-negative-b.py",
+            "source_hex": "2061746574696d652e6e6f7720282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp357-adversarial-a.py",
+            "source_hex": "5861746574696d652e6e6f7720282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP358",
+      "title": "Python floating point direct equality comparison",
+      "category": "correctness",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-682",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp358-positive-a.py",
+            "source_hex": "666c6f617428093d3d20302e34",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "20917378dce743c62eb93d30"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp358-negative-a.py",
+            "source_hex": "216c6f617428093d3d20302e34"
+          },
+          {
+            "path": "contract-fixtures/python/sp358-negative-b.py",
+            "source_hex": "206c6f617428093d3d20302e34"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp358-adversarial-a.py",
+            "source_hex": "586c6f617428093d3d20302e34",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP405",
+      "title": "Django ALLOWED_HOSTS accepts all",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-20",
+      "frameworks": [],
+      "false_positive_analysis": "Local development settings. Should never appear in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp405-positive-a.py",
+            "source_hex": "414c4c4f5745445f484f535453093d095b272a275d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a4ab3db620f48da1dd1130e3"
+          },
+          {
+            "path": "contract-fixtures/python/sp405-positive-b.py",
+            "source_hex": "414c4c4f5745445f484f53545320093d20095b272a275d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a05c0c33b79b003abc2423f2"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp405-negative-a.py",
+            "source_hex": "214c4c4f5745445f484f535453093d095b272a275d"
+          },
+          {
+            "path": "contract-fixtures/python/sp405-negative-b.py",
+            "source_hex": "204c4c4f5745445f484f535453093d095b272a275d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp405-adversarial-a.py",
+            "source_hex": "584c4c4f5745445f484f535453093d095b272a275d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP409",
+      "title": "FastAPI route missing response_model schema",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-200",
+      "frameworks": [],
+      "false_positive_analysis": "Routes returning raw HTML, FileResponse, or custom plain text.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp409-positive-a.py",
+            "source_hex": "406170702e676574202820726573706f6e73655f6d6f64656c093d09416e79",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2c110014bd6e7a00c94a7000"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp409-negative-a.py",
+            "source_hex": "216170702e676574202820726573706f6e73655f6d6f64656c093d09416e79"
+          },
+          {
+            "path": "contract-fixtures/python/sp409-negative-b.py",
+            "source_hex": "206170702e676574202820726573706f6e73655f6d6f64656c093d09416e79"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp409-adversarial-a.py",
+            "source_hex": "586170702e676574202820726573706f6e73655f6d6f64656c093d09416e79",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP410",
+      "title": "Flask secret key set to hardcoded constant",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-798",
+      "frameworks": [
+        "flask"
+      ],
+      "false_positive_analysis": "Mock secret keys in test runners.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp410-positive-a.py",
+            "source_hex": "6170702e7365637265745f6b6579203d20275a27",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6113494715387895b0c7f028"
+          },
+          {
+            "path": "contract-fixtures/python/sp410-positive-b.py",
+            "source_hex": "6170702e7365637265745f6b657909203d0920275a5a273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "1ad06cf2421a38026707b410"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp410-negative-a.py",
+            "source_hex": "2170702e7365637265745f6b6579203d20275a27"
+          },
+          {
+            "path": "contract-fixtures/python/sp410-negative-b.py",
+            "source_hex": "2070702e7365637265745f6b6579203d20275a27"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp410-adversarial-a.py",
+            "source_hex": "5870702e7365637265745f6b6579203d20275a27",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP411",
+      "title": "Django debug mode enabled in settings",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-489",
+      "frameworks": [],
+      "false_positive_analysis": "Local dev settings files (settings_dev.py).",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp411-positive-a.py",
+            "source_hex": "094445425547093d0954727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "5670cec77038155bf13bd33e"
+          },
+          {
+            "path": "contract-fixtures/python/sp411-positive-b.py",
+            "source_hex": "2009444542554720093d2009547275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "eb2a27ca2b6af1c5c03fe033"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp411-negative-a.py",
+            "source_hex": "214445425547093d0954727565"
+          },
+          {
+            "path": "contract-fixtures/python/sp411-negative-b.py",
+            "source_hex": "584445425547093d0954727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp411-adversarial-a.py",
+            "source_hex": "202f2a20696e646972656374202a2f20094445425547093d0954727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP419",
+      "title": "FastAPI CORS allows wildcard with credentials",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-942",
+      "frameworks": [],
+      "false_positive_analysis": "Public APIs with allow_credentials=False.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp419-positive-a.py",
+            "source_hex": "434f52534d6964646c657761726520616c6c6f775f6f726967696e73203d205b20272a27205d20616c6c6f775f63726564656e7469616c73203d2054727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "833baa407b15840dce82c821"
+          },
+          {
+            "path": "contract-fixtures/python/sp419-positive-b.py",
+            "source_hex": "434f52534d6964646c65776172652020616c6c6f775f6f726967696e7309203d09205b0920272a2709205d2020616c6c6f775f63726564656e7469616c7309203d0920547275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7b25b362e2b333e51e63566b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp419-negative-a.py",
+            "source_hex": "214f52534d6964646c657761726520616c6c6f775f6f726967696e73203d205b20272a27205d20616c6c6f775f63726564656e7469616c73203d2054727565"
+          },
+          {
+            "path": "contract-fixtures/python/sp419-negative-b.py",
+            "source_hex": "204f52534d6964646c657761726520616c6c6f775f6f726967696e73203d205b20272a27205d20616c6c6f775f63726564656e7469616c73203d2054727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp419-adversarial-a.py",
+            "source_hex": "584f52534d6964646c657761726520616c6c6f775f6f726967696e73203d205b20272a27205d20616c6c6f775f63726564656e7469616c73203d2054727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP435",
+      "title": "Django DEBUG mode hardcoded in settings file",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-489",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp435-positive-a.py",
+            "source_hex": "4445425547203d205472756509",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a3a75aa62535e9dd81fa51f4"
+          },
+          {
+            "path": "contract-fixtures/python/sp435-positive-b.py",
+            "source_hex": "4445425547203d205472756509",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9333e2f9b7a8b9ade92f0c48"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp435-negative-a.py",
+            "source_hex": "2145425547203d205472756509"
+          },
+          {
+            "path": "contract-fixtures/python/sp435-negative-b.py",
+            "source_hex": "2045425547203d205472756509"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp435-adversarial-a.py",
+            "source_hex": "5845425547203d205472756509",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP436",
+      "title": "Django ALLOWED_HOSTS configured with wildcard in settings",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-644",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp436-positive-a.py",
+            "source_hex": "414c4c4f5745445f484f535453203d205b20222a22205d",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "201ac8f427e9752a081e5fb5"
+          },
+          {
+            "path": "contract-fixtures/python/sp436-positive-b.py",
+            "source_hex": "414c4c4f5745445f484f53545309203d09205b0920222a2209205d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9d28e14972b6fd63bc177231"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp436-negative-a.py",
+            "source_hex": "214c4c4f5745445f484f535453203d205b20222a22205d"
+          },
+          {
+            "path": "contract-fixtures/python/sp436-negative-b.py",
+            "source_hex": "204c4c4f5745445f484f535453203d205b20222a22205d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp436-adversarial-a.py",
+            "source_hex": "584c4c4f5745445f484f535453203d205b20222a22205d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP437",
+      "title": "Django SECRET_KEY hardcoded string literal in settings",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-798",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp437-positive-a.py",
+            "source_hex": "5345435245545f4b4559093d09275a5a5a5a5a5a5a5a5a5a27",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6f02ef8dd80f37e34a277661"
+          },
+          {
+            "path": "contract-fixtures/python/sp437-positive-b.py",
+            "source_hex": "5345435245545f4b455920093d2009275a5a5a5a5a5a5a5a5a5a5a273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "110be96ea1133cd2bff6c77f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp437-negative-a.py",
+            "source_hex": "2145435245545f4b4559093d09275a5a5a5a5a5a5a5a5a5a27"
+          },
+          {
+            "path": "contract-fixtures/python/sp437-negative-b.py",
+            "source_hex": "2045435245545f4b4559093d09275a5a5a5a5a5a5a5a5a5a27"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp437-adversarial-a.py",
+            "source_hex": "5845435245545f4b4559093d09275a5a5a5a5a5a5a5a5a5a27",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP438",
+      "title": "Django SESSION_COOKIE_SECURE explicitly disabled",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-614",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp438-positive-a.py",
+            "source_hex": "53455353494f4e5f434f4f4b49455f534543555245203d2046616c7365",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6734d18de77b906c7539563a"
+          },
+          {
+            "path": "contract-fixtures/python/sp438-positive-b.py",
+            "source_hex": "53455353494f4e5f434f4f4b49455f53454355524509203d092046616c73653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "48da175e94d3ea2755f7ae27"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp438-negative-a.py",
+            "source_hex": "21455353494f4e5f434f4f4b49455f534543555245203d2046616c7365"
+          },
+          {
+            "path": "contract-fixtures/python/sp438-negative-b.py",
+            "source_hex": "20455353494f4e5f434f4f4b49455f534543555245203d2046616c7365"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp438-adversarial-a.py",
+            "source_hex": "58455353494f4e5f434f4f4b49455f534543555245203d2046616c7365",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP439",
+      "title": "Django ORM extra() method used with format string",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-89",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp439-positive-a.py",
+            "source_hex": "2e65787472612028207768657265203d205b206627",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "365ad55cf666401dc3d84fda"
+          },
+          {
+            "path": "contract-fixtures/python/sp439-positive-b.py",
+            "source_hex": "2e65787472610920282020776865726509203d09205b092066273b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6f43523e03858b8932b71b90"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp439-negative-a.py",
+            "source_hex": "2165787472612028207768657265203d205b206627"
+          },
+          {
+            "path": "contract-fixtures/python/sp439-negative-b.py",
+            "source_hex": "2065787472612028207768657265203d205b206627"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp439-adversarial-a.py",
+            "source_hex": "5865787472612028207768657265203d205b206627",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP440",
+      "title": "FastAPI route missing response_model schema definition",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-200",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp440-positive-a.py",
+            "source_hex": "40726f757465722e706f73742028202029200a6173796e6309646566205a20282029202d3e09646963743a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c8c23d25a743b97d2d6e8674"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp440-negative-a.py",
+            "source_hex": "21726f757465722e706f73742028202029200a6173796e6309646566205a20282029202d3e09646963743a"
+          },
+          {
+            "path": "contract-fixtures/python/sp440-negative-b.py",
+            "source_hex": "20726f757465722e706f73742028202029200a6173796e6309646566205a20282029202d3e09646963743a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp440-adversarial-a.py",
+            "source_hex": "58726f757465722e706f73742028202029200a6173796e6309646566205a20282029202d3e09646963743a",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP441",
+      "title": "Flask app secret_key set to hardcoded string literal",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-798",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp441-positive-a.py",
+            "source_hex": "6170702e7365637265745f6b6579203d20225a5a5a5a5a5a22",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "628f09ed77b0803937084762"
+          },
+          {
+            "path": "contract-fixtures/python/sp441-positive-b.py",
+            "source_hex": "6170702e7365637265745f6b657909203d0920225a5a5a5a5a5a5a223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "82decb3d70c3ce8df7f34c53"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp441-negative-a.py",
+            "source_hex": "2170702e7365637265745f6b6579203d20225a5a5a5a5a5a22"
+          },
+          {
+            "path": "contract-fixtures/python/sp441-negative-b.py",
+            "source_hex": "2070702e7365637265745f6b6579203d20225a5a5a5a5a5a22"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp441-adversarial-a.py",
+            "source_hex": "5870702e7365637265745f6b6579203d20225a5a5a5a5a5a22",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP442",
+      "title": "Flask SESSION_COOKIE_HTTPONLY disabled in configuration",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-1004",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp442-positive-a.py",
+            "source_hex": "6170702e636f6e6669675b2253455353494f4e5f434f4f4b49455f485454504f4e4c59225d093d0946616c7365",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "cc0dad01edc0670475faf81e"
+          },
+          {
+            "path": "contract-fixtures/python/sp442-positive-b.py",
+            "source_hex": "6170702e636f6e6669675b2253455353494f4e5f434f4f4b49455f485454504f4e4c59225d20093d200946616c73653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "086d901e03234544ff6a7ada"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp442-negative-a.py",
+            "source_hex": "2170702e636f6e6669675b2253455353494f4e5f434f4f4b49455f485454504f4e4c59225d093d0946616c7365"
+          },
+          {
+            "path": "contract-fixtures/python/sp442-negative-b.py",
+            "source_hex": "2070702e636f6e6669675b2253455353494f4e5f434f4f4b49455f485454504f4e4c59225d093d0946616c7365"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp442-adversarial-a.py",
+            "source_hex": "5870702e636f6e6669675b2253455353494f4e5f434f4f4b49455f485454504f4e4c59225d093d0946616c7365",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP465",
+      "title": "FastAPI background task created without error handling wrapper",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp465-positive-a.py",
+            "source_hex": "6261636b67726f756e645f7461736b732e6164645f7461736b09280961092c092029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "1bef3c7f68eb5eed27996bda"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp465-negative-a.py",
+            "source_hex": "2161636b67726f756e645f7461736b732e6164645f7461736b09280961092c092029"
+          },
+          {
+            "path": "contract-fixtures/python/sp465-negative-b.py",
+            "source_hex": "2061636b67726f756e645f7461736b732e6164645f7461736b09280961092c092029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp465-adversarial-a.py",
+            "source_hex": "5861636b67726f756e645f7461736b732e6164645f7461736b09280961092c092029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP466",
+      "title": "Django transaction.atomic missing in multi-table mutation endpoint",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-662",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp466-positive-a.py",
+            "source_hex": "64656609300928207265717565737420293a200a712e637265617465282029202e637265617465282029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9d62fe8528833ec67aa2a638"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp466-negative-a.py",
+            "source_hex": "21656609300928207265717565737420293a200a712e637265617465282029202e637265617465282029"
+          },
+          {
+            "path": "contract-fixtures/python/sp466-negative-b.py",
+            "source_hex": "20656609300928207265717565737420293a200a712e637265617465282029202e637265617465282029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp466-adversarial-a.py",
+            "source_hex": "58656609300928207265717565737420293a200a712e637265617465282029202e637265617465282029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP471",
+      "title": "FastAPI CORS middleware configured with allow_origins wildcard and allow_credentials",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-942",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp471-positive-a.py",
+            "source_hex": "6164645f6d6964646c6577617265202820434f52534d6964646c657761726571616c6c6f775f6f726967696e73093d095b09272a27095d71616c6c6f775f63726564656e7469616c73093d0954727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "88e9c787b5042769ad933fa3"
+          },
+          {
+            "path": "contract-fixtures/python/sp471-positive-b.py",
+            "source_hex": "6164645f6d6964646c65776172650920280920434f52534d6964646c65776172652071616c6c6f775f6f726967696e7320093d20095b2009272a2720095d2071616c6c6f775f63726564656e7469616c7320093d2009547275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a2ec17dfde74d5b4d2d4b963"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp471-negative-a.py",
+            "source_hex": "2164645f6d6964646c6577617265202820434f52534d6964646c657761726571616c6c6f775f6f726967696e73093d095b09272a27095d71616c6c6f775f63726564656e7469616c73093d0954727565"
+          },
+          {
+            "path": "contract-fixtures/python/sp471-negative-b.py",
+            "source_hex": "2064645f6d6964646c6577617265202820434f52534d6964646c657761726571616c6c6f775f6f726967696e73093d095b09272a27095d71616c6c6f775f63726564656e7469616c73093d0954727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp471-adversarial-a.py",
+            "source_hex": "5864645f6d6964646c6577617265202820434f52534d6964646c657761726571616c6c6f775f6f726967696e73093d095b09272a27095d71616c6c6f775f63726564656e7469616c73093d0954727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP472",
+      "title": "Flask-CORS configured with origins wildcard and supports_credentials",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-942",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp472-positive-a.py",
+            "source_hex": "434f52532028206f726967696e73203d20222a2220737570706f7274735f63726564656e7469616c73093d0954727565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "49f9996261a20374a6c05ddc"
+          },
+          {
+            "path": "contract-fixtures/python/sp472-positive-b.py",
+            "source_hex": "434f525309202820206f726967696e7309203d0920222a222020737570706f7274735f63726564656e7469616c7320093d2009547275653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "948803cca0ab00bdf777c60e"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp472-negative-a.py",
+            "source_hex": "214f52532028206f726967696e73203d20222a2220737570706f7274735f63726564656e7469616c73093d0954727565"
+          },
+          {
+            "path": "contract-fixtures/python/sp472-negative-b.py",
+            "source_hex": "204f52532028206f726967696e73203d20222a2220737570706f7274735f63726564656e7469616c73093d0954727565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp472-adversarial-a.py",
+            "source_hex": "584f52532028206f726967696e73203d20222a2220737570706f7274735f63726564656e7469616c73093d0954727565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP478",
+      "title": "FastAPI unhandled HTTPException re-thrown losing details",
+      "category": "correctness",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp478-positive-a.py",
+            "source_hex": "6578636570742048545450457863657074696f6e3a090a0972616973650948545450457863657074696f6e0928097374617475735f636f6465093d09353030",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "13a7b321aefaff1a75276b88"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp478-negative-a.py",
+            "source_hex": "2178636570742048545450457863657074696f6e3a090a0972616973650948545450457863657074696f6e0928097374617475735f636f6465093d09353030"
+          },
+          {
+            "path": "contract-fixtures/python/sp478-negative-b.py",
+            "source_hex": "2078636570742048545450457863657074696f6e3a090a0972616973650948545450457863657074696f6e0928097374617475735f636f6465093d09353030"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp478-adversarial-a.py",
+            "source_hex": "5878636570742048545450457863657074696f6e3a090a0972616973650948545450457863657074696f6e0928097374617475735f636f6465093d09353030",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP479",
+      "title": "Django CSRF_TRUSTED_ORIGINS missing https scheme",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-352",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp479-positive-a.py",
+            "source_hex": "435352465f545255535445445f4f524947494e53203d205b2022687474703a2f2f",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "36852d3ca37e9fb0f9f46e87"
+          },
+          {
+            "path": "contract-fixtures/python/sp479-positive-b.py",
+            "source_hex": "435352465f545255535445445f4f524947494e5309203d09205b202022687474703a2f2f3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2bec4a6e2059d48378430baf"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp479-negative-a.py",
+            "source_hex": "215352465f545255535445445f4f524947494e53203d205b2022687474703a2f2f"
+          },
+          {
+            "path": "contract-fixtures/python/sp479-negative-b.py",
+            "source_hex": "205352465f545255535445445f4f524947494e53203d205b2022687474703a2f2f"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp479-adversarial-a.py",
+            "source_hex": "585352465f545255535445445f4f524947494e53203d205b2022687474703a2f2f",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP487",
+      "title": "FastAPI streaming response without generator exception handling",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp487-positive-a.py",
+            "source_hex": "53747265616d696e67526573706f6e73650928096120282029202c206d656469615f74797065",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "23ed2ea3b0183d4b4300e937"
+          },
+          {
+            "path": "contract-fixtures/python/sp487-positive-b.py",
+            "source_hex": "53747265616d696e67526573706f6e736520092820095a3009202809202909202c09206d656469615f747970653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "994c81b2a1c5e4c06a46665f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp487-negative-a.py",
+            "source_hex": "21747265616d696e67526573706f6e73650928096120282029202c206d656469615f74797065"
+          },
+          {
+            "path": "contract-fixtures/python/sp487-negative-b.py",
+            "source_hex": "20747265616d696e67526573706f6e73650928096120282029202c206d656469615f74797065"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp487-adversarial-a.py",
+            "source_hex": "58747265616d696e67526573706f6e73650928096120282029202c206d656469615f74797065",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP488",
+      "title": "Django database connection closed inside thread pool worker",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-662",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp488-positive-a.py",
+            "source_hex": "546872656164506f6f6c4578656375746f7220646a616e676f2e64622e636f6e6e656374696f6e2e636c6f73652829",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "fdd9f7356a501673d53fdbf7"
+          },
+          {
+            "path": "contract-fixtures/python/sp488-positive-b.py",
+            "source_hex": "546872656164506f6f6c4578656375746f727120646a616e676f2e64622e636f6e6e656374696f6e2e636c6f736528293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "98fec38822218d6becf07423"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp488-negative-a.py",
+            "source_hex": "216872656164506f6f6c4578656375746f7220646a616e676f2e64622e636f6e6e656374696f6e2e636c6f73652829"
+          },
+          {
+            "path": "contract-fixtures/python/sp488-negative-b.py",
+            "source_hex": "206872656164506f6f6c4578656375746f7220646a616e676f2e64622e636f6e6e656374696f6e2e636c6f73652829"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp488-adversarial-a.py",
+            "source_hex": "586872656164506f6f6c4578656375746f7220646a616e676f2e64622e636f6e6e656374696f6e2e636c6f73652829",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP514",
+      "title": "LangChain unsafe code execution tool enabled",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-95",
+      "frameworks": [],
+      "false_positive_analysis": "Isolated sandboxed execution environments with no host network access.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp514-positive-a.py",
+            "source_hex": "66726f6d206c616e67636861696e5f6578706572696d656e74616c2e746f6f6c7309696d706f727420507974686f6e4173745245504c546f6f6c",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c0521231d8853d471cb73f79"
+          },
+          {
+            "path": "contract-fixtures/python/sp514-positive-b.py",
+            "source_hex": "66726f6d09206c616e67636861696e5f6578706572696d656e74616c2e746f6f6c732009696d706f72740920507974686f6e4173745245504c546f6f6c3b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2804a03a873816cfdc9f5b2f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp514-negative-a.py",
+            "source_hex": "21726f6d206c616e67636861696e5f6578706572696d656e74616c2e746f6f6c7309696d706f727420507974686f6e4173745245504c546f6f6c"
+          },
+          {
+            "path": "contract-fixtures/python/sp514-negative-b.py",
+            "source_hex": "20726f6d206c616e67636861696e5f6578706572696d656e74616c2e746f6f6c7309696d706f727420507974686f6e4173745245504c546f6f6c"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp514-adversarial-a.py",
+            "source_hex": "58726f6d206c616e67636861696e5f6578706572696d656e74616c2e746f6f6c7309696d706f727420507974686f6e4173745245504c546f6f6c",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP520",
+      "title": "LangChain load_tools including dangerous shell or python execution",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-95",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp520-positive-a.py",
+            "source_hex": "6c6f61645f746f6f6c732028205b2022707974686f6e5f7265706c22",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "73fc30e595af23f055cb9877"
+          },
+          {
+            "path": "contract-fixtures/python/sp520-positive-b.py",
+            "source_hex": "6c6f61645f746f6f6c7309202809205b2020227465726d696e616c223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "58a882bf76b53217ff09ae67"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp520-negative-a.py",
+            "source_hex": "216f61645f746f6f6c732028205b2022707974686f6e5f7265706c22"
+          },
+          {
+            "path": "contract-fixtures/python/sp520-negative-b.py",
+            "source_hex": "206f61645f746f6f6c732028205b2022707974686f6e5f7265706c22"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp520-adversarial-a.py",
+            "source_hex": "586f61645f746f6f6c732028205b2022707974686f6e5f7265706c22",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP521",
+      "title": "LangChain SQLDatabaseChain instantiated without query checker verification",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-89",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp521-positive-a.py",
+            "source_hex": "53514c4461746162617365436861696e2028202029",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "925efa6f1ab8a7f364612b03"
+          },
+          {
+            "path": "contract-fixtures/python/sp521-positive-b.py",
+            "source_hex": "53514c4461746162617365436861696e09202820202020293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c337984f37885c6b48e100e4"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp521-negative-a.py",
+            "source_hex": "21514c4461746162617365436861696e2028202029"
+          },
+          {
+            "path": "contract-fixtures/python/sp521-negative-b.py",
+            "source_hex": "20514c4461746162617365436861696e2028202029"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp521-adversarial-a.py",
+            "source_hex": "58514c4461746162617365436861696e2028202029",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP537",
+      "title": "AWS Lambda handler missing connection caching outside handler function",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp537-positive-a.py",
+            "source_hex": "646566096c616d6264615f68616e646c6572202820293a090a7170796d6f6e676f2e4d6f6e676f436c69656e740928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b09ea7c0fe137605829485c2"
+          },
+          {
+            "path": "contract-fixtures/python/sp537-positive-b.py",
+            "source_hex": "64656620096c616d6264615f68616e646c65720920282020293a20090a2071707379636f7067322e636f6e6e6563742009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "392f11a84bfe2dbb93a35cc3"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp537-negative-a.py",
+            "source_hex": "216566096c616d6264615f68616e646c6572202820293a090a7170796d6f6e676f2e4d6f6e676f436c69656e740928"
+          },
+          {
+            "path": "contract-fixtures/python/sp537-negative-b.py",
+            "source_hex": "206566096c616d6264615f68616e646c6572202820293a090a7170796d6f6e676f2e4d6f6e676f436c69656e740928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp537-adversarial-a.py",
+            "source_hex": "586566096c616d6264615f68616e646c6572202820293a090a7170796d6f6e676f2e4d6f6e676f436c69656e740928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP539",
+      "title": "GCP Cloud Storage signed URL generated without expiration cap",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-613",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp539-positive-a.py",
+            "source_hex": "67656e65726174655f7369676e65645f75726c092820",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "222e892df679e61a113daa07"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp539-negative-a.py",
+            "source_hex": "21656e65726174655f7369676e65645f75726c092820"
+          },
+          {
+            "path": "contract-fixtures/python/sp539-negative-b.py",
+            "source_hex": "20656e65726174655f7369676e65645f75726c092820"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp539-adversarial-a.py",
+            "source_hex": "58656e65726174655f7369676e65645f75726c092820",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP543",
+      "title": "ChromaDB persistent client instantiated per request without singleton",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp543-positive-a.py",
+            "source_hex": "6173796e63096465660941716368726f6d6164622e50657273697374656e74436c69656e740928",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ad3a9143208abba003ecab3d"
+          },
+          {
+            "path": "contract-fixtures/python/sp543-positive-b.py",
+            "source_hex": "6173796e6309206465662009395f20716368726f6d6164622e50657273697374656e74436c69656e742009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "c5adb37e65d896533b67bc9c"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp543-negative-a.py",
+            "source_hex": "2173796e63096465660941716368726f6d6164622e50657273697374656e74436c69656e740928"
+          },
+          {
+            "path": "contract-fixtures/python/sp543-negative-b.py",
+            "source_hex": "2073796e63096465660941716368726f6d6164622e50657273697374656e74436c69656e740928"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp543-adversarial-a.py",
+            "source_hex": "5873796e63096465660941716368726f6d6164622e50657273697374656e74436c69656e740928",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP553",
+      "title": "AWS Secrets Manager get_secret_value called inside Lambda handler",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp553-positive-a.py",
+            "source_hex": "646566096c616d6264615f68616e646c6572202820293a090a71736563726574736d616e61676572206765745f7365637265745f76616c7565",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "579780d12042ac2c2614076d"
+          },
+          {
+            "path": "contract-fixtures/python/sp553-positive-b.py",
+            "source_hex": "64656620096c616d6264615f68616e646c65720920282020293a20090a2071736563726574736d616e6167657220206765745f7365637265745f76616c75653b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "9ee65842bf56c414e8d4db69"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp553-negative-a.py",
+            "source_hex": "216566096c616d6264615f68616e646c6572202820293a090a71736563726574736d616e61676572206765745f7365637265745f76616c7565"
+          },
+          {
+            "path": "contract-fixtures/python/sp553-negative-b.py",
+            "source_hex": "206566096c616d6264615f68616e646c6572202820293a090a71736563726574736d616e61676572206765745f7365637265745f76616c7565"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp553-adversarial-a.py",
+            "source_hex": "586566096c616d6264615f68616e646c6572202820293a090a71736563726574736d616e61676572206765745f7365637265745f76616c7565",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP554",
+      "title": "AWS CloudWatch put_metric_data called synchronously in API path",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp554-positive-a.py",
+            "source_hex": "6173796e630964656609410928207265717565737420293a20636c6f756477617463682e7075745f6d65747269635f64617461",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7edfb50c0c5558ca544e9fc5"
+          },
+          {
+            "path": "contract-fixtures/python/sp554-positive-b.py",
+            "source_hex": "6173796e6309206465662009395f2009282020726571756573742020293a7120636c6f756477617463682e7075745f6d65747269635f646174613b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e9f48ca984a777641d402326"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp554-negative-a.py",
+            "source_hex": "6173796e630921656609410928207265717565737420293a20636c6f756477617463682e7075745f6d65747269635f64617461"
+          },
+          {
+            "path": "contract-fixtures/python/sp554-negative-b.py",
+            "source_hex": "6173796e630920656609410928207265717565737420293a20636c6f756477617463682e7075745f6d65747269635f64617461"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp554-adversarial-a.py",
+            "source_hex": "6173796e630958656609410928207265717565737420293a20636c6f756477617463682e7075745f6d65747269635f64617461",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP555",
+      "title": "GCP Secret Manager client instantiated inside Cloud Function handler",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp555-positive-a.py",
+            "source_hex": "646566093009286576656e7420293a717365637265746d616e616765722e5365637265744d616e6167657253657276696365436c69656e74",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "d34ab84e1d5faabb59f86c39"
+          },
+          {
+            "path": "contract-fixtures/python/sp555-positive-b.py",
+            "source_hex": "6465662009617a2009286576656e742020293a20717365637265746d616e616765722e5365637265744d616e6167657253657276696365436c69656e743b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "4739998948d722412db19693"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp555-negative-a.py",
+            "source_hex": "216566093009286576656e7420293a717365637265746d616e616765722e5365637265744d616e6167657253657276696365436c69656e74"
+          },
+          {
+            "path": "contract-fixtures/python/sp555-negative-b.py",
+            "source_hex": "206566093009286576656e7420293a717365637265746d616e616765722e5365637265744d616e6167657253657276696365436c69656e74"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp555-adversarial-a.py",
+            "source_hex": "586566093009286576656e7420293a717365637265746d616e616765722e5365637265744d616e6167657253657276696365436c69656e74",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP556",
+      "title": "GCP Cloud Pub/Sub subscriber without automatic ack deadline extension",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp556-positive-a.py",
+            "source_hex": "737562736372696265722e737562736372696265202820",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6190ec6620a2891288d4fb44"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp556-negative-a.py",
+            "source_hex": "217562736372696265722e737562736372696265202820"
+          },
+          {
+            "path": "contract-fixtures/python/sp556-negative-b.py",
+            "source_hex": "207562736372696265722e737562736372696265202820"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp556-adversarial-a.py",
+            "source_hex": "587562736372696265722e737562736372696265202820",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP572",
+      "title": "Milvus vector search called without prior index loading",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-703",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp572-positive-a.py",
+            "source_hex": "636f6c6c656374696f6e2e7365617263682028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "23f81c2f19bafa77a90ae0c7"
+          },
+          {
+            "path": "contract-fixtures/python/sp572-positive-b.py",
+            "source_hex": "636f6c6c656374696f6e2e7365617263680920283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "29ab3294e848ad34da1a412a"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp572-negative-a.py",
+            "source_hex": "216f6c6c656374696f6e2e7365617263682028"
+          },
+          {
+            "path": "contract-fixtures/python/sp572-negative-b.py",
+            "source_hex": "206f6c6c656374696f6e2e7365617263682028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp572-adversarial-a.py",
+            "source_hex": "586f6c6c656374696f6e2e7365617263682028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP590",
+      "title": "Unbounded in-memory queue without maxsize parameter",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp590-positive-a.py",
+            "source_hex": "6173796e63696f2e517565756509280929",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "f4ab4caf66a271c24a40963d"
+          },
+          {
+            "path": "contract-fixtures/python/sp590-positive-b.py",
+            "source_hex": "71756575652e51756575650920280920293b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "83da87444df3d4d4698b2ab4"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp590-negative-a.py",
+            "source_hex": "2173796e63696f2e517565756509280929"
+          },
+          {
+            "path": "contract-fixtures/python/sp590-negative-b.py",
+            "source_hex": "2073796e63696f2e517565756509280929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp590-adversarial-a.py",
+            "source_hex": "5873796e63696f2e517565756509280929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    }
+  ]
+}

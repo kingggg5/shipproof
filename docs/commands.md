@@ -205,7 +205,7 @@ shipproof gate evidence . --adapter go --format json
 shipproof gate evidence . --adapter rust --allow-project-code --format json
 ```
 
-Adapters are fixed: repository-local TypeScript `tsc --noEmit`, `go vet ./...` with module downloads disabled, and offline `cargo clippy`. TypeScript and Rust require `--allow-project-code`: the local `tsc` is repository-controlled and Cargo may execute `build.rs`. There is no pass-through for commands or analyzer arguments. Exit `0` is pass, `1` is analyzer findings, and `2` is invalid or unavailable evidence.
+Adapters are fixed: repository-local TypeScript `tsc --noEmit`, `go vet ./...` with module downloads disabled, and offline `cargo clippy`. TypeScript and Rust require `--allow-project-code`: the local `tsc` is repository-controlled and Cargo may execute `build.rs`. Even the repository-local TypeScript version probe is not executed during discovery without that consent; `--list` reports `approval required` instead. There is no pass-through for commands or analyzer arguments. Every ready adapter must pass its own version probe; JSON evidence records that bounded version string. Diagnostics are redacted, capped at 200 lines and 4,096 characters per line, and the child process has a fixed 2 MB output cap and 120-second timeout. Timeout, output overflow, crash, or unavailable tools return exit `2`; analyzer findings return `1`; a usable clean analyzer run returns `0`.
 
 ## `mcp`
 

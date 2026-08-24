@@ -1,0 +1,357 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "nextjs",
+  "rules": [
+    {
+      "rule_id": "SP408",
+      "title": "Meta-framework config without CSP header",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-693",
+      "frameworks": [
+        "express"
+      ],
+      "false_positive_analysis": "CSP set at the reverse proxy or CDN level rather than in the app config.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/nextjs/sp408-positive-a/next.config.js",
+            "source_hex": "636f6e7374206e657874436f6e666967203d207b2072656163745374726963744d6f64653a2074727565207d3b0a6d6f64756c652e6578706f727473203d206e657874436f6e6669673b0a",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "9a86344db6917a29da9fa46f"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/nextjs/sp408-negative_a/next.config.js",
+            "source_hex": "636f6e7374206e657874436f6e666967203d207b206173796e6320686561646572732829207b2072657475726e205b7b206b65793a2027436f6e74656e742d53656375726974792d506f6c696379272c2076616c75653a202264656661756c742d737263202773656c662722207d5d3b207d207d3b0a6d6f64756c652e6578706f727473203d206e657874436f6e6669673b0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp408-negative_b/next.config.js",
+            "source_hex": "6d6f64756c652e6578706f727473203d207b206173796e6320686561646572732829207b2072657475726e205b7b20686561646572733a205b7b206b65793a2027436f6e74656e742d53656375726974792d506f6c696379272c2076616c75653a202764656661756c742d737263206e6f6e6527207d5d207d5d3b207d207d3b0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/nextjs/sp408-adversarial-a/next-config-source.ts",
+            "source_hex": "636f6e737420636f6e666967203d207b2072656163745374726963744d6f64653a2074727565207d3b0a6578706f72742064656661756c7420636f6e6669673b0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP591",
+      "title": "Server-only database or ORM client imported inside 'use client' bundle",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-200",
+      "frameworks": [
+        "nextjs",
+        "react"
+      ],
+      "false_positive_analysis": "Test fixtures or mock files not deployed to production.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/nextjs/sp591-positive-a/component.tsx",
+            "source_hex": "2775736520636c69656e74273b0a696d706f7274207b20507269736d61436c69656e74207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f72742066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "be6cd32016ed690548a968b7"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp591-positive-b/component.tsx",
+            "source_hex": "0a2775736520636c69656e74273b0a696d706f7274207b20507269736d61436c69656e74207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f72742066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "92f62aeddf5ec49da59c2e5d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/nextjs/sp591-negative_a/component.tsx",
+            "source_hex": "696d706f7274207b20507269736d61436c69656e74207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f7274206173796e632066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp591-negative_b/component.tsx",
+            "source_hex": "2775736520636c69656e74273b0a696d706f7274207b20617069207d2066726f6d20272e2f62726f777365722d617069273b0a6578706f72742066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/nextjs/sp591-adversarial-a/component.tsx",
+            "source_hex": "636f6e737420646972656374697665203d20277573652027202b2027636c69656e74273b0a696d706f7274207b20507269736d61436c69656e74207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f72742066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP595",
+      "title": "Next.js Server Action database mutation without cache revalidation",
+      "category": "reliability",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "cwe": "CWE-664",
+      "frameworks": [
+        "nextjs",
+        "react"
+      ],
+      "false_positive_analysis": "Actions that perform navigation redirects immediately (redirect() handles revalidation).",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/nextjs/sp595-positive-a/actions.ts",
+            "source_hex": "2775736520736572766572273b0a6578706f7274206173796e632066756e6374696f6e207570646174654974656d2829207b0a2020617761697420707269736d612e757365722e757064617465287b2077686572653a207b2069643a20273127207d207d293b0a7d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "a2003725db6f426183854d1d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/nextjs/sp595-negative_a/actions.ts",
+            "source_hex": "2775736520736572766572273b0a6578706f7274206173796e632066756e6374696f6e207570646174654974656d2829207b0a2020617761697420707269736d612e757365722e757064617465287b2077686572653a207b2069643a20273127207d207d293b0a2020726576616c69646174655061746828272f757365727327293b0a7d0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp595-negative_b/actions.ts",
+            "source_hex": "6578706f7274206173796e632066756e6374696f6e20726561644974656d2829207b2072657475726e20707269736d612e757365722e66696e644d616e7928293b207d0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/nextjs/sp595-adversarial-a/actions.ts",
+            "source_hex": "2775736520736572766572273b0a636f6e7374206d7574617465203d20707269736d612e757365725b27757027202b202764617465275d3b0a6578706f7274206173796e632066756e6374696f6e207570646174654974656d2829207b206177616974206d7574617465287b2077686572653a207b2069643a20273127207d207d293b207d0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP597",
+      "title": "Next.js Server Component sequential waterfall requests blocking initial SSR",
+      "category": "scale",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [
+        "nextjs",
+        "react"
+      ],
+      "false_positive_analysis": "Dependent queries where the second fetch strictly depends on data from the first fetch.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/nextjs/sp597-positive-a/page.tsx",
+            "source_hex": "6578706f72742064656661756c74206173796e632066756e6374696f6e20506167652829207b0a2020636f6e73742061203d206177616974206665746368282768747470733a2f2f612e696e76616c696427293b0a2020636f6e73742062203d206177616974206665746368282768747470733a2f2f622e696e76616c696427293b0a202072657475726e206e756c6c3b0a7d0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "38b180c20bef2b7588c19078"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp597-positive-b/page.tsx",
+            "source_hex": "0a6578706f72742064656661756c74206173796e632066756e6374696f6e20506167652829207b0a2020636f6e73742061203d206177616974206665746368282768747470733a2f2f612e696e76616c696427293b0a2020636f6e73742062203d206177616974206665746368282768747470733a2f2f622e696e76616c696427293b0a202072657475726e206e756c6c3b0a7d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "7e0a05a9b18891a9365a47b5"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/nextjs/sp597-negative_a/page.tsx",
+            "source_hex": "6578706f72742064656661756c74206173796e632066756e6374696f6e20506167652829207b0a2020636f6e7374205b612c20625d203d2061776169742050726f6d6973652e616c6c285b6665746368282768747470733a2f2f612e696e76616c696427292c206665746368282768747470733a2f2f622e696e76616c696427295d293b0a202072657475726e206e756c6c3b0a7d0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp597-negative_b/page.tsx",
+            "source_hex": "6578706f72742064656661756c74206173796e632066756e6374696f6e20506167652829207b0a2020636f6e73742061203d206177616974206665746368282768747470733a2f2f612e696e76616c696427293b0a202072657475726e206e756c6c3b0a7d0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/nextjs/sp597-adversarial-a/page.tsx",
+            "source_hex": "636f6e7374206c6f6164203d2066657463683b0a6578706f72742064656661756c74206173796e632066756e6374696f6e20506167652829207b20636f6e73742061203d206177616974206c6f6164282768747470733a2f2f612e696e76616c696427293b20636f6e73742062203d206177616974206c6f6164282768747470733a2f2f622e696e76616c696427293b2072657475726e206e756c6c3b207d0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP598",
+      "title": "Next.js mutating route handler using cookie auth without CSRF origin verification",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-352",
+      "frameworks": [
+        "nextjs",
+        "react"
+      ],
+      "false_positive_analysis": "Stateless token-based API endpoints using Authorization Bearer headers.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/nextjs/sp598-positive-a/route.ts",
+            "source_hex": "6578706f7274206173796e632066756e6374696f6e20504f535428726571756573743a205265717565737429207b0a2020636f6e73742073657373696f6e203d20636f6f6b69657328292e676574282773657373696f6e27293b0a202072657475726e20526573706f6e73652e6a736f6e287b206f6b3a2074727565207d293b0a7d0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "8080edf2e9ac224bc00102e9"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp598-positive-b/route.ts",
+            "source_hex": "0a6578706f7274206173796e632066756e6374696f6e20504f535428726571756573743a205265717565737429207b0a2020636f6e73742073657373696f6e203d20636f6f6b69657328292e676574282773657373696f6e27293b0a202072657475726e20526573706f6e73652e6a736f6e287b206f6b3a2074727565207d293b0a7d0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "ea387b1b49c700723a0dd73d"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/nextjs/sp598-negative_a/route.ts",
+            "source_hex": "6578706f7274206173796e632066756e6374696f6e20504f535428726571756573743a205265717565737429207b0a20207665726966794f726967696e28726571756573742e686561646572732e67657428276f726967696e2729293b0a2020636f6e73742073657373696f6e203d20636f6f6b69657328292e676574282773657373696f6e27293b0a202072657475726e20526573706f6e73652e6a736f6e287b206f6b3a2074727565207d293b0a7d0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp598-negative_b/route.ts",
+            "source_hex": "6578706f7274206173796e632066756e6374696f6e204745542829207b2072657475726e20526573706f6e73652e6a736f6e287b206f6b3a2074727565207d293b207d0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/nextjs/sp598-adversarial-a/route.ts",
+            "source_hex": "696d706f7274207b207265616453657373696f6e207d2066726f6d20272e2f73657373696f6e2d726561646572273b0a6578706f7274206173796e632066756e6374696f6e20504f53542829207b20636f6e73742073657373696f6e203d207265616453657373696f6e28293b2072657475726e20526573706f6e73652e6a736f6e287b206f6b3a2074727565207d293b207d0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP600",
+      "title": "Next.js Server Action accepting unverified userId argument for database mutation",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-639",
+      "frameworks": [
+        "nextjs",
+        "react"
+      ],
+      "false_positive_analysis": "Admin-only management endpoints with verified admin role checks.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/nextjs/sp600-positive-a/actions.ts",
+            "source_hex": "2775736520736572766572273b0a6578706f7274206173796e632066756e6374696f6e2064656c6574654163636f756e74287573657249643a20737472696e6729207b0a2020617761697420707269736d612e757365722e64656c657465287b2077686572653a207b2069643a20757365724964207d207d293b0a7d0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "8177ea54a151bba0a9f51b96"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp600-positive-b/actions.ts",
+            "source_hex": "0a2775736520736572766572273b0a6578706f7274206173796e632066756e6374696f6e2064656c6574654163636f756e74287573657249643a20737472696e6729207b0a2020617761697420707269736d612e757365722e64656c657465287b2077686572653a207b2069643a20757365724964207d207d293b0a7d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "73dde9e5bd5728c483593208"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/nextjs/sp600-negative_a/actions.ts",
+            "source_hex": "2775736520736572766572273b0a6578706f7274206173796e632066756e6374696f6e2064656c6574654163636f756e742829207b0a2020636f6e737420757365724964203d206177616974207265717569726541757468656e7469636174656455736572496428293b0a2020617761697420707269736d612e757365722e64656c657465287b2077686572653a207b2069643a20757365724964207d207d293b0a7d0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp600-negative_b/actions.ts",
+            "source_hex": "6578706f7274206173796e632066756e6374696f6e206c6973744163636f756e74732829207b2072657475726e20707269736d612e757365722e66696e644d616e7928293b207d0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/nextjs/sp600-adversarial-a/actions.ts",
+            "source_hex": "2775736520736572766572273b0a696d706f7274207b2064656c65746555736572207d2066726f6d20272e2f6d75746174696f6e73273b0a6578706f7274206173796e632066756e6374696f6e2064656c6574654163636f756e74287573657249643a20737472696e6729207b2061776169742064656c6574655573657228757365724964293b207d0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP631",
+      "title": "Node.js native module imported in Edge or Serverless runtime",
+      "category": "reliability",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-664",
+      "frameworks": [],
+      "false_positive_analysis": "Build-time code or edge runners with explicit polyfill layers.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/nextjs/sp631-positive-a/route.ts",
+            "source_hex": "6578706f727420636f6e73742072756e74696d65203d202765646765273b0a696d706f72742066732066726f6d20276e6f64653a6673273b0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "3211a57fe096ca857c60fb1a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp631-positive-b/route.ts",
+            "source_hex": "0a6578706f727420636f6e73742072756e74696d65203d202765646765273b0a696d706f72742066732066726f6d20276e6f64653a6673273b0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "516233f662f145ee6592c028"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/nextjs/sp631-negative_a/route.ts",
+            "source_hex": "6578706f727420636f6e73742072756e74696d65203d20276e6f64656a73273b0a696d706f72742066732066726f6d20276e6f64653a6673273b0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp631-negative_b/route.ts",
+            "source_hex": "6578706f727420636f6e73742072756e74696d65203d202765646765273b0a6578706f7274206173796e632066756e6374696f6e204745542829207b2072657475726e206e657720526573706f6e736528276f6b27293b207d0a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/nextjs/sp631-adversarial-a/route.ts",
+            "source_hex": "6578706f727420636f6e73742072756e74696d65203d205b276564272c20276765275d2e6a6f696e282727293b0a696d706f72742066732066726f6d20276e6f64653a6673273b0a",
+            "expected": false,
+            "rationale": "The source preserves the risky operation through an alias, computed value, or indirect boundary that the local structural engine intentionally does not resolve; the case records a known evasion without overstating proof."
+          }
+        ]
+      }
+    }
+  ]
+}

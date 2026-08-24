@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "tool": {
+    "name": "ShipProof",
+    "version": "0.10.0",
+    "command": "evidence"
+  },
+  "verdict": "PASS_WITH_EVIDENCE",
+  "root": "<ROOT>",
+  "adapter": "typescript",
+  "analyzer": "tsc",
+  "analyzer_version": "Version 5.9.2",
+  "process_exit_code": 0,
+  "passed": true,
+  "diagnostics": [],
+  "diagnostics_truncated": false,
+  "severity_counts": {
+    "error": 0,
+    "warning": 0,
+    "other": 0
+  },
+  "limitations": [
+    "This adapter normalizes analyzer output; it does not prove runtime correctness or security.",
+    "Dependencies are not downloaded, so an uncached dependency may make analysis unavailable."
+  ]
+}

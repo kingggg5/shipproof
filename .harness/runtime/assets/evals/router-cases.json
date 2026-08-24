@@ -1,0 +1,116 @@
+{
+	"schema_version": 1,
+	"purpose": "Deterministic route expectations; compare structured outcomes, not prose.",
+	"cases": [
+		{
+			"id": "R01",
+			"request": "Fix a spelling error in one existing label.",
+			"expected_operation": "start",
+			"expected_scale": "quick",
+			"required_roles": ["Project Manager", "Frontend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Acceptance"],
+			"forbidden_claims": ["independent QA unless isolated"]
+		},
+		{
+			"id": "R02",
+			"request": "Fix a proven one-file parser regression and add its focused test.",
+			"expected_operation": "start",
+			"expected_scale": "quick",
+			"required_roles": ["Project Manager", "Backend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Acceptance"],
+			"forbidden_claims": ["full discovery required"]
+		},
+		{
+			"id": "R03",
+			"request": "Add a normal API endpoint and wire it into the existing client.",
+			"expected_operation": "start",
+			"expected_scale": "standard",
+			"required_roles": ["Project Manager", "Planner / Architect", "Frontend Engineer", "Backend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Plan checkpoint", "Acceptance"],
+			"forbidden_claims": ["all seven roles required"]
+		},
+		{
+			"id": "R04",
+			"request": "Redesign onboarding with a new flow, visual direction, and motion.",
+			"expected_operation": "start",
+			"expected_scale": "standard",
+			"required_roles": ["Project Manager", "Planner / Architect", "Product Designer", "Frontend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Plan checkpoint", "Design", "Acceptance"],
+			"forbidden_claims": ["Pinterest asset reuse is cleared by visibility"]
+		},
+		{
+			"id": "R05",
+			"request": "Migrate authentication and tenant data in production.",
+			"expected_operation": "start",
+			"expected_scale": "full",
+			"required_roles": ["Project Manager", "Planner / Architect", "Researcher", "Backend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Plan", "Decision", "Acceptance"],
+			"forbidden_claims": ["production mutation authorized by plan approval alone"]
+		},
+		{
+			"id": "R06",
+			"request": "Prove this service will support one million users and optimize it.",
+			"expected_operation": "start",
+			"expected_scale": "full",
+			"required_roles": ["Project Manager", "Planner / Architect", "Researcher", "Backend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Plan", "Decision", "Acceptance"],
+			"forbidden_claims": ["capacity estimate is load-test proof"]
+		},
+		{
+			"id": "R07",
+			"request": "Harness review: inspect this ordinary multi-file diff.",
+			"expected_operation": "review",
+			"expected_scale": "standard",
+			"required_roles": ["Project Manager", "Tester / Reviewer / QA"],
+			"required_gates": [],
+			"forbidden_claims": ["implementation authorized", "independent QA unless isolated"]
+		},
+		{
+			"id": "R08",
+			"request": "Harness full: make this low-risk text change.",
+			"expected_operation": "start",
+			"expected_scale": "full",
+			"required_roles": ["Project Manager", "Planner / Architect", "Researcher", "Frontend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Plan", "Acceptance"],
+			"forbidden_claims": ["downgraded explicit full"]
+		},
+		{
+			"id": "R09",
+			"request": "Harness resume",
+			"fixture_state": "unfinished standard run with exactly one next action",
+			"expected_operation": "resume",
+			"expected_scale": "standard",
+			"required_roles": ["Project Manager"],
+			"required_gates": [],
+			"forbidden_claims": ["new run created", "project identity skipped"]
+		},
+		{
+			"id": "R10",
+			"request": "Correct copy in an existing approved dialog without changing layout or behavior.",
+			"expected_operation": "start",
+			"expected_scale": "quick",
+			"required_roles": ["Project Manager", "Frontend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Acceptance"],
+			"forbidden_claims": ["Design Gate required"]
+		},
+		{
+			"id": "R11",
+			"request": "Harness remember project: use meaningful domain names.",
+			"expected_operation": "memory",
+			"expected_scale": null,
+			"required_roles": ["Project Manager"],
+			"required_gates": [],
+			"forbidden_claims": ["delivery graph launched"]
+		},
+		{
+			"id": "R12",
+			"request": "Fix a normal backend bug.",
+			"available_capabilities": [],
+			"expected_operation": "start",
+			"expected_scale": "standard",
+			"required_roles": ["Project Manager", "Planner / Architect", "Backend Engineer", "Tester / Reviewer / QA"],
+			"required_gates": ["Plan checkpoint", "Acceptance"],
+			"forbidden_claims": ["tool unavailable means passed", "independent QA"]
+		}
+	]
+}

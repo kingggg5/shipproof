@@ -1,0 +1,891 @@
+{
+  "schema_version": 1,
+  "batch": "P2-A",
+  "reviewed_at": "2026-08-24",
+  "catalog": "research/language-rule-candidates.json",
+  "policy": "A research ID is not an executable detector. Promotion requires current primary-source semantics, complete fixtures, duplicate analysis, representative-repository shadow measurements, and an acceptable runtime delta. Batch size is a ceiling, not a quota.",
+  "ecosystem_caps": {
+    "csharp": 3,
+    "typescript": 4,
+    "php": 3,
+    "react": 2,
+    "go": 3,
+    "cpp": 4,
+    "angular": 2,
+    "javascript": 2,
+    "sql": 2
+  },
+  "candidate_count": 25,
+  "status_counts": {
+    "fixture_ready": 3,
+    "rejected": 22
+  },
+  "promoted_ids": [],
+  "promotion_result": "no_promotions_pending_representative_shadow_evidence",
+  "candidates": [
+    {
+      "candidate_id": "SP4451",
+      "batch_status": "rejected",
+      "rejection_class": "needs_dataflow",
+      "decision": "ASP.NET upload safety depends on how IFormFile metadata and content flow into validation, storage, and execution; a generic upload regex cannot prove unrestricted dangerous-type acceptance.",
+      "recommended_route": "dotnet_analyzer_or_framework_specific_future_candidate",
+      "duplicate_rule_ids": [],
+      "ecosystem": "csharp",
+      "source_id": "CWE-434",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/434.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP4452",
+      "batch_status": "rejected",
+      "rejection_class": "policy_context",
+      "decision": "ASP.NET impersonation is an intentional supported configuration. The locally visible flag proves identity selection, not unnecessary privilege, so a default security finding would be noisy.",
+      "recommended_route": "opt_in_policy_check",
+      "duplicate_rule_ids": [],
+      "ecosystem": "csharp",
+      "source_id": "CWE-520",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/520.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP4511",
+      "batch_status": "rejected",
+      "rejection_class": "candidate_duplicate",
+      "decision": "CWE-556 describes the same ASP.NET identity-impersonation configuration already represented by candidate SP4452; retaining a second detector target would duplicate one root cause.",
+      "recommended_route": "merge_research_evidence_into_sp4452",
+      "duplicate_rule_ids": [],
+      "ecosystem": "csharp",
+      "source_id": "CWE-556",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/556.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP4851",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP063 already covers target=_blank links without rel=noopener across TypeScript, TSX, JavaScript, JSX, Vue, and HTML suffixes.",
+      "recommended_route": "existing_rule",
+      "duplicate_rule_ids": [
+        "SP063"
+      ],
+      "ecosystem": "typescript",
+      "source_id": "CWE-1022",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1022.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.typescriptlang.org/docs/handbook/project-references",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP4855",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP056 and SP159 already cover sensitive cookies missing HttpOnly in TypeScript/TSX server code; client-side JavaScript cannot add the HttpOnly attribute itself.",
+      "recommended_route": "existing_rules",
+      "duplicate_rule_ids": [
+        "SP056",
+        "SP159"
+      ],
+      "ecosystem": "typescript",
+      "source_id": "CWE-1004",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1004.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.typescriptlang.org/docs/handbook/project-references",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP4858",
+      "batch_status": "rejected",
+      "rejection_class": "framework_semantics_missing",
+      "decision": "The generic CWE does not identify a TypeScript WebSocket server API or an explicit always-allow origin callback. Promote only a framework-specific signature with owning documentation.",
+      "recommended_route": "framework_specific_future_candidate",
+      "duplicate_rule_ids": [],
+      "ecosystem": "typescript",
+      "source_id": "CWE-1385",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1385.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.typescriptlang.org/docs/handbook/project-references",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP4900",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP101, SP117, and SP118 already cover direct eval, Function construction, and timer-string evaluation in TypeScript and JavaScript.",
+      "recommended_route": "existing_rules",
+      "duplicate_rule_ids": [
+        "SP101",
+        "SP117",
+        "SP118"
+      ],
+      "ecosystem": "typescript",
+      "source_id": "CWE-95",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/95.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.typescriptlang.org/docs/handbook/project-references",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP5301",
+      "batch_status": "fixture_ready",
+      "decision": "A narrow PHP signature can observe code that treats browser-supplied upload MIME metadata as an allow/deny decision. The prototype intentionally excludes aliases and full upload-flow claims.",
+      "recommended_route": "representative_shadow",
+      "duplicate_rule_ids": [],
+      "prototype": {
+        "engine": "regex_research_only",
+        "suffixes": [
+          ".php"
+        ],
+        "flags": [
+          "IGNORECASE"
+        ],
+        "pattern": "(?:if\\s*\\([^\\n]*\\$_FILES\\[[^\\]]+\\]\\[['\"]type['\"]\\]|in_array\\s*\\(\\s*\\$_FILES\\[[^\\]]+\\]\\[['\"]type['\"]\\])",
+        "proof_level": "direct_local_signature"
+      },
+      "false_positive_analysis": "Some applications compare reported MIME only for logging, analytics, or a preliminary UX branch and perform authoritative Fileinfo or content validation later. The prototype therefore cannot justify blocking severity until representative review confirms the matched branch controls acceptance or storage.",
+      "cases": {
+        "positive": [
+          {
+            "path": "upload.php",
+            "source_parts": [
+              "if ($",
+              "_FILES['upload']['type'] === 'image/png') { move_uploaded_file($tmp, $dst); }"
+            ],
+            "expected": true
+          },
+          {
+            "path": "avatar.php",
+            "source_parts": [
+              "$allowed = in_array($",
+              "_FILES[\"avatar\"][\"type\"], ['image/jpeg'], true);"
+            ],
+            "expected": true
+          }
+        ],
+        "negative": [
+          {
+            "path": "upload.php",
+            "source_parts": [
+              "$finfo = new finfo(FILEINFO_MIME_TYPE);\n$mime = $finfo->file($",
+              "_FILES['upload']['tmp_name']);"
+            ],
+            "expected": false
+          },
+          {
+            "path": "image.php",
+            "source_parts": [
+              "$kind = exif_imagetype($",
+              "_FILES['image']['tmp_name']);"
+            ],
+            "expected": false
+          },
+          {
+            "path": "audit.php",
+            "source_parts": [
+              "error_log($",
+              "_FILES['upload']['type']);"
+            ],
+            "expected": false
+          },
+          {
+            "path": "validator.php",
+            "source_parts": [
+              "$validator->validateUploadedFile($",
+              "_FILES['upload']);"
+            ],
+            "expected": false
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "upload.php",
+            "source_parts": [
+              "$field = 'type';\nif ($",
+              "_FILES['upload'][$field] === 'image/png') { accept(); }"
+            ],
+            "expected": false,
+            "rationale": "A computed metadata key needs local data-flow and is an explicit known evasion of this narrow prototype."
+          },
+          {
+            "path": "upload.php",
+            "source_parts": [
+              "$reported = $",
+              "_FILES['upload']['type'];\nif ($reported === 'image/png') { accept(); }"
+            ],
+            "expected": false,
+            "rationale": "An alias between the upload metadata and the decision needs taint propagation and is intentionally outside a regex promotion."
+          }
+        ]
+      },
+      "ecosystem": "php",
+      "source_id": "CWE-434",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/434.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.php.net/manual/en/security.php",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP5302",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP060 already covers include/require expressions driven directly by PHP request superglobals or variables.",
+      "recommended_route": "existing_rule",
+      "duplicate_rule_ids": [
+        "SP060"
+      ],
+      "ecosystem": "php",
+      "source_id": "CWE-98",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/98.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.php.net/manual/en/security.php",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP5303",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP078 and SP184 already cover request-superglobal extraction and untrusted variable overwrite in PHP.",
+      "recommended_route": "existing_rules",
+      "duplicate_rule_ids": [
+        "SP078",
+        "SP184"
+      ],
+      "ecosystem": "php",
+      "source_id": "CWE-453",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/453.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.php.net/manual/en/security.php",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP5651",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP063 already covers React JSX/TSX blank-target links without noopener, so a React-labelled copy would emit the same root-cause finding on the same source line.",
+      "recommended_route": "existing_rule",
+      "duplicate_rule_ids": [
+        "SP063"
+      ],
+      "ecosystem": "react",
+      "source_id": "CWE-1022",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1022.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://react.dev/learn/lifecycle-of-reactive-effects",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP5656",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "React does not change eval semantics; SP101, SP117, and SP118 already cover the direct JavaScript and TypeScript sinks.",
+      "recommended_route": "existing_rules",
+      "duplicate_rule_ids": [
+        "SP101",
+        "SP117",
+        "SP118"
+      ],
+      "ecosystem": "react",
+      "source_id": "CWE-95",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/95.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://react.dev/learn/lifecycle-of-reactive-effects",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP5951",
+      "batch_status": "fixture_ready",
+      "decision": "Go exposes HttpOnly directly on http.Cookie, and a bounded literal can identify sensitive cookie names that omit an explicit true value. Helper-returned cookies and computed fields remain outside the prototype.",
+      "recommended_route": "representative_shadow",
+      "duplicate_rule_ids": [],
+      "prototype": {
+        "engine": "regex_research_only",
+        "suffixes": [
+          ".go"
+        ],
+        "flags": [
+          "IGNORECASE",
+          "DOTALL"
+        ],
+        "pattern": "(?:http\\.)?SetCookie\\s*\\([^,]+,\\s*&(?:http\\.)?Cookie\\s*\\{(?=[^}]*Name\\s*:\\s*[\"'](?:session|auth|token|jwt|refresh)[\"'])(?:(?!HttpOnly\\s*:\\s*true)[^}])*\\}\\s*\\)",
+        "proof_level": "direct_local_signature"
+      },
+      "false_positive_analysis": "A sensitive-looking cookie may be intentionally script-readable, protected by another mechanism, or built through a helper that supplies HttpOnly later. The prototype only observes one direct literal and must remain non-blocking until representative review measures how often these contexts occur.",
+      "cases": {
+        "positive": [
+          {
+            "path": "session.go",
+            "source_parts": [
+              "http.Set",
+              "Cookie(w, &http.Cookie{Name: \"session\", Value: token})"
+            ],
+            "expected": true
+          },
+          {
+            "path": "auth.go",
+            "source_parts": [
+              "Set",
+              "Cookie(w, &Cookie{Name: \"auth\", Secure: true})"
+            ],
+            "expected": true
+          }
+        ],
+        "negative": [
+          {
+            "path": "session.go",
+            "source_parts": [
+              "http.Set",
+              "Cookie(w, &http.Cookie{Name: \"session\", HttpOnly: true})"
+            ],
+            "expected": false
+          },
+          {
+            "path": "theme.go",
+            "source_parts": [
+              "http.Set",
+              "Cookie(w, &http.Cookie{Name: \"theme\", Value: value})"
+            ],
+            "expected": false
+          },
+          {
+            "path": "session.go",
+            "source_parts": [
+              "cookie := secureSessionCookie(token)\nhttp.Set",
+              "Cookie(w, cookie)"
+            ],
+            "expected": false
+          },
+          {
+            "path": "session.go",
+            "source_parts": [
+              "http.Set",
+              "Cookie(w, newSessionCookie(token))"
+            ],
+            "expected": false
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "session.go",
+            "source_parts": [
+              "name := \"session\"\nhttp.Set",
+              "Cookie(w, &http.Cookie{Name: name, Value: token})"
+            ],
+            "expected": false,
+            "rationale": "A computed cookie name requires constant propagation and is an explicit known evasion of the narrow literal prototype."
+          },
+          {
+            "path": "session.go",
+            "source_parts": [
+              "cookie := &http.Cookie{Name: \"session\", Value: token}\ncookie.HttpOnly = true\nhttp.Set",
+              "Cookie(w, cookie)"
+            ],
+            "expected": false,
+            "rationale": "A post-construction security assignment requires local object-flow analysis; the prototype intentionally stays silent."
+          }
+        ]
+      },
+      "ecosystem": "go",
+      "source_id": "CWE-1004",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1004.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://go.dev/doc/security/best-practices",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP5953",
+      "batch_status": "rejected",
+      "rejection_class": "framework_semantics_missing",
+      "decision": "The generic CRLF candidate does not name a Go API and the standard HTTP stack validates header syntax. Existing SP175 covers direct supported header-injection forms; a Go extension needs an actual bypass signature.",
+      "recommended_route": "future_api_specific_candidate",
+      "duplicate_rule_ids": [
+        "SP175"
+      ],
+      "ecosystem": "go",
+      "source_id": "CWE-113",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/113.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://go.dev/doc/security/best-practices",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP5955",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP070 and SP189 already cover Go WebSocket upgrade callbacks that accept every origin; another CWE-labelled variant would duplicate their source signature and remediation.",
+      "recommended_route": "existing_rules",
+      "duplicate_rule_ids": [
+        "SP070",
+        "SP189"
+      ],
+      "ecosystem": "go",
+      "source_id": "CWE-1385",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1385.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://go.dev/doc/security/best-practices",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP6302",
+      "batch_status": "rejected",
+      "rejection_class": "needs_dataflow",
+      "decision": "Determining whether a C++ array index is externally controlled and correctly range-checked requires type, range, and control-flow information unavailable to a line regex.",
+      "recommended_route": "compiler_analyzer_or_sanitizer",
+      "duplicate_rule_ids": [],
+      "ecosystem": "cpp",
+      "source_id": "CWE-129",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/129.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP6304",
+      "batch_status": "rejected",
+      "rejection_class": "needs_lifetime_analysis",
+      "decision": "A missing C++ release cannot be established from allocation syntax alone because RAII, ownership transfer, smart pointers, and exceptional paths determine the lifetime.",
+      "recommended_route": "compiler_analyzer_or_sanitizer",
+      "duplicate_rule_ids": [],
+      "ecosystem": "cpp",
+      "source_id": "CWE-401",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/401.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP6306",
+      "batch_status": "rejected",
+      "rejection_class": "needs_dataflow",
+      "decision": "Excessive C++ allocation requires both an untrusted size origin and an application-specific bound; matching allocation calls alone would flag normal bounded allocations.",
+      "recommended_route": "compiler_analyzer_or_resource_test",
+      "duplicate_rule_ids": [],
+      "ecosystem": "cpp",
+      "source_id": "CWE-789",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/789.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP6309",
+      "batch_status": "fixture_ready",
+      "decision": "CWE and CERT both define direct external format arguments as unsafe. The prototype is intentionally limited to command-line argv passed directly in the format position.",
+      "recommended_route": "representative_shadow",
+      "duplicate_rule_ids": [],
+      "prototype": {
+        "engine": "regex_research_only",
+        "suffixes": [
+          ".c",
+          ".cpp",
+          ".h",
+          ".hpp"
+        ],
+        "flags": [],
+        "pattern": "(?:(?:printf|syslog)\\s*\\(\\s*argv\\s*\\[[^\\]]+\\]|fprintf\\s*\\(\\s*[^,]+,\\s*argv\\s*\\[[^\\]]+\\]|sprintf\\s*\\(\\s*[^,]+,\\s*argv\\s*\\[[^\\]]+\\]|snprintf\\s*\\(\\s*[^,]+,\\s*[^,]+,\\s*argv\\s*\\[[^\\]]+\\])",
+        "proof_level": "direct_local_signature"
+      },
+      "false_positive_analysis": "Direct argv in a format position is a strong local signature, but wrappers may constrain input before the call and nonstandard APIs may use different argument order. Aliased parameters require taint analysis, so the prototype records them as known false negatives rather than broadening to every variable format.",
+      "cases": {
+        "positive": [
+          {
+            "path": "main.c",
+            "source_parts": [
+              "print",
+              "f(argv[1]);"
+            ],
+            "expected": true
+          },
+          {
+            "path": "log.cpp",
+            "source_parts": [
+              "fprint",
+              "f(stderr, argv[2]);"
+            ],
+            "expected": true
+          }
+        ],
+        "negative": [
+          {
+            "path": "main.c",
+            "source_parts": [
+              "print",
+              "f(\"%s\", argv[1]);"
+            ],
+            "expected": false
+          },
+          {
+            "path": "main.c",
+            "source_parts": [
+              "fputs(argv[1], stdout);"
+            ],
+            "expected": false
+          },
+          {
+            "path": "main.cpp",
+            "source_parts": [
+              "std::cout << argv[1];"
+            ],
+            "expected": false
+          },
+          {
+            "path": "main.c",
+            "source_parts": [
+              "snprint",
+              "f(buffer, sizeof buffer, \"%s\", argv[1]);"
+            ],
+            "expected": false
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "main.c",
+            "source_parts": [
+              "const char *format = argv[1];\nprint",
+              "f(format);"
+            ],
+            "expected": false,
+            "rationale": "The command-line value is aliased before the sink, so this case requires taint propagation beyond the direct prototype."
+          },
+          {
+            "path": "log.cpp",
+            "source_parts": [
+              "void log(const char *user_input) { print",
+              "f(user_input); }"
+            ],
+            "expected": false,
+            "rationale": "A function parameter is not necessarily externally controlled; callers and interprocedural flow must establish taint."
+          }
+        ]
+      },
+      "ecosystem": "cpp",
+      "source_id": "CWE-134",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/134.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP6751",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP063 already covers Angular TypeScript and template-adjacent blank-target links without noopener, including the relevant .ts suffix and the same remediation boundary.",
+      "recommended_route": "existing_rule",
+      "duplicate_rule_ids": [
+        "SP063"
+      ],
+      "ecosystem": "angular",
+      "source_id": "CWE-1022",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1022.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://angular.dev/best-practices/security",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP6756",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP101, SP117, and SP118 cover JavaScript evaluation sinks, while SP125 and SP455 cover Angular sanitizer bypass APIs including dynamic HTML input.",
+      "recommended_route": "existing_rules",
+      "duplicate_rule_ids": [
+        "SP101",
+        "SP117",
+        "SP118",
+        "SP125",
+        "SP455"
+      ],
+      "ecosystem": "angular",
+      "source_id": "CWE-95",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/95.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://angular.dev/best-practices/security",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP7001",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP063 already covers JavaScript and JSX blank-target links without noopener, so this candidate adds no distinct syntax, proof level, or remediation.",
+      "recommended_route": "existing_rule",
+      "duplicate_rule_ids": [
+        "SP063"
+      ],
+      "ecosystem": "javascript",
+      "source_id": "CWE-1022",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/1022.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP7050",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "SP101, SP117, and SP118 already cover the locally visible JavaScript dynamic-evaluation sinks represented by this generic CWE candidate.",
+      "recommended_route": "existing_rules",
+      "duplicate_rule_ids": [
+        "SP101",
+        "SP117",
+        "SP118"
+      ],
+      "ecosystem": "javascript",
+      "source_id": "CWE-95",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/95.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://nodejs.org/en/learn/getting-started/security-best-practices",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP7451",
+      "batch_status": "rejected",
+      "rejection_class": "executable_duplicate",
+      "decision": "The scanner already has multiple ecosystem-specific CWE-89 detectors, including SP103 and SP145 for direct SQL construction and execution. A generic .sql-file rule cannot observe upstream user control.",
+      "recommended_route": "existing_rules",
+      "duplicate_rule_ids": [
+        "SP103",
+        "SP145"
+      ],
+      "ecosystem": "sql",
+      "source_id": "CWE-89",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/89.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.postgresql.org/docs/current/sql-prepare.html",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    },
+    {
+      "candidate_id": "SP7452",
+      "batch_status": "rejected",
+      "rejection_class": "misrouted_ecosystem",
+      "decision": "Hibernate injection is expressed in Java/Kotlin HQL or query-construction code, not a standalone SQL file; this SQL ecosystem slot cannot produce a correctly routed detector.",
+      "recommended_route": "future_java_hibernate_candidate",
+      "duplicate_rule_ids": [],
+      "ecosystem": "sql",
+      "source_id": "CWE-564",
+      "catalog_status": "research_only",
+      "applicability_tier": "direct",
+      "sources": [
+        {
+          "url": "https://cwe.mitre.org/data/definitions/564.html",
+          "claim": "Primary CWE taxonomy defines the weakness semantics and applicability boundary used for this disposition."
+        },
+        {
+          "url": "https://www.postgresql.org/docs/current/sql-prepare.html",
+          "claim": "Owning ecosystem documentation was reviewed to determine whether a stable repository-visible signature exists."
+        }
+      ]
+    }
+  ],
+  "residual_evidence": [
+    {
+      "id": "P2A-EXT-1",
+      "requirement": "Representative repositories pinned by revision and reviewed under compatible licenses.",
+      "state": "external_evidence_required"
+    },
+    {
+      "id": "P2A-EXT-2",
+      "requirement": "Per-candidate observed TP/FP/FN/TN and duplicate counts from advisory shadow runs.",
+      "state": "blocked_by_P2A-EXT-1"
+    },
+    {
+      "id": "P2A-EXT-3",
+      "requirement": "Scanner wall-time and peak-RSS delta after an eligible candidate is implemented behind shadow mode.",
+      "state": "blocked_by_P2A-EXT-2"
+    }
+  ]
+}

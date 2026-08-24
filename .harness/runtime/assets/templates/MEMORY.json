@@ -1,0 +1,15 @@
+{
+	"schema_version": 1,
+	"project_id": "",
+	"revision": 0,
+	"records": [],
+	"tombstones": [],
+	"adapter": {
+		"kind": "none",
+		"state": "UNAVAILABLE",
+		"scope": "",
+		"source_revision": 0,
+		"export_digest": ""
+	},
+	"last_transaction": null
+}

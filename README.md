@@ -8,7 +8,7 @@ Security · Correctness · Scale · Performance · Release evidence
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Release](https://img.shields.io/badge/release-v0.9.0-2563eb)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.10.0-2563eb)](CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -67,7 +67,7 @@ ShipProof applies the same review contract regardless of who wrote the code. Its
 
 | Property | Current contract |
 | :--- | :--- |
-| Current release | `v0.9.0` reviewed release |
+| Current release | `v0.10.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
 | Executable rules | 620 (`SP001`–`SP665`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
@@ -163,12 +163,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.9.0
+      - uses: kingggg5/shipproof@v0.10.0
         with:
           fail-on: high
 ```
 
-The action writes a structured Markdown status card to the GitHub Step Summary. The example uses the `v0.9.0` release tag; pin the action to a reviewed full commit SHA when an immutable supply-chain reference is required.
+The action writes a structured Markdown status card to the GitHub Step Summary. The example uses the `v0.10.0` release tag; pin the action to a reviewed full commit SHA when an immutable supply-chain reference is required.
 
 For pull requests that touch a large repository, scan only what changed relative to the base branch:
 
@@ -176,7 +176,7 @@ For pull requests that touch a large repository, scan only what changed relative
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: kingggg5/shipproof@v0.9.0
+      - uses: kingggg5/shipproof@v0.10.0
         with:
           fail-on: high
           changed-since: origin/main
@@ -187,7 +187,7 @@ The scanner resolves the git diff (added, copied, modified, and renamed files, p
 The default report format is `sarif`, which the action writes into the workspace. To surface findings as inline Code Scanning alerts, upload that artifact with GitHub's official action after the gate step:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.9.0
+      - uses: kingggg5/shipproof@v0.10.0
         with:
           fail-on: high
           format: sarif
@@ -291,14 +291,14 @@ Plugin-installed Claude skills use the namespaced commands `/shipproof:engineer-
 - **Resource budgets:** gate measured p95 latency/CPU/RAM/throughput regressions with `shipproof gate budget`; runnable samples in [examples/performance](examples/performance).
 - **Capacity planning:** turn reviewed workload assumptions into a transparent model or a deterministic k6 scaffold with `shipproof labs capacity`.
 - **MCP mode:** `shipproof mcp` exposes five read-only tools to any MCP client with canonical paths, bounded runtime, and redacted evidence.
-- **Language-native evidence:** `shipproof gate evidence . --adapter typescript|go|rust` runs approved local analyzers without downloading dependencies.
+- **Language-native evidence:** `shipproof gate evidence . --adapter typescript|go|rust` runs approved local analyzers without downloading dependencies, records the probed analyzer version, and bounds/redacts diagnostics. Repository-controlled TypeScript and Rust paths require explicit consent.
 - **Layering:** pair ShipProof with mature SAST, SCA, secret-history, and supply-chain tools already present in your environment; it routes to them and never silently installs anything.
 
 All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
 ## Research & evaluation status
 
-The scanner ships 620 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a concrete local signature (wave 1 covers JavaScript/TypeScript, Python, and Go), 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. Each target keeps its source-catalog ids in [research/promotion-plan.json](research/promotion-plan.json).
+The scanner ships 620 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready`, 22 were rejected as duplicates or wrong evidence routes, and none was silently promoted without representative shadow metrics. See [the batch record](research/promotion-batch-a.json) and [the broader plan](research/promotion-plan.json).
 
 Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
 
@@ -306,13 +306,13 @@ Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to
 | :--- | :--- | :--- | :--- |
 | vulnerable-node-api | 1.0 | 1.0 | 1.0 |
 | vulnerable-python-api | 1.0 | 1.0 | 1.0 |
-| node-taint-crossfile | 1.0 | 0.8 | 0.889 |
-| adversarial-node | 1.0 | 0.667 | 0.8 |
+| node-taint-crossfile | 1.0 | 1.0 | 1.0 |
+| adversarial-node | 1.0 | 1.0 | 1.0 |
 | secure-node-api / node-secure-crossfile |: |: | 0 findings |
 
-The adversarial corpus holds look-alikes inside comments and string literals that must stay silent, next to disguised chains (two-hop aliasing, destructured parameters, cookie-to-DOM, three-file taint) that must fire.
+The version-2 label contract distinguishes expected finding locations from context-only source/helper files in a vulnerable chain. Those context files remain listed and hashed but do not count as false negatives for a sink-reporting detector. The adversarial corpus holds look-alikes inside comments and string literals that must stay silent, next to disguised chains (two-hop aliasing, destructured parameters, cookie-to-DOM, three-file taint) that must fire.
 
-A separate run clones express, flask, requests as clean baselines plus juice-shop, DVWA, and NodeGoat as intentionally vulnerable apps. Application-scope findings came out at 2 / 5 / 3 / 153 / 74 / 20 on the last snapshot, and the cross-file engine confirmed NodeGoat's documented `eval(req.body)` chain.
+The opt-in real-world evaluator pins express, flask, and requests as clean baselines plus juice-shop, DVWA, and NodeGoat as intentionally vulnerable apps. The reviewed 2026-08-24 manifest run scanned 1,805 files and observed 310 application-scope findings (2 / 9 / 3 / 184 / 84 / 28 in that order). Every alert remains explicitly `unreviewed`; these inventory counts are not a real-world precision claim.
 
 Operating profile: no repository or contributor limits, fully offline against local files only, and interprocedural taint for JavaScript/TypeScript and Python in the open core. Bounded added-line git-history scanning is available with `--history`; live credential validation, SBOM/licensing, and AppSec management remain outside the core and should be paired with dedicated tools ([layering guidance](docs/features.md)). Measurement methodology and current results: [docs/benchmarks.md](docs/benchmarks.md).
 
@@ -336,6 +336,8 @@ A research candidate becomes an executable `SPxxx` rule only after deduplication
 | [2021–2026 annual catalog](docs/rule-expansion-2021-2026.md) | 1,800 time-bounded CVE/CWE/community signals | None |
 | [Language catalog](docs/rule-expansion-languages-5000.md) | 5,000 deduplicated ecosystem/CWE research slots | None |
 | [Executable rule table](docs/rules.md#detection-rules-reference) | 620 reviewed detectors | Emits versioned findings |
+
+The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 620 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
 
 See the [production playbook](docs/production-playbook.md), [development plan](docs/next-development-plan.md), and [delivery roadmap](docs/roadmap.md) for operational boundaries and acceptance gates. Cite a release using [CITATION.cff](CITATION.cff). ShipProof deliberately avoids a single readiness score because one veto-level failure must not be averaged away by many clean checks.
 

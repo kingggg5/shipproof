@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "quality_contract_version": 2,
+  "scope": "Legacy structural and artifact contracts split by engine and ecosystem",
+  "manifests": [
+    {
+      "path": "structural-express.v2.json",
+      "engine": "structural",
+      "ecosystem": "express",
+      "rule_count": 3,
+      "sha256": "960309da1c91eb9ed3538f4eb2ae0bbf05c080f3591a345bc83c68f3ed707f0f"
+    },
+    {
+      "path": "structural-fastapi.v2.json",
+      "engine": "structural",
+      "ecosystem": "fastapi",
+      "rule_count": 2,
+      "sha256": "d759645e8cd702135ca1729ad495024b0aca7b0891e3ecd426f125a02310257e"
+    },
+    {
+      "path": "structural-go.v2.json",
+      "engine": "structural",
+      "ecosystem": "go",
+      "rule_count": 1,
+      "sha256": "55608c386cc30b0411be0b0e71efa52aa15a09694390f0b2f3b487a7fe0c8890"
+    },
+    {
+      "path": "structural-graphql.v2.json",
+      "engine": "structural",
+      "ecosystem": "graphql",
+      "rule_count": 1,
+      "sha256": "7d8e41f61867ee3ab3b8f9369d19aee873989cad8c2d815a30764d32cc61a5e1"
+    },
+    {
+      "path": "structural-javascript.v2.json",
+      "engine": "structural",
+      "ecosystem": "javascript",
+      "rule_count": 1,
+      "sha256": "4a3239580eac88998e86b1284bae04ef669d677938f4e000cff716bb3e6a1099"
+    },
+    {
+      "path": "structural-kubernetes.v2.json",
+      "engine": "structural",
+      "ecosystem": "kubernetes",
+      "rule_count": 1,
+      "sha256": "1e9649eb479b1781c27fd0f426d5fd9f12834b2ea2ab1683dd0b57112e999411"
+    },
+    {
+      "path": "structural-nextjs.v2.json",
+      "engine": "structural",
+      "ecosystem": "nextjs",
+      "rule_count": 7,
+      "sha256": "b23fc25cd8669e0f10a25bafa4c99d2544eb18ee77769ac3af7cec86ff211ebb"
+    },
+    {
+      "path": "structural-python.v2.json",
+      "engine": "structural",
+      "ecosystem": "python",
+      "rule_count": 8,
+      "sha256": "523b482d4ef85ce1f96e4dfdbf05daf302ae84d84682cb6e019b8a7fa0d866ad"
+    },
+    {
+      "path": "structural-react.v2.json",
+      "engine": "structural",
+      "ecosystem": "react",
+      "rule_count": 1,
+      "sha256": "9e2dfc6dbceb530c65498b20877cab492e1bb86c33133d155caf348589a3868b"
+    },
+    {
+      "path": "artifact-sqlite.v2.json",
+      "engine": "artifact",
+      "ecosystem": "sqlite",
+      "rule_count": 1,
+      "sha256": "2f6a169fb2e5a0bd7a0401d47efb2cee1465214ae1bccbd8738ba208842b3f2a"
+    }
+  ]
+}

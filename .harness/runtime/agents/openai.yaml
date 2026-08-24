@@ -1,0 +1,7 @@
+interface:
+  display_name: "Harness: Best in Code"
+  short_description: "Adaptive delivery with portable memory and QA"
+  default_prompt: "Use $best-in-code to select the smallest safe workflow, preserve canonical project memory, apply capability fallbacks, verify the result, and pause only at material human gates."
+
+policy:
+  allow_implicit_invocation: true

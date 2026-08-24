@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "tool": {
+    "name": "ShipProof",
+    "version": "0.10.0",
+    "command": "budget"
+  },
+  "verdict": "BLOCK",
+  "passed": false,
+  "results": [
+    {
+      "metric": "p95_latency_ms",
+      "direction": "lower",
+      "baseline": 100,
+      "current": 240,
+      "regression_percent": 140,
+      "status": "fail",
+      "reasons": [
+        "regressed 140.00% (allowed 10.00%)",
+        "240 exceeds maximum 150"
+      ]
+    },
+    {
+      "metric": "rss_mb",
+      "direction": "lower",
+      "baseline": 128,
+      "current": 320,
+      "regression_percent": 150,
+      "status": "fail",
+      "reasons": [
+        "regressed 150.00% (allowed 10.00%)",
+        "320 exceeds maximum 192"
+      ]
+    }
+  ],
+  "limitations": [
+    "Results are only as representative as the supplied measurements.",
+    "This gate does not measure performance or distinguish environment noise."
+  ],
+  "artifacts": [
+    {
+      "role": "baseline",
+      "source": "<PACKAGE_ROOT>/fixtures/performance-regression/baseline.json",
+      "sha256": "a1a2ce259703735963c507d6b672ce5a222a1f28cfdf2a882c5181bbe828fc59"
+    },
+    {
+      "role": "current",
+      "source": "<PACKAGE_ROOT>/fixtures/performance-regression/current.json",
+      "sha256": "da5dd0d5198993dc4630c1f356055d4a6808af975569cedc583e2c1efd20792f"
+    },
+    {
+      "role": "budget",
+      "source": "<PACKAGE_ROOT>/fixtures/performance-regression/budget.json",
+      "sha256": "2d7b271c84877445b9c6cf3eea7679b329301ec2fc7c9b78b86015b0dabc5f65"
+    }
+  ]
+}
