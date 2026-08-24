@@ -124,7 +124,7 @@ ShipProof formats findings as actionable review cards with source context, confi
 ShipProof turns development into a verified feedback loop: AI writes code, ShipProof finds risks, AI fixes with explicit constraints, and ShipProof re-verifies.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-workflow.png" width="100%" alt="ShipProof workflow: code, scan, evidence, fix and test, then verify; blocked changes return to the fix step" />
+  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-workflow.png" width="100%" alt="ShipProof workflow: scope a human or AI code change, scan security rules, resource budgets and policy gates, produce evidence, fix with a regression test, then re-run the same gates for exit 0 pass, exit 1 block or exit 2 invalid evidence" />
 </p>
 
 If verification blocks the change, the evidence goes back into the fix-and-test step. A pass means the configured gate has evidence for the reviewed scope—not that the software is universally vulnerability-free.

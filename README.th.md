@@ -111,7 +111,7 @@ ShipProof จัด format findings เป็น review card ที่ actionabl
 ShipProof เปลี่ยนการพัฒนาให้เป็น verified feedback loop: AI เขียนโค้ด, ShipProof หาความเสี่ยง, AI แก้ตาม constraint ที่ชัดเจน แล้ว ShipProof ตรวจซ้ำ
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-workflow.png" width="100%" alt="ขั้นตอน ShipProof: เขียนโค้ด สแกน สร้างหลักฐาน แก้พร้อมเทส แล้วตรวจยืนยัน โดยงานที่ถูกบล็อกจะย้อนกลับไปแก้" />
+  <img src="https://raw.githubusercontent.com/kingggg5/shipproof/main/docs/assets/shipproof-workflow.png" width="100%" alt="ขั้นตอน ShipProof: กำหนดขอบเขตโค้ดจากคนหรือ AI สแกนกฎความปลอดภัย resource budget และ policy gate สร้างหลักฐาน แก้พร้อม regression test แล้วตรวจซ้ำเพื่อคืน exit 0 ผ่าน exit 1 บล็อก หรือ exit 2 หลักฐานไม่ถูกต้อง" />
 </p>
 
 ถ้าผลตรวจเป็น `BLOCK` หลักฐานจะย้อนกลับไปที่ขั้นแก้โค้ดและเพิ่มเทส ส่วน `PASS` หมายถึง gate ที่ตั้งไว้มีหลักฐานเพียงพอสำหรับขอบเขตที่ตรวจ ไม่ได้หมายความว่าซอฟต์แวร์ปราศจากช่องโหว่ทุกกรณี
