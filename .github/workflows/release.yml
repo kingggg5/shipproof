@@ -64,10 +64,30 @@ jobs:
             "${release_flags[@]}"
       - name: Maintain moving major tag
         env:
+          GH_TOKEN: ${{ github.token }}
           SHIPPROOF_VERSION: ${{ steps.release.outputs.version }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           major_version="v${SHIPPROOF_VERSION%%.*}"
-          git tag -fa "${major_version}" -m "Moving ${major_version} tag: tracks the latest reviewed ${major_version}.x release. Pin the exact version tag or commit SHA for immutable references." "${GITHUB_REF_NAME}"
-          git push -f origin "${major_version}"
+          target_sha="$(git rev-parse "${GITHUB_REF_NAME}^{commit}")"
+          tag_message="Moving ${major_version} tag: tracks the latest reviewed ${major_version}.x release. Pin the exact version tag or commit SHA for immutable references."
+          tag_object_sha="$(
+            gh api --method POST \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "repos/${GITHUB_REPOSITORY}/git/tags" \
+              -f tag="${major_version}" \
+              -f message="${tag_message}" \
+              -f object="${target_sha}" \
+              -f type=commit \
+              --jq '.sha'
+          )"
+          if ! gh api --method PATCH \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/${GITHUB_REPOSITORY}/git/refs/tags/${major_version}" \
+            -f sha="${tag_object_sha}" \
+            -F force=true; then
+            gh api --method POST \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${major_version}" \
+              -f sha="${tag_object_sha}"
+          fi

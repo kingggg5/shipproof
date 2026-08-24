@@ -408,4 +408,10 @@ test("security and release workflows preserve failure evidence and fail closed",
   assert.doesNotMatch(release, /npm publish/);
   assert.doesNotMatch(release, /\|\| echo/);
   assert.match(release, /gh release create/);
+  assert.doesNotMatch(release, /git push -f origin/);
+  assert.match(release, /repos\/\$\{GITHUB_REPOSITORY\}\/git\/tags/);
+  assert.match(release, /repos\/\$\{GITHUB_REPOSITORY\}\/git\/refs\/tags\/\$\{major_version\}/);
+  assert.match(release, /repos\/\$\{GITHUB_REPOSITORY\}\/git\/refs"/);
+  assert.match(release, /ref="refs\/tags\/\$\{major_version\}"/);
+  assert.match(release, /GH_TOKEN: \$\{\{ github\.token \}\}/);
 });
