@@ -1707,8 +1707,11 @@ def _summary_to_ir_function(summary, effects=None, guards=None):
     )
 
 
-def build_ir_program(graph):
-    """Build an IRProgram from an ImpactGraph that has already been built."""
+def build_ir_program(graph, detected_frameworks=None):
+    """Build an IRProgram from an ImpactGraph, optionally loading framework models."""
+    import json as _json
+    from pathlib import Path as _Path
+
     from ir import IRCallee, IRFunction, IRProgram, IRSink
 
     functions = []
@@ -1747,4 +1750,19 @@ def build_ir_program(graph):
                 guards=[],
             )
             functions.append(fn)
-    return IRProgram(functions=functions)
+
+    program = IRProgram(functions=functions)
+
+    if detected_frameworks:
+        models_dir = _Path(__file__).resolve().parent.parent.parent.parent / "frameworks"
+        for fw_name in sorted(detected_frameworks):
+            model_path = models_dir / f"{fw_name}.json"
+            if model_path.is_file():
+                try:
+                    model = _json.loads(model_path.read_text(encoding="utf-8"))
+                    program.framework_models[fw_name] = model
+                    program.frameworks.add(fw_name)
+                except (OSError, _json.JSONDecodeError):
+                    pass
+
+    return program

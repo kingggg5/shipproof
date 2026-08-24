@@ -145,6 +145,8 @@ class IRProgram:
     """All functions across all files, plus cross-reference indexes."""
 
     functions: list[IRFunction] = field(default_factory=list)
+    frameworks: set[str] = field(default_factory=set)  # detected framework names
+    framework_models: dict[str, dict] = field(default_factory=dict)
 
     def __post_init__(self):
         self._by_name: dict[str, list[IRFunction]] = {}
@@ -162,6 +164,15 @@ class IRProgram:
     @property
     def entrypoints(self) -> list[IRFunction]:
         return [fn for fn in self.functions if fn.is_entrypoint]
+
+    @property
+    def db_sink_functions(self) -> list[IRFunction]:
+        """Functions containing DB effects (useful for N+1/tenant checks)."""
+        return [
+            fn
+            for fn in self.functions
+            if any(e.kind in ("db_read", "db_write") for e in fn.effects)
+        ]
 
 
 # ---------------------------------------------------------------------------
