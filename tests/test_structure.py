@@ -106,6 +106,13 @@ class StructureTests(unittest.TestCase):
         for tool_name in registered_tools:
             self.assertIn(f"`{tool_name}`", commands)
 
+    def test_quality_whitespace_gate_has_complete_history_and_root_fallback(self):
+        ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        quality_job = ci.split("\n  python:\n", maxsplit=1)[0]
+        self.assertIn("fetch-depth: 0", quality_job)
+        self.assertIn("git diff-tree --check --root --no-commit-id -r HEAD", quality_job)
+        self.assertNotIn("git diff --check HEAD^ HEAD", quality_job)
+
     def test_skill_frontmatter_has_no_placeholders(self):
         for name in SKILL_NAMES:
             content = (ROOT / "skills" / name / "SKILL.md").read_text(encoding="utf-8")

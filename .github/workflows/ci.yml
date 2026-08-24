@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
@@ -40,7 +42,7 @@ jobs:
           if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             git diff --check "$BASE_SHA" HEAD
           else
-            git diff --check HEAD^ HEAD
+            git diff-tree --check --root --no-commit-id -r HEAD
           fi
 
   python:

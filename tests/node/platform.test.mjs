@@ -240,7 +240,12 @@ test("evidence diagnostics enforce line-count and per-line bounds", () => {
     writeFileSync(join(root, "tsconfig.json"), "{}", "utf8");
     writeFileSync(
       compiler,
-      'if (process.argv.includes("--version")) console.log("Version 5.9.2"); else { console.error(("x".repeat(5000) + "\\n").repeat(205)); process.exit(1); }',
+      `if (process.argv.includes("--version")) console.log("Version 5.9.2"); else {
+        const { writeSync } = require("node:fs");
+        const line = "x".repeat(5000) + "\\n";
+        for (let index = 0; index < 205; index += 1) writeSync(2, line);
+        process.exitCode = 1;
+      }`,
       "utf8",
     );
     const report = runEvidenceAdapter(root, "typescript", { allowProjectCode: true });
