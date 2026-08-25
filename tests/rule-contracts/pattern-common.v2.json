@@ -3666,6 +3666,338 @@
       }
     },
     {
+      "rule_id": "SP271",
+      "title": "MCP tool definition with shell execution",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-78",
+      "frameworks": [],
+      "false_positive_analysis": "Legitimate MCP tools may need shell execution for specific tasks.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/common/sp271-positive-a.py",
+            "source_hex": "63702e6578656353796e632028",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "788794b080a706842f476ce8"
+          },
+          {
+            "path": "contract-fixtures/common/sp271-positive-b.py",
+            "source_hex": "7368656c6c5f657865632009283b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "7b631ef3b485afc5116865a3"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/common/sp271-negative-a.py",
+            "source_hex": "21702e6578656353796e632028"
+          },
+          {
+            "path": "contract-fixtures/common/sp271-negative-b.py",
+            "source_hex": "20702e6578656353796e632028"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/common/sp271-adversarial-a.py",
+            "source_hex": "58702e6578656353796e632028",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP272",
+      "title": "MCP tool with unrestricted file system access",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-22",
+      "frameworks": [],
+      "false_positive_analysis": "Legitimate MCP tools may need file access for specific tasks.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/common/sp272-positive-a.py",
+            "source_hex": "7265616446696c652070726f636573732e656e76",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "23b3a25c329686a27daa058f"
+          },
+          {
+            "path": "contract-fixtures/common/sp272-positive-b.py",
+            "source_hex": "7265616446696c6553796e6320202e2e2f3b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e96c439392922365d7885a28"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/common/sp272-negative-a.py",
+            "source_hex": "2165616446696c652070726f636573732e656e76"
+          },
+          {
+            "path": "contract-fixtures/common/sp272-negative-b.py",
+            "source_hex": "2065616446696c652070726f636573732e656e76"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/common/sp272-adversarial-a.py",
+            "source_hex": "5865616446696c652070726f636573732e656e76",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP273",
+      "title": "MCP tool with network access without allowlist",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "cwe": "CWE-918",
+      "frameworks": [],
+      "false_positive_analysis": "Legitimate MCP tools may need network access for specific tasks.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/common/sp273-positive-a.py",
+            "source_hex": "7265676973746572546f6f6c2072657175657374732e64656c6574650928092268747470733a2f2f5a27",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "ad1efc1d7456a91602a61ca8"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/common/sp273-negative-a.py",
+            "source_hex": "2165676973746572546f6f6c2072657175657374732e64656c6574650928092268747470733a2f2f5a27"
+          },
+          {
+            "path": "contract-fixtures/common/sp273-negative-b.py",
+            "source_hex": "2065676973746572546f6f6c2072657175657374732e64656c6574650928092268747470733a2f2f5a27"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/common/sp273-adversarial-a.py",
+            "source_hex": "5865676973746572546f6f6c2072657175657374732e64656c6574650928092268747470733a2f2f5a27",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP274",
+      "title": "MCP tool accessing environment credentials",
+      "category": "security",
+      "expected_severity": "critical",
+      "expected_confidence": "high",
+      "cwe": "CWE-200",
+      "frameworks": [],
+      "false_positive_analysis": "Legitimate MCP tools may need credentials for their intended function.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/common/sp274-positive-a.py",
+            "source_hex": "70726f636573732e656e76092809224157535f53454352455422",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "a25f5d8b05a05e01f91e581d"
+          },
+          {
+            "path": "contract-fixtures/common/sp274-positive-b.py",
+            "source_hex": "656e7669726f6e2e676574200928200922414e5448524f5049435f4150495f4b4559223b0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "25df16b6209b61ba950aa427"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/common/sp274-negative-a.py",
+            "source_hex": "21726f636573732e656e76092809224157535f53454352455422"
+          },
+          {
+            "path": "contract-fixtures/common/sp274-negative-b.py",
+            "source_hex": "20726f636573732e656e76092809224157535f53454352455422"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/common/sp274-adversarial-a.py",
+            "source_hex": "58726f636573732e656e76092809224157535f53454352455422",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP275",
+      "title": "MCP tool without input validation",
+      "category": "security",
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "cwe": "CWE-20",
+      "frameworks": [],
+      "false_positive_analysis": "Legitimate MCP tools may have implicit input validation.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/common/sp275-positive-a.ts",
+            "source_hex": "7a2e6f626a656374287b207d29092e736166655061727365092809706172616d730929",
+            "expected_line": 1,
+            "expected_confidence": "low",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "431765025d8082be9858cfee"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/common/sp275-negative-a.ts",
+            "source_hex": "212e6f626a656374287b207d29092e736166655061727365092809706172616d730929"
+          },
+          {
+            "path": "contract-fixtures/common/sp275-negative-b.ts",
+            "source_hex": "202e6f626a656374287b207d29092e736166655061727365092809706172616d730929"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/common/sp275-adversarial-a.ts",
+            "source_hex": "582e6f626a656374287b207d29092e736166655061727365092809706172616d730929",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP281",
+      "title": "Ollama API endpoint exposed without authentication",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Local development environments may intentionally expose Ollama API.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/common/sp281-positive-a.yaml",
+            "source_hex": "4f4c4c414d415f484f5354093a09222a22",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "2e0158dfac191c3875755ef3"
+          },
+          {
+            "path": "contract-fixtures/common/sp281-positive-b.yaml",
+            "source_hex": "4f4c4c414d415f484f535420093a2009223a3a223b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "51d90cdb343cb99c1d3b870a"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/common/sp281-negative-a.yaml",
+            "source_hex": "214c4c414d415f484f5354093a09222a22"
+          },
+          {
+            "path": "contract-fixtures/common/sp281-negative-b.yaml",
+            "source_hex": "204c4c414d415f484f5354093a09222a22"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/common/sp281-adversarial-a.yaml",
+            "source_hex": "584c4c414d415f484f5354093a09222a22",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP284",
+      "title": "vLLM API endpoint exposed without authentication",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-284",
+      "frameworks": [],
+      "false_positive_analysis": "Local development environments may intentionally expose vLLM API.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/common/sp284-positive-a.yaml",
+            "source_hex": "766c6c6d093a09222a22",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "b374f4d70ec53d36c3bb1dbd"
+          },
+          {
+            "path": "contract-fixtures/common/sp284-positive-b.yaml",
+            "source_hex": "766c6c6d5f686f737420093a2009223a3a223b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "8e2df32b2423155173f59e6b"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/common/sp284-negative-a.yaml",
+            "source_hex": "216c6c6d093a09222a22"
+          },
+          {
+            "path": "contract-fixtures/common/sp284-negative-b.yaml",
+            "source_hex": "206c6c6d093a09222a22"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/common/sp284-adversarial-a.yaml",
+            "source_hex": "586c6c6d093a09222a22",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
       "rule_id": "SP301",
       "title": "Redis KEYS in application path",
       "category": "scale",

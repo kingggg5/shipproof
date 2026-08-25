@@ -7,8 +7,8 @@
       "path": "pattern-common.v2.json",
       "engine": "pattern",
       "ecosystem": "common",
-      "rule_count": 258,
-      "sha256": "101e727d427800b117bd2918d5cff4afab38a6dfcbb9d844a4397ad7f00a19b5"
+      "rule_count": 265,
+      "sha256": "432b335b6af4d4a00524e7acbbf9b3d053992175ddb4d27509b81f42b1cd50f5"
     },
     {
       "path": "pattern-container.v2.json",
@@ -91,8 +91,8 @@
       "path": "pattern-rust.v2.json",
       "engine": "pattern",
       "ecosystem": "rust",
-      "rule_count": 11,
-      "sha256": "c4507f1284356a92679138b0dceaa22ff714cc002e6115177d696415e2add493"
+      "rule_count": 14,
+      "sha256": "f6ff5c8a4379699eb9a7e8d55c3f8cd0da04216ff9b5f445b7db34e66d5b55ea"
     },
     {
       "path": "pattern-sql.v2.json",

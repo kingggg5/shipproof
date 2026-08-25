@@ -55,6 +55,156 @@
       }
     },
     {
+      "rule_id": "SP282",
+      "title": "Ollama model pulled from untrusted registry",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-494",
+      "frameworks": [],
+      "false_positive_analysis": "Legitimate models may be hosted at non-official registries.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp282-positive-a.sh",
+            "source_hex": "6f6c6c616d612072756e202e",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "44e2d1c775be3e222967815e"
+          },
+          {
+            "path": "contract-fixtures/rust/sp282-positive-b.sh",
+            "source_hex": "6f6c6c616d61092072756e09202d2e3b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "6e556e3fb3fa016c928853d4"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp282-negative-a.sh",
+            "source_hex": "216c6c616d612072756e202e"
+          },
+          {
+            "path": "contract-fixtures/rust/sp282-negative-b.sh",
+            "source_hex": "206c6c616d612072756e202e"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp282-adversarial-a.sh",
+            "source_hex": "586c6c616d612072756e202e",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP283",
+      "title": "ComfyUI workflow with untrusted custom node",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-494",
+      "frameworks": [],
+      "false_positive_analysis": "Legitimate custom nodes may be hosted at external repositories.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp283-positive-a.yaml",
+            "source_hex": "637573746f6d5f6e6f646573093a095b202268747470733a2f2f6769746875622e636f6d5a22",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "551a1c019f4ee306c89d79d2"
+          },
+          {
+            "path": "contract-fixtures/rust/sp283-positive-b.yaml",
+            "source_hex": "637573746f6d6e6f64657320093a20095b20202268747470733a2f2f6769746875622e636f6d5a5a223b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "be3a482f0f2c7b01fa27812a"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp283-negative-a.yaml",
+            "source_hex": "217573746f6d5f6e6f646573093a095b202268747470733a2f2f6769746875622e636f6d5a22"
+          },
+          {
+            "path": "contract-fixtures/rust/sp283-negative-b.yaml",
+            "source_hex": "207573746f6d5f6e6f646573093a095b202268747470733a2f2f6769746875622e636f6d5a22"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp283-adversarial-a.yaml",
+            "source_hex": "587573746f6d5f6e6f646573093a095b202268747470733a2f2f6769746875622e636f6d5a22",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP285",
+      "title": "vLLM model loaded from untrusted source",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "medium",
+      "cwe": "CWE-494",
+      "frameworks": [],
+      "false_positive_analysis": "Legitimate models may be hosted at non-official sources.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/rust/sp285-positive-a.sh",
+            "source_hex": "766c6c6d207365727665097365727665092d",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "e42ecc820c32627946c44d05"
+          },
+          {
+            "path": "contract-fixtures/rust/sp285-positive-b.sh",
+            "source_hex": "766c6c6d200973657276652009412d3b0a",
+            "expected_line": 1,
+            "expected_confidence": "medium",
+            "expected_detection": "pattern",
+            "expected_proof_level": "L0",
+            "expected_fingerprint": "82c3a87776cc1b46d8fc3256"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/rust/sp285-negative-a.sh",
+            "source_hex": "216c6c6d207365727665097365727665092d"
+          },
+          {
+            "path": "contract-fixtures/rust/sp285-negative-b.sh",
+            "source_hex": "206c6c6d207365727665097365727665092d"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/rust/sp285-adversarial-a.sh",
+            "source_hex": "586c6c6d207365727665097365727665092d",
+            "expected": false,
+            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
+          }
+        ]
+      }
+    },
+    {
       "rule_id": "SP390",
       "title": "Rust unwrap or expect on fallible network operation",
       "category": "reliability",

@@ -38,7 +38,7 @@ def detected_rule_ids(path_value: str, source: str) -> set[str]:
 
 
 class PromotedRuleQualityTests(unittest.TestCase):
-    """Enforce the promotion evidence contract for SP051-SP080.
+    """Enforce the promotion evidence contract for SP051-SP100.
 
     Mirrors tests/rule_cases_v2.json discipline: executed positive/negative
     fixtures, adversarial look-alikes with expected outcomes and rationale,
@@ -51,7 +51,9 @@ class PromotedRuleQualityTests(unittest.TestCase):
         cls.manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         cls.cases = {entry["rule_id"]: entry for entry in cls.manifest["rules"]}
         cls.promoted = {
-            rule.rule_id: rule for rule in RULES if 51 <= int(rule.rule_id.removeprefix("SP")) <= 95
+            rule.rule_id: rule
+            for rule in RULES
+            if 51 <= int(rule.rule_id.removeprefix("SP")) <= 100
         }
 
     def test_manifest_covers_exactly_the_promoted_range(self) -> None:

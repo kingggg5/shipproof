@@ -126,6 +126,11 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP093`** | MEDIUM | Supply-chain | Maven dependency on a SNAPSHOT version | Regex |
 | **`SP094`** | MEDIUM | Supply-chain | Dockerfile ADD over remote URL | Regex |
 | **`SP095`** | HIGH | Supply-chain | Package lifecycle script fetches over network | Regex |
+| **`SP096`** | CRITICAL | Security | Skill file with instruction injection pattern | Regex |
+| **`SP097`** | CRITICAL | Security | Skill file downloads and executes remote code | Regex |
+| **`SP098`** | HIGH | Security | Skill file with shell execution capability | Regex |
+| **`SP099`** | CRITICAL | Security | Skill file with credential harvesting pattern | Regex |
+| **`SP100`** | HIGH | Security | Skill file with network exfiltration pattern | Regex |
 | **`SP101`** | HIGH | Security | Dynamic code execution | Python AST |
 | **`SP102`** | HIGH | Security | Shell execution enabled | Python AST |
 | **`SP103`** | HIGH | Security | SQL built with interpolation | Python AST |
@@ -296,6 +301,16 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP268`** | MEDIUM | Security | Nginx configuration missing X-Content-Type-Options nosniff header | Regex |
 | **`SP269`** | MEDIUM | Security | Systemd unit service running as root without User directive | Regex |
 | **`SP270`** | MEDIUM | Reliability | Systemd unit service configured with unrestricted Restart=always | Regex |
+| **`SP271`** | CRITICAL | Security | MCP tool definition with shell execution | Regex |
+| **`SP272`** | HIGH | Security | MCP tool with unrestricted file system access | Regex |
+| **`SP273`** | MEDIUM | Security | MCP tool with network access without allowlist | Regex |
+| **`SP274`** | CRITICAL | Security | MCP tool accessing environment credentials | Regex |
+| **`SP275`** | MEDIUM | Security | MCP tool without input validation | Regex |
+| **`SP281`** | HIGH | Security | Ollama API endpoint exposed without authentication | Regex |
+| **`SP282`** | HIGH | Security | Ollama model pulled from untrusted registry | Regex |
+| **`SP283`** | HIGH | Security | ComfyUI workflow with untrusted custom node | Regex |
+| **`SP284`** | HIGH | Security | vLLM API endpoint exposed without authentication | Regex |
+| **`SP285`** | HIGH | Security | vLLM model loaded from untrusted source | Regex |
 | **`SP301`** | HIGH | Scale | Redis KEYS in application path | Regex |
 | **`SP302`** | MEDIUM | Scale | Unbounded SQL result | Regex |
 | **`SP303`** | HIGH | Correctness | Blocking sleep in async code | Regex |

@@ -4,7 +4,7 @@ Version: `0.10.0`
 
 | Status | Rules | Meaning |
 | --- | ---: | --- |
-| Complete | 620 | Meets the current executable polarity minimum |
+| Complete | 635 | Meets the current executable polarity minimum |
 | Partial | 0 | Has a manifest but misses at least one minimum |
 | Uncontracted | 0 | No explicit machine-readable polarity manifest |
 | Metadata debt | 0 | Missing CWE, remediation, or explanation fields |

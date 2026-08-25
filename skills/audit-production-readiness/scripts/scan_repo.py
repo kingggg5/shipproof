@@ -3931,6 +3931,96 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Local development settings legitimately enable DEBUG; the finding targets settings modules that also carry deployment markers such as ALLOWED_HOSTS or production middleware stacks.",
         "test": "Keep DEBUG = False in deployable settings, assert the deployed configuration via a settings-dump management command or deployment smoke test.",
     },
+    "SP096": {
+        "why": "Skill files with instruction injection patterns can hijack agent behavior.",
+        "attack": "Attacker crafts a skill file with hidden instructions that override the agent's intended behavior.",
+        "false_positive": "Legitimate skill files may contain similar patterns in documentation or examples.",
+        "test": "Review skill source for malicious instruction patterns before loading into an agent.",
+    },
+    "SP097": {
+        "why": "Skills that download and execute remote code can introduce malicious payloads.",
+        "attack": "Attacker hosts malicious code at a URL referenced by a skill file.",
+        "false_positive": "Legitimate skills may download dependencies from trusted sources.",
+        "test": "Never execute downloaded code without integrity verification; vendor dependencies instead.",
+    },
+    "SP098": {
+        "why": "Skills with shell execution capability can be exploited to run arbitrary commands.",
+        "attack": "Attacker crafts input that causes the skill to execute malicious shell commands.",
+        "false_positive": "Legitimate skills may need shell execution for specific tasks.",
+        "test": "Review whether the skill genuinely needs code execution; sandbox or remove if not required.",
+    },
+    "SP099": {
+        "why": "Skills accessing environment credentials may exfiltrate them.",
+        "attack": "Attacker crafts a skill that reads API keys and sends them to an external endpoint.",
+        "false_positive": "Legitimate skills may need credentials for their intended function.",
+        "test": "Review whether the skill genuinely needs these credentials; scope access to minimum required.",
+    },
+    "SP100": {
+        "why": "Skills sending data to external endpoints may exfiltrate sensitive information.",
+        "attack": "Attacker crafts a skill that sends sensitive data to external webhook endpoints.",
+        "false_positive": "Legitimate skills may need to send data to specific endpoints.",
+        "test": "Review whether the skill genuinely needs to send data externally; scope to minimum required endpoints.",
+    },
+    "SP271": {
+        "why": "MCP tools with shell execution can be exploited to run arbitrary commands.",
+        "attack": "Attacker crafts input that causes the MCP tool to execute malicious shell commands.",
+        "false_positive": "Legitimate MCP tools may need shell execution for specific tasks.",
+        "test": "Review whether the MCP tool genuinely needs shell execution; sandbox or remove if not required.",
+    },
+    "SP272": {
+        "why": "MCP tools with unrestricted file access can read or write sensitive files.",
+        "attack": "Attacker crafts input that causes the MCP tool to read sensitive files outside intended directories.",
+        "false_positive": "Legitimate MCP tools may need file access for specific tasks.",
+        "test": "Restrict file access to specific directories; validate paths before access.",
+    },
+    "SP273": {
+        "why": "MCP tools making network requests without allowlists may exfiltrate data.",
+        "attack": "Attacker crafts input that causes the MCP tool to send data to external endpoints.",
+        "false_positive": "Legitimate MCP tools may need network access for specific tasks.",
+        "test": "Restrict network access to specific allowlisted endpoints; validate URLs before requests.",
+    },
+    "SP274": {
+        "why": "MCP tools accessing environment credentials may exfiltrate them.",
+        "attack": "Attacker crafts an MCP tool that reads API keys and sends them to an external endpoint.",
+        "false_positive": "Legitimate MCP tools may need credentials for their intended function.",
+        "test": "Review whether the MCP tool genuinely needs these credentials; scope access to minimum required.",
+    },
+    "SP275": {
+        "why": "MCP tools without input validation may accept malicious input.",
+        "attack": "Attacker crafts malicious input that causes the MCP tool to behave unexpectedly.",
+        "false_positive": "Legitimate MCP tools may have implicit input validation.",
+        "test": "Add input validation using a schema library; validate all inputs before processing.",
+    },
+    "SP281": {
+        "why": "Ollama API exposed without authentication allows unauthorized model access.",
+        "attack": "Attacker accesses the Ollama API to run models or extract model weights.",
+        "false_positive": "Local development environments may intentionally expose Ollama API.",
+        "test": "Bind Ollama to localhost or add authentication; never expose model APIs publicly.",
+    },
+    "SP282": {
+        "why": "Ollama models from untrusted registries may contain malicious payloads.",
+        "attack": "Attacker hosts a malicious model at a non-official registry.",
+        "false_positive": "Legitimate models may be hosted at non-official registries.",
+        "test": "Only pull models from official Ollama registry; verify model integrity before use.",
+    },
+    "SP283": {
+        "why": "ComfyUI custom nodes from external repositories may contain malicious code.",
+        "attack": "Attacker hosts a malicious custom node at an external repository.",
+        "false_positive": "Legitimate custom nodes may be hosted at external repositories.",
+        "test": "Verify custom node integrity before use; pin to specific commits; review code before loading.",
+    },
+    "SP284": {
+        "why": "vLLM API exposed without authentication allows unauthorized model access.",
+        "attack": "Attacker accesses the vLLM API to run models or extract model weights.",
+        "false_positive": "Local development environments may intentionally expose vLLM API.",
+        "test": "Bind vLLM to localhost or add authentication; never expose model APIs publicly.",
+    },
+    "SP285": {
+        "why": "vLLM models from untrusted sources may contain malicious payloads.",
+        "attack": "Attacker hosts a malicious model at a non-official source.",
+        "false_positive": "Legitimate models may be hosted at non-official sources.",
+        "test": "Only load models from official sources; verify model integrity before use.",
+    },
 }
 
 
@@ -4057,6 +4147,248 @@ RULES: tuple[Rule, ...] = (
         "CWE-494",
         "OWASP ASVS V14",
         frozenset({".json"}),
+    ),
+    # ------------------------------------------------------------------
+    # AI Skills Security (T01-T05 equivalent)
+    # ------------------------------------------------------------------
+    Rule(
+        "SP096",
+        "Skill file with instruction injection pattern",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""(?i)(?:ignore\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts|rules)|"""
+            r"""disregard\s+(?:all\s+)?(?:previous|prior)\s+(?:instructions|prompts)|"""
+            r"""you\s+are\s+now\s+(?:a|an)\s+(?:different|new)|"""
+            r"""forget\s+(?:all\s+)?(?:previous|prior)\s+(?:instructions|context))"""
+        ),
+        "A skill file contains patterns commonly used for prompt injection or instruction hijacking.",
+        "Review the skill source for malicious instruction patterns before loading it into an agent.",
+        "CWE-77",
+        "OWASP ASVS V5",
+        frozenset({".md", ".txt", ".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP097",
+        "Skill file downloads and executes remote code",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""(?i)(?:curl|wget|fetch|http\.get|requests\.get|axios\.get)\s*\(?\s*["']https?://[^"']+["']"""
+            r"""[^;]*\|\s*(?:bash|sh|python|node|eval)"""
+        ),
+        "A skill file downloads remote content and pipes it directly to an interpreter.",
+        "Never execute downloaded code without integrity verification; vendor dependencies instead.",
+        "CWE-494",
+        "OWASP ASVS V14",
+        frozenset({".md", ".sh", ".bash", ".py", ".js"}),
+    ),
+    Rule(
+        "SP098",
+        "Skill file with shell execution capability",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?i)(?<![.\w])(?:exec|eval|subprocess|child_process|os\.system|shell_exec|popen)\s*\("""
+        ),
+        "A skill file contains shell or code execution capability that could be exploited.",
+        "Review whether the skill genuinely needs code execution; sandbox or remove if not required.",
+        "CWE-78",
+        "OWASP ASVS V5",
+        frozenset({".md", ".sh", ".bash"}),
+    ),
+    Rule(
+        "SP099",
+        "Skill file with credential harvesting pattern",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""(?i)(?:process\.env|os\.environ|environ\.get|getenv)\s*\(?\s*["']"""
+            r"""(?:API_KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AWS_SECRET|OPENAI_API_KEY|ANTHROPIC_API_KEY)["']"""
+        ),
+        "A skill file accesses environment credentials, potentially exfiltrating them.",
+        "Review whether the skill genuinely needs these credentials; scope access to minimum required.",
+        "CWE-200",
+        "OWASP ASVS V14",
+        frozenset({".md", ".py", ".js"}),
+    ),
+    Rule(
+        "SP100",
+        "Skill file with network exfiltration pattern",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?i)(?:fetch|http\.request|requests\.post|axios\.post|urllib\.request)\s*\(?\s*["']https?://"""
+            r"""[^"']*(?:api\.openai|api\.anthropic|hooks\.slack|discord\.com/api/webhooks|webhook)[^"']*["']"""
+        ),
+        "A skill file sends data to external webhook or API endpoints, potentially exfiltrating data.",
+        "Review whether the skill genuinely needs to send data externally; scope to minimum required endpoints.",
+        "CWE-200",
+        "OWASP ASVS V14",
+        frozenset({".md", ".py", ".js"}),
+    ),
+    # ------------------------------------------------------------------
+    # MCP Server Security (T06-T09 equivalent)
+    # ------------------------------------------------------------------
+    Rule(
+        "SP271",
+        "MCP tool definition with shell execution",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""(?i)(?:(?:child_process|cp)\.exec(?:Sync)?\s*\(|\bos\.system\s*\(|shell_exec\s*\(|subprocess\.(?:run|call|check_output|Popen)\s*\([^)]*shell\s*=\s*True)"""
+        ),
+        "An MCP tool definition contains shell or code execution capability without sandbox constraints.",
+        "Review whether the MCP tool genuinely needs shell execution; sandbox or remove if not required.",
+        "CWE-78",
+        "OWASP ASVS V5",
+        frozenset({".mjs", ".js", ".ts", ".py"}),
+    ),
+    Rule(
+        "SP272",
+        "MCP tool with unrestricted file system access",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?i)(?:readFile|writeFile|readFileSync|writeFileSync|fs\.read|fs\.write|open\(|open\()"""
+            r"""[^)]*(?:\.\.\/|\.\.\\|process\.env|os\.path)"""
+        ),
+        "An MCP tool accesses file system paths that may traverse outside intended directories.",
+        "Restrict file access to specific directories; validate paths before access.",
+        "CWE-22",
+        "OWASP ASVS V12",
+        frozenset({".mjs", ".js", ".ts", ".py"}),
+    ),
+    Rule(
+        "SP273",
+        "MCP tool with network access without allowlist",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(
+            r"""(?i)(?:registerTool|server\.tool|mcp\.tool|z\.object\(\{)[^;]*"""
+            r"""(?:fetch|http\.request|requests\.(?:get|post|put|delete)|axios\.(?:get|post|put|delete))"""
+            r"""\s*\(\s*["']https?://(?!localhost|127\.0\.0\.1)[^"']+["']"""
+        ),
+        "An MCP tool makes network requests to external endpoints without an allowlist.",
+        "Restrict network access to specific allowlisted endpoints; validate URLs before requests.",
+        "CWE-918",
+        "OWASP ASVS V5",
+        frozenset({".mjs", ".js", ".ts", ".py"}),
+    ),
+    Rule(
+        "SP274",
+        "MCP tool accessing environment credentials",
+        "security",
+        "critical",
+        "high",
+        compile_pattern(
+            r"""(?i)(?:process\.env|os\.environ|environ\.get|getenv)\s*\(?\s*["']"""
+            r"""(?:API_KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AWS_SECRET|OPENAI_API_KEY|ANTHROPIC_API_KEY|DATABASE_URL)["']"""
+        ),
+        "An MCP tool accesses environment credentials, potentially exfiltrating them.",
+        "Review whether the MCP tool genuinely needs these credentials; scope access to minimum required.",
+        "CWE-200",
+        "OWASP ASVS V14",
+        frozenset({".mjs", ".js", ".ts", ".py"}),
+    ),
+    Rule(
+        "SP275",
+        "MCP tool without input validation",
+        "security",
+        "medium",
+        "low",
+        compile_pattern(
+            r"""(?i)z\.object\(\{[^}]*\}\)\s*(?:\.parse|\.safeParse)?\s*\(\s*(?:args|input|params|request)\s*\)"""
+        ),
+        "An MCP tool accepts input without schema validation, potentially accepting malicious input.",
+        "Add input validation using a schema library; validate all inputs before processing.",
+        "CWE-20",
+        "OWASP ASVS V5",
+        frozenset({".mjs", ".js", ".ts"}),
+    ),
+    # ------------------------------------------------------------------
+    # AI Framework CVE Rules (Ollama, ComfyUI, vLLM)
+    # ------------------------------------------------------------------
+    Rule(
+        "SP281",
+        "Ollama API endpoint exposed without authentication",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?i)(?:OLLAMA_HOST|ollama_host)\s*[:=]\s*["'](?:0\.0\.0\.0|::|\*)["']"""
+        ),
+        "Ollama API is bound to all interfaces without authentication, exposing model endpoints.",
+        "Bind Ollama to localhost or add authentication; never expose model APIs publicly.",
+        "CWE-284",
+        "OWASP ASVS V4",
+        frozenset({".env", ".env.example", ".env.local", ".sh", ".bash", ".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP282",
+        "Ollama model pulled from untrusted registry",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(r"""(?i)ollama\s+(?:pull|run)\s+(?!(?:library/|ollama/))[\w\-./]+"""),
+        "Ollama pulls or runs a model from a non-official registry, potentially loading a malicious model.",
+        "Only pull models from official Ollama registry; verify model integrity before use.",
+        "CWE-494",
+        "OWASP ASVS V14",
+        frozenset({".sh", ".bash", ".md", ".txt"}),
+    ),
+    Rule(
+        "SP283",
+        "ComfyUI workflow with untrusted custom node",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?i)(?:custom_nodes|custom-nodes|customnodes)\s*[:=]\s*\[[^\]]*["']https?://(?:github\.com|gitlab\.com)[^"']+["']"""
+        ),
+        "ComfyUI workflow loads custom nodes from external repositories without integrity verification.",
+        "Verify custom node integrity before use; pin to specific commits; review code before loading.",
+        "CWE-494",
+        "OWASP ASVS V14",
+        frozenset({".json", ".yaml", ".yml", ".json5"}),
+    ),
+    Rule(
+        "SP284",
+        "vLLM API endpoint exposed without authentication",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?i)(?:vllm|VLLM_HOST|vllm_host)\s*[:=]\s*["'](?:0\.0\.0\.0|::|\*)["']"""
+        ),
+        "vLLM API is bound to all interfaces without authentication, exposing model endpoints.",
+        "Bind vLLM to localhost or add authentication; never expose model APIs publicly.",
+        "CWE-284",
+        "OWASP ASVS V4",
+        frozenset({".env", ".env.example", ".env.local", ".sh", ".bash", ".yaml", ".yml"}),
+    ),
+    Rule(
+        "SP285",
+        "vLLM model loaded from untrusted source",
+        "security",
+        "high",
+        "medium",
+        compile_pattern(
+            r"""(?i)(?:vllm|vllm serve|vllm run)\s+(?:serve|run)\s+(?!(?:meta-llama|mistralai|google|openai|huggingface))[\w\-./]+"""
+        ),
+        "vLLM loads a model from a non-official source, potentially loading a malicious model.",
+        "Only load models from official sources; verify model integrity before use.",
+        "CWE-494",
+        "OWASP ASVS V14",
+        frozenset({".sh", ".bash", ".md", ".txt"}),
     ),
     Rule(
         "SP051",
@@ -13142,6 +13474,16 @@ def make_finding(
     )
 
 
+DOCUMENT_SCAN_RULE_IDS = frozenset(
+    {
+        "SP096",
+        "SP097",
+        "SP098",
+        "SP099",
+        "SP100",
+    }
+)
+
 FILE_LEVEL_RULE_IDS = frozenset(
     {
         "SP107",
@@ -13191,7 +13533,7 @@ def applicable_line_rules(
         for rule in RULES
         if rule.rule_id not in FILE_LEVEL_RULE_IDS
         and not (rule.rule_id == "SP202" and not is_manifest_name)
-        and not (is_document and not rule.redact)
+        and not (is_document and not rule.redact and rule.rule_id not in DOCUMENT_SCAN_RULE_IDS)
         and not (
             rule.suffixes
             and suffix not in rule.suffixes

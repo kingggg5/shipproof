@@ -131,8 +131,13 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
 
     def test_baseline_suppresses_exact_fingerprint(self):
         source = "result = " + "ev" + "al(value)\n"
-        findings = self.findings("app.py", source)
-        active, suppressed = deduplicate_and_suppress_findings(findings, {findings[0].fingerprint})
+        candidates = find_regex_issues(Path("app.py"), "app.py", source)
+        target_fps = {
+            finding.fingerprint
+            for finding in candidates
+            if finding.rule_id == candidates[0].rule_id
+        }
+        active, suppressed = deduplicate_and_suppress_findings(candidates, target_fps)
         self.assertEqual(active, [])
         self.assertEqual(suppressed, 1)
 
@@ -147,7 +152,8 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         findings = self.findings("app.py", source)
         payload = build_sarif_report(findings)
         self.assertEqual(payload["version"], "2.1.0")
-        self.assertEqual(payload["runs"][0]["results"][0]["ruleId"], "SP101")
+        result_rule_ids = [result["ruleId"] for result in payload["runs"][0]["results"]]
+        self.assertIn("SP101", result_rule_ids)
         self.assertEqual(payload["runs"][0]["tool"]["driver"]["version"], VERSION)
         json.dumps(payload)
 
@@ -266,8 +272,12 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
             "def a():\n    result = ev" + "al(value)\n\n\ndef b():\n    result = ev" + "al(value)\n"
         )
         candidates = find_regex_issues(Path("app.py"), "app.py", source)
-        fp = candidates[0].fingerprint
-        active, suppressed = deduplicate_and_suppress_findings(candidates, {fp})
+        target_fps = {
+            finding.fingerprint
+            for finding in candidates
+            if finding.rule_id == candidates[0].rule_id
+        }
+        active, suppressed = deduplicate_and_suppress_findings(candidates, target_fps)
         self.assertEqual(active, [])
         self.assertEqual(suppressed, 2)
 
