@@ -24,3 +24,6 @@ Thumbs.db
 # harness local-only data
 .harness/.cache/
 .harness/local-capabilities.md
+
+# OpenAI Sites publishing adapter (maintained as its own source repository)
+.site-scaffold/

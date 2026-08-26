@@ -1,6 +1,6 @@
 # ShipProof next development plan
 
-Last reviewed: 2026-08-24.
+Last reviewed: 2026-08-26.
 
 สถานะ: แผนหลักสำหรับเปลี่ยน research backlog ให้เป็น production evidence ที่เชื่อถือได้ โดยไม่เปิดกฎจำนวนมากแบบ big-bang และไม่ลดมาตรฐาน false-positive
 
@@ -18,12 +18,12 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 
 ข้อมูลต่อไปนี้เป็น snapshot ณ วันที่ทบทวน ไม่ใช่ตัวเลขรับประกันในอนาคต:
 
-- executable scanner rules: 620
+- executable scanner rules: 635
 - research inventory: 7,800 catalogued candidates plus 1,000 reserved promotion slots (`SP651–SP9450`)
 - language-specific research candidates: 5,000 (`SP4451–SP9450`)
 - project Python test cases ที่ discover ได้: 564 พร้อม Node, package และ end-to-end suites
 - self-scan: 0 active findings ที่ high gate
-- reference benchmark: 1,000 clean files, 3 samples, median 0.9747 วินาที, p95 0.9879 วินาที, peak RSS 25.57 MB บน Windows/Python 3.12.10; fixture/config digest อยู่ใน report
+- reference benchmark: 1,000 clean files, 3 samples, median 0.7675 วินาที, p95 0.7744 วินาที, peak RSS 28.68 MB บน Windows/Python 3.12.10; fixture/config digest อยู่ใน report
 - default path: read-only, offline และไม่มี dependency เพิ่ม
 
 Candidate ID ไม่ได้แปลว่ามี detector แล้ว จำนวน research slots จึงห้ามนำไปรวมกับ executable rule count ในเอกสารหรือการตลาด
@@ -291,10 +291,10 @@ Security source findings, capacity estimates และ measured performance ต�
 - artifact digest และ deterministic configuration
 - ไม่มี credential หรือ production target ใน generated script
 
-สถานะ ณ 2026-08-24: benchmark harness บันทึก warmup, samples, median, p95, peak RSS,
+สถานะ ณ 2026-08-26: benchmark harness บันทึก warmup, samples, median, p95, peak RSS,
 runtime/platform, workload bytes และ deterministic digests แล้ว. Clean 1,000-file profile มี p95
-0.9879 วินาที; adversarial-regex 250-file profile มี p95 2.4173 วินาที; large-file profile 8 x
-512 KiB มี p95 8.4919 วินาทีและใช้ budget แยก 10 วินาที. ตัวเลขนี้เป็นผลบน Windows/Python
+0.7744 วินาที; adversarial-regex 250-file profile มี p95 2.3359 วินาที; large-file profile 8 x
+512 KiB มี p95 8.3140 วินาทีและใช้ budget แยก 10 วินาที. ตัวเลขนี้เป็นผลบน Windows/Python
 3.12.10 ของเครื่องที่ระบุ ไม่ใช่คำรับรองทุกเครื่อง.
 
 ## P5 — Real-world evaluation and release readiness

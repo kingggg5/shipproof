@@ -46,6 +46,8 @@ class StructureTests(unittest.TestCase):
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
         self.assertEqual(package["bin"], {"shipproof": "bin/shipproof.mjs"})
         self.assertIn("docs", package["files"])
+        self.assertEqual(package["publishConfig"]["registry"], "https://registry.npmjs.org/")
+        self.assertIs(package["publishConfig"]["provenance"], True)
         self.assertNotIn("dependencies", package)
         self.assertEqual(
             set(package["peerDependencies"]),
@@ -88,6 +90,40 @@ class StructureTests(unittest.TestCase):
         count_match = re.search(r"- (\d+) deterministic rules", llms)
         self.assertIsNotNone(count_match)
         self.assertEqual(int(count_match.group(1)), len(RULES))
+
+        current_rule_claims = {
+            "README.md": (
+                r"\*\*(\d+) deterministic rules\*\*",
+                r"\| Executable rules \| (\d+)",
+                r"\*\*(\d+) deterministic executable rules\*\*",
+                r"The scanner ships (\d+) executable rules",
+                r"\| \[Executable rule table\].*\| (\d+) reviewed detectors \|",
+                r"verifies all (\d+) executable rules",
+            ),
+            "README.th.md": (
+                r"\*\*(\d+) deterministic rules\*\*",
+                r"\| Executable rules \| (\d+)",
+                r"\*\*(\d+) deterministic executable rules\*\*",
+                r"\| \[Executable rule table\].*\| (\d+) detectors",
+            ),
+            "docs/rules.md": (r"ShipProof applies (\d+) deterministic executable rules",),
+            "docs/research.md": (r"\| Executable scanner rules \| (\d+) \|",),
+            "docs/next-development-plan.md": (r"- executable scanner rules: (\d+)",),
+            "docs/releases/v0.10.0.md": (
+                r"All (\d+) executable scanner rules",
+                r"change the (\d+)-rule public catalog",
+            ),
+        }
+        for path, patterns in current_rule_claims.items():
+            content = (ROOT / path).read_text(encoding="utf-8")
+            for pattern in patterns:
+                match = re.search(pattern, content)
+                self.assertIsNotNone(match, f"missing rule-count claim in {path}: {pattern}")
+                self.assertEqual(
+                    int(match.group(1)),
+                    len(RULES),
+                    f"stale rule-count claim in {path}: {match.group(0)}",
+                )
         self.assertIn("L2 interprocedural taint flows", llms)
         self.assertIn("--cross-file", llms)
 
@@ -112,6 +148,16 @@ class StructureTests(unittest.TestCase):
         self.assertIn("fetch-depth: 0", quality_job)
         self.assertIn("git diff-tree --check --root --no-commit-id -r HEAD", quality_job)
         self.assertNotIn("git diff --check HEAD^ HEAD", quality_job)
+
+    def test_npm_publish_workflow_is_manual_oidc_and_token_free(self):
+        workflow = (ROOT / ".github" / "workflows" / "publish-npm.yml").read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotRegex(workflow, r"(?m)^\s+(?:push|release):")
+        self.assertIn("environment: npm", workflow)
+        self.assertIn("id-token: write", workflow)
+        self.assertIn('node-version: "24"', workflow)
+        self.assertIn("npm publish --access public", workflow)
+        self.assertNotIn("NPM_TOKEN", workflow)
 
     def test_skill_frontmatter_has_no_placeholders(self):
         for name in SKILL_NAMES:
@@ -145,6 +191,25 @@ class StructureTests(unittest.TestCase):
                     continue
                 resolved = (markdown_file.parent / target_path).resolve()
                 self.assertTrue(resolved.exists(), f"{markdown_file}: {target}")
+
+    def test_public_site_is_local_only_bilingual_and_explicitly_a_sample(self):
+        site = ROOT / "website"
+        for name in ("index.html", "index.th.html", "styles.css", "app.js", "README.md"):
+            self.assertTrue((site / name).is_file(), name)
+
+        for name, sample_label, alternate in (
+            ("index.html", "SAMPLE RUN", "index.th.html"),
+            ("index.th.html", "ข้อมูลตัวอย่าง", "index.html"),
+        ):
+            content = (site / name).read_text(encoding="utf-8")
+            self.assertIn(sample_label, content)
+            self.assertIn(f'href="{alternate}"', content)
+            self.assertIn("https://github.com/kingggg5/shipproof", content)
+            self.assertNotRegex(content, r'<(?:script|link|img)[^>]+(?:src|href)="https?://')
+            self.assertNotRegex(
+                content.lower(),
+                r"google-analytics|googletagmanager|gtag\(|mixpanel|posthog|segment\.com",
+            )
 
     def test_skill_guidance_keeps_external_sources_in_research_notebook(self):
         for markdown_file in sorted((ROOT / "skills").glob("**/*.md")):

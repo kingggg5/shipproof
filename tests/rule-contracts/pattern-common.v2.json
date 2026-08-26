@@ -3673,41 +3673,41 @@
       "expected_confidence": "high",
       "cwe": "CWE-78",
       "frameworks": [],
-      "false_positive_analysis": "Legitimate MCP tools may need shell execution for specific tasks.",
+      "false_positive_analysis": "Shell execution outside a file with visible MCP server/tool context is not an MCP finding. Legitimate MCP tools may still need a narrowly allowlisted command runner.",
       "cases": {
         "positive": [
           {
-            "path": "contract-fixtures/common/sp271-positive-a.py",
+            "path": "contract-fixtures/mcp/sp271-positive-a/mcp-server.py",
             "source_hex": "63702e6578656353796e632028",
             "expected_line": 1,
             "expected_confidence": "high",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "788794b080a706842f476ce8"
+            "expected_fingerprint": "4b98f970c6c5cc46f432f49f"
           },
           {
-            "path": "contract-fixtures/common/sp271-positive-b.py",
+            "path": "contract-fixtures/mcp/sp271-positive-b/mcp-server.py",
             "source_hex": "7368656c6c5f657865632009283b0a",
             "expected_line": 1,
             "expected_confidence": "high",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "7b631ef3b485afc5116865a3"
+            "expected_fingerprint": "ba633daa466c79206b7ef20a"
           }
         ],
         "negative": [
           {
-            "path": "contract-fixtures/common/sp271-negative-a.py",
+            "path": "contract-fixtures/mcp/sp271-negative-a/mcp-server.py",
             "source_hex": "21702e6578656353796e632028"
           },
           {
-            "path": "contract-fixtures/common/sp271-negative-b.py",
+            "path": "contract-fixtures/mcp/sp271-negative-b/mcp-server.py",
             "source_hex": "20702e6578656353796e632028"
           }
         ],
         "adversarial": [
           {
-            "path": "contract-fixtures/common/sp271-adversarial-a.py",
+            "path": "contract-fixtures/mcp/sp271-adversarial-a/mcp-server.py",
             "source_hex": "58702e6578656353796e632028",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
@@ -3723,42 +3723,42 @@
       "expected_confidence": "medium",
       "cwe": "CWE-22",
       "frameworks": [],
-      "false_positive_analysis": "Legitimate MCP tools may need file access for specific tasks.",
+      "false_positive_analysis": "Helper names that merely start with readFile/writeFile, sanitized paths, and file access outside visible MCP server/tool context do not match. Legitimate MCP tools may still need bounded file access.",
       "cases": {
         "positive": [
           {
-            "path": "contract-fixtures/common/sp272-positive-a.py",
-            "source_hex": "7265616446696c652070726f636573732e656e76",
+            "path": "contract-fixtures/mcp/sp272-positive-a/mcp-server.py",
+            "source_hex": "777269746546696c652028202e2e5c",
             "expected_line": 1,
             "expected_confidence": "medium",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "23b3a25c329686a27daa058f"
+            "expected_fingerprint": "525dc57b5cb6a5d793bc892c"
           },
           {
-            "path": "contract-fixtures/common/sp272-positive-b.py",
-            "source_hex": "7265616446696c6553796e6320202e2e2f3b0a",
+            "path": "contract-fixtures/mcp/sp272-positive-b/mcp-server.py",
+            "source_hex": "777269746546696c6553796e6309202820206f732e706174683b0a",
             "expected_line": 1,
             "expected_confidence": "medium",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "e96c439392922365d7885a28"
+            "expected_fingerprint": "7f55389444fa9f58569ae828"
           }
         ],
         "negative": [
           {
-            "path": "contract-fixtures/common/sp272-negative-a.py",
-            "source_hex": "2165616446696c652070726f636573732e656e76"
+            "path": "contract-fixtures/mcp/sp272-negative-a/mcp-server.py",
+            "source_hex": "217269746546696c652028202e2e5c"
           },
           {
-            "path": "contract-fixtures/common/sp272-negative-b.py",
-            "source_hex": "2065616446696c652070726f636573732e656e76"
+            "path": "contract-fixtures/mcp/sp272-negative-b/mcp-server.py",
+            "source_hex": "207269746546696c652028202e2e5c"
           }
         ],
         "adversarial": [
           {
-            "path": "contract-fixtures/common/sp272-adversarial-a.py",
-            "source_hex": "5865616446696c652070726f636573732e656e76",
+            "path": "contract-fixtures/mcp/sp272-adversarial-a/mcp-server.py",
+            "source_hex": "587269746546696c652028202e2e5c",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
           }
@@ -3773,32 +3773,32 @@
       "expected_confidence": "medium",
       "cwe": "CWE-918",
       "frameworks": [],
-      "false_positive_analysis": "Legitimate MCP tools may need network access for specific tasks.",
+      "false_positive_analysis": "Network calls outside a file with visible MCP server/tool context do not match. Legitimate MCP tools may still need allowlisted network access for specific tasks.",
       "cases": {
         "positive": [
           {
-            "path": "contract-fixtures/common/sp273-positive-a.py",
+            "path": "contract-fixtures/mcp/sp273-positive-a/mcp-server.py",
             "source_hex": "7265676973746572546f6f6c2072657175657374732e64656c6574650928092268747470733a2f2f5a27",
             "expected_line": 1,
             "expected_confidence": "medium",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "ad1efc1d7456a91602a61ca8"
+            "expected_fingerprint": "ed4ef0df98482fb68b52ed27"
           }
         ],
         "negative": [
           {
-            "path": "contract-fixtures/common/sp273-negative-a.py",
+            "path": "contract-fixtures/mcp/sp273-negative-a/mcp-server.py",
             "source_hex": "2165676973746572546f6f6c2072657175657374732e64656c6574650928092268747470733a2f2f5a27"
           },
           {
-            "path": "contract-fixtures/common/sp273-negative-b.py",
+            "path": "contract-fixtures/mcp/sp273-negative-b/mcp-server.py",
             "source_hex": "2065676973746572546f6f6c2072657175657374732e64656c6574650928092268747470733a2f2f5a27"
           }
         ],
         "adversarial": [
           {
-            "path": "contract-fixtures/common/sp273-adversarial-a.py",
+            "path": "contract-fixtures/mcp/sp273-adversarial-a/mcp-server.py",
             "source_hex": "5865676973746572546f6f6c2072657175657374732e64656c6574650928092268747470733a2f2f5a27",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
@@ -3814,42 +3814,42 @@
       "expected_confidence": "high",
       "cwe": "CWE-200",
       "frameworks": [],
-      "false_positive_analysis": "Legitimate MCP tools may need credentials for their intended function.",
+      "false_positive_analysis": "Credential reads outside a file with visible MCP server/tool context are handled by other rules, not this MCP finding. Legitimate MCP tools may still need narrowly scoped credentials.",
       "cases": {
         "positive": [
           {
-            "path": "contract-fixtures/common/sp274-positive-a.py",
-            "source_hex": "70726f636573732e656e76092809224157535f53454352455422",
+            "path": "contract-fixtures/mcp/sp274-positive-a/mcp-server.py",
+            "source_hex": "70726f636573732e656e762e4150495f4b4559",
             "expected_line": 1,
             "expected_confidence": "high",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "a25f5d8b05a05e01f91e581d"
+            "expected_fingerprint": "2febdb369c471dfd481af34d"
           },
           {
-            "path": "contract-fixtures/common/sp274-positive-b.py",
-            "source_hex": "656e7669726f6e2e676574200928200922414e5448524f5049435f4150495f4b4559223b0a",
+            "path": "contract-fixtures/mcp/sp274-positive-b/mcp-server.py",
+            "source_hex": "70726f636573732e656e762e4150495f4b45593b0a",
             "expected_line": 1,
             "expected_confidence": "high",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "25df16b6209b61ba950aa427"
+            "expected_fingerprint": "2a09b70f1957f5e3f56668eb"
           }
         ],
         "negative": [
           {
-            "path": "contract-fixtures/common/sp274-negative-a.py",
-            "source_hex": "21726f636573732e656e76092809224157535f53454352455422"
+            "path": "contract-fixtures/mcp/sp274-negative-a/mcp-server.py",
+            "source_hex": "21726f636573732e656e762e4150495f4b4559"
           },
           {
-            "path": "contract-fixtures/common/sp274-negative-b.py",
-            "source_hex": "20726f636573732e656e76092809224157535f53454352455422"
+            "path": "contract-fixtures/mcp/sp274-negative-b/mcp-server.py",
+            "source_hex": "20726f636573732e656e762e4150495f4b4559"
           }
         ],
         "adversarial": [
           {
-            "path": "contract-fixtures/common/sp274-adversarial-a.py",
-            "source_hex": "58726f636573732e656e76092809224157535f53454352455422",
+            "path": "contract-fixtures/mcp/sp274-adversarial-a/mcp-server.py",
+            "source_hex": "58726f636573732e656e762e4150495f4b4559",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
           }
@@ -3858,39 +3858,39 @@
     },
     {
       "rule_id": "SP275",
-      "title": "MCP tool without input validation",
+      "title": "MCP tool accepts an unbounded input schema",
       "category": "security",
       "expected_severity": "medium",
       "expected_confidence": "low",
       "cwe": "CWE-20",
       "frameworks": [],
-      "false_positive_analysis": "Legitimate MCP tools may have implicit input validation.",
+      "false_positive_analysis": "A downstream validator may bound the value, but the tool boundary remains opaque; explicit strict field schemas do not match.",
       "cases": {
         "positive": [
           {
-            "path": "contract-fixtures/common/sp275-positive-a.ts",
-            "source_hex": "7a2e6f626a656374287b207d29092e736166655061727365092809706172616d730929",
+            "path": "contract-fixtures/mcp/sp275-positive-a/mcp-server.ts",
+            "source_hex": "7365727665722e7265676973746572546f6f6c282272756e222c207b20696e707574536368656d613a207a2e616e792829207d2c2068616e646c657229",
             "expected_line": 1,
             "expected_confidence": "low",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "431765025d8082be9858cfee"
+            "expected_fingerprint": "5ea54dbbc88f54d09c6db411"
           }
         ],
         "negative": [
           {
-            "path": "contract-fixtures/common/sp275-negative-a.ts",
-            "source_hex": "212e6f626a656374287b207d29092e736166655061727365092809706172616d730929"
+            "path": "contract-fixtures/mcp/sp275-negative-a/mcp-server.ts",
+            "source_hex": "7365727665722e2165676973746572546f6f6c282272756e222c207b20696e707574536368656d613a207a2e616e792829207d2c2068616e646c657229"
           },
           {
-            "path": "contract-fixtures/common/sp275-negative-b.ts",
-            "source_hex": "202e6f626a656374287b207d29092e736166655061727365092809706172616d730929"
+            "path": "contract-fixtures/mcp/sp275-negative-b/mcp-server.ts",
+            "source_hex": "7365727665722e2065676973746572546f6f6c282272756e222c207b20696e707574536368656d613a207a2e616e792829207d2c2068616e646c657229"
           }
         ],
         "adversarial": [
           {
-            "path": "contract-fixtures/common/sp275-adversarial-a.ts",
-            "source_hex": "582e6f626a656374287b207d29092e736166655061727365092809706172616d730929",
+            "path": "contract-fixtures/mcp/sp275-adversarial-a/mcp-server.ts",
+            "source_hex": "7365727665722e5865676973746572546f6f6c282272756e222c207b20696e707574536368656d613a207a2e616e792829207d2c2068616e646c657229",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
           }

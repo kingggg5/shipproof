@@ -404,6 +404,39 @@ if __name__ == "__main__":
 class FalsePositiveRegressionTests(unittest.TestCase):
     """Guard the precision fixes measured against the five OSS corpora."""
 
+    def test_mcp_rules_require_mcp_context_and_exact_file_calls(self):
+        ordinary_source = (
+            'const { readFileReport } = require("../utils/storage");\n'
+            'const token = process.env["API_KEY"];\n'
+        )
+        ordinary_findings = scan_snippet(ordinary_source, "routes/files.js")
+        self.assertFalse(
+            {"SP271", "SP272", "SP273", "SP274", "SP275"}
+            & {item.rule_id for item in ordinary_findings}
+        )
+
+        mcp_helper = scan_snippet(ordinary_source, "mcp-server.js")
+        self.assertFalse(any(item.rule_id == "SP272" for item in mcp_helper))
+        self.assertTrue(any(item.rule_id == "SP274" for item in mcp_helper))
+
+        unsafe_file = 'const result = readFile("../secrets.json");\n'
+        self.assertTrue(
+            any(item.rule_id == "SP272" for item in scan_snippet(unsafe_file, "mcp-server.js"))
+        )
+
+    def test_mcp_unbounded_input_schema_only_flags_unbounded_shapes(self):
+        unsafe = 'server.registerTool("run", { inputSchema: z.any() }, async (input) => input);\n'
+        safe = (
+            'server.registerTool("run", { inputSchema: '
+            "z.object({ name: z.string().max(100) }).strict() }, handler);\n"
+        )
+        self.assertTrue(
+            any(item.rule_id == "SP275" for item in scan_snippet(unsafe, "mcp-server.ts"))
+        )
+        self.assertFalse(
+            any(item.rule_id == "SP275" for item in scan_snippet(safe, "mcp-server.ts"))
+        )
+
     def test_flask_dict_session_is_not_an_outbound_request(self):
         source = 'from flask import session\nflashes = session.get("_flashes", [])\n'
         findings = scan_snippet(source)

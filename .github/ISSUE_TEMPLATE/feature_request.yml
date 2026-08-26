@@ -1,0 +1,43 @@
+name: Feature request
+description: Propose a user-facing capability or workflow improvement.
+title: "feature: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Describe the user problem and evidence boundary before proposing an implementation.
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Who is blocked, in which workflow, and what evidence is missing today?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: State the observable behavior without prescribing an architecture unless necessary.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and workarounds
+      description: What can users do today, and why is it insufficient?
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Safety, compatibility, and evidence boundaries
+      description: Note effects on offline behavior, permissions, exit codes, schemas, performance, and false assurance.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance evidence
+      description: What test or artifact would prove that the change works without breaking existing contracts?
+    validations:
+      required: true

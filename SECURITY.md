@@ -6,7 +6,7 @@ Security fixes are applied to the latest release on the default branch. Older pu
 
 | Version | Supported |
 | :--- | :--- |
-| Latest `0.6.x` / default branch | Yes |
+| Latest `0.10.x` / default branch | Yes |
 | Earlier public-beta releases | Best effort |
 
 ## Report a vulnerability

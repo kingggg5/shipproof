@@ -33,6 +33,16 @@ Required release-workflow controls:
 - Public repository and exact `repository.url` so npm can attach provenance.
 - Protected environment/tag and manual review before registry publication.
 
-Do not add an automated publish workflow until the registry package and trusted-publisher relationship exist; otherwise every release would fail or tempt maintainers to add a long-lived token.
+The checked-in `Publish npm` workflow is deliberately manual and targets the protected `npm` environment. It accepts only an immutable exact-version tag, checks that the tag and package version match, repeats the complete release gate, requires npm 11.5.1 or newer, and publishes with OIDC. It contains no `NPM_TOKEN` path.
+
+Before the first run, the package owner must:
+
+1. establish the `@kingggg5/shipproof` package and scope ownership on npm;
+2. configure `kingggg5/shipproof`, `.github/workflows/publish-npm.yml`, and environment `npm` as the trusted publisher;
+3. create a protected GitHub environment named `npm` with required maintainer review;
+4. verify the package name is not already owned by another account; and
+5. dispatch the workflow with the already-reviewed immutable tag.
+
+If any relationship is missing, publishing must fail closed. Do not add a long-lived token as a fallback. GitHub Release creation remains a separate workflow so an npm configuration failure cannot rewrite or partially recreate the immutable release.
 
 Primary guidance: [npm trusted publishers](https://docs.npmjs.com/trusted-publishers/) and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/).

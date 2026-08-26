@@ -2,6 +2,8 @@
 
 The risk-based expansion program reserves 8,800 research slots without bulk-shipping noisy regexes. The original [1,000-candidate program](rule-expansion-1000.md) defines promotion thresholds and the `SP651–SP661` pilot. The [2021–2026 and expert expansion](rule-expansion-2021-2026.md) adds 1,800 annual CVE signals and 1,000 CWE-grounded expert candidates. The [5,000-candidate language expansion](rule-expansion-languages-5000.md) adds deduplicated C#, TypeScript, PHP, React, Go, C++, Angular, JavaScript, SQL, Python, Java, Rust, Kotlin, and Swift variants. Every unpromoted record remains research-only. The ordered implementation work, acceptance gates, promotion lifecycle, and CLI 1.0 cleanup are maintained in the [next development plan](next-development-plan.md).
 
+The post-v0.10 priority is [community validation](community-validation.md): representative field evidence, integration reliability, and measured false-positive review. Rule-count growth is not a milestone by itself.
+
 This roadmap turns ShipProof from a local evidence toolkit into a reusable execution layer for AWE TraceGate and global developer workflows. Version 0.4.0 ships the important end-to-end slices; unchecked acceptance work remains a release gate rather than an implied claim.
 
 ## Version 0.4.0 implementation status

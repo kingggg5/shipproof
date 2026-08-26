@@ -1,0 +1,56 @@
+name: Rule proposal
+description: Propose a detector backed by an observable invariant and precision evidence.
+title: "rule: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: A source identifies a risk class; it does not automatically justify a detector. Do not paste licensed third-party rules or private code.
+  - type: input
+    id: ecosystem
+    attributes:
+      label: Ecosystem and versions
+      placeholder: TypeScript / Express 5
+    validations:
+      required: true
+  - type: textarea
+    id: invariant
+    attributes:
+      label: Locally observable unsafe invariant
+      description: Describe exactly what repository evidence can prove.
+    validations:
+      required: true
+  - type: textarea
+    id: nonclaims
+    attributes:
+      label: What the detector must not claim
+      description: List reachability, runtime, configuration, or business facts that need other evidence.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Primary sources
+      description: Link CWE, OWASP, a framework owner, a language specification, or a public CVE. Community posts may motivate discovery but are not sufficient grounding.
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Sanitized positive and negative examples
+      description: Include both unsafe and safe forms, plus likely evasions when known.
+    validations:
+      required: true
+  - type: textarea
+    id: falsepositives
+    attributes:
+      label: False-positive boundary
+      description: Explain look-alikes, framework context, and cases that should be downgraded or ignored.
+    validations:
+      required: true
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Remediation and regression test
+    validations:
+      required: true

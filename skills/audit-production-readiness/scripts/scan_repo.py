@@ -3964,32 +3964,32 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP271": {
         "why": "MCP tools with shell execution can be exploited to run arbitrary commands.",
         "attack": "Attacker crafts input that causes the MCP tool to execute malicious shell commands.",
-        "false_positive": "Legitimate MCP tools may need shell execution for specific tasks.",
+        "false_positive": "Shell execution outside a file with visible MCP server/tool context is not an MCP finding. Legitimate MCP tools may still need a narrowly allowlisted command runner.",
         "test": "Review whether the MCP tool genuinely needs shell execution; sandbox or remove if not required.",
     },
     "SP272": {
         "why": "MCP tools with unrestricted file access can read or write sensitive files.",
         "attack": "Attacker crafts input that causes the MCP tool to read sensitive files outside intended directories.",
-        "false_positive": "Legitimate MCP tools may need file access for specific tasks.",
+        "false_positive": "Helper names that merely start with readFile/writeFile, sanitized paths, and file access outside visible MCP server/tool context do not match. Legitimate MCP tools may still need bounded file access.",
         "test": "Restrict file access to specific directories; validate paths before access.",
     },
     "SP273": {
         "why": "MCP tools making network requests without allowlists may exfiltrate data.",
         "attack": "Attacker crafts input that causes the MCP tool to send data to external endpoints.",
-        "false_positive": "Legitimate MCP tools may need network access for specific tasks.",
+        "false_positive": "Network calls outside a file with visible MCP server/tool context do not match. Legitimate MCP tools may still need allowlisted network access for specific tasks.",
         "test": "Restrict network access to specific allowlisted endpoints; validate URLs before requests.",
     },
     "SP274": {
         "why": "MCP tools accessing environment credentials may exfiltrate them.",
         "attack": "Attacker crafts an MCP tool that reads API keys and sends them to an external endpoint.",
-        "false_positive": "Legitimate MCP tools may need credentials for their intended function.",
+        "false_positive": "Credential reads outside a file with visible MCP server/tool context are handled by other rules, not this MCP finding. Legitimate MCP tools may still need narrowly scoped credentials.",
         "test": "Review whether the MCP tool genuinely needs these credentials; scope access to minimum required.",
     },
     "SP275": {
-        "why": "MCP tools without input validation may accept malicious input.",
-        "attack": "Attacker crafts malicious input that causes the MCP tool to behave unexpectedly.",
-        "false_positive": "Legitimate MCP tools may have implicit input validation.",
-        "test": "Add input validation using a schema library; validate all inputs before processing.",
+        "why": "MCP tools with z.any() or z.unknown() input schemas accept unbounded shapes at the tool boundary.",
+        "attack": "Attacker supplies malformed or oversized values that reach sensitive tool logic without a bounded field schema.",
+        "false_positive": "A downstream validator may bound the value, but the tool boundary remains opaque; explicit strict field schemas do not match.",
+        "test": "Replace unbounded schemas with explicit fields and test malformed, oversized, and unexpected inputs.",
     },
     "SP281": {
         "why": "Ollama API exposed without authentication allows unauthorized model access.",
@@ -4257,7 +4257,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""(?i)(?:readFile|writeFile|readFileSync|writeFileSync|fs\.read|fs\.write|open\(|open\()"""
+            r"""(?i)\b(?:readFile|writeFile|readFileSync|writeFileSync|fs\.read|fs\.write|open)\s*\("""
             r"""[^)]*(?:\.\.\/|\.\.\\|process\.env|os\.path)"""
         ),
         "An MCP tool accesses file system paths that may traverse outside intended directories.",
@@ -4290,8 +4290,9 @@ RULES: tuple[Rule, ...] = (
         "critical",
         "high",
         compile_pattern(
-            r"""(?i)(?:process\.env|os\.environ|environ\.get|getenv)\s*\(?\s*["']"""
-            r"""(?:API_KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AWS_SECRET|OPENAI_API_KEY|ANTHROPIC_API_KEY|DATABASE_URL)["']"""
+            r"""(?ix)(?:process\.env\s*(?:\.\s*(?:API_KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AWS_SECRET|OPENAI_API_KEY|ANTHROPIC_API_KEY|DATABASE_URL)|\[\s*["'](?:API_KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AWS_SECRET|OPENAI_API_KEY|ANTHROPIC_API_KEY|DATABASE_URL)["']\s*\])|"""
+            r"""os\.environ\s*\[\s*["'](?:API_KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AWS_SECRET|OPENAI_API_KEY|ANTHROPIC_API_KEY|DATABASE_URL)["']\s*\]|"""
+            r"""(?:os\.)?(?:environ\.get|getenv)\s*\(\s*["'](?:API_KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|AWS_SECRET|OPENAI_API_KEY|ANTHROPIC_API_KEY|DATABASE_URL)["'])"""
         ),
         "An MCP tool accesses environment credentials, potentially exfiltrating them.",
         "Review whether the MCP tool genuinely needs these credentials; scope access to minimum required.",
@@ -4301,15 +4302,16 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP275",
-        "MCP tool without input validation",
+        "MCP tool accepts an unbounded input schema",
         "security",
         "medium",
         "low",
         compile_pattern(
-            r"""(?i)z\.object\(\{[^}]*\}\)\s*(?:\.parse|\.safeParse)?\s*\(\s*(?:args|input|params|request)\s*\)"""
+            r"""(?is)(?:registerTool|server\.tool|mcp\.tool)\s*\([\s\S]{0,1200}?"""
+            r"""\b(?:inputSchema|schema)\s*:\s*z\.(?:any|unknown)\s*\(\s*\)"""
         ),
-        "An MCP tool accepts input without schema validation, potentially accepting malicious input.",
-        "Add input validation using a schema library; validate all inputs before processing.",
+        "An MCP tool declares an unbounded input schema, allowing arbitrary values at the tool boundary.",
+        "Replace z.any() or z.unknown() with a strict, size-bounded field schema and reject unknown keys.",
         "CWE-20",
         "OWASP ASVS V5",
         frozenset({".mjs", ".js", ".ts"}),
@@ -13484,6 +13486,22 @@ DOCUMENT_SCAN_RULE_IDS = frozenset(
     }
 )
 
+MCP_RULE_IDS = frozenset({"SP271", "SP272", "SP273", "SP274", "SP275"})
+MCP_SOURCE_SIGNAL = re.compile(
+    r"@modelcontextprotocol/sdk|\bMcpServer\b|\bFastMCP\b|"
+    r"\bregisterTool\s*\(|\b(?:server|mcp)\.tool\s*\(",
+    re.IGNORECASE,
+)
+
+
+def has_mcp_context(relative_path: str, source_text: str) -> bool:
+    """Require visible MCP ownership before applying MCP-specific rules."""
+
+    normalized = relative_path.replace("\\", "/").lower()
+    path_has_mcp_segment = re.search(r"(?:^|[/_.-])mcp(?:$|[/_.-])", normalized) is not None
+    return path_has_mcp_segment or MCP_SOURCE_SIGNAL.search(source_text) is not None
+
+
 FILE_LEVEL_RULE_IDS = frozenset(
     {
         "SP107",
@@ -13610,10 +13628,13 @@ def find_regex_issues(
         suffix in DOCUMENT_SUFFIXES,
         path.name.lower() in {"dockerfile", "containerfile"},
     )
+    mcp_context = has_mcp_context(relative_path, source_text)
     gates = rule_gates()
     for rule in applicable_rules:
         rule_is_secret = rule.redact
         rule_id = rule.rule_id
+        if rule_id in MCP_RULE_IDS and not mcp_context:
+            continue
         if rule_id in {"SP092", "SP095"} and path.name.lower() != "package.json":
             continue
         if rule_id == "SP093" and path.name.lower() != "pom.xml":

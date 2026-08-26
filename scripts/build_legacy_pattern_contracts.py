@@ -42,6 +42,8 @@ MANUAL_WITNESSES = {
     "SP124": "fetch(req.query.target)",
     "SP202": "FROM python:latest",
     "SP212": "run: printenv",
+    "SP274": "process.env.API_KEY",
+    "SP275": 'server.registerTool("run", { inputSchema: z.any() }, handler)',
     "SP332": "go func() { ch <- value // unbuffered\n}()",
     "SP371": "for i, item := range items {\n    go func() { use(item) }\n}",
     "SP592": "const body = (await req.json()) as any",
@@ -58,6 +60,11 @@ PATH_OVERRIDES = {
     "SP202": "contract-fixtures/container/sp202-positive-a/Dockerfile",
     "SP221": "contract-fixtures/supply-chain/sp221-positive-a/pyproject.toml",
     "SP269": "contract-fixtures/systemd/sp269-positive-a.service",
+    "SP271": "contract-fixtures/mcp/sp271-positive-a/mcp-server.py",
+    "SP272": "contract-fixtures/mcp/sp272-positive-a/mcp-server.py",
+    "SP273": "contract-fixtures/mcp/sp273-positive-a/mcp-server.py",
+    "SP274": "contract-fixtures/mcp/sp274-positive-a/mcp-server.py",
+    "SP275": "contract-fixtures/mcp/sp275-positive-a/mcp-server.ts",
     "SP332": "contract-fixtures/go/sp332-positive-a.go",
 }
 SUFFIX_PRIORITY = (

@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 620 deterministic executable rules (`SP001`-`SP665`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
+ShipProof applies 635 deterministic executable rules (`SP001`-`SP665`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -305,7 +305,7 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP272`** | HIGH | Security | MCP tool with unrestricted file system access | Regex |
 | **`SP273`** | MEDIUM | Security | MCP tool with network access without allowlist | Regex |
 | **`SP274`** | CRITICAL | Security | MCP tool accessing environment credentials | Regex |
-| **`SP275`** | MEDIUM | Security | MCP tool without input validation | Regex |
+| **`SP275`** | MEDIUM | Security | MCP tool accepts an unbounded input schema | Regex |
 | **`SP281`** | HIGH | Security | Ollama API endpoint exposed without authentication | Regex |
 | **`SP282`** | HIGH | Security | Ollama model pulled from untrusted registry | Regex |
 | **`SP283`** | HIGH | Security | ComfyUI workflow with untrusted custom node | Regex |

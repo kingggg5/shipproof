@@ -8,7 +8,7 @@
       "engine": "pattern",
       "ecosystem": "common",
       "rule_count": 265,
-      "sha256": "432b335b6af4d4a00524e7acbbf9b3d053992175ddb4d27509b81f42b1cd50f5"
+      "sha256": "7533efdce669449ae956a61bcbf9fec4d12af829988c31ce841a193eaacfedf6"
     },
     {
       "path": "pattern-container.v2.json",

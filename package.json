@@ -1,7 +1,7 @@
 {
   "name": "@kingggg5/shipproof",
   "version": "0.10.0",
-  "description": "Zero-dependency production gate, resource budget, and capacity model for AI-written code",
+  "description": "Zero-dependency production gate, resource budget, and capacity model for AI-assisted code",
   "type": "module",
   "bin": {
     "shipproof": "bin/shipproof.mjs"
@@ -49,7 +49,8 @@
     "LICENSE",
     "README.md",
     "README.th.md",
-    "SECURITY.md"
+    "SECURITY.md",
+    "SUPPORT.md"
   ],
   "scripts": {
     "benchmark": "python benchmarks/benchmark_suite.py",
@@ -88,7 +89,8 @@
   },
   "publishConfig": {
     "access": "public",
-    "registry": "https://npm.pkg.github.com"
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
   },
   "repository": {
     "type": "git",
@@ -97,7 +99,7 @@
   "bugs": {
     "url": "https://github.com/kingggg5/shipproof/issues"
   },
-  "homepage": "https://github.com/kingggg5/shipproof#readme",
+  "homepage": "https://shipproof-site.sjet2744.chatgpt.site/shipproof/",
   "keywords": [
     "ai-agents",
     "application-security",

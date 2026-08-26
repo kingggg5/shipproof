@@ -21,7 +21,7 @@ ShipProof is an independently developed production gate for repositories written
 
 ShipProof is not a certification, penetration test, formal proof, or substitute for product-specific threat modeling and runtime tests. It makes assumptions visible, reports the strength of available evidence, and preserves human authority for consequential actions and releases.
 
-**Project resources:** [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Research methodology](docs/research.md) · [Roadmap](docs/roadmap.md) · [Citation](CITATION.cff)
+**Project resources:** [Website](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](docs/community-validation.md) · [Research methodology](docs/research.md) · [Roadmap](docs/roadmap.md) · [Citation](CITATION.cff)
 
 <p align="center">
   <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
@@ -67,13 +67,13 @@ Node.js 20+ runs the front-door CLI. Python 3.10+ is needed for `scan`, `check`,
 
 ## Scope and project status
 
-ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **620 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
+ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **635 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
 
 | Property | Current contract |
 | :--- | :--- |
 | Current release | `v0.10.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
-| Executable rules | 620 (`SP001`–`SP665`, with deliberate reserved gaps) |
+| Executable rules | 635 (`SP001`–`SP665`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates plus 1,000 reserved promotion slots; none are findings until promoted |
 | Exit codes | `0` pass, `1` policy gate failure, `2` invalid or unavailable evidence |
@@ -152,7 +152,7 @@ Full prompt samples, invariant analysis, token cost budgeting, worktree isolatio
 
 ## Detection rules
 
-**620 deterministic executable rules** (`SP001`–`SP665`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
+**635 deterministic executable rules** (`SP001`–`SP665`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
 
 The complete catalog, severity, category, and detection method per rule, plus the ecosystem/framework mapping that decides where each structural check runs, lives in **[docs/rules.md](docs/rules.md)**.
 
@@ -313,7 +313,7 @@ All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
 ## Research & evaluation status
 
-The scanner ships 620 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready`, 22 were rejected as duplicates or wrong evidence routes, and none was silently promoted without representative shadow metrics. See [the batch record](research/promotion-batch-a.json) and [the broader plan](research/promotion-plan.json).
+The scanner ships 635 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready`, 22 were rejected as duplicates or wrong evidence routes, and none was silently promoted without representative shadow metrics. See [the batch record](research/promotion-batch-a.json) and [the broader plan](research/promotion-plan.json).
 
 Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
 
@@ -350,9 +350,9 @@ A research candidate becomes an executable `SPxxx` rule only after deduplication
 | [Expert candidate catalog](docs/rule-expansion-1000.md) | 1,000 model-assisted, source-mapped hypotheses | None |
 | [2021–2026 annual catalog](docs/rule-expansion-2021-2026.md) | 1,800 time-bounded CVE/CWE/community signals | None |
 | [Language catalog](docs/rule-expansion-languages-5000.md) | 5,000 deduplicated ecosystem/CWE research slots | None |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 620 reviewed detectors | Emits versioned findings |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 635 reviewed detectors | Emits versioned findings |
 
-The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 620 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
+The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 635 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
 
 See the [production playbook](docs/production-playbook.md), [development plan](docs/next-development-plan.md), and [delivery roadmap](docs/roadmap.md) for operational boundaries and acceptance gates. Cite a release using [CITATION.cff](CITATION.cff). ShipProof deliberately avoids a single readiness score because one veto-level failure must not be averaged away by many clean checks.
 
@@ -371,7 +371,7 @@ python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 
 The core runtime uses only Node and the Python standard library; Ruff is development-only. The optional MCP adapter uses the MCP SDK and Zod as explicitly installed peers. CI tests Node 20/22/24 and Python 3.10/3.11/3.12/3.13/3.14, verifies an exact package allowlist, smoke-tests the packed artifact, and runs CodeQL for Python and JavaScript/TypeScript.
 
-The scoped npm manifest is ready for a future registry release. Until the owner configures npm trusted publishing, use the GitHub npm install shown above; this project does not claim an unpublished registry release. See [docs/releasing.md](docs/releasing.md).
+The scoped npm manifest and manual OIDC workflow are ready for a future public npm release. Until the owner establishes the package, protected environment, and trusted-publisher relationship, use the GitHub npm install shown above; this project does not claim an unpublished registry release. See [docs/releasing.md](docs/releasing.md).
 
 ## License, citation, and security
 

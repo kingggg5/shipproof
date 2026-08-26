@@ -1,0 +1,64 @@
+name: Publish npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Immutable release tag to publish (for example v0.10.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    environment: npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Validate release tag input
+        env:
+          SHIPPROOF_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "${SHIPPROOF_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "tag must be an exact vMAJOR.MINOR.PATCH release tag" >&2
+            exit 2
+          fi
+      - name: Checkout immutable release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Set up Node.js for trusted publishing
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org/
+      - name: Verify tag, version, and npm client
+        env:
+          SHIPPROOF_TAG: ${{ inputs.tag }}
+        run: |
+          git tag --points-at HEAD --format='%(refname:short)' | grep -Fx -- "${SHIPPROOF_TAG}"
+          node -e 'const p=require("./package.json"); if (`v${p.version}` !== process.env.SHIPPROOF_TAG) process.exit(2)'
+          node -e 'const {execFileSync}=require("node:child_process"); const [a,b]=execFileSync("npm",["--version"],{encoding:"utf8"}).trim().split(".").map(Number); if (a<11 || (a===11 && b<5)) { console.error("npm 11.5.1 or newer is required for trusted publishing"); process.exit(2); }'
+      - name: Install development tools
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+      - name: Install MCP contract-test peers
+        run: npm ci --include=dev --ignore-scripts
+      - name: Verify release source and package boundary
+        run: npm run check
+      - name: Publish with npm trusted publishing
+        run: npm publish --access public

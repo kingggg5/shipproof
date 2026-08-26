@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Usage questions and design discussion
+    url: https://github.com/kingggg5/shipproof/discussions
+    about: Ask for help or discuss workflows without filing a defect.
+  - name: Private security report
+    url: https://github.com/kingggg5/shipproof/security/advisories/new
+    about: Report exploitable vulnerabilities without exposing sensitive details publicly.

@@ -2,9 +2,13 @@
 
 ## Unreleased
 
-## 0.10.0 - 2026-08-24
+## 0.10.0 - 2026-08-26
 
-- Complete machine-readable assurance contracts for all 620 executable rules: positive, negative, adversarial, CWE/control, remediation, and false-positive boundaries now fail closed through a derived inventory.
+- Publish the dependency-free English/Thai website source, add support and evidence-first issue forms, and make community validation—not raw rule-count growth—the next public milestone.
+- Prepare a separate manual npm trusted-publishing workflow with exact-tag validation, a protected environment, OIDC, provenance, and no long-lived-token fallback; registry publication remains unclaimed until the owner establishes the npm package relationship.
+- Correct every current public rule-count claim to the scanner-derived 635-rule inventory and add a structure test that fails on future documentation drift.
+- Tighten `SP271`–`SP275` to files with visible MCP ownership, require exact file-access calls for `SP272`, recognize real JavaScript/Python credential access for `SP274`, and replace the inverted `SP275` validation match with an unbounded `z.any()`/`z.unknown()` schema check. The secure cross-file corpus returns to zero findings, and executable secret fixtures stay self-scan-safe through split source parts.
+- Complete machine-readable assurance contracts for all 635 executable rules: positive, negative, adversarial, CWE/control, remediation, and false-positive boundaries now fail closed through a derived inventory.
 - Triage the first 25-candidate polyglot promotion batch without inflating the executable catalog: three research-only prototypes reached `fixture_ready`, 22 were rejected as duplicates or unsupported semantic claims, and none were promoted without shadow evidence.
 - Harden optional TypeScript, Go, and Rust evidence adapters with repository-contained executable resolution, tool-specific version probes, explicit project-code consent, bounded/redacted diagnostics, and distinct unavailable, timeout, output-limit, crash, and finding states.
 - Make performance evidence reproducible with multi-sample median/p95 reports, deterministic workload digests, clean/adversarial/large-file profiles, explicit memory and time budgets, and weekly CI coverage.

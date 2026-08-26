@@ -1,0 +1,270 @@
+<!doctype html>
+<!--
+  THESIS: ShipProof เปลี่ยนโค้ดที่เขียนด้วย AI ให้เป็นหลักฐานที่ตรวจสอบได้ก่อน merge
+  OWN-WORLD: พื้นสีขาว ตัวอักษรเข้ม ปุ่มสีน้ำเงิน สถานะผ่านสีเขียว และหลักฐานแบบ monospace
+  STORY: ผู้ประเมินเห็น gate ทำงาน เข้าใจวงจรสี่ขั้นตอน แล้วเริ่มรันบนเครื่องของตัวเอง
+  FIRST VIEWPORT: ฝั่งซ้ายคือคำอธิบายและ action; ฝั่งขวาคือ evidence console ตัวอย่างที่ระบุชัดว่าไม่ใช่ live scan
+  FORM: หน้าแนะนำเครื่องมือสำหรับนักพัฒนาแบบเน้นความน่าเชื่อถือและอ่านง่าย
+-->
+<html lang="th" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f9fc" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'self'" />
+    <meta name="description" content="ShipProof คือ production evidence gate แบบ local-first สำหรับซอฟต์แวร์ที่พัฒนาด้วย AI" />
+    <link rel="alternate" hreflang="en" href="index.html" />
+    <link rel="alternate" hreflang="th" href="index.th.html" />
+    <link rel="alternate" hreflang="x-default" href="index.html" />
+    <title>ShipProof: มีหลักฐานก่อน merge</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">ข้ามไปยังเนื้อหา</a>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.th.html" aria-label="หน้าแรก ShipProof">
+          <img src="../docs/assets/shipproof-logo.svg" alt="" width="40" height="40" />
+          <span class="brand-name">ShipProof</span>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          <span class="sr-only">เปิดหรือปิดเมนูนำทาง</span>
+          <span aria-hidden="true">เมนู</span>
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="เมนูหลัก">
+          <a href="#workflow">เวิร์กโฟลว์</a>
+          <a href="#demo">เดโม</a>
+          <a href="#evidence">หลักฐาน</a>
+          <a href="#surfaces">การเชื่อมต่อ</a>
+          <a href="https://github.com/kingggg5/shipproof" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          <span class="language-switch" aria-label="ภาษา"><a href="index.html">EN</a><span aria-hidden="true">/</span><a class="is-current" href="index.th.html" aria-current="page">ไทย</a></span>
+          <a class="nav-cta" href="https://github.com/kingggg5/shipproof#quick-start" target="_blank" rel="noreferrer">รันในเครื่อง</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero section-pad">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Production evidence gate / v0.10.0</p>
+            <h1>มีหลักฐานก่อน <span class="accent-underline">merge.</span></h1>
+            <p class="hero-lede">ShipProof ตรวจการเปลี่ยนแปลงที่พัฒนาด้วย AI ในด้านความปลอดภัย ความถูกต้อง สเกล ประสิทธิภาพ และความเสี่ยงก่อน release ทำงานในเครื่อง ให้ผลลัพธ์แบบ deterministic และมีหลักฐานที่ทีมตรวจสอบได้</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="https://github.com/kingggg5/shipproof#quick-start" target="_blank" rel="noreferrer">เริ่มรัน gate ในเครื่อง <span aria-hidden="true">↗</span></a>
+              <a class="button button-quiet glass-border" href="#evidence">ดูหลักฐานตัวอย่าง <span aria-hidden="true">↓</span></a>
+            </div>
+            <div class="hero-promises" aria-label="คำมั่นของผลิตภัณฑ์">
+              <span><i aria-hidden="true">✓</i> อ่านอย่างเดียวเป็นค่าเริ่มต้น</span>
+              <span><i aria-hidden="true">✓</i> ไม่อัปโหลดซอร์สโค้ด</span>
+              <span><i aria-hidden="true">✓</i> ไม่ต้องมี runtime dependency</span>
+            </div>
+          </div>
+
+          <div class="console-wrap" aria-label="ผลลัพธ์หลักฐาน ShipProof ตัวอย่าง">
+            <div class="console-note"><span class="sample-mark">ข้อมูลตัวอย่าง</span></div>
+            <div class="evidence-console">
+              <div class="console-topbar">
+                <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+                <code>shipproof check .</code>
+                <span class="console-lock" aria-label="ตัวอย่างทำงานในเครื่อง">LOCAL</span>
+              </div>
+              <div class="console-status">
+                <div><span class="status-kicker">ผลลัพธ์ GATE</span><strong class="status-fail-head">FAIL_WITH_FINDINGS</strong></div>
+                <span class="status-fail"><span aria-hidden="true">!</span> บล็อก 3 รายการ</span>
+              </div>
+              <div class="console-tabs" role="tablist" aria-label="รูปแบบผลลัพธ์ตัวอย่าง">
+                <button class="console-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="sample-terminal" id="tab-terminal" data-output="terminal">เทอร์มินัล</button>
+                <button class="console-tab" type="button" role="tab" aria-selected="false" aria-controls="sample-json" id="tab-json" data-output="json">JSON</button>
+                <button class="console-tab" type="button" role="tab" aria-selected="false" aria-controls="sample-sarif" id="tab-sarif" data-output="sarif">SARIF</button>
+              </div>
+              <pre class="console-output" id="sample-terminal" role="tabpanel" aria-labelledby="tab-terminal"><span class="line-muted">$ shipproof check . &#45;&#45;format terminal</span>
+&gt; <span class="line-fail">FAIL</span> scope: changed-since HEAD (18 ไฟล์)
+&gt; <span class="line-key">security</span>     2 high · 4 medium · 2 low
+&gt; <span class="line-key">correctness</span>  1 high · 1 medium · 1 low
+&gt; <span class="line-key">scale</span>        1 high · 1 medium · budget เกิน
+&gt; <span class="line-key">release</span>      1 high · artifact ผ่าน
+&gt;
+&gt; <span class="line-fail">[HIGH]</span> SP105 JWT signature verification disabled
+&gt;          src/auth/jwt.ts:61 · <span class="line-accent">บล็อก 3 รายการ</span>
+&gt; <span class="line-fail">[HIGH]</span> SP109 SSRF to internal network or metadata
+&gt;          src/routes/proxy.ts:44 · <span class="line-accent">แนบคำแนะนำแล้ว</span>
+&gt; <span class="line-fail">[HIGH]</span> SP110 path traversal in file path
+&gt;          src/storage/download.ts:32 · <span class="line-accent">บล็อก 1 รายการ</span>
+&gt; <span class="line-fail">[HIGH]</span> SP501 unmetered AI/LLM API route
+&gt;          src/api/generate.ts:17 · <span class="line-accent">เกินงบประมาณ</span>
+&gt; <span class="line-warn">[MED]</span>  SP204 sensitive data or credential logging
+&gt;          src/auth/login.ts:88 · แนบขอบเขต false positive
+&gt; <span class="line-warn">[MED]</span>  SP406 Express error sent to client
+&gt;          src/api/errors.ts:27 · อาจเผย stack trace
+&gt;
+&gt; findings: <span class="line-fail">14</span> · evidence: <span class="line-accent">sp-evidence-7d2c</span>
+&gt; exit code: <span class="line-fail">1</span></pre>
+              <pre class="console-output is-hidden" id="sample-json" role="tabpanel" aria-labelledby="tab-json" hidden>{
+  <span class="json-key">"status"</span>: <span class="json-string">"fail_with_findings"</span>,
+  <span class="json-key">"scope"</span>: <span class="json-string">"changed-since HEAD"</span>,
+  <span class="json-key">"blocking"</span>: <span class="json-number">3</span>,
+  <span class="json-key">"findings"</span>: [
+    { <span class="json-key">"rule_id"</span>: <span class="json-string">"SP105"</span>, <span class="json-key">"severity"</span>: <span class="json-string">"high"</span> },
+    { <span class="json-key">"rule_id"</span>: <span class="json-string">"SP109"</span>, <span class="json-key">"severity"</span>: <span class="json-string">"high"</span> },
+    { <span class="json-key">"rule_id"</span>: <span class="json-string">"SP204"</span>, <span class="json-key">"severity"</span>: <span class="json-string">"medium"</span> }
+  ],
+  <span class="json-key">"evidence_id"</span>: <span class="json-string">"sp-evidence-7d2c"</span>,
+  <span class="json-key">"exit_code"</span>: <span class="json-number">1</span>
+}</pre>
+              <pre class="console-output is-hidden" id="sample-sarif" role="tabpanel" aria-labelledby="tab-sarif" hidden><span class="line-muted">// SARIF 2.1.0 excerpt</span>
+{
+  <span class="json-key">"version"</span>: <span class="json-string">"2.1.0"</span>,
+  <span class="json-key">"runs"</span>: [{ <span class="json-key">"tool"</span>: <span class="json-string">"ShipProof"</span>,
+    <span class="json-key">"results"</span>: [
+      { <span class="json-key">"ruleId"</span>: <span class="json-string">"SP105"</span>, <span class="json-key">"level"</span>: <span class="json-string">"error"</span> },
+      { <span class="json-key">"ruleId"</span>: <span class="json-string">"SP109"</span>, <span class="json-key">"level"</span>: <span class="json-string">"error"</span> },
+      { <span class="json-key">"ruleId"</span>: <span class="json-string">"SP204"</span>, <span class="json-key">"level"</span>: <span class="json-string">"warning"</span> }
+    ] }]
+}</pre>
+              <div class="console-footer"><span>14 findings · บล็อก 3</span><span>exit 1</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="proof-strip" aria-label="คุณสมบัติผลิตภัณฑ์">
+        <div class="container proof-strip-grid">
+          <p><span class="proof-number">01</span><strong>Local-first</strong><span>ซอร์สโค้ดอยู่ในเครื่องของคุณ</span></p>
+          <p><span class="proof-number">02</span><strong>Deterministic</strong><span>อินพุตเดิมได้ผลลัพธ์ที่ตรวจสอบได้</span></p>
+          <p><span class="proof-number">03</span><strong>Automatable</strong><span>เทอร์มินัล, Action, JSON, SARIF, MCP</span></p>
+        </div>
+      </section>
+
+      <section class="section-pad demo-section" id="demo">
+        <div class="container">
+          <div class="section-heading section-heading-row">
+            <div>
+              <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Interactive sample</p>
+              <h2>ดู gate ตัดสินใจจากหลักฐานจริง</h2>
+            </div>
+            <p class="section-intro">ลองรัน fixture เพื่อดูรูปแบบหลักฐานเดียวกับที่ทีมใช้ใน CI</p>
+          </div>
+
+          <div class="scan-demo glass-border">
+            <div class="scan-demo-toolbar">
+              <div class="scan-command"><span class="figure-label">DEMO REPOSITORY</span><code>shipproof check ./demo-service &#45;&#45;changed-since HEAD</code></div>
+              <button class="button button-primary scan-run" type="button" data-scan-start>รันสแกนตัวอย่าง <span aria-hidden="true">▶</span></button>
+            </div>
+            <div class="scan-demo-body">
+              <div class="scan-progress" aria-live="polite">
+                <div class="scan-progress-head"><div><span class="figure-label">SCAN PIPELINE</span><strong data-scan-state>พร้อมเริ่มทำงาน</strong></div><span class="scan-clock" data-scan-duration>00.00s</span></div>
+                <ol class="scan-stages">
+                  <li data-scan-stage="scope"><span class="stage-icon">01</span><div><strong>กำหนดขอบเขตไฟล์</strong><small>12 ไฟล์ · HEAD..worktree</small></div><span class="stage-status" data-stage-status>พร้อม</span></li>
+                  <li data-scan-stage="rules"><span class="stage-icon">02</span><div><strong>ประเมินกฎ</strong><small>security · correctness · scale</small></div><span class="stage-status" data-stage-status>พร้อม</span></li>
+                  <li data-scan-stage="budget"><span class="stage-icon">03</span><div><strong>ตรวจ budget</strong><small>latency · memory · artifact size</small></div><span class="stage-status" data-stage-status>พร้อม</span></li>
+                  <li data-scan-stage="evidence"><span class="stage-icon">04</span><div><strong>เขียนหลักฐาน</strong><small>terminal · JSON · SARIF</small></div><span class="stage-status" data-stage-status>พร้อม</span></li>
+                </ol>
+              </div>
+
+              <div class="scan-report">
+                <div class="scan-report-top"><span class="figure-label">DECISION RECORD</span><span class="demo-badge">DEMO DATA</span></div>
+                <div class="scan-result"><div><span class="status-kicker">RELEASE GATE</span><strong data-scan-result>FAIL WITH FINDINGS</strong></div><span class="status-fail"><span aria-hidden="true">!</span> <span data-scan-badge>บล็อก 3 รายการ</span></span></div>
+                <div class="scan-metrics"><div><span>FILES</span><strong>18</strong></div><div><span>FINDINGS</span><strong>14</strong></div><div><span>HIGH</span><strong>5</strong></div><div><span>MEDIUM</span><strong>6</strong></div></div>
+                <div class="scan-findings" aria-label="ตัวอย่าง findings">
+                  <div class="finding-row"><span class="finding-severity finding-critical">HIGH</span><div><strong>SP105 · JWT signature verification disabled</strong><small>src/auth/jwt.ts:61 · บล็อก merge</small></div><span class="finding-state">แก้ไข</span></div>
+                  <div class="finding-row"><span class="finding-severity finding-high">HIGH</span><div><strong>SP109 · SSRF to internal network or metadata</strong><small>src/routes/proxy.ts:44 · แนบคำแนะนำแล้ว</small></div><span class="finding-state">แก้ไข</span></div>
+                  <div class="finding-row"><span class="finding-severity finding-medium">MED</span><div><strong>SP204 · sensitive data or credential logging</strong><small>src/auth/login.ts:88 · แนบขอบเขต false positive</small></div><span class="finding-state">ทบทวน</span></div>
+                  <div class="finding-row"><span class="finding-severity finding-high">HIGH</span><div><strong>SP203 · unpinned GitHub Action</strong><small>.github/workflows/ci.yml:29 · supply-chain risk</small></div><span class="finding-state">ทบทวน</span></div>
+                </div>
+                <div class="scan-evidence-line"><code>evidence://sp-demo-7d2c</code><span>14 findings · exit 1</span></div>
+              </div>
+            </div>
+            <p class="demo-disclaimer">ตัวอย่างเท่านั้น · ไม่มีการอัปโหลดหรือสแกน repository</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad" id="workflow">
+        <div class="container">
+          <div class="section-heading section-heading-row">
+            <div>
+              <p class="eyebrow">วงจรการทำงาน</p>
+              <h2>จากโค้ดที่สร้างขึ้น สู่หลักฐานที่พร้อม merge</h2>
+            </div>
+            <p class="section-intro">gate ขนาดเล็กที่ทำซ้ำได้และเข้ากับ workflow เดิมของทีม เริ่มจากเทอร์มินัล แล้วใช้ contract เดิมใน CI เมื่อพร้อม</p>
+          </div>
+          <div class="workflow-grid">
+            <ol class="step-list">
+              <li class="step-item is-current"><span class="step-index">01</span><div><h3>กำหนดขอบเขต</h3><p>ระบุไฟล์และหลักฐานที่เปลี่ยนแปลงจริง</p></div></li>
+              <li class="step-item"><span class="step-index">02</span><div><h3>สแกน</h3><p>ตรวจความปลอดภัย ความถูกต้อง สเกล ประสิทธิภาพ และ release</p></div></li>
+              <li class="step-item"><span class="step-index">03</span><div><h3>แก้ไข</h3><p>อ่านวิธีแก้และขอบเขต false positive คู่กับแต่ละ finding</p></div></li>
+              <li class="step-item"><span class="step-index">04</span><div><h3>ยืนยัน</h3><p>เก็บผลลัพธ์เป็น terminal, JSON, SARIF หรือหลักฐานจาก CI</p></div></li>
+            </ol>
+            <figure class="workflow-figure glass-border">
+              <img src="../docs/assets/shipproof-workflow.png" alt="เวิร์กโฟลว์ ShipProof: กำหนดขอบเขต สแกน แก้ไข และยืนยัน" loading="lazy" />
+              <figcaption><span class="figure-label">แผนผังเวิร์กโฟลว์</span> contract เดียวกันทั้งงานในเครื่องและ automation</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad section-tint" id="evidence">
+        <div class="container evidence-grid">
+          <div class="evidence-copy">
+            <p class="eyebrow">หลักฐาน ไม่ใช่ความรู้สึก</p>
+            <h2>ทำให้การตัดสินใจอ่านได้ทั้งคนและเครื่อง</h2>
+            <p>ทุกผลลัพธ์มี rule ID ที่คงที่ ระดับความรุนแรง mapping กับ control วิธีแก้ และขอบเขตที่อาจเป็น false positive นี่คือสิ่งที่ทำให้ gate ตรวจสอบได้ ไม่ใช่กล่องดำ</p>
+            <a class="text-link" href="https://github.com/kingggg5/shipproof/blob/main/docs/commands.md" target="_blank" rel="noreferrer">อ่าน command reference <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="terminal-card glass-border">
+            <div class="terminal-card-top"><span class="figure-label">มุมมองเทอร์มินัล</span><span class="terminal-card-meta">ตัวอย่าง / ไม่ใช้เครือข่าย</span></div>
+            <img src="../docs/assets/terminal-demo.svg" alt="ผลลัพธ์เทอร์มินัล ShipProof ตัวอย่าง แสดง finding และ exit code" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad" id="surfaces">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">contract เดียว หลายพื้นผิว</p>
+            <h2>ให้ทีมใช้ในจุดที่ต้องตัดสินใจ</h2>
+          </div>
+          <div class="surface-grid glass-border">
+            <article class="surface-card"><span class="card-index">A</span><h3>CLI</h3><p>รัน gate แบบอ่านอย่างเดียวจาก root ของ repository ให้ feedback อยู่ใกล้โค้ด</p><code>shipproof check .</code></article>
+            <article class="surface-card"><span class="card-index">B</span><h3>GitHub Action</h3><p>ใช้ exit code และ evidence contract เดิมใน pull request และ release job</p><code>uses: kingggg5/shipproof@v0.10.0</code></article>
+            <article class="surface-card"><span class="card-index">C</span><h3>JSON / SARIF</h3><p>ส่งออกผลลัพธ์แบบมีโครงสร้างสำหรับ annotation, archive และเครื่องมือ review</p><code>&#45;&#45;format sarif</code></article>
+            <article class="surface-card"><span class="card-index">D</span><h3>MCP (เสริม)</h3><p>เชื่อม gate เข้ากับ AI workflow โดยไม่ทำให้ตัว scanner ต้องพึ่งโมเดล</p><code>shipproof mcp</code></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad section-tint">
+        <div class="container boundary-grid">
+          <div>
+            <p class="eyebrow">ขอบเขตของคำกล่าวอ้าง</p>
+            <h2>ความมั่นใจที่มีร่องรอยให้ตรวจสอบ</h2>
+          </div>
+          <div class="boundary-list">
+            <div class="boundary-row"><span class="boundary-icon boundary-yes" aria-hidden="true">✓</span><div><h3>ShipProof พูดได้ว่า</h3><p>“อินพุตนี้ให้ finding แบบ deterministic เหล่านี้ ภายใต้ policy และ scope นี้”</p></div></div>
+            <div class="boundary-row"><span class="boundary-icon boundary-no" aria-hidden="true">×</span><div><h3>ShipProof ไม่ได้พูดว่า</h3><p>“โค้ดนี้ผ่านการรับรอง ป้องกันการเจาะได้ หรือไม่มี defect ใด ๆ”</p></div></div>
+            <div class="boundary-row"><span class="boundary-icon boundary-note" aria-hidden="true">→</span><div><h3>ทีมของคุณเป็นผู้ตัดสินใจ</h3><p>ใช้หลักฐานร่วมกับ review, tests, threat model และบริบทของระบบ</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad final-cta">
+        <div class="container final-cta-inner">
+          <div><p class="eyebrow">เริ่มด้วยคำสั่งเดียว</p><h2>ส่งการเปลี่ยนแปลง พร้อมเก็บหลักฐานไว้</h2></div>
+          <div class="final-cta-actions"><a class="button button-primary" href="https://github.com/kingggg5/shipproof#quick-start" target="_blank" rel="noreferrer">อ่าน quick start <span aria-hidden="true">↗</span></a><a class="button button-quiet glass-border" href="https://github.com/kingggg5/shipproof/releases" target="_blank" rel="noreferrer">ดู releases <span aria-hidden="true">↗</span></a></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div><div class="footer-brand"><img src="../docs/assets/shipproof-logo.svg" alt="" width="34" height="34" /><span>ShipProof</span></div><p>หลักฐาน production แบบ local-first สำหรับซอฟต์แวร์ที่พัฒนาด้วย AI</p></div>
+        <div class="footer-links"><a href="https://github.com/kingggg5/shipproof/blob/main/LICENSE" target="_blank" rel="noreferrer">ใบอนุญาต</a><a href="https://github.com/kingggg5/shipproof/blob/main/SECURITY.md" target="_blank" rel="noreferrer">ความปลอดภัย</a><a href="https://github.com/kingggg5/shipproof/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">ร่วมพัฒนา</a></div>
+        <p class="footer-note">ไม่มี telemetry ไม่มีการอัปโหลดซอร์ส หลักฐานยังตรวจสอบได้</p>
+      </div>
+    </footer>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

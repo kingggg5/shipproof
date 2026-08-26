@@ -10,7 +10,7 @@ body:
     id: version
     attributes:
       label: ShipProof version
-      placeholder: 0.3.0
+      placeholder: 0.10.0
     validations:
       required: true
   - type: dropdown
@@ -18,12 +18,13 @@ body:
     attributes:
       label: Area
       options:
-        - Skill workflow
-        - Repository scanner
-        - Capacity model
+        - Scanner rule or finding
+        - Policy or gate
         - npm CLI
-        - Prompt catalog
-        - Installer
+        - GitHub Action
+        - MCP adapter
+        - Budget or capacity model
+        - Skill or installer
         - Documentation
     validations:
       required: true

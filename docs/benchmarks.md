@@ -26,7 +26,7 @@ CI runs the fixture battery and throughput check weekly ([.github/workflows/benc
 
 Six small repositories serve as executable contracts: two intentionally vulnerable single-file APIs, one multi-file Node corpus whose taint crosses three files, one adversarial suite of precision traps, and two secure counterparts that must produce zero findings. Labels mark which files genuinely contain issues; scoring is file-level against those labels.
 
-Latest controlled-corpus run (Windows 11, Python 3.12.10, `--cross-file`, median of 3, 2026-08-24):
+Latest controlled-corpus run (Windows 11, Python 3.12.10, `--cross-file`, median of 3, 2026-08-26):
 
 | Corpus | Findings | TP | FP | FN | TN | Context only | Precision | Recall | F1 |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -47,11 +47,11 @@ The 2026-08-24 manifest run fetched and scanned all six pinned revisions success
 
 ## Performance
 
-Measured by [scripts/benchmark-scanner.py](../scripts/benchmark-scanner.py), which now records every sample, median, p95, fixture digest, workload bytes, warmup count, runtime identity, and peak RSS. A 2026-08-24 Windows/Python 3.12 local run measured:
+Measured by [scripts/benchmark-scanner.py](../scripts/benchmark-scanner.py), which now records every sample, median, p95, fixture digest, workload bytes, warmup count, runtime identity, and peak RSS. A 2026-08-26 Windows/Python 3.12 local run measured:
 
-- 1,000 clean 128-byte files: median 0.9747 s, p95 0.9879 s, peak RSS 25.57 MB (5-second reference budget passed).
-- 250 adversarial-regex 4 KiB files: median 2.3894 s, p95 2.4173 s, peak RSS 25.18 MB (5-second stress budget passed).
-- 8 adversarial-regex 512 KiB files: median 8.3898 s, p95 8.4919 s, peak RSS 27.53 MB (10-second large-file stress budget; the stricter 5-second exploratory target did not pass).
+- 1,000 clean 128-byte files: median 0.7675 s, p95 0.7744 s, peak RSS 28.68 MB (5-second reference budget passed).
+- 250 adversarial-regex 4 KiB files: median 2.2336 s, p95 2.3359 s, peak RSS 26.53 MB (5-second stress budget passed).
+- 8 adversarial-regex 512 KiB files: median 8.2779 s, p95 8.3140 s, peak RSS 28.32 MB (10-second large-file stress budget; the stricter 5-second exploratory target did not pass).
 
 Throughput is re-checked after engine changes; the JS/TS analyzer and SARIF enrichment did not move it measurably.
 

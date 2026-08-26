@@ -1,0 +1,270 @@
+<!doctype html>
+<!--
+  THESIS: ShipProof turns AI-written changes into inspectable evidence before merge; it refuses the generic “AI assistant” hero.
+  OWN-WORLD: White paper, ink/navy type, cobalt action, green semantic pass, hairline rules, system sans + monospace evidence.
+  STORY: A technical buyer sees the gate working, understands the four-step loop, then runs it locally.
+  FIRST VIEWPORT: Split screen: left headline and two actions; right live-looking but explicitly sample evidence console.
+  FORM: Trust-first developer-tool landing, chosen for a high-signal console demonstration and calm documentation rhythm.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f9fc" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'self'" />
+    <meta name="description" content="ShipProof is a local-first production evidence gate for AI-assisted software." />
+    <link rel="alternate" hreflang="en" href="index.html" />
+    <link rel="alternate" hreflang="th" href="index.th.html" />
+    <link rel="alternate" hreflang="x-default" href="index.html" />
+    <title>ShipProof: proof before merge</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="./" aria-label="ShipProof home">
+          <img src="../docs/assets/shipproof-logo.svg" alt="" width="40" height="40" />
+          <span class="brand-name">ShipProof</span>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          <span class="sr-only">Toggle navigation</span>
+          <span aria-hidden="true">Menu</span>
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary navigation">
+          <a href="#workflow">Workflow</a>
+          <a href="#demo">Demo</a>
+          <a href="#evidence">Evidence</a>
+          <a href="#surfaces">Integrations</a>
+          <a href="https://github.com/kingggg5/shipproof" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          <span class="language-switch" aria-label="Language"><a class="is-current" href="index.html" aria-current="page">EN</a><span aria-hidden="true">/</span><a href="index.th.html">ไทย</a></span>
+          <a class="nav-cta" href="https://github.com/kingggg5/shipproof#quick-start" target="_blank" rel="noreferrer">Run locally</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero section-pad">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Production evidence gate / v0.10.0</p>
+            <h1>Proof before <span class="accent-underline">merge.</span></h1>
+            <p class="hero-lede">ShipProof checks AI-assisted changes for security, correctness, scale, performance, and release risk. It runs locally, deterministically, and with evidence your team can inspect.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="https://github.com/kingggg5/shipproof#quick-start" target="_blank" rel="noreferrer">Run the gate locally <span aria-hidden="true">↗</span></a>
+              <a class="button button-quiet glass-border" href="#evidence">See sample evidence <span aria-hidden="true">↓</span></a>
+            </div>
+            <div class="hero-promises" aria-label="Product promises">
+              <span><i aria-hidden="true">✓</i> Read-only by default</span>
+              <span><i aria-hidden="true">✓</i> No source upload</span>
+              <span><i aria-hidden="true">✓</i> No runtime dependency</span>
+            </div>
+          </div>
+
+          <div class="console-wrap" aria-label="Illustrative ShipProof evidence output">
+            <div class="console-note"><span class="sample-mark">SAMPLE RUN</span></div>
+            <div class="evidence-console">
+              <div class="console-topbar">
+                <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+                <code>shipproof check .</code>
+                <span class="console-lock" aria-label="Local-only sample">LOCAL</span>
+              </div>
+              <div class="console-status">
+                <div><span class="status-kicker">GATE RESULT</span><strong class="status-fail-head">FAIL_WITH_FINDINGS</strong></div>
+                <span class="status-fail"><span aria-hidden="true">!</span> 3 blocking</span>
+              </div>
+              <div class="console-tabs" role="tablist" aria-label="Sample output format">
+                <button class="console-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="sample-terminal" id="tab-terminal" data-output="terminal">Terminal</button>
+                <button class="console-tab" type="button" role="tab" aria-selected="false" aria-controls="sample-json" id="tab-json" data-output="json">JSON</button>
+                <button class="console-tab" type="button" role="tab" aria-selected="false" aria-controls="sample-sarif" id="tab-sarif" data-output="sarif">SARIF</button>
+              </div>
+              <pre class="console-output" id="sample-terminal" role="tabpanel" aria-labelledby="tab-terminal"><span class="line-muted">$ shipproof check . &#45;&#45;format terminal</span>
+&gt; <span class="line-fail">FAIL</span> scope: changed-since HEAD (18 files)
+&gt; <span class="line-key">security</span>     2 high · 4 medium · 2 low
+&gt; <span class="line-key">correctness</span>  1 high · 1 medium · 1 low
+&gt; <span class="line-key">scale</span>        1 high · 1 medium · budget exceeded
+&gt; <span class="line-key">release</span>      1 high · artifact check passed
+&gt;
+&gt; <span class="line-fail">[HIGH]</span> SP105 JWT signature verification disabled
+&gt;          src/auth/jwt.ts:61 · <span class="line-accent">3 blocking</span>
+&gt; <span class="line-fail">[HIGH]</span> SP109 SSRF to internal network or metadata
+&gt;          src/routes/proxy.ts:44 · <span class="line-accent">remediation attached</span>
+&gt; <span class="line-fail">[HIGH]</span> SP110 path traversal in file path
+&gt;          src/storage/download.ts:32 · <span class="line-accent">1 blocking</span>
+&gt; <span class="line-fail">[HIGH]</span> SP501 unmetered AI/LLM API route
+&gt;          src/api/generate.ts:17 · <span class="line-accent">budget exceeded</span>
+&gt; <span class="line-warn">[MED]</span>  SP204 sensitive data or credential logging
+&gt;          src/auth/login.ts:88 · review boundary attached
+&gt; <span class="line-warn">[MED]</span>  SP406 Express error sent to client
+&gt;          src/api/errors.ts:27 · stack trace exposure
+&gt;
+&gt; findings: <span class="line-fail">14</span> · evidence: <span class="line-accent">sp-evidence-7d2c</span>
+&gt; exit code: <span class="line-fail">1</span></pre>
+              <pre class="console-output is-hidden" id="sample-json" role="tabpanel" aria-labelledby="tab-json" hidden>{
+  <span class="json-key">"status"</span>: <span class="json-string">"fail_with_findings"</span>,
+  <span class="json-key">"scope"</span>: <span class="json-string">"changed-since HEAD"</span>,
+  <span class="json-key">"blocking"</span>: <span class="json-number">3</span>,
+  <span class="json-key">"findings"</span>: [
+    { <span class="json-key">"rule_id"</span>: <span class="json-string">"SP105"</span>, <span class="json-key">"severity"</span>: <span class="json-string">"high"</span> },
+    { <span class="json-key">"rule_id"</span>: <span class="json-string">"SP109"</span>, <span class="json-key">"severity"</span>: <span class="json-string">"high"</span> },
+    { <span class="json-key">"rule_id"</span>: <span class="json-string">"SP204"</span>, <span class="json-key">"severity"</span>: <span class="json-string">"medium"</span> }
+  ],
+  <span class="json-key">"evidence_id"</span>: <span class="json-string">"sp-evidence-7d2c"</span>,
+  <span class="json-key">"exit_code"</span>: <span class="json-number">1</span>
+}</pre>
+              <pre class="console-output is-hidden" id="sample-sarif" role="tabpanel" aria-labelledby="tab-sarif" hidden><span class="line-muted">// SARIF 2.1.0 excerpt</span>
+{
+  <span class="json-key">"version"</span>: <span class="json-string">"2.1.0"</span>,
+  <span class="json-key">"runs"</span>: [{ <span class="json-key">"tool"</span>: <span class="json-string">"ShipProof"</span>,
+    <span class="json-key">"results"</span>: [
+      { <span class="json-key">"ruleId"</span>: <span class="json-string">"SP105"</span>, <span class="json-key">"level"</span>: <span class="json-string">"error"</span> },
+      { <span class="json-key">"ruleId"</span>: <span class="json-string">"SP109"</span>, <span class="json-key">"level"</span>: <span class="json-string">"error"</span> },
+      { <span class="json-key">"ruleId"</span>: <span class="json-string">"SP204"</span>, <span class="json-key">"level"</span>: <span class="json-string">"warning"</span> }
+    ] }]
+}</pre>
+              <div class="console-footer"><span>14 findings · 3 blocking</span><span>exit 1</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="proof-strip" aria-label="Product properties">
+        <div class="container proof-strip-grid">
+          <p><span class="proof-number">01</span><strong>Local-first</strong><span>your repository stays where it is</span></p>
+          <p><span class="proof-number">02</span><strong>Deterministic</strong><span>same input, inspectable result</span></p>
+          <p><span class="proof-number">03</span><strong>Automatable</strong><span>terminal, Action, JSON, SARIF, MCP</span></p>
+        </div>
+      </section>
+
+      <section class="section-pad demo-section" id="demo">
+        <div class="container">
+          <div class="section-heading section-heading-row">
+            <div>
+              <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Interactive sample</p>
+              <h2>See the gate make a decision.</h2>
+            </div>
+            <p class="section-intro">Run a self-contained fixture with the same evidence shape your team can keep in CI.</p>
+          </div>
+
+          <div class="scan-demo glass-border">
+            <div class="scan-demo-toolbar">
+              <div class="scan-command"><span class="figure-label">DEMO REPOSITORY</span><code>shipproof check ./demo-service &#45;&#45;changed-since HEAD</code></div>
+              <button class="button button-primary scan-run" type="button" data-scan-start>Run sample scan <span aria-hidden="true">▶</span></button>
+            </div>
+            <div class="scan-demo-body">
+              <div class="scan-progress" aria-live="polite">
+                <div class="scan-progress-head"><div><span class="figure-label">SCAN PIPELINE</span><strong data-scan-state>Ready to run</strong></div><span class="scan-clock" data-scan-duration>00.00s</span></div>
+                <ol class="scan-stages">
+                  <li data-scan-stage="scope"><span class="stage-icon">01</span><div><strong>Scope changed files</strong><small>12 files · HEAD..worktree</small></div><span class="stage-status" data-stage-status>Ready</span></li>
+                  <li data-scan-stage="rules"><span class="stage-icon">02</span><div><strong>Evaluate rules</strong><small>security · correctness · scale</small></div><span class="stage-status" data-stage-status>Ready</span></li>
+                  <li data-scan-stage="budget"><span class="stage-icon">03</span><div><strong>Check budgets</strong><small>latency · memory · artifact size</small></div><span class="stage-status" data-stage-status>Ready</span></li>
+                  <li data-scan-stage="evidence"><span class="stage-icon">04</span><div><strong>Write evidence</strong><small>terminal · JSON · SARIF</small></div><span class="stage-status" data-stage-status>Ready</span></li>
+                </ol>
+              </div>
+
+              <div class="scan-report">
+                <div class="scan-report-top"><span class="figure-label">DECISION RECORD</span><span class="demo-badge">DEMO DATA</span></div>
+                <div class="scan-result"><div><span class="status-kicker">RELEASE GATE</span><strong data-scan-result>FAIL WITH FINDINGS</strong></div><span class="status-fail"><span aria-hidden="true">!</span> <span data-scan-badge>3 blocking</span></span></div>
+                <div class="scan-metrics"><div><span>FILES</span><strong>18</strong></div><div><span>FINDINGS</span><strong>14</strong></div><div><span>HIGH</span><strong>5</strong></div><div><span>MEDIUM</span><strong>6</strong></div></div>
+                <div class="scan-findings" aria-label="Sample findings">
+                  <div class="finding-row"><span class="finding-severity finding-critical">HIGH</span><div><strong>SP105 · JWT signature verification disabled</strong><small>src/auth/jwt.ts:61 · blocks merge</small></div><span class="finding-state">fix</span></div>
+                  <div class="finding-row"><span class="finding-severity finding-high">HIGH</span><div><strong>SP109 · SSRF to internal network or metadata</strong><small>src/routes/proxy.ts:44 · remediation attached</small></div><span class="finding-state">fix</span></div>
+                  <div class="finding-row"><span class="finding-severity finding-medium">MED</span><div><strong>SP204 · sensitive data or credential logging</strong><small>src/auth/login.ts:88 · review boundary attached</small></div><span class="finding-state">review</span></div>
+                  <div class="finding-row"><span class="finding-severity finding-high">HIGH</span><div><strong>SP203 · unpinned GitHub Action</strong><small>.github/workflows/ci.yml:29 · supply-chain risk</small></div><span class="finding-state">review</span></div>
+                </div>
+                <div class="scan-evidence-line"><code>evidence://sp-demo-7d2c</code><span>14 findings · exit 1</span></div>
+              </div>
+            </div>
+            <p class="demo-disclaimer">Demo only · no repository data is uploaded or scanned.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad" id="workflow">
+        <div class="container">
+          <div class="section-heading section-heading-row">
+            <div>
+              <p class="eyebrow">The loop</p>
+              <h2>From generated change to mergeable evidence.</h2>
+            </div>
+            <p class="section-intro">A small, repeatable gate that fits the workflow you already have. Start at the terminal; promote the same contract to CI when the change is ready.</p>
+          </div>
+          <div class="workflow-grid">
+            <ol class="step-list">
+              <li class="step-item is-current"><span class="step-index">01</span><div><h3>Scope</h3><p>Identify the files and evidence that actually changed.</p></div></li>
+              <li class="step-item"><span class="step-index">02</span><div><h3>Scan</h3><p>Run security, correctness, scale, performance, and release checks.</p></div></li>
+              <li class="step-item"><span class="step-index">03</span><div><h3>Fix</h3><p>Read remediation context and false-positive boundaries beside each finding.</p></div></li>
+              <li class="step-item"><span class="step-index">04</span><div><h3>Verify</h3><p>Keep the result as terminal, JSON, SARIF, or CI evidence.</p></div></li>
+            </ol>
+            <figure class="workflow-figure glass-border">
+              <img src="../docs/assets/shipproof-workflow.png" alt="ShipProof workflow: scope, scan, fix, and verify" loading="lazy" />
+              <figcaption><span class="figure-label">WORKFLOW MAP</span> One contract across local work and automation.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad section-tint" id="evidence">
+        <div class="container evidence-grid">
+          <div class="evidence-copy">
+            <p class="eyebrow">Evidence, not vibes</p>
+            <h2>Make the decision legible to humans and machines.</h2>
+            <p>Every result has a stable rule ID, severity, control mapping, remediation text, and a boundary for when it may be a false positive. That is what makes a gate reviewable instead of mysterious.</p>
+            <a class="text-link" href="https://github.com/kingggg5/shipproof/blob/main/docs/commands.md" target="_blank" rel="noreferrer">Read the command reference <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="terminal-card glass-border">
+            <div class="terminal-card-top"><span class="figure-label">TERMINAL VIEW</span><span class="terminal-card-meta">sample / no network</span></div>
+            <img src="../docs/assets/terminal-demo.svg" alt="Illustrative ShipProof terminal output showing findings and exit code" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad" id="surfaces">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">One contract, several surfaces</p>
+            <h2>Meet developers where the decision happens.</h2>
+          </div>
+          <div class="surface-grid glass-border">
+            <article class="surface-card"><span class="card-index">A</span><h3>CLI</h3><p>Run a read-only gate from the repository root. Keep feedback close to the code.</p><code>shipproof check .</code></article>
+            <article class="surface-card"><span class="card-index">B</span><h3>GitHub Action</h3><p>Use the same exit-code and evidence contract in pull requests and release jobs.</p><code>uses: kingggg5/shipproof@v0.10.0</code></article>
+            <article class="surface-card"><span class="card-index">C</span><h3>JSON / SARIF</h3><p>Export structured results for annotations, archives, and your own review tooling.</p><code>&#45;&#45;format sarif</code></article>
+            <article class="surface-card"><span class="card-index">D</span><h3>MCP (optional)</h3><p>Expose the gate to an AI workflow without making the scanner itself dependent on a model.</p><code>shipproof mcp</code></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad section-tint">
+        <div class="container boundary-grid">
+          <div>
+            <p class="eyebrow">Claim boundaries</p>
+            <h2>Confidence with a paper trail.</h2>
+          </div>
+          <div class="boundary-list">
+            <div class="boundary-row"><span class="boundary-icon boundary-yes" aria-hidden="true">✓</span><div><h3>ShipProof can say</h3><p>“This input produced these deterministic findings under this policy and scope.”</p></div></div>
+            <div class="boundary-row"><span class="boundary-icon boundary-no" aria-hidden="true">×</span><div><h3>ShipProof does not say</h3><p>“This code is certified, impenetrable, or free of every possible defect.”</p></div></div>
+            <div class="boundary-row"><span class="boundary-icon boundary-note" aria-hidden="true">→</span><div><h3>Your team decides</h3><p>Use the evidence with review, tests, threat modelling, and the context of your system.</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-pad final-cta">
+        <div class="container final-cta-inner">
+          <div><p class="eyebrow">Start with one command</p><h2>Ship the change. Keep the proof.</h2></div>
+          <div class="final-cta-actions"><a class="button button-primary" href="https://github.com/kingggg5/shipproof#quick-start" target="_blank" rel="noreferrer">Read the quick start <span aria-hidden="true">↗</span></a><a class="button button-quiet glass-border" href="https://github.com/kingggg5/shipproof/releases" target="_blank" rel="noreferrer">Browse releases <span aria-hidden="true">↗</span></a></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div><div class="footer-brand"><img src="../docs/assets/shipproof-logo.svg" alt="" width="34" height="34" /><span>ShipProof</span></div><p>Local-first production evidence for AI-assisted software.</p></div>
+        <div class="footer-links"><a href="https://github.com/kingggg5/shipproof/blob/main/LICENSE" target="_blank" rel="noreferrer">License</a><a href="https://github.com/kingggg5/shipproof/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/kingggg5/shipproof/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">Contributing</a></div>
+        <p class="footer-note">No telemetry. No source upload. Evidence stays inspectable.</p>
+      </div>
+    </footer>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

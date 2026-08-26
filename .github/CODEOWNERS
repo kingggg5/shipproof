@@ -1,0 +1,9 @@
+# Default review owner while the maintainer team is small.
+* @kingggg5
+
+# Changes to release, security, and public-contract surfaces require owner review.
+/.github/workflows/ @kingggg5
+/SECURITY.md @kingggg5
+/action.yml @kingggg5
+/schemas/ @kingggg5
+/skills/audit-production-readiness/scripts/scan_repo.py @kingggg5

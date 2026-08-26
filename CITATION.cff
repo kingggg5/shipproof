@@ -6,10 +6,10 @@ authors:
   - family-names: Pipitakun
     given-names: Jesadakorn
 version: 0.10.0
-date-released: 2026-08-24
+date-released: 2026-08-26
 license: MIT
 repository-code: "https://github.com/kingggg5/shipproof"
-url: "https://github.com/kingggg5/shipproof"
+url: "https://shipproof-site.sjet2744.chatgpt.site/shipproof/"
 abstract: >-
   ShipProof is a deterministic, local-first production gate for security,
   correctness, scale, performance, capacity, and release evidence in
