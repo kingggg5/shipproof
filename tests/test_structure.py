@@ -186,6 +186,15 @@ class StructureTests(unittest.TestCase):
             self.assertTrue(matches, action_pattern)
             self.assertEqual(set(matches), {expected_pin}, action_pattern)
 
+    def test_dependabot_keeps_major_updates_out_of_bulk_groups(self):
+        config = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+        npm_group = re.search(
+            r"npm-development:\s+dependency-type: development\s+"
+            r"update-types:\s+- minor\s+- patch",
+            config,
+        )
+        self.assertIsNotNone(npm_group)
+
     def test_skill_frontmatter_has_no_placeholders(self):
         for name in SKILL_NAMES:
             content = (ROOT / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
