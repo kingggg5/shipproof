@@ -174,8 +174,8 @@ class StructureTests(unittest.TestCase):
                 "v7.0.0",
             ),
             "github/codeql-action/(?:init|analyze|upload-sarif)": (
-                "ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd",
-                "v4.37.7",
+                "db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28",
+                "v4.37.8",
             ),
         }
         for action_pattern, expected_pin in expected.items():
