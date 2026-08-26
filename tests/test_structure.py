@@ -159,6 +159,33 @@ class StructureTests(unittest.TestCase):
         self.assertIn("npm publish --access public", workflow)
         self.assertNotIn("NPM_TOKEN", workflow)
 
+    def test_workflow_action_major_pins_move_atomically(self):
+        workflow_text = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in sorted((ROOT / ".github" / "workflows").glob("*.yml"))
+        )
+        expected = {
+            "actions/setup-python": (
+                "5fda3b95a4ea91299a34e894583c3862153e4b97",
+                "v7.0.0",
+            ),
+            "actions/setup-node": (
+                "820762786026740c76f36085b0efc47a31fe5020",
+                "v7.0.0",
+            ),
+            "github/codeql-action/(?:init|analyze|upload-sarif)": (
+                "ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd",
+                "v4.37.7",
+            ),
+        }
+        for action_pattern, expected_pin in expected.items():
+            matches = re.findall(
+                rf"uses: {action_pattern}@([0-9a-f]{{40}}) # (v[0-9]+\.[0-9]+\.[0-9]+)",
+                workflow_text,
+            )
+            self.assertTrue(matches, action_pattern)
+            self.assertEqual(set(matches), {expected_pin}, action_pattern)
+
     def test_skill_frontmatter_has_no_placeholders(self):
         for name in SKILL_NAMES:
             content = (ROOT / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
