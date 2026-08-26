@@ -72,7 +72,7 @@
     "node": ">=20"
   },
   "peerDependencies": {
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "zod": "3.25.76"
   },
   "peerDependenciesMeta": {
@@ -84,7 +84,7 @@
     }
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "zod": "3.25.76"
   },
   "publishConfig": {
