@@ -80,7 +80,7 @@
   },
   "peerDependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
-    "zod": "3.25.76"
+    "zod": "4.6.5"
   },
   "peerDependenciesMeta": {
     "@modelcontextprotocol/sdk": {
@@ -92,7 +92,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
-    "zod": "3.25.76"
+    "zod": "4.6.5"
   },
   "overrides": {
     "fast-uri": "3.1.6",
