@@ -185,20 +185,20 @@ class StructureTests(unittest.TestCase):
                 "v7.0.1",
             ),
             "actions/upload-artifact": (
-                "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
-                "v7.0.1",
+                "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+                "v7.0.2",
             ),
             "actions/setup-python": (
                 "5fda3b95a4ea91299a34e894583c3862153e4b97",
                 "v7.0.0",
             ),
             "actions/setup-node": (
-                "820762786026740c76f36085b0efc47a31fe5020",
-                "v7.0.0",
+                "949feb2413d6458794dcd2491c4babbbce0c15c1",
+                "v7.1.0",
             ),
             "github/codeql-action/(?:init|analyze|upload-sarif)": (
-                "cdf488f595d80d6e07e03d4674febd5ab45fa938",
-                "v4.37.9",
+                "6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee",
+                "v4.39.0",
             ),
         }
         for action_pattern, expected_pin in expected.items():
@@ -230,6 +230,20 @@ class StructureTests(unittest.TestCase):
             "codeql-actions:\n        patterns:\n          - github/codeql-action/*",
             actions_config,
         )
+
+    def test_benchmarks_retain_failed_precision_report_without_weakening_gate(self):
+        workflow = (ROOT / ".github" / "workflows" / "benchmarks.yml").read_text(encoding="utf-8")
+        precision_step = workflow.split("      - name: Precision thresholds\n", 1)[1].split(
+            "      - name: Upload clean-corpus artifact\n", 1
+        )[0]
+        self.assertIn(
+            "run: python scripts/check-precision-trend.py --report benchmark-clean-corpus.json",
+            precision_step,
+        )
+        self.assertNotIn("continue-on-error", precision_step)
+        upload_step = workflow.split("      - name: Upload clean-corpus artifact\n", 1)[1]
+        self.assertIn("if: always() && hashFiles('benchmark-clean-corpus.json') != ''", upload_step)
+        self.assertIn("path: benchmark-clean-corpus.json", upload_step)
 
     def test_skill_frontmatter_has_no_placeholders(self):
         for name in SKILL_NAMES:
