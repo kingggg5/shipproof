@@ -1206,37 +1206,37 @@
         "positive": [
           {
             "path": "contract-fixtures/python/sp405-positive-a.py",
-            "source_hex": "414c4c4f5745445f484f535453093d095b272a275d",
+            "source_hex": "414c4c4f5745445f484f535453203d205b222a225d",
             "expected_line": 1,
             "expected_confidence": "high",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "a4ab3db620f48da1dd1130e3"
+            "expected_fingerprint": "dfe4ee10d88f83d7dfce9aba"
           },
           {
             "path": "contract-fixtures/python/sp405-positive-b.py",
-            "source_hex": "414c4c4f5745445f484f53545320093d20095b272a275d3b0a",
+            "source_hex": "414c4c4f5745445f484f53545309203d09205b222a225d3b0a",
             "expected_line": 1,
             "expected_confidence": "high",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "a05c0c33b79b003abc2423f2"
+            "expected_fingerprint": "8886c67ae567eed2612ff3d3"
           }
         ],
         "negative": [
           {
             "path": "contract-fixtures/python/sp405-negative-a.py",
-            "source_hex": "214c4c4f5745445f484f535453093d095b272a275d"
+            "source_hex": "214c4c4f5745445f484f535453203d205b222a225d"
           },
           {
             "path": "contract-fixtures/python/sp405-negative-b.py",
-            "source_hex": "204c4c4f5745445f484f535453093d095b272a275d"
+            "source_hex": "204c4c4f5745445f484f535453203d205b222a225d"
           }
         ],
         "adversarial": [
           {
             "path": "contract-fixtures/python/sp405-adversarial-a.py",
-            "source_hex": "584c4c4f5745445f484f535453093d095b272a275d",
+            "source_hex": "584c4c4f5745445f484f535453203d205b222a225d",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
           }

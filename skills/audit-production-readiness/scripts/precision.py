@@ -316,8 +316,10 @@ def context_allows(finding: Any, source_text: str, relative_path: str) -> bool:
             EXTERNAL_INPUT_RE.search(nearby_text(source_text, finding.line, 8))
         ):
             return False
-    if rule_id == "SP106" and re.search(
-        r"\b(?:bccache|cache|__pycache__|bytecache)\b", relative_path, re.IGNORECASE
+    if (
+        rule_id == "SP106"
+        and re.search(r"\b(?:bccache|cache|__pycache__|bytecache)\b", finding.path, re.IGNORECASE)
+        and not EXTERNAL_INPUT_RE.search(nearby_text(source_text, finding.line, 6))
     ):
         return False
     return not (

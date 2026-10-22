@@ -146,56 +146,6 @@
       }
     },
     {
-      "rule_id": "SP212",
-      "title": "CI/CD step printing environment variables to console",
-      "category": "security",
-      "expected_severity": "high",
-      "expected_confidence": "high",
-      "cwe": "CWE-532",
-      "frameworks": [],
-      "false_positive_analysis": "Commands setting specific variables like env: FOO=BAR.",
-      "cases": {
-        "positive": [
-          {
-            "path": "contract-fixtures/infrastructure/sp212-positive-a.yaml",
-            "source_hex": "72756e3a207072696e74656e76",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "94ae7ed2da9e503fb8ed6e24"
-          },
-          {
-            "path": "contract-fixtures/infrastructure/sp212-positive-b.yaml",
-            "source_hex": "72756e3a207072696e74656e763b0a",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "5f431d428f17662609930fc9"
-          }
-        ],
-        "negative": [
-          {
-            "path": "contract-fixtures/infrastructure/sp212-negative-a.yaml",
-            "source_hex": "21756e3a207072696e74656e76"
-          },
-          {
-            "path": "contract-fixtures/infrastructure/sp212-negative-b.yaml",
-            "source_hex": "20756e3a207072696e74656e76"
-          }
-        ],
-        "adversarial": [
-          {
-            "path": "contract-fixtures/infrastructure/sp212-adversarial-a.yaml",
-            "source_hex": "58756e3a207072696e74656e76",
-            "expected": false,
-            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
-          }
-        ]
-      }
-    },
-    {
       "rule_id": "SP215",
       "title": "Terraform AWS S3 bucket with public ACL",
       "category": "security",

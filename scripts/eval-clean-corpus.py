@@ -36,6 +36,7 @@ from finding_labels import (  # noqa: E402
     load_label_records,
     score_findings,
 )
+from paired_corpus import canonical_sha, load_plan, remediate_copy, validate_report  # noqa: E402
 from scan_repo import (  # noqa: E402
     TEXT_SUFFIXES,
     VERSION,
@@ -511,7 +512,9 @@ def finding_record(finding: object) -> dict[str, object]:
     }
 
 
-def evaluate(specification: dict[str, str], workspace: Path) -> dict[str, object]:
+def evaluate(
+    specification: dict[str, str], workspace: Path, *, remediation: dict[str, Any] | None = None
+) -> dict[str, object]:
     ecosystem = specification["ecosystem"]
     if ecosystem == "python":
         package_root = install_python_package(specification, workspace)
@@ -521,16 +524,56 @@ def evaluate(specification: dict[str, str], workspace: Path) -> dict[str, object
         package_root = install_go_package(specification, workspace)
     else:
         package_root = install_rust_package(specification, workspace)
-    if not license_present(package_root):
+    original = scan_package(specification, package_root)
+    if remediation is not None:
+        try:
+            quiet, receipt = remediate_copy(
+                specification,
+                package_root,
+                workspace,
+                original,
+                remediation,
+                scan_package,
+                sha256_scannable,
+            )
+            original["_quiet"] = quiet
+            original["_receipt"] = receipt
+        except (OSError, RuntimeError, ValueError, KeyError, TypeError) as exc:
+            # A lost positive or rejected recipe must leave the original raw
+            # evidence in the uploaded failure report, not drop that package.
+            original["_pair_error"] = str(exc)
+    return original
+
+
+def scan_package(
+    specification: dict[str, str], package_root: Path, *, verify_source: bool = True
+) -> dict[str, object]:
+    if verify_source and not license_present(package_root):
         raise RuntimeError(f"{specification['name']}: reviewed license file is missing")
     digest = sha256_scannable(package_root)
     expected = specification.get("source_sha256")
-    if isinstance(expected, str) and expected and expected != digest:
+    if verify_source and isinstance(expected, str) and expected and expected != digest:
         raise RuntimeError(
             f"{specification['name']}: source digest {digest} does not match manifest {expected}"
         )
     started = time.perf_counter()
     findings, stats = scan_repository(package_root)
+    # This benchmark binds scannable source, not opaque wheel metadata such as
+    # py.typed. Retain the full default ledger, and reject every source omission.
+    if any(
+        stats.get("completeness", {}).get(key)
+        for key in (
+            "unreadable",
+            "parser_limit",
+            "line_limit",
+            "oversized",
+            "symlinks",
+            "containers",
+        )
+    ):
+        raise RuntimeError(
+            f"{specification['name']}: incomplete scan coverage {stats.get('completeness')}"
+        )
     elapsed = round(time.perf_counter() - started, 2)
     app_findings = [item for item in findings if item.scope == "app"]
     by_rule: dict[str, int] = {}
@@ -540,7 +583,9 @@ def evaluate(specification: dict[str, str], workspace: Path) -> dict[str, object
         by_rule[finding.rule_id] = by_rule.get(finding.rule_id, 0) + 1
         by_severity[finding.severity] = by_severity.get(finding.severity, 0) + 1
         by_confidence[finding.confidence] = by_confidence.get(finding.confidence, 0) + 1
-    records = [finding_record(item) for item in app_findings[:MAX_FINDING_RECORDS]]
+    if len(app_findings) > MAX_FINDING_RECORDS:
+        raise RuntimeError(f"{specification['name']}: finding record limit exceeded")
+    records = [finding_record(item) for item in app_findings]
     return {
         "package": specification["name"],
         "status": "scanned",
@@ -557,6 +602,7 @@ def evaluate(specification: dict[str, str], workspace: Path) -> dict[str, object
         "by_rule": dict(sorted(by_rule.items(), key=lambda item: -item[1])),
         "verdict": determine_verdict(findings, completeness=stats.get("completeness")),
         "scan_profile": stats.get("scan_profile"),
+        "completeness": stats.get("completeness"),
         "finding_review_status": "unreviewed",
         "app_finding_records": records,
     }
@@ -669,6 +715,11 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="print raw JSON")
     parser.add_argument("--labels", action="store_true", help="score reviewed JSONL labels")
     parser.add_argument(
+        "--paired",
+        action="store_true",
+        help="retain original positive findings and evaluate reviewed remediated copies against unchanged quiet thresholds",
+    )
+    parser.add_argument(
         "--require-digests",
         action="store_true",
         help="fail when a package has no pinned source_sha256",
@@ -687,7 +738,12 @@ def main() -> int:
     try:
         manifest_path = arguments.manifest.resolve()
         manifest = load_manifest(manifest_path)
-    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        if arguments.paired and (arguments.only is not None or arguments.pin_digests):
+            raise ValueError(
+                "--paired requires the complete original pinned corpus; --only/--pin-digests are not allowed"
+            )
+        plan = load_plan(manifest=manifest) if arguments.paired else None
+    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
         print(f"clean-corpus evaluation: invalid manifest: {exc}", file=sys.stderr)
         return 2
 
@@ -715,24 +771,41 @@ def main() -> int:
     workspace = arguments.workspace
     workspace.mkdir(parents=True, exist_ok=True)
     results: list[dict[str, object]] = []
+    quiet_results: list[dict[str, object]] = []
+    receipts: list[dict[str, object]] = []
     unavailable: list[str] = []
     for specification in targets:
         try:
-            results.append(evaluate(specification, workspace))
-        except (OSError, RuntimeError, ValueError) as exc:
+            if plan is None:
+                results.append(evaluate(specification, workspace))
+            else:
+                entry = next(
+                    item for item in plan["packages"] if item["package"] == specification["name"]
+                )
+                original = evaluate(specification, workspace, remediation=entry)
+                pair_error = original.pop("_pair_error", None)
+                if pair_error is not None:
+                    unavailable.append(f"{specification['name']}: {pair_error}")
+                else:
+                    quiet_results.append(original.pop("_quiet"))
+                    receipts.append(original.pop("_receipt"))
+                results.append(original)
+        except (OSError, RuntimeError, ValueError, KeyError, TypeError) as exc:
             unavailable.append(str(exc))
 
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "2.0" if plan is not None else "1.0",
         "tool": {"name": "ShipProof", "version": VERSION, "command": "eval-clean-corpus"},
         "verdict": "INVALID_EVIDENCE" if unavailable else "PASS_WITH_EVIDENCE",
         "platform": platform.platform(),
         "python": platform.python_version(),
         "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "manifest_canonical_sha256": canonical_sha(manifest),
         "limitations": [
             "Installed packages are not a vulnerability-free guarantee; findings stay unreviewed until labeled.",
             "Digests cover scannable source files only so compiled wheels do not make the fingerprint platform-specific.",
             "This opt-in maintainer workflow requires network access and is never part of the default scanner path.",
+            "The default completeness ledger includes opaque non-source metadata; source omissions invalidate this benchmark. A quiet benchmark leg is not a complete application security verdict.",
         ],
         "summary": summarize(results),
         "packages": results,
@@ -744,6 +817,22 @@ def main() -> int:
         except ValueError as exc:
             print(f"clean-corpus evaluation: invalid labels: {exc}", file=sys.stderr)
             return 2
+    if plan is not None:
+        quiet = {"summary": summarize(quiet_results), "packages": quiet_results}
+        if arguments.labels:
+            quiet["label_report"] = apply_labels(quiet_results, LABEL_DIR)
+        payload["paired"] = {
+            "schema_version": 1,
+            "plan_canonical_sha256": canonical_sha(plan),
+            "quiet": quiet,
+            "receipts": receipts,
+        }
+        if not unavailable:
+            try:
+                validate_report(payload, plan)
+            except (ValueError, KeyError, TypeError) as exc:
+                print(f"clean-corpus evaluation: invalid paired evidence: {exc}", file=sys.stderr)
+                return 2
     if arguments.pin_digests and not unavailable:
         pin_digests(manifest_path, results)
         payload["manifest_sha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()

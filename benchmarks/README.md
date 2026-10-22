@@ -57,6 +57,23 @@ The 1,000-file clean reference remains below the 5-second release budget. Separa
 
 Source-only/helper chain files produce no finding by design and are not counted as false negatives; they remain named in the label artifact and included in its digest.
 
+## Paired clean-corpus evaluation (opt-in)
+
+Run the approved paired evaluation and validate the saved report:
+
+```bash
+python scripts/eval-clean-corpus.py --paired --json --labels --write-baseline benchmark-clean-corpus-paired.json
+python scripts/check-precision-trend.py --require-paired --report benchmark-clean-corpus-paired.json
+```
+
+The original leg retains all 30 packages, 867 files, and original positive findings. Only reviewed byte-level source changes are applied to separate copies for the quiet leg; packages and findings are not removed to meet a budget. The opt-in evaluator installs the pinned packages, and both legs retain their source and finding evidence.
+
+The reviewed [remediation plan](clean-corpus-remediations.json) records original/remediated hashes, exact edits, receipts, and expected positive recall. Its source pins cover the 15 packages without original manifest digests while leaving [clean-corpus.json](clean-corpus.json) unchanged. Unmodified MarkupSafe Linux and Windows source variants are individually hashed. Action references use exact commit SHAs from their original refs, including the branch-specific Rust toolchain and `dtolnay/install` variants; they are not replaced with a different default branch or current release.
+
+Hash, receipt, and original-positive recall validation precede quiet-leg gating. The shell-free subprocess reference variant intentionally gives up vendor/API compatibility; it is not a drop-in vendor patch. The existing quiet thresholds remain unchanged: zero high/critical application findings and at most 22 gate high+medium findings, alongside the other checked-in limits.
+
+The tested local run on 2026-10-22 reports 130 original application findings, including 54 high/critical; the quiet copies report 72 application findings, zero high/critical, and 16 gate medium findings. The ten existing label records are unchanged. These are corpus-specific measurements, not universal precision or complete application coverage: opaque non-source metadata remains in the completeness ledger.
+
 ## Real-world open-source evaluation
 
 `python scripts/eval-realworld.py` is an opt-in network workflow driven by [realworld-repositories.json](realworld-repositories.json). Every repository URL, full commit, classification, SPDX identifier, and license permalink is reviewed and checked before scanning. Output includes revision/license/corpus digests and marks finding review as `unreviewed`; it cannot turn a repository-wide “clean” or “vulnerable” label into per-alert precision automatically.

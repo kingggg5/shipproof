@@ -21,7 +21,7 @@ ShipProof is an independently developed production gate for repositories written
 
 ShipProof is not a certification, penetration test, formal proof, or substitute for product-specific threat modeling and runtime tests. It makes assumptions visible, reports the strength of available evidence, and preserves human authority for consequential actions and releases.
 
-**Project resources:** [Website](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](docs/roadmap.md) · [Citation](CITATION.cff)
+**Project resources:** [Website](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) · [Citation](CITATION.cff)
 
 <p align="center">
   <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
@@ -179,6 +179,8 @@ The complete catalog, severity, category, and detection method per rule, plus th
 ShipProof prioritizes high precision over noisy alerts:
 
 For example, `SP631` requires an explicit Edge runtime declaration plus a native runtime import; ordinary Node.js code and prose mentioning a runtime or ledger are not Edge evidence. See the [rule boundary](docs/rules.md).
+
+Precision signatures require workflow `run` command context rather than metadata, distinguish string joins from file paths, and preserve the uppercase Django `ALLOWED_HOSTS` key. Go header deadlines include a positive `ReadTimeout` fallback; cancellation findings require an explicitly discarded `CancelFunc`, not a named function called later or inside a deferred closure. Rust panic findings require a local Actix/Rocket route attribute or Axum routing binding. These are bounded source checks, not universal precision claims.
 
 - **Inline suppression:** Add `# shipproof-ignore SP101` or `// shipproof-ignore SP101` directly on the line or on the line immediately preceding it. The marker is honored only inside a comment (or at the start of a documentation line), never inside string data, and may list several rules at once (for example `# shipproof-ignore SP101 SP102`). Both the regex and the Python AST engines honor these markers.
 - **Confidence filtering:** Run with `--min-confidence high` to surface high-confidence heuristic findings; these still require verification.
@@ -377,7 +379,7 @@ A research candidate becomes an executable `SPxxx` rule only after deduplication
 
 The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 652 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
 
-See the [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md), and [delivery roadmap](docs/roadmap.md) for operational boundaries and acceptance gates. Cite a release using [CITATION.cff](CITATION.cff). ShipProof deliberately avoids a single readiness score because one veto-level failure must not be averaged away by many clean checks.
+See the [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md), and [delivery roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) for operational boundaries and acceptance gates. Cite a release using [CITATION.cff](CITATION.cff). ShipProof deliberately avoids a single readiness score because one veto-level failure must not be averaged away by many clean checks.
 
 ## Project governance
 

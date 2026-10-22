@@ -1,0 +1,1265 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-10-22",
+  "manifest_canonical_sha256": "5573f2272a84d359669b91aa302edd34fd4ffc041ae059227074f75d8b9f162b",
+  "policy": "Approved paired evaluation: retain the untouched pinned positive corpus and all raw findings. Apply only these exact reviewed source changes to separate copies. Keep quiet thresholds unchanged. Source signatures do not prove application exploitability; these reference variants are not vendor patches or API-parity claims.",
+  "action_pin_evidence": {
+    "schema_version": 1,
+    "verified_at_utc": "2026-10-22T08:48:59Z",
+    "method": "git ls-remote over HTTPS; exact refs/tags/<original ref>, its peeled ^{} ref, and refs/heads/<original ref> only",
+    "identity_note": "tag_and_branch means both exact names were advertised at the same commit; matching_refs retains both identities. Branch-specific refs were not replaced. Peeled annotated-tag commits take precedence over tag objects when advertised.",
+    "pins": [
+      {
+        "original_action_reference": "actions/add-to-project@v0.5.0",
+        "repository": "actions/add-to-project",
+        "ref": "v0.5.0",
+        "kind": "tag",
+        "exact_commit": "31b3f3ccdc584546fc445612dec3f38ff5edb41c",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/actions/add-to-project/commit/31b3f3ccdc584546fc445612dec3f38ff5edb41c",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v0.5.0",
+            "exact_commit": "31b3f3ccdc584546fc445612dec3f38ff5edb41c",
+            "peeled": false
+          }
+        ]
+      },
+      {
+        "original_action_reference": "actions/checkout@v3",
+        "repository": "actions/checkout",
+        "ref": "v3",
+        "kind": "tag",
+        "exact_commit": "a37ce9120846195fa4ece8f58b268e6043cb2f26",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/actions/checkout/commit/a37ce9120846195fa4ece8f58b268e6043cb2f26",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v3",
+            "exact_commit": "a37ce9120846195fa4ece8f58b268e6043cb2f26",
+            "peeled": false
+          }
+        ]
+      },
+      {
+        "original_action_reference": "actions/checkout@v4",
+        "repository": "actions/checkout",
+        "ref": "v4",
+        "kind": "tag",
+        "exact_commit": "11d5960a326750d5838078e36cf38b85af677262",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v4",
+            "exact_commit": "11d5960a326750d5838078e36cf38b85af677262",
+            "peeled": false
+          }
+        ]
+      },
+      {
+        "original_action_reference": "actions/setup-go@v4",
+        "repository": "actions/setup-go",
+        "ref": "v4",
+        "kind": "tag",
+        "exact_commit": "7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/actions/setup-go/commit/7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v4",
+            "exact_commit": "7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4",
+            "peeled": false
+          }
+        ]
+      },
+      {
+        "original_action_reference": "actions/setup-go@v5",
+        "repository": "actions/setup-go",
+        "ref": "v5",
+        "kind": "tag",
+        "exact_commit": "40f1582b2485089dde7abd97c1529aa768e1baff",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/actions/setup-go/commit/40f1582b2485089dde7abd97c1529aa768e1baff",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v5",
+            "exact_commit": "40f1582b2485089dde7abd97c1529aa768e1baff",
+            "peeled": false
+          }
+        ]
+      },
+      {
+        "original_action_reference": "actions/upload-artifact@v4",
+        "repository": "actions/upload-artifact",
+        "ref": "v4",
+        "kind": "tag",
+        "exact_commit": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v4",
+            "exact_commit": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "peeled": false
+          }
+        ]
+      },
+      {
+        "original_action_reference": "codecov/codecov-action@v3",
+        "repository": "codecov/codecov-action",
+        "ref": "v3",
+        "kind": "tag_and_branch",
+        "exact_commit": "ab904c41d6ece82784817410c45d8b8c02684457",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/codecov/codecov-action/commit/ab904c41d6ece82784817410c45d8b8c02684457",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v3",
+            "exact_commit": "ab904c41d6ece82784817410c45d8b8c02684457",
+            "peeled": false
+          },
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/v3",
+            "exact_commit": "ab904c41d6ece82784817410c45d8b8c02684457"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "dtolnay/.github/.github/workflows/pre_ci.yml@master",
+        "repository": "dtolnay/.github",
+        "ref": "master",
+        "kind": "branch",
+        "exact_commit": "c385818d09075f9d4c62c66b55ff6ecfe6ca9844",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/dtolnay/.github/commit/c385818d09075f9d4c62c66b55ff6ecfe6ca9844",
+        "matching_refs": [
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/master",
+            "exact_commit": "c385818d09075f9d4c62c66b55ff6ecfe6ca9844"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "dtolnay/install@cargo-docs-rs",
+        "repository": "dtolnay/install",
+        "ref": "cargo-docs-rs",
+        "kind": "tag_and_branch",
+        "exact_commit": "982daea0f5d846abc3c83e01a6a1d73c040047c1",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/dtolnay/install/commit/982daea0f5d846abc3c83e01a6a1d73c040047c1",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/cargo-docs-rs",
+            "exact_commit": "982daea0f5d846abc3c83e01a6a1d73c040047c1",
+            "peeled": false
+          },
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/cargo-docs-rs",
+            "exact_commit": "982daea0f5d846abc3c83e01a6a1d73c040047c1"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "dtolnay/install@cargo-outdated",
+        "repository": "dtolnay/install",
+        "ref": "cargo-outdated",
+        "kind": "tag_and_branch",
+        "exact_commit": "f0761f7aa894742cde7dec05963ea54ae2dfc4b5",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/dtolnay/install/commit/f0761f7aa894742cde7dec05963ea54ae2dfc4b5",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/cargo-outdated",
+            "exact_commit": "f0761f7aa894742cde7dec05963ea54ae2dfc4b5",
+            "peeled": false
+          },
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/cargo-outdated",
+            "exact_commit": "f0761f7aa894742cde7dec05963ea54ae2dfc4b5"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "dtolnay/rust-toolchain@1.61.0",
+        "repository": "dtolnay/rust-toolchain",
+        "ref": "1.61.0",
+        "kind": "branch",
+        "exact_commit": "573a80258e8a3349cc9def38551e59a9dffaeb8d",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/dtolnay/rust-toolchain/commit/573a80258e8a3349cc9def38551e59a9dffaeb8d",
+        "matching_refs": [
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/1.61.0",
+            "exact_commit": "573a80258e8a3349cc9def38551e59a9dffaeb8d"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "dtolnay/rust-toolchain@master",
+        "repository": "dtolnay/rust-toolchain",
+        "ref": "master",
+        "kind": "branch",
+        "exact_commit": "683b588c487a69d01f6c6ddf40f036ff682cc2c8",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/dtolnay/rust-toolchain/commit/683b588c487a69d01f6c6ddf40f036ff682cc2c8",
+        "matching_refs": [
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/master",
+            "exact_commit": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "dtolnay/rust-toolchain@miri",
+        "repository": "dtolnay/rust-toolchain",
+        "ref": "miri",
+        "kind": "branch",
+        "exact_commit": "0c5191052c6bf2ba7dee1704a526ce23acd9a454",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/dtolnay/rust-toolchain/commit/0c5191052c6bf2ba7dee1704a526ce23acd9a454",
+        "matching_refs": [
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/miri",
+            "exact_commit": "0c5191052c6bf2ba7dee1704a526ce23acd9a454"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "dtolnay/rust-toolchain@nightly",
+        "repository": "dtolnay/rust-toolchain",
+        "ref": "nightly",
+        "kind": "branch",
+        "exact_commit": "2c76c034f9e32a5d6e2c104dc4df23a22476db04",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/dtolnay/rust-toolchain/commit/2c76c034f9e32a5d6e2c104dc4df23a22476db04",
+        "matching_refs": [
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/nightly",
+            "exact_commit": "2c76c034f9e32a5d6e2c104dc4df23a22476db04"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "dtolnay/rust-toolchain@stable",
+        "repository": "dtolnay/rust-toolchain",
+        "ref": "stable",
+        "kind": "branch",
+        "exact_commit": "b725eda525362e7cf34af9a7243cac1e3f01a7ec",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/dtolnay/rust-toolchain/commit/b725eda525362e7cf34af9a7243cac1e3f01a7ec",
+        "matching_refs": [
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/stable",
+            "exact_commit": "b725eda525362e7cf34af9a7243cac1e3f01a7ec"
+          }
+        ]
+      },
+      {
+        "original_action_reference": "golang/govulncheck-action@v1",
+        "repository": "golang/govulncheck-action",
+        "ref": "v1",
+        "kind": "tag",
+        "exact_commit": "032d45514ae346b1db93c04b0c90b841c370344f",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/golang/govulncheck-action/commit/032d45514ae346b1db93c04b0c90b841c370344f",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v1",
+            "exact_commit": "032d45514ae346b1db93c04b0c90b841c370344f",
+            "peeled": false
+          }
+        ]
+      },
+      {
+        "original_action_reference": "golangci/golangci-lint-action@v3",
+        "repository": "golangci/golangci-lint-action",
+        "ref": "v3",
+        "kind": "tag",
+        "exact_commit": "3a919529898de77ec3da873e3063ca4b10e7f5cc",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/golangci/golangci-lint-action/commit/3a919529898de77ec3da873e3063ca4b10e7f5cc",
+        "matching_refs": [
+          {
+            "kind": "tag",
+            "full_ref": "refs/tags/v3",
+            "exact_commit": "3a919529898de77ec3da873e3063ca4b10e7f5cc",
+            "peeled": false
+          }
+        ]
+      },
+      {
+        "original_action_reference": "securego/gosec@master",
+        "repository": "securego/gosec",
+        "ref": "master",
+        "kind": "branch",
+        "exact_commit": "17ad2dd7533fd4c773d916e2bc81446917d593b5",
+        "verified_at_utc": "2026-10-22T08:48:59Z",
+        "source_url": "https://github.com/securego/gosec/commit/17ad2dd7533fd4c773d916e2bc81446917d593b5",
+        "matching_refs": [
+          {
+            "kind": "branch",
+            "full_ref": "refs/heads/master",
+            "exact_commit": "17ad2dd7533fd4c773d916e2bc81446917d593b5"
+          }
+        ]
+      }
+    ]
+  },
+  "packages": [
+    {
+      "package": "flask",
+      "version": "3.1.3",
+      "license_spdx": "BSD-3-Clause",
+      "files": 25,
+      "source_sha256": "5293e154cb0d8b93cc05521693900012b5fa8211afc67441e18feec441f26c5a",
+      "remediated_source_sha256": "5293e154cb0d8b93cc05521693900012b5fa8211afc67441e18feec441f26c5a",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "requests",
+      "version": "2.33.1",
+      "license_spdx": "Apache-2.0",
+      "files": 18,
+      "source_sha256": "2e1a64e19857c433fef6e850b6ed6b5e3a96550d93dafcbfec08fa3431acefa4",
+      "remediated_source_sha256": "2e1a64e19857c433fef6e850b6ed6b5e3a96550d93dafcbfec08fa3431acefa4",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "fastapi",
+      "version": "0.140.12",
+      "license_spdx": "MIT",
+      "files": 55,
+      "source_sha256": "97a51367609c3acd17d2833512884a1f78d4293099136ac4c0b46d9f872e7e29",
+      "remediated_source_sha256": "97a51367609c3acd17d2833512884a1f78d4293099136ac4c0b46d9f872e7e29",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "werkzeug",
+      "version": "3.1.8",
+      "license_spdx": "BSD-3-Clause",
+      "files": 55,
+      "source_sha256": "e258d3829191550a2f2f8d1e27c903aa62a927695a5dcbca0108df6c4910fc7f",
+      "remediated_source_sha256": "e258d3829191550a2f2f8d1e27c903aa62a927695a5dcbca0108df6c4910fc7f",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "httpx",
+      "version": "0.28.1",
+      "license_spdx": "BSD-3-Clause",
+      "files": 23,
+      "source_sha256": "6b49d3bb7f0aa995da547e8a2532f9b36137d319d952fd507292d6408758040f",
+      "remediated_source_sha256": "6b49d3bb7f0aa995da547e8a2532f9b36137d319d952fd507292d6408758040f",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "click",
+      "version": "8.3.3",
+      "license_spdx": "BSD-3-Clause",
+      "files": 17,
+      "source_sha256": "ff9c8a36395a262fb73d62bc968d96bcb2a5d71e4a6f87c5fc0b42cbd666b95f",
+      "remediated_source_sha256": "ff9c8a36395a262fb73d62bc968d96bcb2a5d71e4a6f87c5fc0b42cbd666b95f",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "jinja2",
+      "version": "3.1.6",
+      "license_spdx": "BSD-3-Clause",
+      "files": 25,
+      "source_sha256": "03258c05e68a3754d2c4218feb82b398c8c09f9a77a59b735b141c18ff08d2eb",
+      "remediated_source_sha256": "03258c05e68a3754d2c4218feb82b398c8c09f9a77a59b735b141c18ff08d2eb",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "urllib3",
+      "version": "2.6.3",
+      "license_spdx": "MIT",
+      "files": 37,
+      "source_sha256": "071a2fc706ef7631f4e08b5e4c6dcf74d8fa8847aab4941dd7b398477c375c34",
+      "remediated_source_sha256": "071a2fc706ef7631f4e08b5e4c6dcf74d8fa8847aab4941dd7b398477c375c34",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "pydantic",
+      "version": "2.13.3",
+      "license_spdx": "MIT",
+      "files": 105,
+      "source_sha256": "d64b8604ab048ff50ee7b9a898471ccca96bb64a4153fe34bee958ae3ec66b9e",
+      "remediated_source_sha256": "d64b8604ab048ff50ee7b9a898471ccca96bb64a4153fe34bee958ae3ec66b9e",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "body-parser",
+      "version": "2.3.0",
+      "license_spdx": "MIT",
+      "files": 10,
+      "source_sha256": "27392e012c63428a59cc6d8766c6f27ef1418e7d5f652a1004ad548f5400b641",
+      "remediated_source_sha256": "27392e012c63428a59cc6d8766c6f27ef1418e7d5f652a1004ad548f5400b641",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "cors",
+      "version": "2.8.6",
+      "license_spdx": "MIT",
+      "files": 4,
+      "source_sha256": "e99104f0c32acd24e0d567a03f969c921229ee1bd618069a612b1ee6fa64e7ab",
+      "remediated_source_sha256": "e99104f0c32acd24e0d567a03f969c921229ee1bd618069a612b1ee6fa64e7ab",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "ajv",
+      "version": "8.20.0",
+      "license_spdx": "MIT",
+      "files": 129,
+      "source_sha256": "ac6ddb455aa0ed13e6b5b43ea3ca4ab3c5f902f8c6d909f41d9382c8f1a8ce3c",
+      "remediated_source_sha256": "ac6ddb455aa0ed13e6b5b43ea3ca4ab3c5f902f8c6d909f41d9382c8f1a8ce3c",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "cookie",
+      "version": "0.7.2",
+      "license_spdx": "MIT",
+      "files": 5,
+      "source_sha256": "e1a90570b8364fa8bd96dbdbb8cd9c9695e677db11a165d0d3ff529bee0b7e62",
+      "remediated_source_sha256": "e1a90570b8364fa8bd96dbdbb8cd9c9695e677db11a165d0d3ff529bee0b7e62",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "cross-spawn",
+      "version": "7.0.6",
+      "license_spdx": "MIT",
+      "files": 9,
+      "source_sha256": "267726562874a7581c7b5b4e21bf832706d5549182a560b28a4b2821ec066df3",
+      "remediated_source_sha256": "267726562874a7581c7b5b4e21bf832706d5549182a560b28a4b2821ec066df3",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "debug",
+      "version": "4.4.3",
+      "license_spdx": "MIT",
+      "files": 7,
+      "source_sha256": "b0ad994a5eece245449ca06b5af8804088dd67091bc776f2bf29a7118e8937b1",
+      "remediated_source_sha256": "b0ad994a5eece245449ca06b5af8804088dd67091bc776f2bf29a7118e8937b1",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "starlette",
+      "version": "0.50.0",
+      "license_spdx": "BSD-3-Clause",
+      "files": 34,
+      "source_sha256": "c18da0ecac1a4383342f97664e0d12c68cbc0398de2057f0ba3e6716462ea904",
+      "remediated_source_sha256": "c18da0ecac1a4383342f97664e0d12c68cbc0398de2057f0ba3e6716462ea904",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "itsdangerous",
+      "version": "2.2.0",
+      "license_spdx": "BSD-3-Clause",
+      "files": 8,
+      "source_sha256": "a89153169ce28af1b9d51d0594ace8b3444cc5c67bea161f6310fda529a2647b",
+      "remediated_source_sha256": "a89153169ce28af1b9d51d0594ace8b3444cc5c67bea161f6310fda529a2647b",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "markupsafe",
+      "version": "3.0.2",
+      "license_spdx": "BSD-3-Clause",
+      "files": 4,
+      "source_sha256": "2d4d63e860a24a41bdc46bf26508b4e0123cba2a8a0d9f3ca164d3806fa20305",
+      "remediated_source_sha256": "2d4d63e860a24a41bdc46bf26508b4e0123cba2a8a0d9f3ca164d3806fa20305",
+      "expected_findings": [],
+      "edits": [],
+      "source_sha256_variants": [
+        "52075d4b207590b59cfcb1978f17c75fcd3fb0e61bc8ae9979327b3c005781fd"
+      ],
+      "variant_provenance": "Linux GitHub Actions run 39741128857 and locally verified Windows wheel, exact same package/version; unmodified paired copies must preserve their actual original bytes."
+    },
+    {
+      "package": "sniffio",
+      "version": "1.3.1",
+      "license_spdx": "Apache-2.0",
+      "files": 5,
+      "source_sha256": "3146c09a6e9a01afc765f3190c9f009c3420b199b2bc65cc6c254942134e4efd",
+      "remediated_source_sha256": "3146c09a6e9a01afc765f3190c9f009c3420b199b2bc65cc6c254942134e4efd",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "anyio",
+      "version": "4.10.0",
+      "license_spdx": "MIT",
+      "files": 41,
+      "source_sha256": "0ca058c1cf23a9e95535baddb34cb9dc9f18686e311a2c2d7416c8c1fc433f09",
+      "remediated_source_sha256": "838faf45eb079abe327174f5f30fa4fc098e660fe4d766f934643d92b3d20b95",
+      "expected_findings": [
+        {
+          "rule_id": "SP102",
+          "path": "_backends/_trio.py",
+          "line": 1135
+        }
+      ],
+      "edits": [
+        {
+          "path": "_backends/_trio.py",
+          "before_sha256": "b51183b68b3ac66aa61a5b2d7c8f301231af859ab4cbf4984da3369bccdab515",
+          "after_sha256": "756b5acd812f1489a1e97a4b5e9182880282f8d6d961d227b8088e9878036e0f",
+          "replacements": [
+            {
+              "before_hex": "20202020202020202020202020202020636f6e766572745f6974656d28636f6d6d616e64292c0a",
+              "after_hex": "202020202020202020202020202020205b636f6e766572745f6974656d28636f6d6d616e64295d2c0a",
+              "count": 1,
+              "rule_id": "SP102",
+              "reason": "Shell-free reference profile: a string denotes one executable path; compound shell command strings are intentionally no longer supported. Not a drop-in vendor patch.",
+              "source_url": "https://trio.readthedocs.io/en/stable/reference-io.html#quoting-more-than-you-wanted-to-know"
+            },
+            {
+              "before_hex": "202020202020202020202020202020207368656c6c3d547275652c0a",
+              "after_hex": "202020202020202020202020202020207368656c6c3d46616c73652c0a",
+              "count": 1,
+              "rule_id": "SP102",
+              "reason": "Disable OS shell interpretation; consumers needing arguments must supply an argv sequence. This does not establish untrusted input in the original library.",
+              "source_url": "https://trio.readthedocs.io/en/stable/reference-io.html#quoting-more-than-you-wanted-to-know"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "ms",
+      "version": "2.1.3",
+      "license_spdx": "MIT",
+      "files": 4,
+      "source_sha256": "f5914582c7b88ac069e4a14d59b5df708c28260fd59d94fad47af1d4b5ae406c",
+      "remediated_source_sha256": "f5914582c7b88ac069e4a14d59b5df708c28260fd59d94fad47af1d4b5ae406c",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "bytes",
+      "version": "3.1.2",
+      "license_spdx": "MIT",
+      "files": 5,
+      "source_sha256": "4d00dd0dcc590986273307fb9969144e079e516efcfdc91e6e0ca154efb7b7e1",
+      "remediated_source_sha256": "4d00dd0dcc590986273307fb9969144e079e516efcfdc91e6e0ca154efb7b7e1",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "methods",
+      "version": "1.1.2",
+      "license_spdx": "MIT",
+      "files": 5,
+      "source_sha256": "b1dc52a48e97b200e8d6c8286f8bb6b25bb8e9148c2134d134b0bd76460d913b",
+      "remediated_source_sha256": "b1dc52a48e97b200e8d6c8286f8bb6b25bb8e9148c2134d134b0bd76460d913b",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "vary",
+      "version": "1.1.2",
+      "license_spdx": "MIT",
+      "files": 5,
+      "source_sha256": "58d950c9d047d16eafd20a2766113c40d6f711b30b7ebecdfbb0e7aa24d23ea4",
+      "remediated_source_sha256": "58d950c9d047d16eafd20a2766113c40d6f711b30b7ebecdfbb0e7aa24d23ea4",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "negotiator",
+      "version": "0.6.4",
+      "license_spdx": "MIT",
+      "files": 9,
+      "source_sha256": "474af9651e1feb27bd8b557eed862d9c2dfb2ba3e18ef9507362eb256c8bf7fc",
+      "remediated_source_sha256": "474af9651e1feb27bd8b557eed862d9c2dfb2ba3e18ef9507362eb256c8bf7fc",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "chi",
+      "version": "v5.2.2",
+      "license_spdx": "MIT",
+      "files": 77,
+      "source_sha256": "8a2cc3b13d14ca4b182f9808d7439e9e5231f938899ae969dd0da8e6b36248f2",
+      "remediated_source_sha256": "63febdd011c32d12fe57faae19a164d1d1455e7d04eb3e29947bcd8054e4f91f",
+      "expected_findings": [
+        {
+          "rule_id": "SP377",
+          "path": "_examples/graceful/main.go",
+          "line": 19
+        },
+        {
+          "rule_id": "SP378",
+          "path": "_examples/graceful/main.go",
+          "line": 31
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 30
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 36
+        }
+      ],
+      "edits": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "before_sha256": "76b84acaa2b789cb750c248152dd67b14f419792eed85c2c8675d168529be605",
+          "after_sha256": "04c427573c2b467ee978cf5bb62a06e0eebf45b72985683ed74063462fbd2db6",
+          "replacements": [
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f73657475702d676f4076350a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f73657475702d676f40343066313538326232343835303839646465376162643937633135323961613736386531626166660a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/setup-go/commit/40f1582b2485089dde7abd97c1529aa768e1baff"
+            },
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f636865636b6f75744076340a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f636865636b6f757440313164353936306133323637353064353833383037386533366366333862383561663637373236320a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262"
+            }
+          ]
+        },
+        {
+          "path": "_examples/graceful/main.go",
+          "before_sha256": "b642f761971c48ecaf181a0e7fbbe313f893cb5e2a595b3cfe001f916e3bc4b6",
+          "after_sha256": "37af097b4e68f52734aac64e2f68822e71d43cae7446db03998868d80af12988",
+          "replacements": [
+            {
+              "before_hex": "736572766572203a3d2026687474702e5365727665727b416464723a2022302e302e302e303a33333333222c2048616e646c65723a207365727669636528297d",
+              "after_hex": "736572766572203a3d2026687474702e5365727665727b416464723a2022302e302e302e303a33333333222c2048616e646c65723a207365727669636528292c205265616448656164657254696d656f75743a2035202a2074696d652e5365636f6e647d",
+              "count": 1,
+              "rule_id": "SP377",
+              "reason": "Bound header reads on the example's actual served http.Server.",
+              "source_url": "https://pkg.go.dev/net/http#Server"
+            },
+            {
+              "before_hex": "090973687574646f776e4374782c205f203a3d20636f6e746578742e5769746854696d656f7574287365727665724374782c2033302a74696d652e5365636f6e64290a",
+              "after_hex": "090973687574646f776e4374782c2073687574646f776e43616e63656c203a3d20636f6e746578742e5769746854696d656f7574287365727665724374782c2033302a74696d652e5365636f6e64290a090964656665722073687574646f776e43616e63656c28290a",
+              "count": 1,
+              "rule_id": "SP378",
+              "reason": "Retain and defer the discarded shutdown CancelFunc inside its existing owner goroutine.",
+              "source_url": "https://pkg.go.dev/context#WithTimeout"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "mux",
+      "version": "v1.8.1",
+      "license_spdx": "BSD-3-Clause",
+      "files": 25,
+      "source_sha256": "ee44a1442e4959bbe796195087823b09c58b5c9b65d849684506b2be432c76fb",
+      "remediated_source_sha256": "d77a5924c5075d68e52f4be41545f737db974ad9265892bf55ce26215d22c60a",
+      "expected_findings": [
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/issues.yml",
+          "line": 18
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/security.yml",
+          "line": 20
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/security.yml",
+          "line": 23
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/security.yml",
+          "line": 29
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/security.yml",
+          "line": 34
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/test.yml",
+          "line": 21
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/test.yml",
+          "line": 24
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/test.yml",
+          "line": 33
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/verify.yml",
+          "line": 20
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/verify.yml",
+          "line": 23
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/verify.yml",
+          "line": 29
+        }
+      ],
+      "edits": [
+        {
+          "path": ".github/workflows/issues.yml",
+          "before_sha256": "1b1fc06708b0fc109258d07e8786ca8a2d1a3c6e94032017c0ad88bba4d6b5fe",
+          "after_sha256": "0c301ab6301664f65afb6592b4f1c1265fa2920f060875b4a7b3a2541019be21",
+          "replacements": [
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f6164642d746f2d70726f6a6563744076302e352e300a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f6164642d746f2d70726f6a65637440333162336633636364633538343534366663343435363132646563336633386666356564623431630a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/add-to-project/commit/31b3f3ccdc584546fc445612dec3f38ff5edb41c"
+            }
+          ]
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "before_sha256": "2abe88f16be4de770dbff66fa3d372ffcc66da154b64bcd8aa5fde66aac44e5c",
+          "after_sha256": "91ffa4323693c534f0c5b2f184b281f36b8f20e2b4c98786be72ba3fb442b592",
+          "replacements": [
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f636865636b6f75744076330a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f636865636b6f757440613337636539313230383436313935666134656365386635386232363865363034336362326632360a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/checkout/commit/a37ce9120846195fa4ece8f58b268e6043cb2f26"
+            },
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f73657475702d676f4076340a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f73657475702d676f40376238636631306434653461303164343939326431386138396634643764633561336536643666340a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/setup-go/commit/7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4"
+            },
+            {
+              "before_hex": "2020202020202020757365733a20736563757265676f2f676f736563406d61737465720a",
+              "after_hex": "2020202020202020757365733a20736563757265676f2f676f73656340313761643264643735333366643463373733643931366532626338313434363931376435393362350a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/securego/gosec/commit/17ad2dd7533fd4c773d916e2bc81446917d593b5"
+            },
+            {
+              "before_hex": "2020202020202020757365733a20676f6c616e672f676f76756c6e636865636b2d616374696f6e4076310a",
+              "after_hex": "2020202020202020757365733a20676f6c616e672f676f76756c6e636865636b2d616374696f6e40303332643435353134616533343662316462393363303462306339306238343163333730333434660a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/golang/govulncheck-action/commit/032d45514ae346b1db93c04b0c90b841c370344f"
+            }
+          ]
+        },
+        {
+          "path": ".github/workflows/test.yml",
+          "before_sha256": "03eb0f40f30f4a24b9dcb8c6c83e6a0a7783054a805077a06c5de1a213def3c5",
+          "after_sha256": "3edf29990290736a0895cdce930c1141f3de92810fd11f7c02511151d7191c15",
+          "replacements": [
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f636865636b6f75744076330a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f636865636b6f757440613337636539313230383436313935666134656365386635386232363865363034336362326632360a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/checkout/commit/a37ce9120846195fa4ece8f58b268e6043cb2f26"
+            },
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f73657475702d676f4076340a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f73657475702d676f40376238636631306434653461303164343939326431386138396634643764633561336536643666340a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/setup-go/commit/7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4"
+            },
+            {
+              "before_hex": "2020202020202020757365733a20636f6465636f762f636f6465636f762d616374696f6e4076330a",
+              "after_hex": "2020202020202020757365733a20636f6465636f762f636f6465636f762d616374696f6e40616239303463343164366563653832373834383137343130633435643862386330323638343435370a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/codecov/codecov-action/commit/ab904c41d6ece82784817410c45d8b8c02684457"
+            }
+          ]
+        },
+        {
+          "path": ".github/workflows/verify.yml",
+          "before_sha256": "e2e623c45861ae316954acb7b9b7c4a55d1065d3cd29f6c184062cbfd323ae1d",
+          "after_sha256": "bf65d7ed4be5a9629c124b3654af451b4efc89d6af09216ca2a29ae26bac349a",
+          "replacements": [
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f636865636b6f75744076330a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f636865636b6f757440613337636539313230383436313935666134656365386635386232363865363034336362326632360a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/checkout/commit/a37ce9120846195fa4ece8f58b268e6043cb2f26"
+            },
+            {
+              "before_hex": "2020202020202020757365733a20616374696f6e732f73657475702d676f4076340a",
+              "after_hex": "2020202020202020757365733a20616374696f6e732f73657475702d676f40376238636631306434653461303164343939326431386138396634643764633561336536643666340a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/setup-go/commit/7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4"
+            },
+            {
+              "before_hex": "2020202020202020757365733a20676f6c616e6763692f676f6c616e6763692d6c696e742d616374696f6e4076330a",
+              "after_hex": "2020202020202020757365733a20676f6c616e6763692f676f6c616e6763692d6c696e742d616374696f6e40336139313935323938393864653737656333646138373365333036336361346231306537663563630a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/golangci/golangci-lint-action/commit/3a919529898de77ec3da873e3063ca4b10e7f5cc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "pkg-errors",
+      "version": "v0.9.1",
+      "license_spdx": "BSD-2-Clause",
+      "files": 16,
+      "source_sha256": "f655846ef386ff6c754d520ec49cb4839a6b110af6bc38ac43b8a71367ee2443",
+      "remediated_source_sha256": "f655846ef386ff6c754d520ec49cb4839a6b110af6bc38ac43b8a71367ee2443",
+      "expected_findings": [],
+      "edits": []
+    },
+    {
+      "package": "anyhow",
+      "version": "1.0.99",
+      "license_spdx": "MIT",
+      "files": 43,
+      "source_sha256": "454a12ede6e816df77884a782a789dda2345beee1819c733f90068e4b959a1c5",
+      "remediated_source_sha256": "c13ebfac889fa8662eea4f9ffe7fdd4fc264f53d498ea716a6753a34c21f3a09",
+      "expected_findings": [
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 17
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 30
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 31
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 45
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 63
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 64
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 78
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 79
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 90
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 91
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 105
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 106
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 109
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 118
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 119
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 131
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 132
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 144
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 145
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 146
+        }
+      ],
+      "edits": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "before_sha256": "abf9b3c18079cb2066daf02f3873e53a725af3a66d8d6774ed7b8c1523738328",
+          "after_sha256": "45e8e69d067d28eb0355d607711c6e2b5dc209d125a09eada7914a904dbcd568",
+          "replacements": [
+            {
+              "before_hex": "20202020757365733a2064746f6c6e61792f2e6769746875622f2e6769746875622f776f726b666c6f77732f7072655f63692e796d6c406d61737465720a",
+              "after_hex": "20202020757365733a2064746f6c6e61792f2e6769746875622f2e6769746875622f776f726b666c6f77732f7072655f63692e796d6c40633338353831386430393037356639643463363263363662353566663665636665366361393834340a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/.github/commit/c385818d09075f9d4c62c66b55ff6ecfe6ca9844"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a20616374696f6e732f636865636b6f75744076340a",
+              "after_hex": "2020202020202d20757365733a20616374696f6e732f636865636b6f757440313164353936306133323637353064353833383037386533366366333862383561663637373236320a",
+              "count": 8,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e406d61737465720a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40363833623538386334383761363964303166366336646466343066303336666636383263633263380a",
+              "count": 2,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a20616374696f6e732f75706c6f61642d61727469666163744076340a",
+              "after_hex": "2020202020202d20757365733a20616374696f6e732f75706c6f61642d617274696661637440656131363566386436356236653735623534303434396539326234383836663433363037666130320a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e406e696768746c790a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40326337366330333466396533326135643665326331303464633464663233613232343736646230340a",
+              "count": 3,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/2c76c034f9e32a5d6e2c104dc4df23a22476db04"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40737461626c650a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40623732356564613532353336326537636633346166396137323433636163316533663031613765630a",
+              "count": 2,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/b725eda525362e7cf34af9a7243cac1e3f01a7ec"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f696e7374616c6c40636172676f2d646f63732d72730a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f696e7374616c6c40393832646165613066356438343661626333633833653031613661316437336330343030343763310a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/install/commit/982daea0f5d846abc3c83e01a6a1d73c040047c1"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e406d6972690a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40306335313931303532633662663262613764656531373034613532366365323361636439613435340a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/0c5191052c6bf2ba7dee1704a526ce23acd9a454"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f696e7374616c6c40636172676f2d6f757464617465640a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f696e7374616c6c40663037363166376161383934373432636465376465633035393633656135346165326466633462350a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/install/commit/f0761f7aa894742cde7dec05963ea54ae2dfc4b5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "thiserror",
+      "version": "2.0.16",
+      "license_spdx": "MIT",
+      "files": 62,
+      "source_sha256": "64d2a963f0f8e2f1b5ca86878600873812a5230dd5afef60df3c69352603e8ed",
+      "remediated_source_sha256": "97837cc67be1078cc9515ac12d1a5565df7aac2d086e3132f7f1c15279dabfa9",
+      "expected_findings": [
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 17
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 30
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 31
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 45
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 59
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 60
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 72
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 73
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 86
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 87
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 90
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 99
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 100
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 112
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 113
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 125
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 126
+        },
+        {
+          "rule_id": "SP203",
+          "path": ".github/workflows/ci.yml",
+          "line": 127
+        }
+      ],
+      "edits": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "before_sha256": "f159cecae599edbdec739810d542db84d53c7e6378c9445c6ba3d1d16297acc8",
+          "after_sha256": "9addb92c4dc217c8749e52178ac4e97bf84627e95c293519d4f05a7cfc29deee",
+          "replacements": [
+            {
+              "before_hex": "20202020757365733a2064746f6c6e61792f2e6769746875622f2e6769746875622f776f726b666c6f77732f7072655f63692e796d6c406d61737465720a",
+              "after_hex": "20202020757365733a2064746f6c6e61792f2e6769746875622f2e6769746875622f776f726b666c6f77732f7072655f63692e796d6c40633338353831386430393037356639643463363263363662353566663665636665366361393834340a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/.github/commit/c385818d09075f9d4c62c66b55ff6ecfe6ca9844"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a20616374696f6e732f636865636b6f75744076340a",
+              "after_hex": "2020202020202d20757365733a20616374696f6e732f636865636b6f757440313164353936306133323637353064353833383037386533366366333862383561663637373236320a",
+              "count": 7,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e406d61737465720a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40363833623538386334383761363964303166366336646466343066303336666636383263633263380a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a20616374696f6e732f75706c6f61642d61727469666163744076340a",
+              "after_hex": "2020202020202d20757365733a20616374696f6e732f75706c6f61642d617274696661637440656131363566386436356236653735623534303434396539326234383836663433363037666130320a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40312e36312e300a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40353733613830323538653861333334396363396465663338353531653539613964666661656238640a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/573a80258e8a3349cc9def38551e59a9dffaeb8d"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e406e696768746c790a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40326337366330333466396533326135643665326331303464633464663233613232343736646230340a",
+              "count": 3,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/2c76c034f9e32a5d6e2c104dc4df23a22476db04"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f696e7374616c6c40636172676f2d646f63732d72730a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f696e7374616c6c40393832646165613066356438343661626333633833653031613661316437336330343030343763310a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/install/commit/982daea0f5d846abc3c83e01a6a1d73c040047c1"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e406d6972690a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40306335313931303532633662663262613764656531373034613532366365323361636439613435340a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/0c5191052c6bf2ba7dee1704a526ce23acd9a454"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40737461626c650a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f727573742d746f6f6c636861696e40623732356564613532353336326537636633346166396137323433636163316533663031613765630a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/rust-toolchain/commit/b725eda525362e7cf34af9a7243cac1e3f01a7ec"
+            },
+            {
+              "before_hex": "2020202020202d20757365733a2064746f6c6e61792f696e7374616c6c40636172676f2d6f757464617465640a",
+              "after_hex": "2020202020202d20757365733a2064746f6c6e61792f696e7374616c6c40663037363166376161383934373432636465376465633035393633656135346165326466633462350a",
+              "count": 1,
+              "rule_id": "SP203",
+              "reason": "Pin the exact original branch/tag commit, including branch-specific default inputs; not replaced with another branch.",
+              "source_url": "https://github.com/dtolnay/install/commit/f0761f7aa894742cde7dec05963ea54ae2dfc4b5"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

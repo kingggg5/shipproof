@@ -8,9 +8,9 @@ Version: `0.12.0`
 | Partial | 0 | Has a manifest but misses at least one minimum |
 | Uncontracted | 0 | No explicit machine-readable polarity manifest |
 | Metadata debt | 0 | Missing CWE, remediation, or explanation fields |
-| Realistic negatives | 94 | At least one negative that looks like production code |
-| Near-miss negatives only | 558 | Token-boundary negatives without production-shaped silence |
-| High/critical missing realistic negatives | 423 | Shrink-only transitional debt |
+| Realistic negatives | 98 | At least one negative that looks like production code |
+| Near-miss negatives only | 554 | Token-boundary negatives without production-shaped silence |
+| High/critical missing realistic negatives | 419 | Shrink-only transitional debt |
 
 Zero-debt executable-rule gate: **PASS**
 

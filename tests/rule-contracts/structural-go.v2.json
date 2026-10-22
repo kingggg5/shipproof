@@ -44,6 +44,195 @@
           }
         ]
       }
+    },
+    {
+      "rule_id": "SP377",
+      "title": "Go http.Server has no effective header-read deadline",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Construction is not proof of serving an exposed listener. Dynamic durations, shadowed imports and later local deadline assignments are unresolved; a visible positive ReadTimeout fallback stays silent.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/precision/sp377/positive-missing/server.go",
+            "source_hex": "7061636b616765206170700a696d706f727420226e65742f68747470220a76617220737276203d2026687474702e5365727665727b416464723a20223a38303830222c2048616e646c65723a2068616e646c65727d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "03b575faa8c979c5e6a46389"
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/positive-zero/server.go",
+            "source_hex": "7061636b616765206170700a696d706f727420226e65742f68747470220a76617220737276203d2026687474702e5365727665727b5265616448656164657254696d656f75743a20302c205265616454696d656f75743a20307d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "8cadf5df85622ed218d8ec97"
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/positive-negative/server.go",
+            "source_hex": "7061636b616765206170700a696d706f72742028226e65742f68747470223b202274696d6522290a76617220737276203d2026687474702e5365727665727b5265616448656164657254696d656f75743a202d31202a2074696d652e5365636f6e642c205265616454696d656f75743a2035202a2074696d652e5365636f6e647d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "f30b006c371a9c1ff5f6e5ed"
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/positive-alias/server.go",
+            "source_hex": "7061636b616765206170700a696d706f72742077656220226e65742f68747470220a76617220737276203d20267765622e5365727665727b48616e646c65723a2068616e646c65727d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "dba9bb9da2f102eba209c045"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/precision/sp377/negative-header-limit/server.go",
+            "source_hex": "7061636b616765206170700a696d706f72742028226e65742f68747470223b202274696d6522290a76617220737276203d2026687474702e5365727665727b5265616448656164657254696d656f75743a2035202a2074696d652e5365636f6e647d0a",
+            "expected": false,
+            "rationale": "The 'header-limit' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/negative-read-fallback/server.go",
+            "source_hex": "7061636b616765206170700a696d706f72742028226e65742f68747470223b202274696d6522290a76617220737276203d2026687474702e5365727665727b5265616454696d656f75743a2035202a2074696d652e5365636f6e647d0a",
+            "expected": false,
+            "rationale": "The 'read-fallback' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/negative-dynamic/server.go",
+            "source_hex": "7061636b616765206170700a696d706f727420226e65742f68747470220a76617220737276203d2026687474702e5365727665727b5265616448656164657254696d656f75743a20636f6e66696775726564446561646c696e657d0a",
+            "expected": false,
+            "rationale": "The 'dynamic' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/negative-custom-package/server.go",
+            "source_hex": "7061636b616765206170700a696d706f727420226578616d706c652e746573742f68747470220a76617220737276203d2026687474702e5365727665727b416464723a20223a38303830227d0a",
+            "expected": false,
+            "rationale": "The 'custom-package' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/negative-later-assignment/server.go",
+            "source_hex": "7061636b616765206170700a696d706f72742028226e65742f68747470223b202274696d6522290a66756e632073657276652829207b20737276203a3d2026687474702e5365727665727b416464723a20223a38303830227d3b207372762e5265616448656164657254696d656f7574203d2035202a2074696d652e5365636f6e643b207372762e4c697374656e416e6453657276652829207d0a",
+            "expected": false,
+            "rationale": "The 'later-assignment' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/negative-string/server.go",
+            "source_hex": "7061636b616765206170700a636f6e737420646f6373203d2060687474702e5365727665727b7d600a",
+            "expected": false,
+            "rationale": "The 'string' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/precision/sp377/adversarial-parameter-shadow/server.go",
+            "source_hex": "7061636b616765206170700a696d706f727420226e65742f68747470220a66756e6320736572766528687474702046616b6529207b20737276203a3d2026687474702e5365727665727b416464723a20223a38303830227d3b207573652873727629207d0a",
+            "expected": false,
+            "rationale": "The 'parameter-shadow' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp377/adversarial-local-shadow/server.go",
+            "source_hex": "7061636b616765206170700a696d706f727420226e65742f68747470220a66756e632073657276652829207b2068747470203a3d20637573746f6d3b20737276203a3d2026687474702e5365727665727b7d3b207573652873727629207d0a",
+            "expected": false,
+            "rationale": "The 'local-shadow' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          }
+        ]
+      }
+    },
+    {
+      "rule_id": "SP378",
+      "title": "Go cancelable context discards its cancellation function",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Parent cancellation or expiry can bound lifetime. Named CancelFuncs may be called later, deferred inside a closure, or transferred to an owner; this check does not flag those lifecycles.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/precision/sp378/positive-cancel/context.go",
+            "source_hex": "7061636b616765206170700a696d706f72742022636f6e74657874220a66756e632072756e2829207b206374782c205f203a3d20636f6e746578742e5769746843616e63656c28636f6e746578742e4261636b67726f756e642829293b207573652863747829207d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "3ef8133d49fdd6c1f1b9f698"
+          },
+          {
+            "path": "contract-fixtures/precision/sp378/positive-timeout/context.go",
+            "source_hex": "7061636b616765206170700a696d706f7274202822636f6e74657874223b202274696d6522290a66756e632072756e2829207b206374782c205f203a3d20636f6e746578742e5769746854696d656f757428636f6e746578742e4261636b67726f756e6428292c2033302a74696d652e5365636f6e64293b207573652863747829207d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "529454c6e93c867c15958987"
+          },
+          {
+            "path": "contract-fixtures/precision/sp378/positive-deadline-alias/context.go",
+            "source_hex": "7061636b616765206170700a696d706f727420632022636f6e74657874220a66756e632072756e2829207b206374782c205f203a3d20632e57697468446561646c696e6528706172656e742c20646561646c696e65293b207573652863747829207d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "c0b092d4fe2b9ae6994764fd"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/precision/sp378/negative-direct-cancel/context.go",
+            "source_hex": "7061636b616765206170700a696d706f72742022636f6e74657874220a66756e632072756e2829207b206374782c2063616e63656c203a3d20636f6e746578742e5769746843616e63656c28706172656e74293b2064656665722063616e63656c28293b207573652863747829207d0a",
+            "expected": false,
+            "rationale": "The 'direct-cancel' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp378/negative-closure-cancel/context.go",
+            "source_hex": "7061636b616765206170700a696d706f72742022636f6e74657874220a66756e632072756e2829207b206374782c2063616e63656c203a3d20636f6e746578742e5769746854696d656f757428706172656e742c206475726174696f6e293b2064656665722066756e632829207b2063616e63656c28293b20636c65616e75702829207d28293b207573652863747829207d0a",
+            "expected": false,
+            "rationale": "The 'closure-cancel' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp378/negative-ownership-transfer/context.go",
+            "source_hex": "7061636b616765206170700a696d706f72742022636f6e74657874220a66756e63206368696c6428292028636f6e746578742e436f6e746578742c20636f6e746578742e43616e63656c46756e6329207b2072657475726e20636f6e746578742e5769746843616e63656c28706172656e7429207d0a",
+            "expected": false,
+            "rationale": "The 'ownership-transfer' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp378/negative-later-cancel/context.go",
+            "source_hex": "7061636b616765206170700a696d706f72742022636f6e74657874220a66756e632072756e2829207b206374782c2073746f70203a3d20636f6e746578742e5769746843616e63656c28706172656e74293b2075736528637478293b2073746f702829207d0a",
+            "expected": false,
+            "rationale": "The 'later-cancel' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp378/negative-custom/context.go",
+            "source_hex": "7061636b616765206170700a696d706f727420226578616d706c652e746573742f636f6e74657874220a66756e632072756e2829207b206374782c205f203a3d20636f6e746578742e5769746843616e63656c28706172656e74293b207573652863747829207d0a",
+            "expected": false,
+            "rationale": "The 'custom' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/precision/sp378/adversarial-parameter/context.go",
+            "source_hex": "7061636b616765206170700a696d706f72742022636f6e74657874220a66756e632072756e28636f6e7465787420466163746f727929207b206374782c205f203a3d20636f6e746578742e5769746843616e63656c28706172656e74293b207573652863747829207d0a",
+            "expected": false,
+            "rationale": "The 'parameter' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp378/adversarial-comment/context.go",
+            "source_hex": "7061636b616765206170700a696d706f72742022636f6e74657874220a2f2f206374782c205f203a3d20636f6e746578742e5769746843616e63656c28706172656e74290a66756e632072756e2829207b7d0a",
+            "expected": false,
+            "rationale": "The 'comment' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          }
+        ]
+      }
     }
   ]
 }

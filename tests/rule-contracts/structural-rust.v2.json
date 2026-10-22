@@ -1,0 +1,125 @@
+{
+  "schema_version": 2,
+  "quality_contract_version": 2,
+  "engine": "structural",
+  "ecosystem": "rust",
+  "rules": [
+    {
+      "rule_id": "SP621",
+      "title": "Rust unwrap or expect invoked in HTTP route handler risking thread panic",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-754",
+      "frameworks": [],
+      "false_positive_analysis": "A panic is not necessarily input-triggered. This bounded check requires an Actix/Rocket route attribute or an Axum routing binding to a unique local function; arbitrary library/build/test unwraps and explicit Some/Ok constructors stay silent.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/precision/sp621/positive-actix/routes.rs",
+            "source_hex": "235b61637469785f7765623a3a67657428222f6974656d7322295d0a6173796e6320666e206974656d732829202d3e20537472696e67207b206c6f61645f6974656d28292e756e777261702829207d0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "34de7d022a23a652f1baf2a9"
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/positive-rocket-expect/routes.rs",
+            "source_hex": "235b726f636b65743a3a67657428222f6974656d7322295d0a666e206974656d732829202d3e20537472696e67207b206c6f61645f6974656d28292e657870656374282272657175697265642229207d0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "d4b919ca952b7489d1d380c0"
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/positive-axum/routes.rs",
+            "source_hex": "6173796e6320666e206974656d732829202d3e20537472696e67207b206c6f61645f6974656d28292e756e777261702829207d0a666e206170702829207b206c657420726f757465203d206178756d3a3a726f7574696e673a3a676574286974656d73293b207d0a",
+            "expected_line": 1,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "a3ee63d73128468f1b016f6d"
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/positive-imported/routes.rs",
+            "source_hex": "757365206178756d3a3a726f7574696e673a3a7b6765742c20706f73747d3b0a6173796e6320666e206974656d732829202d3e20537472696e67207b206c6f61645f6974656d28292e657870656374282272657175697265642229207d0a666e206170702829207b206c657420726f757465203d20676574286974656d73293b207d0a",
+            "expected_line": 2,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "675902896f5fdea209c940eb"
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/positive-macro-import/routes.rs",
+            "source_hex": "7573652061637469785f7765623a3a6765743b0a235b67657428222f6974656d7322295d0a6173796e6320666e206974656d732829202d3e20537472696e67207b206c6f61645f6974656d28292e756e777261702829207d0a",
+            "expected_line": 3,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "b42f2f185dad2c8ae982ad27"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/precision/sp621/negative-library/routes.rs",
+            "source_hex": "70756220666e20726f6f745f63617573652829202d3e20537472696e67207b206361757365732e6c61737428292e756e7772617028292e746f5f737472696e672829207d0a",
+            "expected": false,
+            "rationale": "The 'library' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/negative-build/routes.rs",
+            "source_hex": "666e206d61696e2829207b206c6574206f7574707574203d207374643a3a70726f636573733a3a436f6d6d616e643a3a6e65772822727573746322292e6f757470757428292e756e7772617028293b207d0a",
+            "expected": false,
+            "rationale": "The 'build' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/negative-unit-test/routes.rs",
+            "source_hex": "235b746573745d0a666e20726f756e645f747269702829207b206173736572745f65712128706172736528226f6b22292e756e7772617028292c20226f6b22293b207d0a",
+            "expected": false,
+            "rationale": "The 'unit-test' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/negative-nested/routes.rs",
+            "source_hex": "235b61637469785f7765623a3a67657428222f6974656d7322295d0a6173796e6320666e206974656d732829202d3e20537472696e67207b20666e2068656c7065722829202d3e20537472696e67207b206c6f61645f6974656d28292e756e777261702829207d2068656c7065722829207d0a",
+            "expected": false,
+            "rationale": "The 'nested' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/negative-success/routes.rs",
+            "source_hex": "235b61637469785f7765623a3a67657428222f6974656d7322295d0a6173796e6320666e206974656d732829202d3e20537472696e67207b20536f6d6528226f6b22292e756e7772617028292e746f5f737472696e672829207d0a",
+            "expected": false,
+            "rationale": "The 'success' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/negative-checked/routes.rs",
+            "source_hex": "235b61637469785f7765623a3a67657428222f6974656d7322295d0a6173796e6320666e206974656d732829202d3e20526573756c743c537472696e672c204572726f723e207b206c6f61645f6974656d2829207d0a",
+            "expected": false,
+            "rationale": "The 'checked' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/negative-unbound-name/routes.rs",
+            "source_hex": "6173796e6320666e206765745f75736572287265713a20487474705265717565737429202d3e2048747470526573706f6e7365207b2070617273655f69642826726571292e756e777261702829207d0a",
+            "expected": false,
+            "rationale": "The 'unbound-name' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/precision/sp621/adversarial-namespace-shadow/routes.rs",
+            "source_hex": "6d6f642061637469785f776562207b7d0a235b61637469785f7765623a3a67657428222f6974656d7322295d0a666e206974656d732829202d3e20537472696e67207b206c6f61645f6974656d28292e756e777261702829207d0a",
+            "expected": false,
+            "rationale": "The 'namespace-shadow' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp621/adversarial-route-string/routes.rs",
+            "source_hex": "636f6e737420444f433a2026737472203d2022235b61637469785f7765623a3a676574285c222f5c22295d20666e20726f7574652829207b2076616c75652e756e777261702829207d223b0a",
+            "expected": false,
+            "rationale": "The 'route-string' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          }
+        ]
+      }
+    }
+  ]
+}

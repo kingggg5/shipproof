@@ -96,6 +96,105 @@
           }
         ]
       }
+    },
+    {
+      "rule_id": "SP212",
+      "title": "CI/CD step printing environment variables to console",
+      "category": "security",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-532",
+      "frameworks": [],
+      "false_positive_analysis": "This signature requires a bare env/printenv/set command in a workflow step run scalar. Metadata, env prefixes, specific-variable queries and quoted data are not dumps; custom shell bindings remain unresolved.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/precision/sp212/positive-inline/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a20656e760a",
+            "expected_line": 7,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "eb0b54c4ef0ea4a340f653be"
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/positive-block/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a207c0a202020202020202020206563686f2072656164790a202020202020202020207072696e74656e760a",
+            "expected_line": 9,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "932ca73667e301389cf2b98a"
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/positive-list/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a206563686f20726561647920262620656e760a",
+            "expected_line": 7,
+            "expected_confidence": "high",
+            "expected_detection": "structural",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "7a5822f4681365ce89f28c66"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/precision/sp212/negative-env-prefix/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a20656e76206e6f6465207363726970742e6a730a",
+            "expected": false,
+            "rationale": "The 'env-prefix' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/negative-set-option/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a20736574202d650a",
+            "expected": false,
+            "rationale": "The 'set-option' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/negative-echo-argument/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a206563686f20656e760a",
+            "expected": false,
+            "rationale": "The 'echo-argument' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/negative-metadata/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202064656661756c74733a0a20202020202072756e3a0a2020202020202020776f726b696e672d6469726563746f72793a20247b7b20656e762e474f50415448207d7d0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a20676f2074657374202e2f2e2e2e0a",
+            "expected": false,
+            "rationale": "The 'metadata' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/negative-folded/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a203e0a20202020202020202020656e760a202020202020202020206e6f6465207363726970742e6a730a",
+            "expected": false,
+            "rationale": "The 'folded' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/negative-quoted/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a2027656e760a202020202020202020206e6f6465207363726970742e6a73270a",
+            "expected": false,
+            "rationale": "The 'quoted' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/negative-named-printenv/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a207072696e74656e76204e4f44455f454e560a",
+            "expected": false,
+            "rationale": "The 'named-printenv' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/precision/sp212/adversarial-heredoc/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a207c0a20202020202020202020636174203c3c27454f46270a20202020202020202020656e760a20202020202020202020454f460a",
+            "expected": false,
+            "rationale": "The 'heredoc' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          },
+          {
+            "path": "contract-fixtures/precision/sp212/adversarial-shell-string/.github/workflows/ci.yml",
+            "source_hex": "6e616d653a2043490a6f6e3a20707573680a6a6f62733a0a2020746573743a0a2020202072756e732d6f6e3a207562756e74752d6c61746573740a2020202073746570733a0a2020202020202d2072756e3a207c0a202020202020202020206563686f20226465736372697074696f6e0a20202020202020202020656e760a20202020202020202020656e64220a",
+            "expected": false,
+            "rationale": "The 'shell-string' fixture exercises a reviewed source, applicability or identity boundary. It must remain silent without all of this rule's required local evidence; it is not a general precision claim."
+          }
+        ]
+      }
     }
   ]
 }

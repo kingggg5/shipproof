@@ -28,6 +28,27 @@ LABELS.loader.exec_module(finding_labels)
 
 
 class CleanCorpusManifestTests(unittest.TestCase):
+    def test_rejected_pair_keeps_the_original_raw_report(self):
+        specification = {"name": "sample", "ecosystem": "python"}
+        raw = {
+            "package": "sample",
+            "app_finding_records": [{"rule_id": "SP203", "severity": "high"}],
+        }
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(eval_clean_corpus, "install_python_package", return_value=Path(directory)),
+            patch.object(eval_clean_corpus, "scan_package", return_value=raw),
+            patch.object(
+                eval_clean_corpus,
+                "remediate_copy",
+                side_effect=ValueError("original positives changed"),
+            ),
+        ):
+            result = eval_clean_corpus.evaluate(specification, Path(directory), remediation={})
+            self.assertEqual(result["app_finding_records"], raw["app_finding_records"])
+            self.assertIn("original positives changed", result["_pair_error"])
+            self.assertNotIn("_quiet", result)
+
     def test_checked_in_manifest_pins_the_documented_packages(self):
         manifest = eval_clean_corpus.load_manifest(ROOT / "benchmarks" / "clean-corpus.json")
         names = [item["name"] for item in manifest["packages"]]
