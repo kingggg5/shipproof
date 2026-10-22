@@ -2,20 +2,37 @@
 
 ## Unreleased
 
-- Refresh the optional MCP development SDK to `1.30.0` and pin its transitive URI, parser, and framework dependencies to audited patched versions (`fast-uri`, `hono`, `qs`). Runtime production dependencies remain zero; `npm audit` reports no known vulnerabilities.
+## 0.12.0 - 2026-10-22
+
+- Add offline PHP2Shell declared-version advisory SP683 for CVE-2026-109618 and CVE-2026-109619 (disclosed 2026-10-21). Compare supported PHP branch fixes separately, follow final static FPM/Apache image stages, and keep vendor/backport/deployment uncertainty explicit. No live PHP, container or registry probing is added.
+- Correct SP668 to use syslog's format argument with bounded lexical filtering; narrow SP670 to a literal DTD/external-resolver combination actually consumed by XmlReader. DTD parsing with a null resolver is not classified as XXE.
+- Show test names during Python coverage runs so slow instrumentation is diagnosable in CI/redirected Windows logs. Measurement scope, branch collection and the 80% gate are unchanged.
+- Minimize evidence for the new advisory cohorts and the narrowed client-import rule. Omit unrelated arguments, comments and neighboring source from all report/fix-prompt formats; synthetic credential-canary regressions cover this privacy boundary. Normalized evidence can change affected fingerprints without changing rule IDs or schemas.
+
+- Add nine import-aware JS/TypeScript advisory checks SP674–SP682 for explicit Node, JWT, Next.js, Electron and Puppeteer security opt-outs, with `.mts`/`.cts` source support and authored real-walker contracts. No runtime dependencies, network access or repository execution are added.
+- Retire SP429: Express JSON parsing already defaults to a bounded body size. Narrow SP591 to real client directives and runtime imports, exclude erased type imports and classify the observable bundling boundary as a medium advisory instead of claiming a critical credential leak.
+- Keep research expansion plans in the source repository rather than the npm runtime artifact; link to their public source and retain the existing package byte budgets.
+
+- Add advisory structural Roblox/Luau checks SP671/SP672 for immediate execution of an HTTP response or RemoteEvent client source, and Rust SP673 for explicit zero-initialized references. Scan local `.lua` and `.luau` source with bounded lexical handling of comments and strings.
+- Extend SP104 for direct reqwest builder chains using the final TLS switch value, and correct the Dart custom-trust-store false positive. Enforce runtime advisory eligibility for SP666–SP673.
+- Keep release-note inventories tied to their immutable tags. Historical release notes remain in Git and are omitted from the npm artifact; current runtime code stays inside the existing package budgets.
+
+- Refresh the optional MCP development SDK to `1.32.1` and pin patched transitive URI, parser, HTTP-framework and proxy/IP-classification packages (`fast-uri`, `hono`, `qs`, `proxy-addr`, `ip-address`). Runtime dependencies remain zero; the reviewed lockfile audit reports no known vulnerabilities as of 2026-10-22.
+
+Release details and evidence boundaries: [v0.12.0 notes](https://github.com/kingggg5/shipproof/blob/v0.12.0/docs/releases/v0.12.0.md).
 
 ## 0.11.2 - 2026-09-15
 
-- Treat generated `.sarif` reports as recognized assets so a leftover Action/CLI report is not an unknown-binary coverage hole and is not re-scanned as source. See [docs/releases/v0.11.2.md](docs/releases/v0.11.2.md).
+- Treat generated `.sarif` reports as recognized assets so a leftover Action/CLI report is not an unknown-binary coverage hole and is not re-scanned as source. See [v0.11.2 release notes](https://github.com/kingggg5/shipproof/blob/v0.11.2/docs/releases/v0.11.2.md).
 
 ## 0.11.1 - 2026-09-15
 
 - Follow host PATH symlinks such as Linux `python3` when resolving trusted executables, then require the canonical target to stay a regular executable outside the repository.
-- Skip `research/` by default and treat oversized Git-index hatches inside ignored trees as exclusions so giant research catalogs do not fail the completeness gate; oversized application source still does. See [docs/releases/v0.11.1.md](docs/releases/v0.11.1.md).
+- Skip `research/` by default and treat oversized Git-index hatches inside ignored trees as exclusions so giant research catalogs do not fail the completeness gate; oversized application source still does. See [v0.11.1 release notes](https://github.com/kingggg5/shipproof/blob/v0.11.1/docs/releases/v0.11.1.md).
 
 ## 0.11.0 - 2026-09-15
 
-- Publish the precision, coverage, and trust-boundary work as the `0.11.0` release boundary; see [docs/releases/v0.11.0.md](docs/releases/v0.11.0.md).
+- Publish the precision, coverage, and trust-boundary work as the `0.11.0` release boundary; see [v0.11.0 release notes](https://github.com/kingggg5/shipproof/blob/v0.11.0/docs/releases/v0.11.0.md).
 - Default scans now require L1 proof (AST/taint/structural) or an allowlisted L0 finding such as a high-confidence secret or `DEBUG = True` before they `BLOCK`. Remaining high L0 findings still appear, but the verdict is `REVIEW`. Override with `--block-min-proof` / `security.block_min_proof`; `shipproof check` will not honor a floor below L1. Auto library mode downranks application-oriented rules when no application entrypoint is visible; set `scan.profile` to `application` or `library` to pin it. Nested `wsgi.py` / `asgi.py` modules no longer force application profile, so WSGI/ASGI libraries stay in library mode. SP061 is advisory and no longer changes the verdict. Terminal and Markdown collapse extra copies of the same rule in one file; JSON and SARIF keep every finding.
 - Head-to-head labels are schema 3: fixture corpora now have sink-line labels, CI gates line-level precision/recall at 0.95 on the ShipProof self-leg, and Linux Semgrep comparison is an opt-in workflow input that uses only the original ruleset in `benchmarks/semgrep-comparison/`. OWASP Benchmark Java/Python stay unbundled after a GPL-2.0/GPL-3.0 license review.
 - Add a revision-pinned clean-corpus evaluator (`scripts/eval-clean-corpus.py`) and a finding-label store (`benchmarks/labels/`, `schemas/finding-label.schema.json`) so precision is scored only on reviewed rows. Context gates now suppress the common clean-library false positives (SHA1 without password context, `fnmatch.filter`, `while True` plus `recv`, MIME-only SSE strings, framework SSE implementations, cache pickle loads, docstring DSNs, `exec(compile)` config loaders, debug REPLs, and inflate `.pipe()` with nearby destroy/unpipe). License review accepts `dist-info/licenses/` and license classifiers so wheels such as Jinja2 are scannable. Clean-corpus coverage expands to at least 30 pinned packages across Python, JavaScript, Go, and Rust. Weekly and release workflows enforce `benchmarks/precision-thresholds.json` through `scripts/check-precision-trend.py`. The ten remaining medium gate leftovers on the original 15-package measurement are labeled `false_positive` after source review.
@@ -53,7 +70,7 @@
 
 ## 0.9.0 - 2026-08-24
 
-- Prepare the evidence-contract and analyzer-correctness fixes for the `0.9.0` release; see [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).
+- Prepare the evidence-contract and analyzer-correctness fixes for the `0.9.0` release; see [v0.9.0 release notes](https://github.com/kingggg5/shipproof/blob/v0.9.0/docs/releases/v0.9.0.md).
 
 - Add `scan --history`: scan git history for secrets that were added in past commits and may still exist in history even after removal from HEAD. Uses only stdlib subprocess + git commands; bounded to 500 commits by default; findings anchored to the introducing commit with redacted evidence.
 - Extend secrets detection quality: a demote-only Shannon entropy gate now covers all non-calibrated secret rules (45+ provider token patterns), dropping format-valid but obviously filler test tokens to low confidence while leaving structured high-entropy keys untouched.

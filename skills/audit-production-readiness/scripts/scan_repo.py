@@ -34,12 +34,16 @@ from functools import lru_cache
 from pathlib import Path
 
 import archive_inspect
+import js_config_checks
+import php_advisories
+import polyglot_checks
 import precision as precision_policy
 
-VERSION = "0.11.2"
+VERSION = "0.12.0"
 MAX_SNIPPET_BYTES = 200_000
 MAX_SCAN_LINE_CHARS = 8_192
 CONTEXT_LEVELS = ("summary", "overview", "full")
+JS_CONFIG_SUFFIXES = frozenset({".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts"})
 
 SEVERITY = {"none": 99, "critical": 0, "high": 1, "medium": 2, "low": 3}
 CONFIDENCE = {"high": 0, "medium": 1, "low": 2}
@@ -88,6 +92,8 @@ TEXT_SUFFIXES = {
     ".cjs",
     ".ts",
     ".tsx",
+    ".mts",
+    ".cts",
     ".vue",
     ".svelte",
     ".astro",
@@ -101,6 +107,8 @@ TEXT_SUFFIXES = {
     ".rs",
     ".swift",
     ".dart",
+    ".lua",
+    ".luau",
     ".rb",
     ".erb",
     ".ex",
@@ -160,6 +168,8 @@ TEXT_NAMES = {
     ".gitattributes",
     ".gitmodules",
     ".npmignore",
+    ".php-version",
+    ".tool-versions",
     ".gitkeep",
     "license",
     "codeowners",
@@ -2590,12 +2600,6 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
         "test": "Add a test confirming that log the full error internally and send generic sanitized error messages to clients.",
     },
-    "SP429": {
-        "why": "express.json() initialized without explicit payload limit option risks memory exhaustion on oversized JSON bodies.",
-        "attack": "An attacker or runtime failure exploits `Express express.json body parser without limit option` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-        "test": "Add a test confirming that set an explicit body size limit: `app.use(express.json({ limit: '1mb' }));`.",
-    },
     "SP430": {
         "why": "express-session without an explicit store uses MemoryStore, which leaks memory and does not scale across instances.",
         "attack": "An attacker or runtime failure exploits `Express session using default in-memory MemoryStore in production` to bypass controls or degrade service availability.",
@@ -3503,10 +3507,10 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Add a test confirming that set an explicit bounded queue size: `asyncio.queue(maxsize=1000)`.",
     },
     "SP591": {
-        "why": "Importing database drivers or server-only packages into 'use client' components leaks server credentials and crashes client browser bundles.",
-        "attack": "Attacker inspects client JS bundle to extract internal database query logic and server architecture details.",
-        "false_positive": "Test fixtures or mock files not deployed to production.",
-        "test": "Isolate database logic in Server Components or Server Actions, or use import 'server-only'.",
+        "why": "A runtime server-only import in an explicit client module crosses a bundling boundary; framework enforcement may reject the build rather than expose code.",
+        "attack": "A server dependency can break a browser build or expose server implementation details if the bundler fails to enforce the boundary. This signature does not prove a credential leak.",
+        "false_positive": "Requires a real directive prologue and top-level runtime import. Type-only imports, named type specifiers, export types, comments and quoted examples are excluded. Client boundaries inherited from another file and bundler transforms remain unresolved.",
+        "test": "Keep runtime database imports server-side. Verify import type and import { type Model } stay silent while runtime driver imports in an explicit client module are reported.",
     },
     "SP592": {
         "why": "Casting request body to 'as any' disables TypeScript type safety and runtime validation, inviting injection and state corruption.",
@@ -3967,7 +3971,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP668": {
         "why": "Using argv data as a printf-family format string lets format directives read or write process memory and can lead to code execution.",
         "attack": "An attacker supplies format directives through a command-line argument; the process interprets them instead of treating the argument as ordinary data.",
-        "false_positive": "A validated constant format or a wrapper that passes argv as a data argument is safe; this detector only recognizes direct argv use in the format position.",
+        "false_positive": "Requires argv[index] in the actual format position: syslog's second argument, printf's first, fprintf/sprintf's second or snprintf's third. Literal formats, argv used as priority/data, member calls and unrelated name suffixes stay silent. Macros, wrappers and semantic binding remain unresolved; this pattern is advisory, not a taint proof.",
         "test": 'Use a literal format such as "%s" and pass argv as a separate argument; run with format directives and assert no memory disclosure or mutation occurs.',
     },
     "SP669": {
@@ -3977,10 +3981,88 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Store credentials in platform-backed secure storage, rotate any exposed token, and assert that preference files contain no reusable authentication material.",
     },
     "SP670": {
-        "why": "Enabling XML DTD processing or an external resolver lets untrusted XML resolve external entities and access local or remote resources.",
-        "attack": "An attacker submits XML containing an external entity; the parser dereferences it and discloses local files or performs an internal network request.",
-        "false_positive": "Trusted offline XML with a reviewed DTD may require this setting, but request-facing parsers should use Prohibit or Ignore and a null resolver.",
-        "test": "Set DtdProcessing to Prohibit or Ignore, set XmlResolver to null, and add an XXE regression payload that must not read files or make network requests.",
+        "why": "An XmlReader explicitly combines DTD parsing with a network-capable XmlUrlResolver. DTD parsing alone does not establish external entity resolution.",
+        "attack": "Untrusted XML may cause external resource reads when both options are effective; this local configuration does not establish attacker-controlled input or network access.",
+        "false_positive": "Advisory: requires one literal XmlReaderSettings initializer with final Parse plus new XmlUrlResolver(), a single local binding and direct XmlReader.Create consumption. Null/throwing/secure resolvers, Prohibit/Ignore, overrides, rebinding, type look-alikes and ambiguous C# string forms stay silent. Split assignments and general object flow are unresolved.",
+        "test": "Keep XmlResolver null or ThrowingResolver, bound XML input/entity expansion separately, and test that external resources cannot be read. Internal DTDs with a null resolver must not be labeled XXE.",
+    },
+    "SP671": {
+        "why": "Executing source fetched through HttpService gives the remote publisher control of the server script's capabilities.",
+        "attack": "A changed or compromised remote script runs when loadstring compiles and immediately executes the HTTP response; LoadStringEnabled and HTTP permissions are prerequisites.",
+        "false_positive": "An explicitly trusted loader may be deliberate. This advisory requires a direct HttpService binding and immediate execution; JSON decoding, quoted examples and compilation without invocation stay silent.",
+        "test": "Vendor and review source locally, disable LoadStringEnabled when unnecessary, and assert fetched responses are treated as data rather than executable functions.",
+    },
+    "SP672": {
+        "why": "A RemoteEvent's data arguments are client controlled; passing them straight into loadstring crosses the client/server code-execution boundary.",
+        "attack": "If server loadstring is enabled, a caller sends source as the second callback argument and the handler immediately executes it with server capabilities.",
+        "false_positive": "This advisory only recognizes a two-parameter callback with immediate loadstring invocation as its entire body. Guarded, typed, aliased and nested flows require separate review and are not classified by this signature.",
+        "test": "Replace code-bearing events with server-defined action IDs and validated argument schemas; verify clients cannot submit executable source.",
+    },
+    "SP673": {
+        "why": "Rust references must be non-null even inside unsafe code. An all-zero reference violates the type's initialization invariant immediately.",
+        "attack": "Reaching a fully qualified mem::zeroed reference initialization creates invalid memory state; optimizations or subsequent use may crash or behave unpredictably.",
+        "false_positive": "The advisory requires explicit std/core mem::zeroed with a reference type. Raw pointers, integers, Option references and uninitialized storage without assume_init stay silent; import aliases and complex generics are not resolved.",
+        "test": "Initialize references from a live value or retain storage as MaybeUninit until a valid value is written. Use compiler diagnostics or Miri separately when available.",
+    },
+    "SP674": {
+        "why": "The exported Next.js image configuration explicitly permits optimizer requests to private IP addresses.",
+        "attack": "An image optimization request may reach internal services if URL restrictions and network isolation also allow it; this is not proof of a reachable SSRF.",
+        "false_positive": "Advisory: intentional private image services exist. Only an exported literal configuration in next.config.* is recognized; spreads, computed keys, mutations and wrapper functions remain unresolved.",
+        "test": "Keep dangerouslyAllowLocalIP false unless private origins and network access are explicitly reviewed; test that metadata and internal URLs are rejected.",
+    },
+    "SP675": {
+        "why": "jsonwebtoken verification explicitly skips exp or nbf claim validation.",
+        "attack": "Expired or premature tokens can be accepted when the corresponding claim exists and no independent lifetime check rejects them.",
+        "false_positive": "Advisory: renewal and inspection flows may deliberately ignore time claims. Requires a direct imported verify call and literal true in its options; decode, sign, false overrides and ambiguous bindings stay silent.",
+        "test": "Restore time-claim validation; verify expired and not-yet-active tokens are rejected on authentication paths.",
+    },
+    "SP676": {
+        "why": "jsonwebtoken verification permits asymmetric key types that do not match the selected signature algorithm.",
+        "attack": "The compatibility switch removes an algorithm/key-type check. Actual acceptance depends on the key, algorithm and crypto implementation; it does not disable all signature verification.",
+        "false_positive": "Advisory: reviewed legacy migrations may need compatibility. Requires an unambiguous runtime jsonwebtoken import and final literal true; custom verify methods and type imports stay silent.",
+        "test": "Use a key of the expected type, remove allowInvalidAsymmetricKeyTypes, and test rejection of incompatible algorithm/key combinations.",
+    },
+    "SP677": {
+        "why": "Node AES-GCM is explicitly configured with a 4- or 8-byte authentication tag, below the 96-bit hardening target.",
+        "attack": "Short tags reduce forgery resistance; acceptable message and attempt limits depend on the protocol. NIST's proposed removal is not claimed to be a finalized standard.",
+        "false_positive": "Advisory: bounded legacy protocols can intentionally use short tags. Requires an imported Node crypto call, literal AES-GCM algorithm and supported short length. CCM, 12-16 bytes, default length and invalid lengths stay silent.",
+        "test": "Prefer the default 16-byte GCM tag; test that a changed tag is rejected and document any legacy protocol's attempt and per-key limits.",
+    },
+    "SP678": {
+        "why": "A positive-size unsafe Buffer is converted directly to a string before any overwrite.",
+        "attack": "The conversion may read stale process memory. Whether it contains sensitive bytes or leaves the process is unknown; zero-fill runtime flags can change behavior.",
+        "false_positive": "Advisory: requires an explicit node:buffer/buffer import, positive integer size and immediate full toString conversion. Zero size, safe allocation, fill/write steps, partial ranges and ambiguous Buffer bindings are excluded.",
+        "test": "Use Buffer.alloc for readable storage, or overwrite the entire unsafe buffer before conversion; test that output never contains unwritten bytes.",
+    },
+    "SP679": {
+        "why": "A Node HTTP(S) call explicitly enables the lenient HTTP parser.",
+        "attack": "Parser disagreement with another HTTP hop may enable request or response smuggling; a proxy topology and exploitable byte sequence are not established by this setting alone.",
+        "false_positive": "Advisory: controlled legacy peers may need leniency. Requires a direct imported Node HTTP(S) API and literal true in the options argument. Custom request helpers, spreads, false overrides and data objects stay silent.",
+        "test": "Leave insecureHTTPParser false and reject malformed messages consistently across all HTTP hops.",
+    },
+    "SP680": {
+        "why": "An imported Electron BrowserWindow explicitly disables webSecurity in its webPreferences.",
+        "attack": "The renderer loses same-origin protections. Impact depends on loaded content and other application controls; no remote content is inferred.",
+        "false_positive": "Advisory: trusted local viewers may use the opt-out intentionally. Only a direct new BrowserWindow with literal nested options is recognized; unrelated properties, type imports, shadowed constructors and overrides stay silent.",
+        "test": "Keep webSecurity enabled and use narrow reviewed IPC or protocol handlers instead of disabling browser protections.",
+    },
+    "SP681": {
+        "why": "An Electron renderer combines Node integration with disabled context isolation.",
+        "attack": "Untrusted renderer script may gain Node capabilities if it can execute in this window; the signature does not establish a renderer injection or remote page.",
+        "false_positive": "Advisory: trusted local tools may intentionally expose Node. Requires both explicit settings in one BrowserWindow. Explicit or global sandbox enforcement, safe overrides, ambiguous preferences and custom constructors are excluded.",
+        "test": "Disable nodeIntegration, enable contextIsolation and sandboxing, and expose only validated operations through a narrow contextBridge.",
+    },
+    "SP682": {
+        "why": "An imported Puppeteer launch explicitly supplies Chromium's --no-sandbox argument.",
+        "attack": "Browser content runs without Chromium sandbox containment; host compromise additionally requires a browser bug or dangerous exposed capability.",
+        "false_positive": "Advisory: some isolated hosts intentionally supply equivalent containment. Requires a literal Chrome launch argument array. Firefox launches, custom launch functions, spreads and computed arguments are excluded.",
+        "test": "Configure a supported Chromium sandbox or reviewed external isolation; verify untrusted browser content cannot access host capabilities.",
+    },
+    "SP683": {
+        "why": "An explicit PHP version declaration predates the upstream PHP2Shell fixes published on 2026-10-21: CVE-2026-109618 and CVE-2026-109619.",
+        "attack": "Unpatched web-serving PHP can suffer memory corruption before application code executes. A declared version does not establish deployment, reachability, a working exploit or absence of vendor backports.",
+        "false_positive": "Advisory, not a deployed-vulnerability assertion. Requires an exact .php-version/.tool-versions pin or the final static official PHP FPM/Apache image stage. CLI images, Composer constraints, floating/prerelease/vendor versions, custom registries and unresolved digests stay silent. Check vendor patch evidence for backported builds.",
+        "test": "Upgrade each supported branch to at least 8.2.35, 8.3.36, 8.4.27 or 8.5.12, or verify a vendor backport. Restart web workers and verify the deployed binary; application guards or disabling upload progress are not a complete fix.",
     },
     "SP096": {
         "why": "Skill files with instruction injection patterns can hijack agent behavior.",
@@ -5803,7 +5885,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "high",
         compile_pattern(
-            r"""(?:\b(?:verify|rejectUnauthorized)\s*[:=]\s*(?:false|False)\b|\bbadCertificateCallback\s*=\s*\([^)]*\)\s*=>\s*true\b|\bServerCertificateCustomValidationCallback\s*=\s*\([^)]*\)\s*=>\s*true\b|\bServerCertificateCustomValidationCallback\s*=\s*HttpClientHandler\.DangerousAcceptAnyServerCertificateValidator\b|\bSecurityContext\s*\(\s*withTrustedRoots\s*:\s*false\b)"""
+            r"""(?:\b(?:verify|rejectUnauthorized)\s*[:=]\s*(?:false|False)\b|\bbadCertificateCallback\s*=\s*\([^)]*\)\s*=>\s*true\b|\bServerCertificateCustomValidationCallback\s*=\s*\([^)]*\)\s*=>\s*true\b|\bServerCertificateCustomValidationCallback\s*=\s*HttpClientHandler\.DangerousAcceptAnyServerCertificateValidator\b)"""
         ),
         "TLS peer verification is explicitly disabled.",
         "Restore certificate verification and configure the correct trust chain.",
@@ -9856,19 +9938,6 @@ RULES: tuple[Rule, ...] = (
         frozenset({".js", ".ts", ".mjs"}),
     ),
     Rule(
-        "SP429",
-        "Express express.json body parser without limit option",
-        "scale",
-        "medium",
-        "high",
-        compile_pattern(r"""app\.use\s*\(\s*express\.json\s*\(\s*\)\s*\)"""),
-        "express.json() initialized without explicit payload limit option risks memory exhaustion on oversized JSON bodies.",
-        "Set an explicit body size limit: `app.use(express.json({ limit: '1mb' }));`.",
-        "CWE-400",
-        "Capacity",
-        frozenset({".js", ".ts", ".mjs"}),
-    ),
-    Rule(
         "SP430",
         "Express session using default in-memory MemoryStore in production",
         "scale",
@@ -12025,14 +12094,14 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP591",
-        "Server-only database or ORM client imported inside 'use client' bundle",
-        "security",
-        "critical",
+        "Client module imports a server-only runtime dependency",
+        "correctness",
+        "medium",
         "high",
         compile_pattern(
             r"""(?:from|import)\s+['"](?:@prisma/client|drizzle-orm/node-postgres|server-only|pg|mysql2)['"]"""
         ),
-        "Importing database drivers or server-only packages into 'use client' components leaks server credentials and crashes client browser bundles.",
+        "An explicit client module imports a runtime server dependency; framework enforcement may reject the build. Type-only imports are excluded.",
         "Isolate database logic in Server Components or Server Actions, or use import 'server-only'.",
         "CWE-200",
         "OWASP ASVS V14",
@@ -13098,7 +13167,7 @@ RULES: tuple[Rule, ...] = (
         "medium",
         "medium",
         compile_pattern(
-            r"""(?:(?:printf|syslog)\s*\(\s*argv\s*\[[^\]]+\]|fprintf\s*\(\s*[^,]+,\s*argv\s*\[[^\]]+\]|sprintf\s*\(\s*[^,]+,\s*argv\s*\[[^\]]+\]|snprintf\s*\(\s*[^,]+,\s*[^,]+,\s*argv\s*\[[^\]]+\])"""
+            r"""(?<![\w.:])(?:(?:std::)?printf\s*\(\s*argv\s*\[[^\]\r\n]{1,128}\]|syslog\s*\(\s*[^,()\n]{1,128},\s*argv\s*\[[^\]\r\n]{1,128}\]|(?:std::)?(?:fprintf|sprintf)\s*\(\s*[^,()\n]{1,256},\s*argv\s*\[[^\]\r\n]{1,128}\]|(?:std::)?snprintf\s*\(\s*[^,()\n]{1,256},\s*[^,()\n]{1,256},\s*argv\s*\[[^\]\r\n]{1,128}\])"""
         ),
         "A C/C++ formatted-output call receives an attacker-controlled argv value as its format string.",
         'Use a constant format string such as "%s" and pass argv as data; validate command-line inputs before use.',
@@ -13123,18 +13192,184 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP670",
-        "C# XML parser enables DTD or external resolution",
+        "C# XmlReader combines DTD parsing and external resolution",
         "security",
         "medium",
         "low",
-        compile_pattern(
-            r"""(?:DtdProcessing\s*=\s*DtdProcessing\.Parse|XmlResolver\s*=\s*new\s+(?:XmlUrlResolver|XmlSecureResolver))"""
-        ),
-        "A C# XML parser configuration enables DTD processing or an external resolver, creating an XXE risk for untrusted XML.",
-        "Use DtdProcessing.Prohibit or Ignore, set XmlResolver to null, and parse untrusted XML with bounded input and explicit types.",
+        compile_pattern(r"$^"),
+        "A directly consumed XmlReaderSettings initializer combines DtdProcessing.Parse and XmlUrlResolver; external input and deployment still require review.",
+        "Use a null/throwing resolver and separately bound XML/entity expansion. DTD parsing with a null resolver is not by itself external entity resolution.",
         "CWE-611",
         "OWASP ASVS V5",
         frozenset({".cs"}),
+    ),
+    Rule(
+        "SP671",
+        "Roblox executes an HTTP response as Luau source",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(r"$^"),
+        "A direct HttpService response is compiled and immediately executed with loadstring.",
+        "Vendor reviewed modules and parse HTTP responses as data; disable LoadStringEnabled unless explicitly required.",
+        "CWE-494",
+        "Roblox server script integrity",
+        frozenset({".lua", ".luau"}),
+    ),
+    Rule(
+        "SP672",
+        "Roblox RemoteEvent executes client-supplied source",
+        "security",
+        "medium",
+        "medium",
+        compile_pattern(r"$^"),
+        "An OnServerEvent callback immediately compiles and executes a client data argument.",
+        "Use server-owned action handlers and validate client arguments; do not execute client-supplied code.",
+        "CWE-94",
+        "Roblox client-server boundary",
+        frozenset({".lua", ".luau"}),
+    ),
+    Rule(
+        "SP673",
+        "Rust zero-initializes a reference type",
+        "correctness",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An explicit std/core mem::zeroed call creates an invalid null reference.",
+        "Create the reference from a live value, or keep storage as MaybeUninit until a valid value is written.",
+        "CWE-665",
+        "Rust reference validity",
+        frozenset({".rs"}),
+    ),
+    Rule(
+        "SP674",
+        "Next.js image optimizer permits private IP targets",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "Exported image options explicitly set dangerouslyAllowLocalIP to true.",
+        "Keep private IP image targets blocked unless origins and network isolation are reviewed.",
+        "CWE-918",
+        "Next.js image request boundary",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP675",
+        "JWT verification skips time-claim validation",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported jsonwebtoken verify call ignores expiration or not-before claims.",
+        "Restore exp/nbf validation on authentication paths and test token lifetime boundaries.",
+        "CWE-613",
+        "JWT lifetime validation",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP676",
+        "JWT verification permits incompatible asymmetric key types",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported jsonwebtoken verify call enables allowInvalidAsymmetricKeyTypes.",
+        "Use compatible algorithm/key pairs and remove this legacy compatibility opt-out.",
+        "CWE-347",
+        "JWT algorithm/key compatibility",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP677",
+        "Node AES-GCM uses a short authentication tag",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported Node crypto AES-GCM call selects a 4- or 8-byte authentication tag.",
+        "Prefer the default 16-byte tag; review protocol limits before retaining shorter legacy tags.",
+        "CWE-326",
+        "Authenticated encryption strength",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP678",
+        "Node unsafe Buffer is immediately read as a string",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "A positive-size imported unsafe Buffer is converted to a string before an overwrite.",
+        "Use Buffer.alloc or overwrite every byte before converting unsafe storage to a string.",
+        "CWE-908",
+        "Initialized memory confidentiality",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP679",
+        "Node HTTP explicitly enables a lenient parser",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported HTTP(S) call explicitly sets insecureHTTPParser to true.",
+        "Keep strict parsing enabled and reject malformed HTTP consistently across intermediaries.",
+        "CWE-444",
+        "HTTP parser agreement",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP680",
+        "Electron BrowserWindow disables web security",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported BrowserWindow constructor sets webPreferences.webSecurity to false.",
+        "Retain browser security and use narrow reviewed IPC or protocol APIs for cross-origin needs.",
+        "CWE-693",
+        "Electron origin boundary",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP681",
+        "Electron renderer enables Node without context isolation",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "A BrowserWindow combines nodeIntegration true and contextIsolation false.",
+        "Disable Node integration, enable isolation and sandboxing, and expose validated contextBridge APIs.",
+        "CWE-749",
+        "Electron privilege boundary",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP682",
+        "Puppeteer launches Chromium without its sandbox",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported Puppeteer launch passes an explicit --no-sandbox argument.",
+        "Configure a supported Chromium sandbox or independently reviewed host containment.",
+        "CWE-693",
+        "Browser process containment",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP683",
+        "Declared PHP version predates PHP2Shell fixes",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "This declared upstream PHP version predates CVE-2026-109618/CVE-2026-109619 fixes. Review web-runtime deployment and vendor backports; this is not proof of an exploitable host.",
+        "Upgrade to PHP 8.2.35/8.3.36/8.4.27/8.5.12 or a verified vendor-fixed build, restart web workers and verify the running binary. Reviewed 2026-10-22; no online lookup is performed.",
+        "CWE-1395",
+        "PHP runtime supply-chain advisories",
     ),
 )
 
@@ -13142,6 +13377,7 @@ RULES: tuple[Rule, ...] = (
 # Derived from metadata (not a hand-maintained ID list) so new provider-token
 # rules inherit placeholder filtering, comment scanning, and document scanning.
 SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
+MINIMIZED_EVIDENCE_RULE_IDS = frozenset({"SP591", *(f"SP{number}" for number in range(666, 684))})
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
 
 # Rules whose evidence is the CONTENT of a string literal (URL query shapes,
@@ -13666,6 +13902,8 @@ def comment_line_prefixes(path: Path) -> tuple[str, ...]:
         return ("//", "/*")
     if suffix == ".sql":
         return ("--", "/*")
+    if suffix in {".lua", ".luau"}:
+        return ("--",)
     if suffix in {".tf", ".hcl"}:
         return ("#", "//")
     return ()
@@ -13678,6 +13916,8 @@ def is_pure_comment(line: str, path: Path, prefixes: Sequence[str] | None = None
     markers = prefixes if prefixes is not None else comment_line_prefixes(path)
     if markers == ("#",):
         return stripped.startswith("#")
+    if markers == ("--",):
+        return stripped.startswith("--")
     if markers == ("//", "/*"):
         return stripped.startswith(("//", "/*", "*", "<!--"))
     if markers == ("--", "/*"):
@@ -13865,9 +14105,13 @@ def make_finding(
     end_line: int | None = None,
     end_column: int | None = None,
     history_commit: str | None = None,
+    minimal_evidence: str | None = None,
 ) -> Finding:
     safe_evidence = clean_evidence(evidence, rule.redact)
-    if rule.redact:
+    minimized = rule.rule_id in MINIMIZED_EVIDENCE_RULE_IDS or minimal_evidence is not None
+    if minimized and not rule.redact:
+        safe_evidence = clean_evidence(minimal_evidence or rule.message, False)
+    if rule.redact or minimized:
         content_hash = hashlib.sha256(evidence.strip().encode("utf-8", "replace")).hexdigest()[:12]
         identity = f"{rule.rule_id}:{relative_path}:{content_hash}"
     else:
@@ -14035,6 +14279,20 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP631",
         "SP664",
         "SP665",
+        "SP670",
+        "SP671",
+        "SP672",
+        "SP673",
+        "SP674",
+        "SP675",
+        "SP676",
+        "SP677",
+        "SP678",
+        "SP679",
+        "SP680",
+        "SP681",
+        "SP682",
+        "SP683",
     }
 )
 
@@ -14316,15 +14574,26 @@ def js_shadowed_bindings(
 
 
 def js_precision_lines(
-    path: Path, source: str, frameworks: frozenset[str] | None
+    path: Path,
+    source: str,
+    frameworks: frozenset[str] | None,
+    minimal_evidence: dict[tuple[str, int], str] | None = None,
 ) -> list[tuple[str, int]]:
-    """Require local identity, scope, and source evidence for three narrow checks."""
+    """Require local identity, scope and literal evidence for bounded JS/TS checks."""
     tokens = js_context_tokens(source)
     values = [token[0] for token in tokens]
     pairs, depths = js_context_structure(values)
     if not depths:
         return []
     hits: list[tuple[str, int]] = []
+    excerpts: dict[tuple[str, int], str] = {}
+    for rule_id, start, _end in js_config_checks.signature_spans(
+        path, tokens, pairs, depths, excerpts
+    ):
+        line_number = source.count("\n", 0, start) + 1
+        hits.append((rule_id, line_number))
+        if minimal_evidence is not None:
+            minimal_evidence[(rule_id, line_number)] = excerpts[(rule_id, start)]
 
     # Only literal top-level BullMQ imports/require bindings establish identity.
     bindings: dict[str, tuple[str, int]] = {}
@@ -14427,6 +14696,12 @@ def js_precision_lines(
         directives.add(values[cursor])
         cursor = next_cursor + (values[next_cursor : next_cursor + 1] == [";"])
 
+    if path.suffix.lower() in find_rule("SP591").suffixes and directives.intersection(
+        {'"use client"', "'use client'"}
+    ):
+        for index in js_config_checks.client_runtime_imports(values, pairs, depths):
+            hits.append(("SP591", source.count("\n", 0, tokens[index][1]) + 1))
+
     # Adjacent default-GET literal requests in one exported async Page/Layout.
     if (
         path.name.lower()
@@ -14514,6 +14789,87 @@ def js_precision_lines(
     return list(dict.fromkeys(hits))
 
 
+def dotnet_xml_precision_lines(source: str) -> list[int]:
+    """Narrow initializer-to-reader evidence; not a general C# parser."""
+    if any(marker in source for marker in ('@"', '$"', '"""')):
+        return []
+    tokens = js_context_tokens(source)
+    values = [value for value, _ in tokens]
+    pairs, depths = js_context_structure(values)
+    if not depths:
+        return []
+    types = {"XmlReaderSettings", "XmlReader", "XmlUrlResolver", "DtdProcessing"}
+    if any(
+        values[i] in {"class", "struct", "record", "interface"} and values[i + 1] in types
+        for i in range(len(values) - 1)
+    ):
+        return []
+    if any(
+        values[i] == "using" and values[i + 1] in types and values[i + 2] == "="
+        for i in range(len(values) - 2)
+    ):
+        return []
+    if any(
+        values[i] in {"var", "const"} and values[i + 1] in types for i in range(len(values) - 1)
+    ):
+        return []
+    counts = Counter(values)
+
+    def qualified(start: int, name: str) -> int:
+        if values[start : start + 5] == ["System", ".", "Xml", ".", name]:
+            return start + 5
+        return start + 1 if values[start : start + 1] == [name] else -1
+
+    hits = []
+    for index, value in enumerate(values):
+        if value != "new" or index < 2 or values[index - 1] != "=":
+            continue
+        if index < 3 or values[index - 3] not in {"var", "XmlReaderSettings"}:
+            continue
+        name = values[index - 2]
+        if not re.fullmatch(r"[A-Za-z_][\w]*", name) or counts[name] != 2:
+            continue
+        opening = qualified(index + 1, "XmlReaderSettings")
+        if opening < 0:
+            continue
+        if values[opening : opening + 2] == ["(", ")"]:
+            opening += 2
+        closing = pairs.get(opening)
+        if closing is None or values[opening] != "{":
+            continue
+        options = {}
+        for start, end in js_config_checks.segments(values, pairs, opening):
+            if values[start + 1 : start + 2] != ["="] or values[start] in options:
+                options = {}
+                break
+            options[values[start]] = (start + 2, end)
+        dtd = options.get("DtdProcessing")
+        resolver = options.get("XmlResolver")
+        if dtd is None or resolver is None:
+            continue
+        dtd_end = qualified(dtd[0], "DtdProcessing")
+        resolver_type = qualified(resolver[0] + 1, "XmlUrlResolver")
+        if (
+            dtd_end < 0
+            or values[dtd_end : dtd[1]] != [".", "Parse"]
+            or values[resolver[0]] != "new"
+            or resolver_type < 0
+            or values[resolver_type : resolver[1]] != ["(", ")"]
+        ):
+            continue
+        for cursor in range(closing + 1, min(len(values), closing + 513)):
+            if cursor and values[cursor - 1] == ".":
+                continue
+            member = qualified(cursor, "XmlReader")
+            if member < 0 or values[member : member + 3] != [".", "Create", "("]:
+                continue
+            args = js_config_checks.segments(values, pairs, member + 2)
+            if len(args) == 2 and values[args[1][0] : args[1][1]] == [name]:
+                hits.append(source.count("\n", 0, tokens[index][1]) + 1)
+                break
+    return list(dict.fromkeys(hits))
+
+
 def find_regex_issues(
     path: Path,
     relative_path: str,
@@ -14535,19 +14891,96 @@ def find_regex_issues(
     if any(len(line) > MAX_SCAN_LINE_CHARS for line in source_lines):
         raise ScanCoverageError("line_limit")
     lines = source_lines if lines is None else lines
+    if suffix == ".cs" and "XmlReaderSettings" in source_text and "XmlResolver" in source_text:
+        for line_number in dotnet_xml_precision_lines(source_text):
+            append_file_level_finding(findings, "SP670", relative_path, lines, line_number)
+    if path.name.lower() in {"dockerfile", "containerfile", ".php-version", ".tool-versions"}:
+        for version, line_number in php_advisories.advisory_declarations(path, source_text):
+            append_file_level_finding(
+                findings,
+                "SP683",
+                relative_path,
+                lines,
+                line_number,
+                minimal_evidence=f"Declared upstream PHP version: {version}",
+            )
     # Keep this public helper safe for direct callers too. File/snippet scans
     # already enforce the line budget, but rule-contract builders and tests can
     # invoke the regex engine directly with attacker-controlled text.
     if any(len(line) > MAX_SCAN_LINE_CHARS for line in lines):
         raise ScanCoverageError("line_limit")
+    format_token_starts = None
+    if suffix in find_rule("SP668").suffixes and "argv" in source_text:
+        # Code-shaped printf text in C strings/comments is not a call. C++ raw
+        # strings need a different lexer; leave that ambiguous context unresolved.
+        format_token_starts = (
+            set()
+            if 'R"' in source_text
+            else {
+                offset
+                for value, offset in js_context_tokens(source_text)
+                if value in {"printf", "fprintf", "sprintf", "snprintf", "syslog", "std"}
+            }
+        )
+    if suffix in {".lua", ".luau", ".rs"}:
+        language = "rust" if suffix == ".rs" else "lua"
+        try:
+            spans = polyglot_checks.signature_spans(source_text, language)
+        except polyglot_checks.LexicalLimitError as exc:
+            raise ScanCoverageError("parser_limit") from exc
+        for rule_id, start, end in spans:
+            line_number, column = offset_to_position(source_text, start)
+            prefixes = comment_line_prefixes(path)
+            adjacent = lines[max(0, line_number - 2) : line_number]
+            if any(rule_id in extract_inline_ignore_ids(line, prefixes) for line in adjacent):
+                continue
+            end_line, end_column = offset_to_position(source_text, end)
+            finding = make_finding(
+                find_rule(rule_id),
+                relative_path,
+                line_number,
+                lines[line_number - 1],
+                detection="structural",
+                column=column,
+                end_line=end_line,
+                end_column=end_column,
+                minimal_evidence="reqwest Client builder explicitly enables an invalid-certificate/hostname TLS switch"
+                if rule_id == "SP104"
+                else None,
+            )
+            # New Rust TLS variants are advisory until representative review.
+            findings.append(replace(finding, tier="advisory") if rule_id == "SP104" else finding)
     if is_github_workflow and suffix in {".yml", ".yaml"}:
         for line_number in github_run_expression_lines(source_text):
             append_file_level_finding(findings, "SP210", relative_path, lines, line_number)
-    if suffix in {".js", ".jsx", ".ts", ".tsx"} and any(
-        marker in source_text for marker in ("bullmq", "fetch", ".json")
+    if suffix in JS_CONFIG_SUFFIXES and any(
+        marker in source_text
+        for marker in (
+            "bullmq",
+            "fetch",
+            ".json",
+            "use client",
+            "dangerouslyAllowLocalIP",
+            "jsonwebtoken",
+            "authTagLength",
+            "allocUnsafe",
+            "insecureHTTPParser",
+            "webPreferences",
+            "puppeteer",
+        )
     ):
-        for rule_id, line_number in js_precision_lines(path, source_text, detected_frameworks):
-            append_file_level_finding(findings, rule_id, relative_path, lines, line_number)
+        excerpts: dict[tuple[str, int], str] = {}
+        for rule_id, line_number in js_precision_lines(
+            path, source_text, detected_frameworks, excerpts
+        ):
+            append_file_level_finding(
+                findings,
+                rule_id,
+                relative_path,
+                lines,
+                line_number,
+                minimal_evidence=excerpts.get((rule_id, line_number)),
+            )
     package_dependency_names: set[str] = set()
     package_lifecycle_names: set[str] = set()
     if path.name.lower() == "package.json":
@@ -14606,6 +15039,10 @@ def find_regex_issues(
     for rule in applicable_rules:
         rule_is_secret = rule.redact
         rule_id = rule.rule_id
+        # Lua/Luau support starts with its own lexical checks and secret rules.
+        # Generic foreign-language regexes have no validated Luau semantics.
+        if suffix in {".lua", ".luau"} and not rule_is_secret:
+            continue
         if rule_id in SKILL_RULE_IDS and not effective_skill_context:
             continue
         if rule_id in MCP_RULE_IDS and not mcp_context:
@@ -14673,6 +15110,12 @@ def find_regex_issues(
             continue
         if r"[\s\S]" in rule.pattern.pattern or r"\n" in rule.pattern.pattern:
             for match in rule.pattern.finditer(source_text):
+                if (
+                    rule_id == "SP668"
+                    and format_token_starts is not None
+                    and match.start() not in format_token_starts
+                ):
+                    continue
                 matched_text = match.group(0)
                 # Structural rules operate within one nearby declaration or block. A match
                 # spanning most of a file is cross-block correlation, not evidence.
@@ -14785,28 +15228,6 @@ def find_regex_issues(
         append_file_level_finding(findings, "SP612", relative_path, lines, apollo_line)
 
     # Next.js / React Server Components checks
-    if (
-        suffix in {".jsx", ".tsx", ".js", ".ts", ".mjs"}
-        and re.search(r"['\"]use client['\"]", source_text)
-        and re.search(
-            r"""(?:from|import)\s+['"](?:@prisma/client|drizzle-orm/node-postgres|server-only|pg|mysql2)['"]""",
-            source_text,
-        )
-    ):
-        client_line = next(
-            (
-                i
-                for i, v in enumerate(lines, 1)
-                if re.search(
-                    r"""(?:from|import)\s+['"](?:@prisma/client|drizzle-orm/node-postgres|server-only|pg|mysql2)['"]""",
-                    v,
-                )
-            ),
-            None,
-        )
-        if client_line:
-            append_file_level_finding(findings, "SP591", relative_path, lines, client_line)
-
     if (
         suffix in {".ts", ".tsx", ".js", ".jsx"}
         and "use server" in source_text
@@ -15455,6 +15876,8 @@ def append_file_level_finding(
     relative_path: str,
     lines: Sequence[str],
     line_number: int,
+    *,
+    minimal_evidence: str | None = None,
 ) -> None:
     line_str = lines[line_number - 1] if 1 <= line_number <= len(lines) else ""
     prev_line_str = lines[line_number - 2] if line_number >= 2 else ""
@@ -15464,7 +15887,14 @@ def append_file_level_finding(
     if rule_id in ignore_curr or rule_id in ignore_prev:
         return
     findings.append(
-        make_finding(find_rule(rule_id), relative_path, line_number, line_str, "structural")
+        make_finding(
+            find_rule(rule_id),
+            relative_path,
+            line_number,
+            line_str,
+            "structural",
+            minimal_evidence=minimal_evidence,
+        )
     )
 
 
@@ -17766,7 +18196,7 @@ def build_json_report(
     test_findings = [f for f in findings if f.scope == "test"]
     limitations = [
         "Fast heuristic scan; confirm every finding.",
-        "No runtime reachability or dependency CVE database.",
+        "No runtime reachability or general dependency CVE feed; dated version advisories do not verify deployed vendor patches.",
     ]
     if isinstance(completeness, dict) and not completeness.get("is_complete", True):
         reasons = ", ".join(str(reason) for reason in completeness.get("reasons", []))
@@ -17952,7 +18382,11 @@ def read_finding_context(
     context: int = 2,
 ) -> list[tuple[int, str]]:
     """Return context without re-reading credential material hidden by a finding."""
-    if finding.rule_id in SECRET_RULE_IDS:
+    if (
+        finding.rule_id in SECRET_RULE_IDS
+        or finding.rule_id in MINIMIZED_EVIDENCE_RULE_IDS
+        or (finding.rule_id == "SP104" and finding.tier == "advisory")
+    ):
         return [(finding.line, terminal_safe_text(finding.evidence))]
     return read_source_context(root, finding.path, finding.line, context=context)
 

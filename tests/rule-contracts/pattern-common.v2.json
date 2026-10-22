@@ -6425,47 +6425,6 @@
       }
     },
     {
-      "rule_id": "SP429",
-      "title": "Express express.json body parser without limit option",
-      "category": "scale",
-      "expected_severity": "medium",
-      "expected_confidence": "high",
-      "cwe": "CWE-400",
-      "frameworks": [],
-      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-      "cases": {
-        "positive": [
-          {
-            "path": "contract-fixtures/common/sp429-positive-a.ts",
-            "source_hex": "6170702e757365092809657870726573732e6a736f6e202820292029",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "aaa34f2269f7a51c0e533ecf"
-          }
-        ],
-        "negative": [
-          {
-            "path": "contract-fixtures/common/sp429-negative-a.ts",
-            "source_hex": "2170702e757365092809657870726573732e6a736f6e202820292029"
-          },
-          {
-            "path": "contract-fixtures/common/sp429-negative-b.ts",
-            "source_hex": "2070702e757365092809657870726573732e6a736f6e202820292029"
-          }
-        ],
-        "adversarial": [
-          {
-            "path": "contract-fixtures/common/sp429-adversarial-a.ts",
-            "source_hex": "5870702e757365092809657870726573732e6a736f6e202820292029",
-            "expected": false,
-            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
-          }
-        ]
-      }
-    },
-    {
       "rule_id": "SP430",
       "title": "Express session using default in-memory MemoryStore in production",
       "category": "scale",

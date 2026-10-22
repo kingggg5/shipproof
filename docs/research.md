@@ -1,6 +1,6 @@
 # ShipProof research notebook
 
-Last reviewed: 2026-08-20.
+Last cohort review: 2026-10-22; older notebook entries retain their original context.
 
 This notebook records the external pages consulted while ShipProof was designed. It is intentionally separate from the [production playbook](production-playbook.md): the playbook contains ShipProof's operating model; this file preserves provenance, challenges assumptions, and makes later re-verification possible.
 
@@ -12,13 +12,24 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 640 | Versioned behavior; covered by structure and regression tests |
+| Executable scanner rules | 652 | Versioned behavior; covered by structure and regression tests |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
 | Reserved promotion slots | 1,000 | Deliberate namespace reservation; not catalog evidence |
 
 Candidate count measures catalog coverage, not detector quality. Candidates have no runtime effect, cannot emit a finding, and must not be presented as shipped product capability.
+
+The [2026-10 TypeScript cohort](https://github.com/kingggg5/shipproof/blob/main/research/typescript-cohort-2026-10.md)
+records primary documentation, deduplication decisions, nine advisory detectors and
+128 authored cases. It also records the Express-default retirement and TypeScript
+type-import correction. This directed corpus is not an independent precision benchmark.
+
+The [PHP2Shell record](https://github.com/kingggg5/shipproof/blob/main/research/php2shell-2026-10.md)
+verifies the 21 October 2026 runtime advisories against PHP/GHSA and documents exact
+branch cutoffs, vendor-backport uncertainty and the source-only evidence boundary.
+The 0.12 release also corrects syslog argument positions and the C# DTD/resolver
+distinction instead of promoting those keyword matches into confirmed vulnerabilities.
 
 ## Reading protocol
 

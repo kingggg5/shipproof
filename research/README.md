@@ -2,6 +2,18 @@
 
 This directory is a research backlog, not a list of enabled scanner rules.
 
+## Planning entry point — 2026-09-22
+
+Use the [long-term product and engineering plan](long-term-plan-2026-2027.md) and
+[Dart, C/C++, and C#/.NET rule plan](rule-plan-2026-2027.md) for proposed work
+ordering, verified baseline gaps, promotion criteria, and the 5,000-rule target.
+These plans do not mark implementation milestones complete or supersede
+released-version evidence.
+
+Implemented cohorts: [Roblox/Rust](roblox-rust-cohort-2026-10.md) and
+[TypeScript/JavaScript precision](typescript-cohort-2026-10.md), including primary
+sources, retained limitations and executed fixture evidence.
+
 - `annual-rule-candidates.json` contains 300 critical evidence signals for each year from 2021 through 2026. They are real CVE records selected from a bounded 300-record NVD sample in each available calendar quarter, with CISA KEV membership and vendor advisories used where available. This is a reproducible research sample, not an assertion that these are the globally most important 300 CVEs.
 - `expert-rule-candidates.json` contains 1,000 weakness candidates grounded in the current MITRE CWE catalog.
 - `language-rule-candidates.json` contains 5,000 deduplicated `(ecosystem, CWE)` research variants for 14 production ecosystems. It records applicability evidence, structured consequences, existing-rule overlap, risk dimensions, and official ecosystem sources.

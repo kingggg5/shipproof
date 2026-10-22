@@ -87,6 +87,17 @@ def fixture_source(index: int, profile: str, bytes_per_file: int) -> str:
     if profile == "clean":
         prefix = f"def normalize_{index}(value: str) -> str:\n    return value.strip()\n"
         padding = "# bounded benchmark padding\n"
+    elif profile == "typescript-config":
+        sources = (
+            "import {verify} from 'jsonwebtoken';\nexport function authenticate(token: string, key: string) { return verify(token, key, {ignoreExpiration: false, ignoreNotBefore: false, algorithms: ['RS256']}); }\n",
+            "import {createCipheriv} from 'node:crypto';\nexport function encrypt(key: Uint8Array, nonce: Uint8Array) { return createCipheriv('aes-256-gcm', key, nonce, {authTagLength: 16}); }\n",
+            "import {createServer} from 'node:http';\nexport const server = createServer({insecureHTTPParser: false}, handler);\n",
+            "import {Buffer} from 'node:buffer';\nexport const initialized = Buffer.allocUnsafe(64).fill(0).toString('hex');\n",
+            "import {BrowserWindow} from 'electron';\nexport const window = new BrowserWindow({webPreferences: {webSecurity: true, contextIsolation: true, nodeIntegration: false}});\n",
+            "import puppeteer from 'puppeteer';\nexport async function render() { return puppeteer.launch({headless: true, args: []}); }\n",
+        )
+        prefix = sources[index % len(sources)]
+        padding = "// bounded benchmark padding\n"
     else:
         prefix = f"def parse_{index}(value: str) -> str:\n    return value\n"
         # Exercise long near-miss regex input without embedding a vulnerable
@@ -110,7 +121,8 @@ def write_fixture(
     for index in range(file_count):
         bucket = root / f"module-{index // 250:04d}"
         bucket.mkdir(exist_ok=True)
-        path = bucket / f"service-{index:06d}.py"
+        suffix = ".ts" if profile == "typescript-config" else ".py"
+        path = bucket / f"service-{index:06d}{suffix}"
         source = fixture_source(index, profile, bytes_per_file)
         path.write_text(source, encoding="utf-8")
         source_bytes = source.encode("utf-8")
@@ -138,7 +150,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--samples", type=int, default=3, help="Measured scan samples")
     parser.add_argument(
         "--profile",
-        choices=("clean", "adversarial-regex"),
+        choices=("clean", "adversarial-regex", "typescript-config"),
         default="clean",
         help="Generated finding-free workload shape",
     )

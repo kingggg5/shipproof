@@ -7,8 +7,8 @@
       "path": "pattern-common.v2.json",
       "engine": "pattern",
       "ecosystem": "common",
-      "rule_count": 264,
-      "sha256": "df6298221b578f21aa50eda50de7d1e01ffbfa51361302ebe26a30929e03305d"
+      "rule_count": 263,
+      "sha256": "96f723f2a484a0ebbfa0417cfdf7b164d86dc4ce3ddd24851ca7c187acd58aca"
     },
     {
       "path": "pattern-container.v2.json",

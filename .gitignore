@@ -6,6 +6,7 @@ coverage.xml
 .mypy_cache/
 .ruff_cache/
 .npm-cache/
+.cache/
 node_modules/
 .shipproof-research-cache/
 .venv/

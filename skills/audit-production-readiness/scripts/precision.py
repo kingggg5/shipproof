@@ -25,6 +25,26 @@ L0_BLOCK_ALLOWLIST = frozenset(
 ADVISORY_RULE_IDS = frozenset(
     {
         "SP061",  # bare except / except Exception
+        "SP591",  # Client bundling boundary, not evidence of leaked credentials.
+        # These cohorts explicitly ship advisory pending representative labels.
+        "SP666",
+        "SP667",
+        "SP668",
+        "SP669",
+        "SP670",
+        "SP671",
+        "SP672",
+        "SP673",
+        "SP674",
+        "SP675",
+        "SP676",
+        "SP677",
+        "SP678",
+        "SP679",
+        "SP680",
+        "SP681",
+        "SP682",
+        "SP683",  # Declared version, not deployed PHP patch/attack evidence.
     }
 )
 

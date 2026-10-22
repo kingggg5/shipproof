@@ -1142,20 +1142,16 @@
     },
     {
       "rule_id": "SP668",
-      "expected_severity": "medium",
-      "expected_confidence": "medium",
-      "blocking_eligible": false,
       "sources": [
         {
-          "url": "https://wiki.sei.cmu.edu/confluence/display/c/FIO30-C.+Exclude+user+input+from+format+strings",
-          "claim": "CERT C FIO30-C requires externally controlled data to stay out of printf-family format-string positions."
+          "url": "https://pubs.opengroup.org/onlinepubs/9799919799/functions/syslog.html",
+          "claim": "POSIX syslog takes priority first and the format string second; an argv value in the priority argument is not evidence of a controlled format string."
         },
         {
           "url": "https://cwe.mitre.org/data/definitions/134.html",
-          "claim": "CWE-134 describes externally controlled format strings that can disclose or modify process memory."
+          "claim": "CWE-134 classifies externally controlled format strings; identifying the actual format argument is required before making this local finding."
         }
       ],
-      "false_positive_analysis": "The detector requires argv[index] directly in the format argument of printf, syslog, fprintf, sprintf, or snprintf and only runs on C/C++ suffixes. Literal formats with argv as data, local aliases, validated wrappers, and pointer arithmetic remain silent. The direct command-line shape is strong evidence but not a complete taint proof, so this first promotion is advisory.",
       "positive": [
         {
           "path": "main.c",
@@ -1168,6 +1164,14 @@
         {
           "path": "buffer.c",
           "source": "void print(char **argv) { snprintf(buf, sizeof buf, argv[1]); }"
+        },
+        {
+          "path": "logger.c",
+          "source": "void log(char **argv) { syslog(LOG_ERR, argv[1]); }"
+        },
+        {
+          "path": "syslog.c",
+          "source": "void log(char **argv) { syslog(\n LOG_ERR | LOG_AUTH,\n argv[2]); }"
         }
       ],
       "negative": [
@@ -1188,6 +1192,22 @@
           "source": "void log(char **argv) { syslog(LOG_ERR, \"%s\", argv[1]); }"
         },
         {
+          "path": "priority.c",
+          "source": "void log(char **argv) { syslog(argv[1], \"%s\", message); }"
+        },
+        {
+          "path": "wrapper.cpp",
+          "source": "void log(char **argv) { my_syslog(LOG_ERR, argv[1]); }"
+        },
+        {
+          "path": "wrapper.cpp",
+          "source": "void log(char **argv) { custom::printf(argv[1]); }"
+        },
+        {
+          "path": "member.cpp",
+          "source": "void log(char **argv) { logger.printf(argv[1]); }"
+        },
+        {
           "path": "main.txt",
           "source": "printf(argv[1]);"
         }
@@ -1197,15 +1217,25 @@
           "path": "main.c",
           "source": "int main(int argc, char **argv_safe) { printf(argv_safe[1]); }",
           "expected": false,
-          "rationale": "A similarly named safe variable is not the exact argv source recognized by this deliberately narrow detector."
+          "rationale": "The direct source spelling is argv, not any identifier with a matching prefix; aliases require separate semantic analysis."
         },
         {
           "path": "main.c",
           "source": "int main(int argc, char **argv) { printf(argv + 1); }",
           "expected": false,
-          "rationale": "Pointer arithmetic needs semantic analysis and is outside this direct-index signature; it must not be guessed as a format-string finding."
+          "rationale": "Pointer arithmetic is unresolved by this direct-index pattern and must not be presented as a verified format argument."
+        },
+        {
+          "path": "syslog.c",
+          "source": "const char *example = \"syslog(LOG_ERR, argv[1]);\";",
+          "expected": false,
+          "rationale": "Quoted code-like data is not an executed syslog call and must remain silent even when it contains a complete unsafe-looking example."
         }
-      ]
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Requires argv[index] in the actual format position: syslog's second argument, printf's first, fprintf/sprintf's second or snprintf's third. Literal formats, argv used as priority/data, member calls and unrelated name suffixes stay silent. Macros, wrappers and semantic binding remain unresolved; this pattern is advisory, not a taint proof."
     },
     {
       "rule_id": "SP669",
@@ -1276,42 +1306,66 @@
     },
     {
       "rule_id": "SP670",
-      "expected_severity": "medium",
-      "expected_confidence": "low",
-      "blocking_eligible": false,
       "sources": [
         {
-          "url": "https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-xml",
-          "claim": "Microsoft's XML guidance treats external entities and resolver configuration as security-sensitive parser behavior that must be explicitly controlled."
+          "url": "https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca3075",
+          "claim": "Microsoft distinguishes DTD parsing and external resource resolution. A null resolver blocks external resource access; DTD expansion needs separate limits."
         },
         {
           "url": "https://cwe.mitre.org/data/definitions/611.html",
-          "claim": "CWE-611 covers XML external entity resolution and the disclosure or network access caused by unsafe parser settings."
+          "claim": "CWE-611 describes unintended external XML entity resolution; enabling an internal DTD alone is not sufficient evidence of this weakness."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/fundamentals/syslib-diagnostics/syslib0047",
+          "claim": "XmlSecureResolver is obsolete in modern .NET; this detector does not equate it with the explicitly network-capable XmlUrlResolver configuration."
         }
       ],
-      "false_positive_analysis": "The rule only recognizes direct DtdProcessing.Parse or construction of XmlUrlResolver/XmlSecureResolver in C# configuration. Prohibit, Ignore, null resolvers, JSON parsing, and helper-returned settings stay silent. Trusted offline XML may intentionally use DTDs, so the advisory finding requires deployment and input-flow review.",
       "positive": [
         {
           "path": "XmlParser.cs",
-          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse };\nusing var reader = XmlReader.Create(stream, settings);"
+          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n"
         },
         {
           "path": "XmlParser.cs",
-          "source": "var settings = new XmlReaderSettings();\nsettings.XmlResolver = new XmlUrlResolver();"
+          "source": "var settings = new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Parse, XmlResolver = new System.Xml.XmlUrlResolver() };\nusing var reader = System.Xml.XmlReader.Create(stream, settings);\n"
         },
         {
           "path": "XmlParser.cs",
-          "source": "var settings = new XmlReaderSettings { XmlResolver = new XmlSecureResolver(new XmlUrlResolver(), credential) };"
+          "source": "var settings = new XmlReaderSettings() { XmlResolver = new XmlUrlResolver(), DtdProcessing = DtdProcessing.Parse };\nusing var reader = XmlReader.Create(stream, settings);\n"
         }
       ],
       "negative": [
         {
           "path": "XmlParser.cs",
-          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null };"
+          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = null };\nusing var reader = XmlReader.Create(stream, settings);\n"
         },
         {
           "path": "XmlParser.cs",
-          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore };"
+          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n"
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n"
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = XmlResolver.ThrowingResolver };\nusing var reader = XmlReader.Create(stream, settings);\n"
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlSecureResolver(new XmlUrlResolver(), policy) };\nusing var reader = XmlReader.Create(stream, settings);\n"
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "var settings = new XmlReaderSettings { XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n"
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() };\nsettings.XmlResolver = null;\nusing var reader = XmlReader.Create(stream, settings);\n"
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = null, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n"
         },
         {
           "path": "JsonParser.cs",
@@ -1323,23 +1377,1222 @@
         },
         {
           "path": "XmlParser.cs",
-          "source": "var settings = new XmlReaderSettings { XmlResolver = null };"
+          "source": "var settings = new XmlReaderSettings();\nsettings.DtdProcessing = DtdProcessing.Parse;\nsettings.XmlResolver = new XmlUrlResolver();\nusing var reader = XmlReader.Create(stream, settings);"
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "obj.settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n"
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "var XmlReader = customReaderFactory;\nvar settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n"
         }
       ],
       "adversarial": [
         {
           "path": "XmlParser.cs",
-          "source": "var mode = DtdProcessing.ParseMode;\nvar settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit };",
+          "source": "/*\nvar settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n*/",
           "expected": false,
-          "rationale": "A similarly named enum or identifier is not an assignment enabling DTD processing and must not be treated as parser configuration."
+          "rationale": "Configuration-shaped prose in a block comment must not establish a parser object, its settings or consumption by XmlReader.Create."
         },
         {
           "path": "XmlParser.cs",
-          "source": "var resolver = new MyXmlUrlResolverFactory().Create();\nsettings.XmlResolver = resolver;",
+          "source": "class XmlReaderSettings {}\nvar settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n",
           "expected": false,
-          "rationale": "Computed resolver flow requires semantic analysis; the narrow rule stays silent rather than guessing that the custom resolver is unsafe."
+          "rationale": "A locally declared look-alike type makes standard-library identity ambiguous and must not create external-entity evidence."
+        },
+        {
+          "path": "XmlParser.cs",
+          "source": "using XmlReaderSettings = Custom.Settings;\nvar settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() };\nusing var reader = XmlReader.Create(stream, settings);\n",
+          "expected": false,
+          "rationale": "An explicit custom type alias is not System.Xml.XmlReaderSettings; this bounded detector must not infer ownership from the local name."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "low",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: requires one literal XmlReaderSettings initializer with final Parse plus new XmlUrlResolver(), a single local binding and direct XmlReader.Create consumption. Null/throwing/secure resolvers, Prohibit/Ignore, overrides, rebinding, type look-alikes and ambiguous C# string forms stay silent. Split assignments and general object flow are unresolved."
+    },
+    {
+      "rule_id": "SP671",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/reference/engine/globals/LuaGlobals#loadstring",
+          "claim": "Roblox loadstring compiles source; immediately invoking the returned function executes it, subject to server loadstring permissions."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/494.html",
+          "claim": "CWE-494 describes executing downloaded code without establishing the integrity of the received executable content."
+        }
+      ],
+      "false_positive_analysis": "Requires a single direct local game:GetService HttpService binding, exactly one use, and loadstring(GetAsync(single argument)) followed by an empty invocation. Trusted remote loaders can be intentional, so the rule stays advisory. JSON data, compilation without execution, aliases, multiple uses, local loadstring bindings, strings and comments are excluded. HTTP/loadstring platform permissions and reachability remain unknown.",
+      "positive": [
+        {
+          "path": "Server.server.luau",
+          "source": "local http = game:GetService(\"HttpService\")\nloadstring(http:GetAsync(\"https://modules.invalid/script\"))()\n"
+        },
+        {
+          "path": "Loader.lua",
+          "source": "local transport = game:GetService(\"HttpService\")\nloadstring(transport:GetAsync(\"https://modules.invalid/script\"))()\n"
+        },
+        {
+          "path": "Bootstrap.luau",
+          "source": "local http = game:GetService(\"HttpService\")\nloadstring(\n http:GetAsync(endpoint)\n)()\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Data.luau",
+          "source": "local http = game:GetService(\"HttpService\")\nlocal data = http:JSONDecode(http:GetAsync(endpoint))\nprint(data)\n"
+        },
+        {
+          "path": "Compile.luau",
+          "source": "local http = game:GetService(\"HttpService\")\nlocal compiled = loadstring(http:GetAsync(endpoint))\n"
+        },
+        {
+          "path": "Constant.luau",
+          "source": "local fn = loadstring('return 1')\nprint(fn())\n"
+        },
+        {
+          "path": "Example.lua",
+          "source": "--[=[\nlocal http = game:GetService(\"HttpService\")\nloadstring(http:GetAsync(\"https://modules.invalid/script\"))()\n]=]\nreturn {}\n"
+        },
+        {
+          "path": "Example.luau",
+          "source": "local example = [=[\nlocal http = game:GetService(\"HttpService\")\nloadstring(http:GetAsync(\"https://modules.invalid/script\"))()\n]=]\nreturn example\n"
+        },
+        {
+          "path": "Foreign.txt",
+          "source": "local http = game:GetService(\"HttpService\")\nloadstring(http:GetAsync(\"https://modules.invalid/script\"))()\n"
+        },
+        {
+          "path": "ComputedService.luau",
+          "source": "local http = game:GetService(serviceName)\nloadstring(http:GetAsync(\"https://modules.invalid/script\"))()\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Shadow.lua",
+          "source": "local loadstring = function(code) return function() end end\nlocal http = game:GetService(\"HttpService\")\nloadstring(http:GetAsync(\"https://modules.invalid/script\"))()\n",
+          "expected": false,
+          "rationale": "A local loadstring function is a different binding from the Roblox builtin; its spelling must not establish remote execution."
+        },
+        {
+          "path": "String.luau",
+          "source": "local http = game:GetService(\"HttpService\")\nlocal example = 'loadstring(http:GetAsync(endpoint))()'\n",
+          "expected": false,
+          "rationale": "Executable-looking content inside a quoted literal is data and must not turn an example into a code-execution finding."
+        },
+        {
+          "path": "ShadowParam.luau",
+          "source": "local http = game:GetService(\"HttpService\")\nfunction run(loadstring)\nloadstring(http:GetAsync(\"https://modules.invalid/script\"))()\nend\n",
+          "expected": false,
+          "rationale": "A function parameter shadows the builtin loadstring. The bounded detector conservatively declines the ambiguous binding."
+        },
+        {
+          "path": "MethodShadow.luau",
+          "source": "local http = game:GetService(\"HttpService\")\nfunction Loader:run(loadstring)\nloadstring(http:GetAsync(\"https://modules.invalid/script\"))()\nend\n",
+          "expected": false,
+          "rationale": "A method parameter shadows the global evaluator just as a standalone function parameter does; method syntax must not bypass binding checks."
         }
       ]
+    },
+    {
+      "rule_id": "SP672",
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
+          "claim": "RemoteEvent handlers must validate client-supplied data; the first callback parameter identifies the player and later parameters come from the client."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/94.html",
+          "claim": "CWE-94 covers treating externally supplied data as executable source and crossing an application's code-execution boundary."
+        }
+      ],
+      "false_positive_analysis": "Only an OnServerEvent Connect callback with two untyped parameters and an entire body of loadstring(secondParameter)() is recognized. The source is a client data argument, not the implicit Player. Guarded or complex handlers, fixed commands, aliases, comments, long strings, field methods and shadowed builtins stay silent. The local signature cannot prove Roblox deployment or LoadStringEnabled, and is advisory.",
+      "positive": [
+        {
+          "path": "Remote.server.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, code)\nloadstring(code)()\nend)\n"
+        },
+        {
+          "path": "Admin.lua",
+          "source": "adminRemote.OnServerEvent:Connect(function(player, payload)\nloadstring(payload)()\nend)\n"
+        },
+        {
+          "path": "Events.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, code)\n-- incoming source\nloadstring(code)()\nend)\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Actions.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, action)\nhandlers[action](player)\nend)\n"
+        },
+        {
+          "path": "Guard.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, code)\nif not allowed(player) then return end\nloadstring(code)()\nend)\n"
+        },
+        {
+          "path": "Player.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, code)\nloadstring(player)()\nend)\n"
+        },
+        {
+          "path": "Constant.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, code)\nloadstring('return 1')()\nend)\n"
+        },
+        {
+          "path": "Note.lua",
+          "source": "--[==[\nremote.OnServerEvent:Connect(function(player, code)\nloadstring(code)()\nend)\n]==]\nreturn {}\n"
+        },
+        {
+          "path": "Foreign.rs",
+          "source": "remote.OnServerEvent:Connect(function(player, code)\nloadstring(code)()\nend)\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Typed.luau",
+          "source": "remote.OnServerEvent:Connect(function(player: Player, code: string)\nloadstring(code)()\nend)\n",
+          "expected": false,
+          "rationale": "Typed parameters require additional Luau syntax handling. They are a documented unsupported shape rather than inferred data-flow evidence."
+        },
+        {
+          "path": "Reassigned.lua",
+          "source": "remote.OnServerEvent:Connect(function(player, code)\ncode = 'return 1'\nloadstring(code)()\nend)\n",
+          "expected": false,
+          "rationale": "A safe overwrite before the sink invalidates direct client provenance; a later matching spelling must not bypass assignment analysis."
+        },
+        {
+          "path": "Quoted.lua",
+          "source": "local example = [=[\nremote.OnServerEvent:Connect(function(player, code)\nloadstring(code)()\nend)\n]=]\n",
+          "expected": false,
+          "rationale": "Long-bracket literals can contain callback-shaped text. The lexer must exclude the entire literal before matching server handlers."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP673",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://doc.rust-lang.org/std/mem/fn.zeroed.html",
+          "claim": "The Rust standard library documents that all-zero reference values are invalid and that constructing them with mem::zeroed causes undefined behavior."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/665.html",
+          "claim": "CWE-665 classifies improper initialization; this rule narrows that class to explicitly zero-initialized Rust references."
+        }
+      ],
+      "false_positive_analysis": "Requires a fully qualified std/core mem::zeroed turbofish whose type begins with a reference, followed by a direct empty call. Raw pointers, integers, Option references, MaybeUninit storage, shadowed modules, documentation strings and nested block comments are excluded. Aliases, inferred types and complex nested generic types remain unsupported. This is local invalid-state evidence, not an exploitability claim.",
+      "positive": [
+        {
+          "path": "main.rs",
+          "source": "fn main() { let _value = unsafe { std::mem::zeroed::<&u32>() }; }\n"
+        },
+        {
+          "path": "lib.rs",
+          "source": "fn main() { let _value = unsafe { core::mem::zeroed::<&mut i64>() }; }\n"
+        },
+        {
+          "path": "ffi.rs",
+          "source": "unsafe fn init<'a>() { let value = std::mem::zeroed::<&'a str>(); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "ptr.rs",
+          "source": "fn main() { let _value = unsafe { std::mem::zeroed::<*const u32>() }; }\n"
+        },
+        {
+          "path": "int.rs",
+          "source": "fn main() { let _value = unsafe { std::mem::zeroed::<u32>() }; }\n"
+        },
+        {
+          "path": "option.rs",
+          "source": "fn main() { let _value = unsafe { std::mem::zeroed::<Option<&u32>>() }; }\n"
+        },
+        {
+          "path": "storage.rs",
+          "source": "let storage = std::mem::MaybeUninit::<&u32>::zeroed();\n"
+        },
+        {
+          "path": "borrow.rs",
+          "source": "fn main() { let value = 7; let reference: &i32 = &value; }\n"
+        },
+        {
+          "path": "example.rs",
+          "source": "let example = r###\"std::mem::zeroed::<&u32>()\"###;\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "comments.rs",
+          "source": "/* outer /* inner */ fn main() { let _value = unsafe { std::mem::zeroed::<&u32>() }; }\n */\n",
+          "expected": false,
+          "rationale": "Rust block comments nest; signatures inside the outer comment after an inner close must remain non-executable text."
+        },
+        {
+          "path": "shadow.rs",
+          "source": "mod std { pub mod mem {} }\nfn main() { let _value = unsafe { std::mem::zeroed::<&u32>() }; }\n",
+          "expected": false,
+          "rationale": "A local std module makes this relative path ambiguous. The detector must not infer standard-library identity from the spelling alone."
+        },
+        {
+          "path": "foreign.rs",
+          "source": "fn main() { let _value = unsafe { custom::std::mem::zeroed::<&u32>() }; }\n",
+          "expected": false,
+          "rationale": "A longer module path ending with std is not the standard library path; suffix matching would invent the wrong function identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP674",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://nextjs.org/docs/app/api-reference/components/image#dangerouslyallowlocalip",
+          "claim": "Next.js blocks private IP image optimization by default; this explicit switch permits it and requires review of network exposure."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/918.html",
+          "claim": "CWE-918 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        }
+      ],
+      "false_positive_analysis": "Advisory: intentional private image services exist. Only an exported literal configuration in next.config.* is recognized; spreads, computed keys, mutations and wrapper functions remain unresolved.",
+      "positive": [
+        {
+          "path": "next.config.ts",
+          "source": "export default { images: { dangerouslyAllowLocalIP: true } };\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "import type { NextConfig } from 'next';\nconst config: NextConfig = {\n images: { dangerouslyAllowLocalIP: true }\n};\nexport default config;\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const config = { images: { 'dangerouslyAllowLocalIP': true } };\nmodule.exports = config;\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "next.config.ts",
+          "source": "export default { images: { dangerouslyAllowLocalIP: false } };\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default { images: { remotePatterns: [{ hostname: 'images.example.com' }] } };\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default { images: { dangerouslyAllowLocalIP: true, dangerouslyAllowLocalIP: false } };\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default { images: { dangerouslyAllowLocalIP: true, ...reviewedImages } };\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const unused = { images: { dangerouslyAllowLocalIP: true } };\nexport default {};\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const config = { images: { dangerouslyAllowLocalIP: true } };\nconfig.images.dangerouslyAllowLocalIP = false;\nexport default config;\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "module.exports = { images: { dangerouslyAllowLocalIP: true } };\nmodule.exports = {};\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const module = localModule;\nmodule.exports = { images: { dangerouslyAllowLocalIP: true } };\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default { images: { dangerouslyAllowLocalIP: true } } && safeConfig;\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const config = { images: { dangerouslyAllowLocalIP: true } } && safeConfig;\nexport default config;\n"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const notes = { images: { dangerouslyAllowLocalIP: true } };\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "next.config.ts",
+          "source": "/*\nexport default { images: { dangerouslyAllowLocalIP: true } };\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const documentation = \"export default { images: { dangerouslyAllowLocalIP: true } };\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default { images: { dangerouslyAllowLocalIP: /* reviewed boundary */ true } };\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP675",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://github.com/auth0/node-jsonwebtoken/blob/master/verify.js",
+          "claim": "jsonwebtoken verify options can explicitly skip expiration or not-before checks; signature verification is a separate protection."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/613.html",
+          "claim": "CWE-613 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        }
+      ],
+      "false_positive_analysis": "Advisory: renewal and inspection flows may deliberately ignore time claims. Requires a direct imported verify call and literal true in its options; decode, sign, false overrides and ambiguous bindings stay silent.",
+      "positive": [
+        {
+          "path": "auth.ts",
+          "source": "import jwt from 'jsonwebtoken';\nexport const claims = jwt.verify(token, publicKey, { ignoreExpiration: true });\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "import { verify as check } from 'jsonwebtoken';\ncheck(token, key, {\n ignoreNotBefore: true, algorithms: ['RS256']\n}, callback);\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "const jwt = require('jsonwebtoken');\njwt.verify(token, key, { ignoreExpiration: false, ignoreNotBefore: true });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "auth.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { algorithms: ['RS256'], clockTolerance: 5 });\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { ignoreExpiration: false, ignoreNotBefore: false });\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { ignoreExpiration: true, ignoreExpiration: false });\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { ignoreExpiration: true, ...strictOptions });\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.decode(token, { ignoreExpiration: true });\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "import jwt from './local-token-policy';\njwt.verify(token, key, { ignoreExpiration: true });\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "import jwt from 'jsonwebtoken';\nfunction validate(jwt: CustomTokens): unknown { return jwt.verify(token, key, { ignoreExpiration: true }); }\n"
+        },
+        {
+          "path": "auth.ts",
+          "source": "import type { verify } from 'jsonwebtoken';\nconst options = { ignoreExpiration: true };\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "auth.ts",
+          "source": "/*\nimport jwt from 'jsonwebtoken';\nexport const claims = jwt.verify(token, publicKey, { ignoreExpiration: true });\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "auth.ts",
+          "source": "const documentation = \"import jwt from 'jsonwebtoken';\\nexport const claims = jwt.verify(token, publicKey, { ignoreExpiration: true });\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "auth.ts",
+          "source": "import jwt from 'jsonwebtoken';\nexport const claims = jwt.verify(token, publicKey, { ignoreExpiration: /* reviewed boundary */ true });\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP676",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback",
+          "claim": "jsonwebtoken documents allowInvalidAsymmetricKeyTypes as a backwards-compatibility switch that should be avoided, not a general signature bypass."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/347.html",
+          "claim": "CWE-347 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        }
+      ],
+      "false_positive_analysis": "Advisory: reviewed legacy migrations may need compatibility. Requires an unambiguous runtime jsonwebtoken import and final literal true; custom verify methods and type imports stay silent.",
+      "positive": [
+        {
+          "path": "verify.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { allowInvalidAsymmetricKeyTypes: true });\n"
+        },
+        {
+          "path": "verify.ts",
+          "source": "import { verify as validate } from 'jsonwebtoken';\nvalidate(token, key, {\n algorithms: ['RS256'], allowInvalidAsymmetricKeyTypes: true\n});\n"
+        },
+        {
+          "path": "verify.ts",
+          "source": "const { verify: validate } = require('jsonwebtoken');\nvalidate(token, key, { 'allowInvalidAsymmetricKeyTypes': true }, callback);\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "verify.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { algorithms: ['RS256'] });\n"
+        },
+        {
+          "path": "verify.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { allowInvalidAsymmetricKeyTypes: false });\n"
+        },
+        {
+          "path": "verify.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { allowInvalidAsymmetricKeyTypes: true, allowInvalidAsymmetricKeyTypes: false });\n"
+        },
+        {
+          "path": "verify.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { allowInvalidAsymmetricKeyTypes: true, ...strictOptions });\n"
+        },
+        {
+          "path": "verify.ts",
+          "source": "import { verify } from './signature-policy';\nverify(token, key, { allowInvalidAsymmetricKeyTypes: true });\n"
+        },
+        {
+          "path": "verify.ts",
+          "source": "import type { verify } from 'jsonwebtoken';\nconst options = { allowInvalidAsymmetricKeyTypes: true };\n"
+        },
+        {
+          "path": "verify.ts",
+          "source": "import { verify } from 'jsonwebtoken';\nfunction run(verify: TokenVerifier): unknown { return verify(token, key, { allowInvalidAsymmetricKeyTypes: true }); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "verify.ts",
+          "source": "/*\nimport jwt from 'jsonwebtoken';\njwt.verify(token, key, { allowInvalidAsymmetricKeyTypes: true });\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "verify.ts",
+          "source": "const documentation = \"import jwt from 'jsonwebtoken';\\njwt.verify(token, key, { allowInvalidAsymmetricKeyTypes: true });\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "verify.ts",
+          "source": "import jwt from 'jsonwebtoken';\njwt.verify(token, key, { allowInvalidAsymmetricKeyTypes: /* reviewed boundary */ true });\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP677",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options",
+          "claim": "Node crypto expresses GCM authTagLength in bytes and defaults to 16; the signature selects accepted short lengths of 4 or 8 bytes."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/326.html",
+          "claim": "CWE-326 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        },
+        {
+          "url": "https://csrc.nist.gov/pubs/sp/800/38/d/r1/2prd",
+          "claim": "The 2026 NIST pre-draft announcement proposes removing GCM authentication tags below 96 bits; this is future hardening direction, not a finalized requirement."
+        }
+      ],
+      "false_positive_analysis": "Advisory: bounded legacy protocols can intentionally use short tags. Requires an imported Node crypto call, literal AES-GCM algorithm and supported short length. CCM, 12-16 bytes, default length and invalid lengths stay silent.",
+      "positive": [
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from 'node:crypto';\nconst cipher = createCipheriv('aes-256-gcm', key, nonce, { authTagLength: 4 });\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import * as crypto from 'crypto';\ncrypto.createDecipheriv('aes-128-gcm', key, nonce, {\n authTagLength: 8\n});\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "const { createCipheriv: encrypt } = require('node:crypto');\nencrypt('aes-192-gcm', key, nonce, { 'authTagLength': 8 });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from 'node:crypto';\ncreateCipheriv('aes-256-gcm', key, nonce);\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from 'node:crypto';\ncreateCipheriv('aes-256-gcm', key, nonce, { authTagLength: 16 });\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from 'node:crypto';\ncreateCipheriv('aes-256-gcm', key, nonce, { authTagLength: 12 });\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from 'node:crypto';\ncreateCipheriv('aes-256-ccm', key, nonce, { authTagLength: 8 });\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from 'node:crypto';\ncreateCipheriv('aes-256-gcm', key, nonce, { authTagLength: 7 });\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from 'node:crypto';\ncreateCipheriv('aes-256-gcm', key, nonce, { authTagLength: 4, authTagLength: 16 });\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from './hardware-crypto';\ncreateCipheriv('aes-256-gcm', key, nonce, { authTagLength: 4 });\n"
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import type { createCipheriv } from 'node:crypto';\nconst options = { authTagLength: 4 };\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "encryption.ts",
+          "source": "/*\nimport { createCipheriv } from 'node:crypto';\nconst cipher = createCipheriv('aes-256-gcm', key, nonce, { authTagLength: 4 });\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "encryption.ts",
+          "source": "const documentation = \"import { createCipheriv } from 'node:crypto';\\nconst cipher = createCipheriv('aes-256-gcm', key, nonce, { authTagLength: 4 });\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "encryption.ts",
+          "source": "import { createCipheriv } from 'node:crypto';\nconst cipher = createCipheriv /* split call */ (\n'aes-256-gcm', key, nonce, { authTagLength: 4 });\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP678",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/buffer.html#what-makes-bufferallocunsafe-and-bufferallocunsafeslow-unsafe",
+          "claim": "Node unsafe Buffer allocation need not initialize memory; reading it before a complete overwrite can expose old bytes, unlike Buffer.alloc."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/908.html",
+          "claim": "CWE-908 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        }
+      ],
+      "false_positive_analysis": "Advisory: requires an explicit node:buffer/buffer import, positive integer size and immediate full toString conversion. Zero size, safe allocation, fill/write steps, partial ranges and ambiguous Buffer bindings are excluded.",
+      "positive": [
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from 'node:buffer';\nexport const text = Buffer.allocUnsafe(64).toString('hex');\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer as Bytes } from 'buffer';\nconst text = Bytes.allocUnsafeSlow(128)\n .toString('base64');\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "const { Buffer } = require('node:buffer');\nconst text = Buffer.allocUnsafe(32).toString();\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from 'node:buffer';\nconst text = Buffer.alloc(64).toString('hex');\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from 'node:buffer';\nconst text = Buffer.allocUnsafe(64).fill(0).toString('hex');\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from 'node:buffer';\nconst bytes = Buffer.allocUnsafe(32);\nbytes.fill(0);\nconst text = bytes.toString();\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from 'node:buffer';\nconst text = Buffer.allocUnsafe(0).toString();\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from 'node:buffer';\nconst text = Buffer.allocUnsafe(64).toString('hex', 0, 0);\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from './safe-buffer';\nconst text = Buffer.allocUnsafe(64).toString();\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from 'node:buffer';\nfunction read(Buffer: SafeBuffer): string { return Buffer.allocUnsafe(64).toString(); }\n"
+        },
+        {
+          "path": "buffer.ts",
+          "source": "const text = Buffer.allocUnsafe(64).toString();\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "buffer.ts",
+          "source": "/*\nimport { Buffer } from 'node:buffer';\nexport const text = Buffer.allocUnsafe(64).toString('hex');\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "buffer.ts",
+          "source": "const documentation = \"import { Buffer } from 'node:buffer';\\nexport const text = Buffer.allocUnsafe(64).toString('hex');\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "buffer.ts",
+          "source": "import { Buffer } from 'node:buffer';\nexport const text = Buffer.allocUnsafe /* split call */ (\n64).toString('hex');\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP679",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/http.html#httpcreateserveroptions-requestlistener",
+          "claim": "Node HTTP parser leniency is false by default; insecureHTTPParser true is an explicit compatibility opt-out with intermediary parsing risk."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/444.html",
+          "claim": "CWE-444 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        }
+      ],
+      "false_positive_analysis": "Advisory: controlled legacy peers may need leniency. Requires a direct imported Node HTTP(S) API and literal true in the options argument. Custom request helpers, spreads, false overrides and data objects stay silent.",
+      "positive": [
+        {
+          "path": "http.ts",
+          "source": "import { createServer } from 'node:http';\ncreateServer({ insecureHTTPParser: true }, handler);\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "import * as https from 'node:https';\nhttps.request(endpoint, {\n insecureHTTPParser: true\n}, callback);\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "const { get: fetchLegacy } = require('http');\nfetchLegacy({ host: host, 'insecureHTTPParser': true }, callback);\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "http.ts",
+          "source": "import { createServer } from 'node:http';\ncreateServer(handler);\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "import { createServer } from 'node:http';\ncreateServer({ insecureHTTPParser: false }, handler);\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "import { request } from 'node:https';\nrequest(endpoint, { insecureHTTPParser: true, insecureHTTPParser: false });\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "import { request } from 'node:https';\nrequest(endpoint, { insecureHTTPParser: true, ...strictOptions });\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "import { request } from './request-policy';\nrequest(endpoint, { insecureHTTPParser: true });\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "import type { request } from 'node:http';\nconst options = { insecureHTTPParser: true };\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "import { request } from 'node:http';\nfunction run(request: Transport): void { request(endpoint, { insecureHTTPParser: true }); }\n"
+        },
+        {
+          "path": "http.ts",
+          "source": "import * as http from 'node:http';\nconst options = { insecureHTTPParser: true };\nhttp.createServer(handler);\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "http.ts",
+          "source": "/*\nimport { createServer } from 'node:http';\ncreateServer({ insecureHTTPParser: true }, handler);\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "http.ts",
+          "source": "const documentation = \"import { createServer } from 'node:http';\\ncreateServer({ insecureHTTPParser: true }, handler);\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "http.ts",
+          "source": "import { createServer } from 'node:http';\ncreateServer({ insecureHTTPParser: /* reviewed boundary */ true }, handler);\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP680",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://www.electronjs.org/docs/latest/tutorial/security/#6-do-not-disable-websecurity",
+          "claim": "Electron recommends retaining webSecurity because disabling it removes renderer same-origin protections; loaded content determines practical exposure."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/693.html",
+          "claim": "CWE-693 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        }
+      ],
+      "false_positive_analysis": "Advisory: trusted local viewers may use the opt-out intentionally. Only a direct new BrowserWindow with literal nested options is recognized; unrelated properties, type imports, shadowed constructors and overrides stay silent.",
+      "positive": [
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { webSecurity: false } });\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import * as electron from 'electron';\nnew electron.BrowserWindow({\n webPreferences: { 'webSecurity': false }\n});\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "const { BrowserWindow: Window } = require('electron');\nnew Window({ width: 800, webPreferences: { webSecurity: false } });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { webSecurity: true } });\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ width: 800 });\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { webSecurity: false, webSecurity: true } });\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { webSecurity: false, ...strictPreferences } });\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from './window-factory';\nnew BrowserWindow({ webPreferences: { webSecurity: false } });\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import type { BrowserWindow } from 'electron';\nconst prefs = { webSecurity: false };\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from 'electron';\nfunction open(BrowserWindow: SafeWindow): unknown { return new BrowserWindow({ webPreferences: { webSecurity: false } }); }\n"
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webSecurity: false });\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "desktop.ts",
+          "source": "/*\nimport { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { webSecurity: false } });\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "desktop.ts",
+          "source": "const documentation = \"import { BrowserWindow } from 'electron';\\nnew BrowserWindow({ webPreferences: { webSecurity: false } });\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "desktop.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { webSecurity: /* explicit value */ false } });\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP681",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://www.electronjs.org/docs/latest/tutorial/security/#2-do-not-enable-nodejs-integration-for-remote-content",
+          "claim": "Electron warns against renderer Node integration for untrusted content and recommends context isolation and sandbox containment."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/749.html",
+          "claim": "CWE-749 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        }
+      ],
+      "false_positive_analysis": "Advisory: trusted local tools may intentionally expose Node. Requires both explicit settings in one BrowserWindow. Explicit or global sandbox enforcement, safe overrides, ambiguous preferences and custom constructors are excluded.",
+      "positive": [
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: false } });\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow as Window } from 'electron';\nnew Window({\n webPreferences: { contextIsolation: false, nodeIntegration: true, sandbox: false }\n});\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "const electron = require('electron');\nnew electron.BrowserWindow({ webPreferences: { 'nodeIntegration': true, 'contextIsolation': false } });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: false, contextIsolation: true } });\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: true } });\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: false, sandbox: true } });\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: false, nodeIntegration: false } });\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: false, ...securePreferences } });\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from './safe-window';\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: false } });\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "import { app, BrowserWindow } from 'electron';\napp.enableSandbox();\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: false } });\n"
+        },
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: true } });\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "window.ts",
+          "source": "/*\nimport { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: false } });\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "window.ts",
+          "source": "const documentation = \"import { BrowserWindow } from 'electron';\\nnew BrowserWindow({ webPreferences: { nodeIntegration: true, contextIsolation: false } });\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "window.ts",
+          "source": "import { BrowserWindow } from 'electron';\nnew BrowserWindow({ webPreferences: { nodeIntegration: /* reviewed boundary */ true, contextIsolation: false } });\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP682",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://pptr.dev/troubleshooting#setting-up-chrome-linux-sandbox",
+          "claim": "Puppeteer discourages Chrome --no-sandbox and recommends configuring sandbox containment; equivalent external isolation needs separate review."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/693.html",
+          "claim": "CWE-693 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
+        }
+      ],
+      "false_positive_analysis": "Advisory: some isolated hosts intentionally supply equivalent containment. Requires a literal Chrome launch argument array. Firefox launches, custom launch functions, spreads and computed arguments are excluded.",
+      "positive": [
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nawait puppeteer.launch({ args: ['--no-sandbox'] });\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "import { launch as start } from 'puppeteer-core';\nstart({\n browser: 'chrome', args: ['--headless', '--no-sandbox']\n});\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "const browser = require('puppeteer');\nbrowser.launch({ args: ['--no-sandbox'], headless: true });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nawait puppeteer.launch({ headless: true });\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nawait puppeteer.launch({ args: ['--disable-dev-shm-usage'] });\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nawait puppeteer.launch({ args: ['--no-sandbox'], args: [] });\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nawait puppeteer.launch({ args: ['--no-sandbox'], ...secureLaunch });\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nawait puppeteer.launch({ browser: 'firefox', args: ['--no-sandbox'] });\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "import { launch } from './isolated-browser';\nlaunch({ args: ['--no-sandbox'] });\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nfunction render(puppeteer: LocalBrowser): unknown { return puppeteer.launch({ args: ['--no-sandbox'] }); }\n"
+        },
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nawait puppeteer.launch({ args: [...approvedArgs, '--no-sandbox'] });\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "render.ts",
+          "source": "/*\nimport puppeteer from 'puppeteer';\nawait puppeteer.launch({ args: ['--no-sandbox'] });\n*/\nexport {};\n",
+          "expected": false,
+          "rationale": "A complete example inside a block comment is not an import or executable configuration and must remain silent."
+        },
+        {
+          "path": "render.ts",
+          "source": "const documentation = \"import puppeteer from 'puppeteer';\\nawait puppeteer.launch({ args: ['--no-sandbox'] });\\n\";\n",
+          "expected": false,
+          "rationale": "A quoted example containing imports and unsafe settings is data; source-like string content must not establish API identity."
+        },
+        {
+          "path": "render.ts",
+          "source": "import puppeteer from 'puppeteer';\nawait puppeteer.launch /* split call */ (\n{ args: ['--no-sandbox'] });\n",
+          "expected": true,
+          "rationale": "Comments and whitespace between real tokens must not hide an explicit unsafe setting or change imported API identity."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP683",
+      "sources": [
+        {
+          "url": "https://www.php.net/archive/2026.php#2026-10-21-5",
+          "claim": "PHP's October 21 2026 advisory gives branch fixes 8.2.35, 8.3.36, 8.4.27 and 8.5.12, and explicitly notes that distribution vendors can backport patches."
+        },
+        {
+          "url": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w",
+          "claim": "CVE-2026-109618 is a PHP runtime request/OOM cleanup memory-corruption issue, not a vulnerability established by PHP application keywords."
+        },
+        {
+          "url": "https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp",
+          "claim": "CVE-2026-109619 concerns persistent worker state referring to released request memory; deployment, patch provenance and runtime state matter."
+        }
+      ],
+      "positive": [
+        {
+          "path": ".php-version",
+          "source": "8.4.26\n"
+        },
+        {
+          "path": ".tool-versions",
+          "source": "nodejs 24.15.0\nphp 8.3.35\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.5.11-fpm\nCOPY app /srv/app\n"
+        },
+        {
+          "path": "Containerfile",
+          "source": "FROM docker.io/library/php:8.2.34-apache-bookworm\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4.26-fpm-alpine AS runtime\nFROM runtime AS production\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.1.33\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM --platform=linux/amd64 php:8.4.26-fpm AS app\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": ".php-version",
+          "source": "8.2.35\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.3.36\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.4.27\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.5.12\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.4.28\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.6.0RC3\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.4\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.4.26-1+deb12u1\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "system\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4.27-fpm\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4.26-cli\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4.26-fpm AS unused\nFROM nginx:1.27\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4-fpm\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM custom/php:8.4.26-fpm\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4.26-fpm-vendorfixed\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4.26-fpm@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+        },
+        {
+          "path": "composer.json",
+          "source": "{\"require\":{\"php\":\"^8.0\"},\"config\":{\"platform\":{\"php\":\"8.4.26\"}}}"
+        },
+        {
+          "path": "app.php",
+          "source": "<?php $documentation = \"PHP 8.4.26\"; ?>"
+        },
+        {
+          "path": "app.php",
+          "source": "<?php\nfunction supportsRuntime(): bool {\n    return PHP_VERSION_ID >= 80400;\n}\n"
+        },
+        {
+          "path": ".tool-versions",
+          "source": "php 8.4.26 system\n"
+        },
+        {
+          "path": ".php-version",
+          "source": "8.4.26\n8.4.27\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4.27-fpm\nRUN cat <<'EOF'\nFROM php:8.4.26-fpm\nEOF\n",
+          "expected": false,
+          "rationale": "A heredoc can contain an instruction-looking FROM line. The unsupported heredoc context stays unresolved instead of inventing a runtime stage."
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM php:8.4.27-fpm\nRUN echo hello \\\n FROM php:8.4.26-fpm\n",
+          "expected": false,
+          "rationale": "A continued RUN instruction contains data rather than a new FROM; physical line matching would incorrectly replace a fixed final base."
+        },
+        {
+          "path": "Dockerfile",
+          "source": "ARG PHP_IMAGE=php:8.4.26-fpm\nFROM ${PHP_IMAGE}\n",
+          "expected": false,
+          "rationale": "Build arguments are overridable and are not resolved by this offline signature; a declared default does not establish the effective runtime image."
+        },
+        {
+          "path": ".php-version",
+          "source": "# historical 8.4.26\n8.4.27\n",
+          "expected": false,
+          "rationale": "Comments describing historical versions do not override the single explicit current version declaration."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory, not a deployed-vulnerability assertion. Requires an exact .php-version/.tool-versions pin or the final static official PHP FPM/Apache image stage. CLI images, Composer constraints, floating/prerelease/vendor versions, custom registries and unresolved digests stay silent. Check vendor patch evidence for backported builds."
     }
   ]
 }

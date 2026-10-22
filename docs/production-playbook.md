@@ -184,4 +184,4 @@ Every production decision should leave a compact record:
 | Gates | Independent decisions for each ShipProof release gate |
 | Decision | Release, conditional release, or block; approver and timestamp |
 
-The supporting [research notebook](research.md) records which external pages were consulted and how they affected ShipProof. It is traceability for this playbook, not a substitute for ShipProof's own reasoning.
+The supporting [research notebook](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) records which external pages were consulted and how they affected ShipProof. It is traceability for this playbook, not a substitute for ShipProof's own reasoning.

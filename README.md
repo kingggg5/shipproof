@@ -12,7 +12,7 @@ Security · Correctness · Scale · Performance · Release evidence
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Release](https://img.shields.io/badge/release-v0.11.2-2563eb)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.12.0-2563eb)](CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -21,7 +21,7 @@ ShipProof is an independently developed production gate for repositories written
 
 ShipProof is not a certification, penetration test, formal proof, or substitute for product-specific threat modeling and runtime tests. It makes assumptions visible, reports the strength of available evidence, and preserves human authority for consequential actions and releases.
 
-**Project resources:** [Website](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](docs/community-validation.md) · [Research methodology](docs/research.md) · [Roadmap](docs/roadmap.md) · [Citation](CITATION.cff)
+**Project resources:** [Website](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](docs/roadmap.md) · [Citation](CITATION.cff)
 
 <p align="center">
   <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
@@ -67,13 +67,13 @@ Node.js 20+ runs the front-door CLI. Python 3.10+ is needed for `scan`, `check`,
 
 ## Scope and project status
 
-ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **640 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
+ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **652 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
 
 | Property | Current contract |
 | :--- | :--- |
-| Current release | `v0.11.2` reviewed release |
+| Current release | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
-| Executable rules | 640 (`SP001`–`SP670`, with deliberate reserved gaps) |
+| Executable rules | 652 (`SP001`–`SP683`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates plus 1,000 reserved promotion slots; none are findings until promoted |
 | Exit codes | `0` pass, `1` policy gate failure, `2` invalid or unavailable evidence |
@@ -82,6 +82,24 @@ ShipProof applies the same review contract regardless of who wrote the code. Its
 Rule design is informed by primary references such as [MITRE CWE](https://cwe.mitre.org/), [OWASP ASVS](https://owasp.org/www-project-application-security-verification-standard/), [OWASP API Security](https://owasp.org/API-Security/), [NIST SSDF](https://csrc.nist.gov/pubs/sp/800/218/final), owning framework documentation, and real vulnerability records. A source identifies a risk class; it does not automatically justify a detector. Promotion requires local observability, a bounded implementation, positive/negative/adversarial fixtures, mappings, remediation, and a documented false-positive boundary.
 
 ## Trust model
+
+Current source adds advisory checks for Roblox/Luau `.lua`/`.luau` files
+(`SP671`–`SP672`) and Rust invalid reference initialization (`SP673`), plus
+direct reqwest TLS configuration in `SP104`. See the [rule boundaries](docs/rules.md)
+for supported syntax and limitations. The registry above describes this checkout;
+tagged release notes describe their published artifacts.
+
+The TypeScript/JavaScript configuration cohort (`SP674`–`SP682`) adds import-aware
+advisories for explicit JWT, Node, Next.js, Electron and Puppeteer security opt-outs.
+Type-only imports do not trigger `SP591`. `SP429` is retired: Express's JSON parser
+already has a bounded default. See the [rule boundaries](docs/rules.md) and
+[source/fixture record](https://github.com/kingggg5/shipproof/blob/main/research/typescript-cohort-2026-10.md).
+
+The offline advisory snapshot reviewed **22 October 2026** includes PHP2Shell
+(`CVE-2026-109618`, `CVE-2026-109619`) as `SP683`. It checks explicit PHP pins and
+final official FPM/Apache image declarations; it does not infer runtime versions
+from Composer constraints or prove deployed exposure. Verify vendor backports and
+upgrade the actual web runtime. See the [PHP2Shell boundaries](docs/rules.md#php2shell-version-evidence).
 
 | ShipProof guarantees | ShipProof does not claim |
 | :--- | :--- |
@@ -152,7 +170,7 @@ Full prompt samples, invariant analysis, token cost budgeting, worktree isolatio
 
 ## Detection rules
 
-**640 deterministic executable rules** (`SP001`–`SP670`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
+**652 deterministic executable rules** (`SP001`–`SP683`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
 
 The complete catalog, severity, category, and detection method per rule, plus the ecosystem/framework mapping that decides where each structural check runs, lives in **[docs/rules.md](docs/rules.md)**.
 
@@ -183,12 +201,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: kingggg5/shipproof@v0.11.2
+      - uses: kingggg5/shipproof@v0.12.0
         with:
           fail-on: high
 ```
 
-The action writes a structured Markdown status card to the GitHub Step Summary. The example uses the `v0.11.2` release tag; pin the action to a reviewed full commit SHA when an immutable supply-chain reference is required.
+The action writes a structured Markdown status card to the GitHub Step Summary. The example uses the `v0.12.0` release tag; pin the action to a reviewed full commit SHA when an immutable supply-chain reference is required.
 
 For pull requests that touch a large repository, scan only what changed relative to the base branch:
 
@@ -196,7 +214,7 @@ For pull requests that touch a large repository, scan only what changed relative
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: kingggg5/shipproof@v0.11.2
+      - uses: kingggg5/shipproof@v0.12.0
         with:
           fail-on: high
           changed-since: origin/main
@@ -207,7 +225,7 @@ The scanner resolves the git diff (added, copied, modified, and renamed files, p
 The default report format is `sarif`, which the action writes into the workspace. To surface findings as inline Code Scanning alerts, upload that artifact with GitHub's official action after the gate step:
 
 ```yaml
-      - uses: kingggg5/shipproof@v0.11.2
+      - uses: kingggg5/shipproof@v0.12.0
         with:
           fail-on: high
           format: sarif
@@ -318,7 +336,7 @@ All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
 ## Research & evaluation status
 
-The scanner ships 640 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready` and are mapped into the non-blocking SP666-SP668 wave; Wave D adds SP669-SP670 for Dart and C#/.NET; the other candidates remain research-only or rejected until their evidence boundary is met. See the [batch record](research/promotion-batch-a.json), [promotion waves](research/promotion-wave-b.md), and [broader plan](research/promotion-plan.json).
+The scanner ships 652 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready` and are mapped into the non-blocking SP666-SP668 wave; Wave D adds SP669-SP670 for Dart and C#/.NET; the other candidates remain research-only or rejected until their evidence boundary is met. See the [batch record](research/promotion-batch-a.json), [promotion waves](research/promotion-wave-b.md), and [broader plan](research/promotion-plan.json).
 
 Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
 
@@ -338,7 +356,7 @@ Operating profile: no repository or contributor limits, fully offline against lo
 
 ## Research methodology and provenance
 
-ShipProof is independently implemented. References are used to define questions, terminology, and expected safety boundaries; external detector code and license-restricted rule sets are not copied. The [research notebook](docs/research.md) records the page consulted, the question asked, the decision retained, and the claims deliberately not inferred.
+ShipProof is independently implemented. References are used to define questions, terminology, and expected safety boundaries; external detector code and license-restricted rule sets are not copied. The [research notebook](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) records the page consulted, the question asked, the decision retained, and the claims deliberately not inferred.
 
 The evidence hierarchy for a rule proposal is:
 
@@ -352,12 +370,12 @@ A research candidate becomes an executable `SPxxx` rule only after deduplication
 
 | Research artifact | Scope | Runtime effect |
 | :--- | :--- | :--- |
-| [Expert candidate catalog](docs/rule-expansion-1000.md) | 1,000 model-assisted, source-mapped hypotheses | None |
-| [2021–2026 annual catalog](docs/rule-expansion-2021-2026.md) | 1,800 time-bounded CVE/CWE/community signals | None |
-| [Language catalog](docs/rule-expansion-languages-5000.md) | 5,000 deduplicated ecosystem/CWE research slots | None |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 640 reviewed detectors | Emits versioned findings |
+| [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 model-assisted, source-mapped hypotheses | None |
+| [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 time-bounded CVE/CWE/community signals | None |
+| [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 deduplicated ecosystem/CWE research slots | None |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 652 reviewed detectors | Emits versioned findings |
 
-The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 640 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
+The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 652 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
 
 See the [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md), and [delivery roadmap](docs/roadmap.md) for operational boundaries and acceptance gates. Cite a release using [CITATION.cff](CITATION.cff). ShipProof deliberately avoids a single readiness score because one veto-level failure must not be averaged away by many clean checks.
 

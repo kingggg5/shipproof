@@ -1,6 +1,6 @@
 {
   "name": "@kingggg5/shipproof",
-  "version": "0.11.2",
+  "version": "0.12.0",
   "description": "Zero-dependency production gate, resource budget, and capacity model for AI-assisted code",
   "type": "module",
   "bin": {
@@ -18,6 +18,11 @@
     "!docs/assets/shipproof-workflow.png",
     "!docs/precision-plan.md",
     "!docs/next-development-plan.md",
+    "!docs/research.md",
+    "!docs/rule-expansion-1000.md",
+    "!docs/rule-expansion-2021-2026.md",
+    "!docs/rule-expansion-languages-5000.md",
+    "!docs/releases",
     "!schemas/comment-anchor.schema.json",
     "!schemas/triage-assessment.schema.json",
     "examples/capacity/*.js",
@@ -72,14 +77,14 @@
     "test:mcp": "node tests/node/mcp-handshake.test.mjs",
     "test:node:coverage": "node --experimental-test-coverage --test-coverage-include=lib/policy.mjs --test-coverage-include=lib/safe-path.mjs --test-coverage-include=lib/cli.mjs --test-coverage-include=lib/evidence.mjs --test-coverage-include=lib/runtime.mjs --test-coverage-include=scripts/run-action.mjs --test-coverage-lines=70 tests/node/all.test.mjs",
     "test:python": "python -m unittest discover -s tests -p test_*.py -v && python -m unittest discover -s examples/demo-api/fixtures/after/tests -v",
-    "test:python:coverage": "python -m coverage erase && python -m coverage run -m unittest discover -s tests -p test_*.py && python -m coverage run --append -m unittest discover -s examples/demo-api/fixtures/after/tests && python -m coverage report && python -m coverage xml",
+    "test:python:coverage": "python -m coverage erase && python -m coverage run -m unittest discover -s tests -p test_*.py -v && python -m coverage run --append -m unittest discover -s examples/demo-api/fixtures/after/tests -v && python -m coverage report && python -m coverage xml",
     "test:package": "node scripts/package-smoke.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "peerDependencies": {
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "zod": "3.25.76"
   },
   "peerDependenciesMeta": {
@@ -91,13 +96,15 @@
     }
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "zod": "3.25.76"
   },
   "overrides": {
-    "fast-uri": "3.1.6",
-    "hono": "4.13.8",
-    "qs": "6.16.0"
+    "fast-uri": "3.1.8",
+    "hono": "4.13.13",
+    "qs": "6.16.0",
+    "ip-address": "10.7.4",
+    "proxy-addr": "2.0.8"
   },
   "publishConfig": {
     "access": "public",

@@ -1,12 +1,78 @@
 # Detection rules reference
 
-ShipProof applies 640 deterministic executable rules (`SP001`-`SP670`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
+ShipProof applies 652 deterministic executable rules (`SP001`-`SP683`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
 Run `shipproof explain SP108` for why a rule exists, its attack scenario, false-positive boundary, and regression-test guidance.
 
+`SP666`–`SP683` are runtime advisory findings pending representative-repository
+review; lowering the severity or proof floor does not make them blocking.
+These cohorts, `SP591` and advisory Rust TLS evidence expose only normalized risk
+details. Unrelated arguments/comments and neighboring source are omitted from
+report and fix-prompt contexts to avoid credential echo. Inspect the local source
+at the reported location; affected fingerprints can change across this boundary.
+The Rust reqwest extension of `SP104` is also advisory and recognizes a fully
+qualified `reqwest::[blocking::]Client::builder()` chain ending in `build()`;
+the final literal value of each TLS switch controls the result.
+
+The JS/TypeScript cohort `SP674`–`SP682` requires exported Next.js configuration
+or direct runtime ESM/semicolon-delimited const-require bindings, balanced lexical
+context and literal effective options. It supports `.js`, `.jsx`, `.mjs`, `.cjs`,
+`.ts`, `.tsx`, `.mts` and `.cts`; older detectors retain their own suffix lists.
+Comments, strings, regular-expression literals, type-only imports, local shadows,
+binding escapes and safe duplicate-property overrides do not establish evidence.
+Spreads, computed/escaped keys, accessors, interpolated templates, wrapper APIs,
+large expressions and unresolved syntax stay outside these signatures. Silence
+is not a TypeScript compiler result or proof that the application is safe.
+The Next.js signature accepts only `next.config.js`, `.mjs` and `.ts`; shadowed
+CommonJS module objects, multiple exports and unsupported config extensions stay
+silent rather than being treated as deployed image configuration.
+
+`SP591` is a medium advisory for an explicit client-module/value-import boundary,
+not a confirmed credential leak or compiled-bundle result. Whole `import type`
+declarations are excluded; inline-only type imports remain unresolved because
+`verbatimModuleSyntax` can retain an empty side-effect import. `SP429` is retired
+and its ID will not be reused: Express JSON parsing
+has a default body-size limit, so omitting an explicit option is not evidence of
+an unbounded parser. Oversized explicit limits remain covered by `SP412`.
+
+Luau and Rust additions use a bounded lexer to exclude quoted/long/raw strings
+and comments, including nested Rust comments. Unterminated lexical input or
+exceeding 50,000 tokens records `parser_limit` in the completeness ledger.
+Luau interpolated strings, typed/guarded handlers, aliases and complex Rust
+types remain outside these signatures; a silent result does not establish their
+safety. No submitted source is executed by these checks.
+
 `SP631` requires an explicit literal Edge runtime declaration and a native runtime import. It does not classify ordinary Node.js serverless code, comments, quoted examples, or type-only imports as Edge execution. Its boundary follows the official [runtime configuration](https://github.com/vercel/next.js/blob/canary/docs/01-app/03-api-reference/03-file-conventions/02-route-segment-config/runtime.mdx) and [Edge API limitations](https://github.com/vercel/next.js/blob/canary/docs/01-app/03-api-reference/07-edge.mdx), checked through Context7 on 2026-09-04. This local structural check does not resolve computed/multiline declarations, ambiguous JSX/template contexts, build-time polyfills, or deployment settings.
+
+## PHP2Shell version evidence
+
+`SP683` uses a dated offline snapshot of CVE-2026-109618 and CVE-2026-109619,
+disclosed 21 October 2026 and reviewed 22 October. It recognizes exact upstream
+pins in `.php-version`, a single PHP entry in `.tool-versions`, or the final static
+official PHP FPM/Apache image stage (following local stage aliases). Branch fixes
+are **8.2.35**, **8.3.36**, **8.4.27** and **8.5.12**; they are not one global minimum.
+
+The upstream issues are critical. The scanner reports a medium advisory about a
+declared version, not an exploited or reachable deployment. Verify distribution
+backports, the actual web-serving binary and worker restart. Composer constraints,
+CLI-only images, custom registries, floating/prerelease/vendor versions, dynamic
+arguments, unresolved digests and heredocs remain outside the signature; silence
+does not establish patch status. No live PHP/container/network probe is performed.
+Application validation or INI mitigations are not treated as a complete patch.
+
+Primary references: [PHP announcement](https://www.php.net/archive/2026.php#2026-10-21-5),
+[OOM advisory](https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w),
+[stale-state advisory](https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp).
+
+`SP668` preserves the format-position boundary (syslog's second argument) and
+filters quoted/comment examples; ambiguous C++ raw strings and semantic binding
+remain unresolved. `SP670` now requires one literal XmlReaderSettings initializer
+with Parse plus XmlUrlResolver and direct XmlReader.Create consumption. Null,
+throwing/secure resolvers, prohibiting modes, rebinding, local type look-alikes and
+ambiguous C# string forms stay silent. Internal DTD parsing is not itself XXE;
+entity-expansion limits are a separate concern.
 
 ## Ecosystem-aware detection
 
@@ -21,7 +87,9 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **FastAPI, Starlette, Litestar, Sanic** | `pyproject.toml`, `requirements.txt` | Unprotected admin routes (`SP108`), Missing `response_model` (`SP409`), Wildcard CORS credentials (`SP419`), N+1 queries in loops (`SP307`), Unbounded pagination (`SP305`), Missing HTTP timeouts (`SP304`), Dropped asyncio task refs (`SP335`), ThreadPool per request (`SP344`) |
 | **Django & Flask** | `pyproject.toml`, `requirements.txt` | Hardcoded `SECRET_KEY` (`SP404`), Wildcard `ALLOWED_HOSTS` (`SP405`), Debug enabled (`SP201`, `SP411`), Flask hardcoded `secret_key` (`SP410`), String-interpolated SQL (`SP103`), SSTI via `render_template_string` (`SP137`) |
 | **Go (Gin, Echo, Fiber, Chi)** | `go.mod` | Missing server timeouts (`SP131`), Ignored errors (`SP136`), Response body leak (`SP315`), Goroutine context leaks (`SP309`), Unbuffered channel deadlocks (`SP332`), WaitGroup race conditions (`SP333`), Insecure secret fallbacks (`SP004`), Outbound request timeouts (`SP304`), Unbounded concurrency (`SP306`) |
-| **Rust (Actix-web, Axum, Rocket)** | `Cargo.toml` | Committed keys/credentials (`SP001`, `SP002`, `SP003`), TLS verification bypass (`SP104`), SSRF to metadata (`SP109`), Credential logging (`SP204`) |
+| **Rust (Actix-web, Axum, Rocket)** | `Cargo.toml`, `.rs` | Committed keys/credentials (`SP001`, `SP002`, `SP003`), direct reqwest TLS bypass (`SP104`, advisory), invalid zero-initialized references (`SP673`, advisory), SSRF to metadata (`SP109`), credential logging (`SP204`) |
+| **Roblox / Luau** | `.lua`, `.luau` local source files | HttpService response executed as source (`SP671`), immediate client-code execution in RemoteEvent callbacks (`SP672`), provider-secret checks. Initial support excludes general Lua data-flow and binary place files. |
+| **JS / TypeScript configuration** | Runtime ESM/const-require imports; `next.config.*` exports | Image private-IP opt-out (`SP674`), JWT time/key-type opt-outs (`SP675`, `SP676`), short GCM tags (`SP677`), direct uninitialized Buffer read (`SP678`), lenient HTTP parsing (`SP679`), Electron origin/privilege boundaries (`SP680`, `SP681`), Chromium sandbox opt-out (`SP682`). All are advisory. |
 | **PHP (Laravel, Symfony)** | `composer.json` | Dynamic code evaluation (`SP101`), SQL injection interpolation (`SP103`, `SP128`), Path traversal (`SP110`), Loose equality credential comparison (`SP127`), Reflected XSS (`SP129`), Open redirect (`SP130`), Object injection (`SP113`) |
 | **Ruby (Rails, Sinatra)** | `Gemfile` | Secret key leakage (`SP003`), Unsafe deserialization with Marshal/YAML (`SP106`), Debug mode enabled (`SP201`), CSRF forgery disabled (`SP417`), Dynamic code execution (`SP101`), Missing payment idempotency (`SP504`) |
 | **Java / Kotlin (Spring Boot, Quarkus, Micronaut)** | `pom.xml`, `build.gradle`, `build.gradle.kts` | Committed keys/credentials (`SP001`, `SP002`, `SP003`), Insecure CORS with credentials (`SP107`), Path traversal (`SP110`), Spring Boot actuator public exposure (`SP416`), Binary ObjectInputStream deserialization (`SP168`) |
@@ -441,7 +509,6 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP426`** | HIGH | Security | Svelte @html tag rendering unescaped content | Regex |
 | **`SP427`** | MEDIUM | Security | Express helmet middleware explicitly disabling standard protections | Regex |
 | **`SP428`** | HIGH | Security | Express error handling middleware exposing stack traces to client | Regex |
-| **`SP429`** | MEDIUM | Scale | Express express.json body parser without limit option | Regex |
 | **`SP430`** | HIGH | Scale | Express session using default in-memory MemoryStore in production | Regex |
 | **`SP431`** | HIGH | Security | NestJS global ValidationPipe missing whitelist option | Regex |
 | **`SP432`** | HIGH | Security | NestJS controller administrative endpoint missing UseGuards decorator | Regex |
@@ -593,7 +660,7 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP588`** | CRITICAL | Security | Supabase client initialized on client side with service_role key | Regex |
 | **`SP589`** | MEDIUM | Correctness | Vector index created with Euclidean metric on un-normalized vectors | Regex |
 | **`SP590`** | HIGH | Scale | Unbounded in-memory queue without maxsize parameter | Regex |
-| **`SP591`** | CRITICAL | Security | Server-only database or ORM client imported inside 'use client' bundle | Regex |
+| **`SP591`** | MEDIUM | Correctness | Client module imports a server-only runtime dependency | Structural |
 | **`SP592`** | HIGH | Security | Next.js mutating route handler or action casting request body directly to any | Regex |
 | **`SP593`** | HIGH | Correctness | Next.js 15 route segment params accessed without await Promise resolution | Regex |
 | **`SP594`** | HIGH | Security | Authenticated user-specific API call configured with static force-cache | Regex |
@@ -672,5 +739,18 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP667`** | MEDIUM | Security | Go sensitive cookie without explicit HttpOnly | Regex |
 | **`SP668`** | MEDIUM | Security | C/C++ format string taken directly from argv | Regex |
 | **`SP669`** | MEDIUM | Security | Dart credential stored in SharedPreferences | Regex |
-| **`SP670`** | MEDIUM | Security | C# XML parser enables DTD or external resolution | Regex |
+| **`SP670`** | MEDIUM | Security | C# XmlReader combines DTD parsing and external resolution | Structural |
+| **`SP671`** | MEDIUM | Security | Roblox executes an HTTP response as Luau source | Structural |
+| **`SP672`** | MEDIUM | Security | Roblox RemoteEvent executes client-supplied source | Structural |
+| **`SP673`** | MEDIUM | Correctness | Rust zero-initializes a reference type | Structural |
+| **`SP674`** | MEDIUM | Security | Next.js image optimizer permits private IP targets | Structural |
+| **`SP675`** | MEDIUM | Security | JWT verification skips time-claim validation | Structural |
+| **`SP676`** | MEDIUM | Security | JWT verification permits incompatible asymmetric key types | Structural |
+| **`SP677`** | MEDIUM | Security | Node AES-GCM uses a short authentication tag | Structural |
+| **`SP678`** | MEDIUM | Security | Node unsafe Buffer is immediately read as a string | Structural |
+| **`SP679`** | MEDIUM | Security | Node HTTP explicitly enables a lenient parser | Structural |
+| **`SP680`** | MEDIUM | Security | Electron BrowserWindow disables web security | Structural |
+| **`SP681`** | MEDIUM | Security | Electron renderer enables Node without context isolation | Structural |
+| **`SP682`** | MEDIUM | Security | Puppeteer launches Chromium without its sandbox | Structural |
+| **`SP683`** | MEDIUM | Security | Declared PHP version predates PHP2Shell fixes | Structural |
 

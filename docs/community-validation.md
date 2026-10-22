@@ -35,7 +35,7 @@ Each reviewed finding should retain only non-sensitive metadata:
 ```yaml
 repository_revision: full-commit-sha
 ecosystem: typescript
-shipproof_version: 0.11.2
+shipproof_version: 0.12.0
 rule_id: SPxxx
 label: true_positive | false_positive | needs_context | duplicate
 proof_level: L0 | L1 | L2

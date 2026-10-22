@@ -186,6 +186,10 @@ STRUCTURAL_CASES: dict[str, dict[str, str]] = {
         "positive": "'use client';\nimport { PrismaClient } from '@prisma/client';\nexport function Page() { return null; }\n",
         "negative_a": "import { PrismaClient } from '@prisma/client';\nexport async function Page() { return null; }\n",
         "negative_b": "'use client';\nimport { api } from './browser-api';\nexport function Page() { return null; }\n",
+        "negative_type": "'use client';\nimport type { User } from '@prisma/client';\nexport const selected: User | null = null;\n",
+        "negative_inline_types": "'use client';\nimport { type User, type Post as Entry } from '@prisma/client';\nexport const selected: User | null = null;\n",
+        "negative_comment": "// 'use client';\nimport { PrismaClient } from '@prisma/client';\nexport function Page() { return null; }\n",
+        "negative_string": "const label = 'use client';\nimport { PrismaClient } from '@prisma/client';\nexport function Page() { return null; }\n",
         "adversarial": "const directive = 'use ' + 'client';\nimport { PrismaClient } from '@prisma/client';\nexport function Page() { return null; }\n",
     },
     "SP595": {

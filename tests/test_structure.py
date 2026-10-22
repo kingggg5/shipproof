@@ -59,6 +59,18 @@ class StructureTests(unittest.TestCase):
         for risky_hook in ("preinstall", "install", "postinstall", "prepare"):
             self.assertNotIn(risky_hook, package["scripts"])
 
+    def test_coverage_command_retains_scope_and_exposes_test_progress(self):
+        package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+        command = package["scripts"]["test:python:coverage"]
+        self.assertIn("-s tests -p test_*.py -v", command)
+        self.assertIn(
+            "--append -m unittest discover -s examples/demo-api/fixtures/after/tests -v", command
+        )
+        self.assertIn("python -m coverage report && python -m coverage xml", command)
+        configuration = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        self.assertIn("branch = true", configuration)
+        self.assertIn("fail_under = 80", configuration)
+
     def test_machine_contracts_and_distribution_entrypoints_exist(self):
         for path in (
             ROOT / "action.yml",
@@ -109,22 +121,6 @@ class StructureTests(unittest.TestCase):
             "docs/rules.md": (r"ShipProof applies (\d+) deterministic executable rules",),
             "docs/research.md": (r"\| Executable scanner rules \| (\d+) \|",),
             "docs/next-development-plan.md": (r"- executable scanner rules: (\d+)",),
-            "docs/releases/v0.10.0.md": (
-                r"All (\d+) executable scanner rules",
-                r"change the (\d+)-rule public catalog",
-            ),
-            "docs/releases/v0.11.0.md": (
-                r"All (\d+) executable scanner rules",
-                r"change the (\d+)-rule public catalog",
-            ),
-            "docs/releases/v0.11.1.md": (
-                r"All (\d+) executable scanner rules",
-                r"change the (\d+)-rule public catalog",
-            ),
-            "docs/releases/v0.11.2.md": (
-                r"All (\d+) executable scanner rules",
-                r"change the (\d+)-rule public catalog",
-            ),
         }
         for path, patterns in current_rule_claims.items():
             content = (ROOT / path).read_text(encoding="utf-8")
@@ -136,6 +132,13 @@ class StructureTests(unittest.TestCase):
                     len(RULES),
                     f"stale rule-count claim in {path}: {match.group(0)}",
                 )
+        # Published release notes describe their immutable artifact, not main.
+        # Counts verified from the four corresponding release tags.
+        for version in ("0.10.0", "0.11.0", "0.11.1", "0.11.2"):
+            note = (ROOT / "docs/releases" / f"v{version}.md").read_text(encoding="utf-8")
+            count = re.search(r"All (\d+) executable scanner rules", note)
+            self.assertIsNotNone(count, version)
+            self.assertEqual(int(count.group(1)), 635, version)
         self.assertIn("L2 interprocedural taint flows", llms)
         self.assertIn("--cross-file", llms)
 

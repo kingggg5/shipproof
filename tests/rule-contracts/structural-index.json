@@ -57,7 +57,7 @@
       "engine": "structural",
       "ecosystem": "nextjs",
       "rule_count": 7,
-      "sha256": "056461e1d9c7a720f4bc24165111b87458601fcc6e228ef8e35720b7b29e50b4"
+      "sha256": "d50325e0b45a2cd5e51ddc9726fb9a01ac5b7e9e439e285f0c9c010a49344576"
     },
     {
       "path": "structural-python.v2.json",

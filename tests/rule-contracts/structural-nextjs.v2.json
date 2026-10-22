@@ -49,16 +49,16 @@
     },
     {
       "rule_id": "SP591",
-      "title": "Server-only database or ORM client imported inside 'use client' bundle",
-      "category": "security",
-      "expected_severity": "critical",
+      "title": "Client module imports a server-only runtime dependency",
+      "category": "correctness",
+      "expected_severity": "medium",
       "expected_confidence": "high",
       "cwe": "CWE-200",
       "frameworks": [
         "nextjs",
         "react"
       ],
-      "false_positive_analysis": "Test fixtures or mock files not deployed to production.",
+      "false_positive_analysis": "Requires a real directive prologue and top-level runtime import. Type-only imports, named type specifiers, export types, comments and quoted examples are excluded. Client boundaries inherited from another file and bundler transforms remain unresolved.",
       "cases": {
         "positive": [
           {
@@ -68,16 +68,7 @@
             "expected_confidence": "high",
             "expected_detection": "structural",
             "expected_proof_level": "L1",
-            "expected_fingerprint": "be6cd32016ed690548a968b7"
-          },
-          {
-            "path": "contract-fixtures/nextjs/sp591-positive-b/component.tsx",
-            "source_hex": "0a2775736520636c69656e74273b0a696d706f7274207b20507269736d61436c69656e74207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f72742066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a",
-            "expected_line": 3,
-            "expected_confidence": "high",
-            "expected_detection": "structural",
-            "expected_proof_level": "L1",
-            "expected_fingerprint": "92f62aeddf5ec49da59c2e5d"
+            "expected_fingerprint": "1c62fc2b017312c44953c179"
           }
         ],
         "negative": [
@@ -88,6 +79,22 @@
           {
             "path": "contract-fixtures/nextjs/sp591-negative_b/component.tsx",
             "source_hex": "2775736520636c69656e74273b0a696d706f7274207b20617069207d2066726f6d20272e2f62726f777365722d617069273b0a6578706f72742066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp591-negative_comment/component.tsx",
+            "source_hex": "2f2f202775736520636c69656e74273b0a696d706f7274207b20507269736d61436c69656e74207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f72742066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp591-negative_inline_types/component.tsx",
+            "source_hex": "2775736520636c69656e74273b0a696d706f7274207b207479706520557365722c207479706520506f737420617320456e747279207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f727420636f6e73742073656c65637465643a2055736572207c206e756c6c203d206e756c6c3b0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp591-negative_string/component.tsx",
+            "source_hex": "636f6e7374206c6162656c203d202775736520636c69656e74273b0a696d706f7274207b20507269736d61436c69656e74207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f72742066756e6374696f6e20506167652829207b2072657475726e206e756c6c3b207d0a"
+          },
+          {
+            "path": "contract-fixtures/nextjs/sp591-negative_type/component.tsx",
+            "source_hex": "2775736520636c69656e74273b0a696d706f72742074797065207b2055736572207d2066726f6d202740707269736d612f636c69656e74273b0a6578706f727420636f6e73742073656c65637465643a2055736572207c206e756c6c203d206e756c6c3b0a"
           }
         ],
         "adversarial": [

@@ -45,6 +45,24 @@ class BenchmarkScannerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             benchmark_scanner.nearest_rank_percentile([1], 0)
 
+    def test_typescript_profile_is_deterministic_and_scans_real_ts_files(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            first_signature = benchmark_scanner.write_fixture(
+                Path(first), 12, "typescript-config", 512
+            )
+            second_signature = benchmark_scanner.write_fixture(
+                Path(second), 12, "typescript-config", 512
+            )
+            self.assertEqual(first_signature, second_signature)
+            self.assertEqual(first_signature[1], 12 * 512)
+            self.assertEqual(len(list(Path(first).rglob("*.ts"))), 12)
+            scanner = benchmark_scanner.load_scanner()
+            findings, stats = scanner.scan_repository(Path(first))
+            self.assertEqual(findings, [])
+            self.assertTrue(stats["completeness"]["is_complete"])
+
 
 if __name__ == "__main__":
     unittest.main()

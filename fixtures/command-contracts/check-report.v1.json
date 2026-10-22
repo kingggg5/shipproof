@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "tool": {
     "name": "ShipProof",
-    "version": "0.11.2",
+    "version": "0.12.0",
     "command": "check"
   },
   "root": "<ROOT>",
@@ -18,7 +18,7 @@
         "schema_version": "1.0",
         "tool": {
           "name": "ShipProof",
-          "version": "0.11.2",
+          "version": "0.12.0",
           "command": "scan"
         },
         "root": "<ROOT>",
@@ -210,7 +210,7 @@
         ],
         "limitations": [
           "Fast heuristic scan; confirm every finding.",
-          "No runtime reachability or dependency CVE database.",
+          "No runtime reachability or general dependency CVE feed; dated version advisories do not verify deployed vendor patches.",
           "No git-history scan was requested."
         ]
       }

@@ -1916,10 +1916,13 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         findings = self.findings("Http.cs", source)
         self.assertFalse(any(f.rule_id == "SP104" for f in findings))
 
-    def test_sp104_dart_trust_roots_disabled_is_flagged(self):
-        source = "final context = SecurityContext(withTrustedRoots: false);\n"
+    def test_sp104_dart_custom_trust_store_is_not_a_verification_bypass(self):
+        source = (
+            "final context = SecurityContext(withTrustedRoots: false);\n"
+            "context.setTrustedCertificates('private-ca.pem');\n"
+        )
         findings = self.findings("tls.dart", source)
-        self.assertTrue(any(f.rule_id == "SP104" for f in findings))
+        self.assertFalse(any(f.rule_id == "SP104" for f in findings))
 
     def test_sp104_dart_trust_roots_enabled_is_not_flagged(self):
         source = "final context = SecurityContext(withTrustedRoots: true);\n"
