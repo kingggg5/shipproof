@@ -362,14 +362,14 @@ class BoundedMultilineRulesTests(unittest.TestCase):
 
 
 class ParallelJobsTests(unittest.TestCase):
-    def scan_via_cli(self, jobs: int) -> str:
+    def scan_via_cli(self, root: Path, jobs: int) -> str:
         import subprocess
 
         result = subprocess.run(  # noqa: S603 - fixed argv in a test fixture
             [
                 sys.executable,
                 str(ROOT / "skills" / "audit-production-readiness" / "scripts" / "scan_repo.py"),
-                str(ROOT),
+                str(root),
                 "--format",
                 "json",
                 "--fail-on",
@@ -387,10 +387,34 @@ class ParallelJobsTests(unittest.TestCase):
         return result.stdout
 
     def test_parallel_scan_matches_sequential_output(self):
-        # The repository itself has well over the parallel threshold of files.
-        sequential = self.scan_via_cli(1)
-        parallel = self.scan_via_cli(4)
-        self.assertEqual(sequential, parallel)
+        # A live checkout can change while coverage/build artifacts are written.
+        # Use stable mixed-language inputs above the actual worker threshold,
+        # keeping the entire JSON comparison (including coverage/asset counts).
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sources = {
+                ".py": "def normalize(value):\n    return value.strip()\n",
+                ".ts": "export const value: number = 1;\n",
+                ".go": "package fixtures\nvar Value = 1\n",
+                ".rs": "pub fn value() -> u32 { 1 }\n",
+            }
+            suffixes = tuple(sources)
+            for index in range(scan_repo.PARALLEL_MIN_FILES + 4):
+                suffix = suffixes[index % len(suffixes)]
+                (root / f"module_{index}{suffix}").write_text(sources[suffix], encoding="utf-8")
+            (root / ".php-version").write_text("8.4.26\n", encoding="utf-8")
+            (root / "diagram.svg").write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg"/>', encoding="utf-8"
+            )
+            sequential = self.scan_via_cli(root, 1)
+            parallel = self.scan_via_cli(root, 4)
+            self.assertEqual(sequential, parallel)
+            report = json.loads(sequential)
+            self.assertGreaterEqual(
+                report["summary"]["files_scanned"], scan_repo.PARALLEL_MIN_FILES
+            )
+            self.assertTrue(report["findings"])
+            self.assertTrue(report["summary"]["completeness"]["is_complete"])
 
     def test_jobs_flag_rejects_zero(self):
         exit_code = main([".", "--format", "json", "--jobs", "0"])

@@ -23,11 +23,11 @@ moving major alias is maintained only by that successful release workflow.
 
 | Gate | State / evidence |
 | --- | --- |
-| Security | Local high-gate self-scan exits 0: 452 inspected files, complete selected-source coverage, 0 application findings and 32 intentional test-scope findings. Dependency audit went from 1 critical / 2 high / 2 moderate to zero. Remote security checks pending. |
+| Security | Local high-gate self-scan exits 0 with complete selected-source coverage, 0 application findings and 32 intentional test-scope findings. Dependency audit went from 1 critical / 2 high / 2 moderate to zero. The first integrated push passed both GitHub Security jobs. |
 | Correctness | `npm run check` passes: 868 Python tests (3 existing platform skips), 2 demo tests, Node suites, lint, package allowlist and isolated CLI/Action/MCP consumer smoke. Contract freshness, compile, rule assurance and precision-trend gates pass. |
 | Data & privacy | Default remains offline/read-only. Synthetic credential echo in the new advisories was confirmed and fixed with normalized evidence/minimized contexts; regressions cover JSON, SARIF, terminal, Markdown and full fix prompts. No claim that all arbitrary private source can be recognized as non-sensitive. |
-| Scale | Both final 1,000-file profiles pass the unchanged 8 s / 256 MiB limits; measurements below. Package is 111 files, 484,874 packed / 1,857,107 unpacked bytes, below unchanged 500,000 / 1,870,000 ceilings. No production-scale claim. |
-| Operability | Packed consumer and missing-optional-peer smoke pass. Node instrumented coverage passed at 87.44% line coverage. Windows Python coverage is inconclusive; exact Linux CI and publication checks remain required. |
+| Scale | Both final 1,000-file profiles pass the unchanged 8 s / 256 MiB limits; measurements below. Package is 111 files, 485,013 packed / 1,857,553 unpacked bytes, below unchanged 500,000 / 1,870,000 ceilings. No production-scale claim. |
+| Operability | Packed consumer and missing-optional-peer smoke pass. Node instrumented coverage passed at 87.44% line coverage. The repaired full Python coverage run passed at 85% aggregate with branch collection; exact follow-up Linux CI and publication checks remain required. |
 | Supply chain | SDK 1.32.1, fast-uri 3.1.8, hono 4.13.13, proxy-addr 2.0.8, ip-address 10.7.4; install scripts disabled, audit zero. Signed/protected-tag requirement or an explicit owner exception still needs resolution before tagging. No npm publication was performed. |
 
 ## Bounded measurement details
@@ -48,7 +48,7 @@ executed against all returned findings, not only a filtered advisory list. Rule
 assurance remains 652 complete, 0 partial/uncontracted/metadata debt, 94 rules with
 realistic negatives, 558 near-miss-only and 423 high/critical realistic-negative debt.
 
-## Python coverage limitation
+## Coverage timeout diagnosis and resolution
 
 An initial non-verbose Windows run was stopped after prolonged CPU activity and
 buffered progress output. A verbose timer-based diagnostic reached later tests but
@@ -56,10 +56,29 @@ exited with a native access violation (`-1073741819`). Focused invariants, resea
 catalog and baseline-suppression coverage probes passed. These diagnostics do not
 establish a ShipProof application crash or a successful full coverage result.
 
-The coverage command now prints test names; its measurement scope, branch flag and
-80% floor are unchanged. The full non-instrumented suite passes. Linux CI's normal
-coverage job is required before an exact release tag; no exclusion or threshold
-was added to hide this unknown, and the diagnostic wrapper is not shipped.
+The first integrated commit `c9ff33d` passed the five Python and three Node matrix
+jobs, quality and both Security jobs. Its coverage job timed out after ten minutes:
+[CI run](https://github.com/kingggg5/shipproof/actions/runs/39731850502). Logs narrowed
+the stall to `test_main_cli_execution_branches`, which scanned the actual checkout
+with a 10 MB per-file limit under branch tracing. The test's purpose is CLI dispatch
+and baseline output, not an instrumented audit of the growing research/test corpus.
+
+The follow-up runs that same real CLI branch on a deterministic temporary repo,
+preserving the pre-existing-output branch and adding JSON-content verification.
+It also compares complete sequential/parallel JSON on stable mixed-language input
+above the actual 24-file worker threshold, rather than racing live coverage/build
+artifacts in the checkout. No assertion on findings/completeness was relaxed.
+
+The focused CLI branch now passes under coverage in 1.697 s. After both isolation
+fixes, the actual `npm run test:python:coverage` passes: 868 tests in 103.417 s,
+three existing platform skips, two demo tests, 85% branch-instrumented aggregate
+and XML output. The subsequent `npm run check` also passes (868 Python tests in
+31.970 s plus Node/lint/package/consumer gates).
+
+The dedicated full-checkout self-audit remains in CI and was also run locally.
+Coverage measurement scope, branch collection, 80% floor and job timeout remain
+unchanged; no exclusion was added. The temporary diagnostic wrapper is not shipped.
+The exact follow-up Linux CI result remains an external release gate.
 
 ## Publication gate
 

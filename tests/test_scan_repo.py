@@ -616,13 +616,19 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
             self.assertEqual(
                 main(["--snippet", "ev" + "al(request.args['q'])", "--snippet-file", "app.py"]), 1
             )
-            with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-                baseline_out = Path(f.name)
-            try:
+            # This is a CLI branch contract, not the repository self-audit.
+            # Scanning cwd makes its cost depend on the growing fixture corpus
+            # and becomes pathological under branch instrumentation. CI keeps
+            # the full checkout self-audit as its own independent command.
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "app.py").write_text("def health():\n    return 'ok'\n", encoding="utf-8")
+                baseline_out = root / "baseline.json"
+                baseline_out.touch()  # Preserve the existing-output branch.
                 self.assertEqual(
                     main(
                         [
-                            ".",
+                            str(root),
                             "--format",
                             "json",
                             "--baseline-out",
@@ -636,9 +642,7 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
                     0,
                 )
                 self.assertTrue(baseline_out.exists())
-            finally:
-                if baseline_out.exists():
-                    baseline_out.unlink()
+                self.assertIsInstance(json.loads(baseline_out.read_text(encoding="utf-8")), dict)
 
     def test_detect_frameworks_across_manifests(self):
         import tempfile
