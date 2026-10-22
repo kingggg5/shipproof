@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -15,6 +16,13 @@ try {
   ({ StdioClientTransport } = await import("@modelcontextprotocol/sdk/client/stdio.js"));
 } catch (error) {
   unavailable = error instanceof Error ? error.message : String(error);
+}
+if (process.env.SHIPPROOF_MCP_REQUIRE_PEERS === "1" && unavailable) {
+  throw new Error(`required MCP test peers are unavailable: ${unavailable}`);
+}
+if (process.env.SHIPPROOF_MCP_EXPECT_ZOD) {
+  const require = createRequire(import.meta.url);
+  assert.equal(require("zod/package.json").version, process.env.SHIPPROOF_MCP_EXPECT_ZOD);
 }
 
 test(
@@ -121,6 +129,21 @@ test(
       assert.equal(capacity.structuredContent.tool.command, "capacity");
       assert.equal(capacity.structuredContent.inputs.users, 100);
 
+      // Use fixtures from the actual server package, also in a fresh packed consumer.
+      const packageRoot = join(dirname(SERVER_ENTRY), "..");
+      for (const name of ["baseline", "current", "budget"]) {
+        copyFileSync(
+          join(packageRoot, "examples", "performance", `${name}.json`),
+          join(repositoryRoot, `${name}.json`),
+        );
+      }
+      const budget = await client.callTool({
+        name: "shipproof_budget",
+        arguments: { baseline: "baseline.json", current: "current.json", budget: "budget.json" },
+      });
+      assert.equal(budget.isError, undefined);
+      assert.equal(budget.structuredContent.passed, true);
+
       const nestedScan = await client.callTool({
         name: "shipproof_scan",
         arguments: { path: "โฟลเดอร์ space", fail_on: "high" },
@@ -167,6 +190,22 @@ test(
       assert.equal(snippet.isError, undefined);
       assert.equal(snippet.structuredContent.root, realpathSync.native(repositoryRoot));
       assert.equal(snippet.structuredContent.summary.files_scanned, 1);
+
+      for (const [name, argumentsValue] of [
+        ["shipproof_scan", { path: 42 }],
+        ["shipproof_budget", { baseline: 42, current: "current.json", budget: "budget.json" }],
+        ["shipproof_capacity", { users: "100" }],
+        ["shipproof_capacity", { users: Number.MAX_SAFE_INTEGER + 1 }],
+        ["shipproof_explain", { rule_id: 42 }],
+        ["shipproof_lint_snippet", { code: 42 }],
+        ["shipproof_lint_snippet", { code: "", filename: "../outside.py" }],
+        ["shipproof_lint_snippet", { code: "ก".repeat(70_000), filename: "large.txt" }],
+        ["shipproof_scan", { path: ".." }],
+        ["shipproof_budget", { baseline: "../outside.json", current: "current.json", budget: "budget.json" }],
+      ]) {
+        const rejected = await client.callTool({ name, arguments: argumentsValue });
+        assert.equal(rejected.isError, true, `${name} must reject invalid or out-of-root input`);
+      }
     } finally {
       await client.close().catch(() => {});
       rmSync(repositoryRoot, { recursive: true, force: true });

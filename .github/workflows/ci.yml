@@ -131,6 +131,37 @@ jobs:
         if: matrix.node-version == '22'
         run: npm run test:package
 
+  mcp-peers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22", "24"]
+        zod-version: ["3.25.76", "4.6.7"]
+    env:
+      SHIPPROOF_MCP_REQUIRE_PEERS: "1"
+      SHIPPROOF_MCP_EXPECT_ZOD: ${{ matrix.zod-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install pinned test peers without lifecycle scripts
+        run: |
+          npm ci --include=dev --ignore-scripts
+          npm install --no-save --package-lock=false --ignore-scripts "zod@${{ matrix.zod-version }}"
+      - name: Test source MCP contracts (no skipped peers)
+        run: npm run test:mcp
+      - name: Test real packed consumer with the selected peer
+        run: npm run test:mcp:peers -- "${{ matrix.zod-version }}"
+
   coverage:
     runs-on: ubuntu-latest
     timeout-minutes: 10

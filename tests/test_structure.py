@@ -56,8 +56,21 @@ class StructureTests(unittest.TestCase):
         self.assertTrue(
             all(value["optional"] for value in package["peerDependenciesMeta"].values())
         )
+        self.assertEqual(package["peerDependencies"]["zod"], "^3.25.76 || ^4.6.7")
+        lock = json.loads((ROOT / "package-lock.json").read_text(encoding="utf-8"))
+        self.assertEqual(lock["packages"][""]["peerDependencies"], package["peerDependencies"])
         for risky_hook in ("preinstall", "install", "postinstall", "prepare"):
             self.assertNotIn(risky_hook, package["scripts"])
+
+    def test_mcp_ci_covers_both_peer_majors_and_real_packed_consumers(self):
+        ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        peer_job = ci.split("  mcp-peers:\n", 1)[1].split("  coverage:\n", 1)[0]
+        self.assertIn('node-version: ["20", "22", "24"]', peer_job)
+        self.assertIn('zod-version: ["3.25.76", "4.6.7"]', peer_job)
+        self.assertIn('SHIPPROOF_MCP_REQUIRE_PEERS: "1"', peer_job)
+        self.assertIn("run: npm run test:mcp", peer_job)
+        self.assertIn("run: npm run test:mcp:peers --", peer_job)
+        self.assertIn("--ignore-scripts", peer_job)
 
     def test_coverage_command_retains_scope_and_exposes_test_progress(self):
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
