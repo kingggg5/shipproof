@@ -250,7 +250,7 @@ class StructureTests(unittest.TestCase):
             "      - name: Upload clean-corpus artifact\n", 1
         )[0]
         self.assertIn(
-            "run: python scripts/check-precision-trend.py --report benchmark-clean-corpus.json",
+            "run: python scripts/check-precision-trend.py --require-paired --report benchmark-clean-corpus.json",
             precision_step,
         )
         self.assertNotIn("continue-on-error", precision_step)

@@ -1335,7 +1335,7 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertNotIn("SP135", [f.rule_id for f in findings])
 
     def test_go_discarded_error_is_flagged(self):
-        source = "result, err := doThing()\n" + "_, _ " + "= result, err\n"
+        source = "result, err := doThing()\n" + "_ " + "= err\n"
         findings = self.findings("store.go", source)
         self.assertIn("SP136", [f.rule_id for f in findings])
 
@@ -1853,7 +1853,7 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
 
     def test_sp621_rust_unwrap_in_route_handler(self):
         source = (
-            "async fn get_user(req: HttpRequest) -> HttpResponse {\n    let id = parse_id(&req)."
+            '#[actix_web::get("/users")]\nasync fn get_user(req: HttpRequest) -> HttpResponse {\n    let id = parse_id(&req).'
             + "unwrap();\n    HttpResponse::Ok().finish()\n}"
         )
         findings = self.findings("handler.rs", source)

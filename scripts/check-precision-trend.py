@@ -18,6 +18,9 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from paired_corpus import validate_report  # noqa: E402
+
 DEFAULT_BASELINE = ROOT / "benchmarks" / "clean-corpus-baseline.json"
 DEFAULT_THRESHOLDS = ROOT / "benchmarks" / "precision-thresholds.json"
 
@@ -33,6 +36,8 @@ def load_json(path: Path) -> dict[str, Any]:
 
 
 def corpus_metrics(payload: dict[str, Any]) -> dict[str, Any]:
+    if "paired" in payload or payload.get("schema_version") == "2.0":
+        payload = validate_report(payload)
     summary = payload.get("summary")
     if not isinstance(summary, dict):
         raise ValueError("clean-corpus report is missing summary")
@@ -109,9 +114,12 @@ def main() -> int:
     parser.add_argument("--report", type=Path, default=DEFAULT_BASELINE)
     parser.add_argument("--thresholds", type=Path, default=DEFAULT_THRESHOLDS)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--require-paired", action="store_true")
     arguments = parser.parse_args()
     try:
         report = load_json(arguments.report)
+        if arguments.require_paired and report.get("schema_version") != "2.0":
+            raise ValueError("a paired-corpus report is required")
         thresholds_doc = load_json(arguments.thresholds)
         if thresholds_doc.get("schema_version") != 1:
             raise ValueError("precision thresholds schema_version must be 1")
@@ -120,7 +128,7 @@ def main() -> int:
             raise ValueError("precision thresholds must include clean_corpus")
         metrics = corpus_metrics(report)
         failures = check_clean_corpus(metrics, clean)
-    except (OSError, ValueError, TypeError) as exc:
+    except (OSError, ValueError, TypeError, KeyError) as exc:
         print(f"precision trend: {exc}", file=sys.stderr)
         return 2
     payload = {"metrics": metrics, "failures": failures}

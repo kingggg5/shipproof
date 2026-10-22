@@ -254,6 +254,15 @@ PRECISION_CASES = json.loads((ROOT / "tests" / "precision_cases.json").read_text
     "cases"
 ]
 PRECISION_RULE_IDS = {"SP210", "SP220", "SP583", "SP597", "SP599"}
+PRECISION_37_ECOSYSTEMS = {"SP212": "infrastructure", "SP377": "go", "SP378": "go", "SP621": "rust"}
+PRECISION_CASES.extend(
+    case
+    for case in json.loads((ROOT / "tests/precision_37_cases.json").read_text(encoding="utf-8"))[
+        "cases"
+    ]
+    if case["rule_id"] in PRECISION_37_ECOSYSTEMS
+)
+PRECISION_RULE_IDS.update(PRECISION_37_ECOSYSTEMS)
 
 
 def encoded_text(source: str) -> dict[str, str]:
@@ -511,6 +520,7 @@ def build_payloads() -> dict[str, str]:
         grouped[base["ecosystem"]].append(structural_entry(rules[rule_id], base))
     for rule_id in sorted(PRECISION_RULE_IDS - {"SP220"}, key=rule_number):
         ecosystem = {
+            **PRECISION_37_ECOSYSTEMS,
             "SP210": "infrastructure",
             "SP583": "javascript",
             "SP597": "nextjs",

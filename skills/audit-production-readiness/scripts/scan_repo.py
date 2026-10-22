@@ -13,6 +13,7 @@ import json
 import math
 import os
 import re
+import shlex
 import shutil
 import stat as stat_module
 import subprocess
@@ -1023,9 +1024,9 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Fuzz with oversized inputs under ASan and verify no overflow.",
     },
     "SP136": {
-        "why": "Discarding Go return values hides errors until they corrupt state or crash a request far from the cause.",
+        "why": "Explicitly assigning an err value to the blank identifier may hide a failure; tuple arity does not establish which return value is an error.",
         "attack": "A failed write is ignored; the request reports success while data was never persisted.",
-        "false_positive": "Deliberate discards of non-error values with a comment explaining why.",
+        "false_positive": "The err identifier can have a non-error type, or a discard can be deliberate. This low-confidence signature does not perform Go type inference.",
         "test": "Force the dependency to fail and verify the error surfaces in logs and responses.",
     },
     "SP137": {
@@ -1479,9 +1480,9 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Add permissions: contents: read at the workflow root.",
     },
     "SP212": {
-        "why": "Dumping environment variables prints all CI secrets and API tokens to public build logs.",
-        "attack": "Attacker views public build logs on GitHub Actions to extract leaked secrets.",
-        "false_positive": "Commands setting specific variables like env: FOO=BAR.",
+        "why": "Dumping a complete CI environment can expose unmasked credentials or sensitive configuration in build logs.",
+        "attack": "An unintended log reader obtains an unmasked value printed by the workflow step.",
+        "false_positive": "This signature requires a bare env/printenv/set command in a workflow step run scalar. Metadata, env prefixes, specific-variable queries and quoted data are not dumps; custom shell bindings remain unresolved.",
         "test": "Remove printenv from CI build steps.",
     },
     "SP213": {
@@ -2289,16 +2290,16 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Add a test confirming that construct an explicit `&http.client{timeout: 10 * time.second}`.",
     },
     "SP377": {
-        "why": "A Go http.Server omits ReadHeaderTimeout, leaving the server vulnerable to Slowloris connection pool exhaustion.",
+        "why": "A standard net/http.Server literal with no effective header-read deadline can retain slow connections. A positive ReadTimeout also bounds header reads when ReadHeaderTimeout is zero.",
         "attack": "An attacker or runtime failure exploits `Go http.Server missing ReadHeaderTimeout causing Slowloris vulnerability` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+        "false_positive": "Construction is not proof of serving an exposed listener. Dynamic durations, shadowed imports and later local deadline assignments are unresolved; a visible positive ReadTimeout fallback stays silent.",
         "test": "Add a test confirming that set `readheadertimeout: 5 * time.second` and `writetimeout: 10 * time.second` on http.server.",
     },
     "SP378": {
-        "why": "A Go cancelable context does not call `defer cancel()`, leaking associated timer goroutines and context trees.",
-        "attack": "An attacker or runtime failure exploits `Go context.WithCancel or WithTimeout missing defer cancel call` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-        "test": "Add a test confirming that add `defer cancel()` immediately after context creation.",
+        "why": "Discarding the CancelFunc returned by context.WithCancel, WithTimeout or WithDeadline prevents early release of resources owned by that child context.",
+        "attack": "Repeated operations retain child contexts or timers until the parent is cancelled or the deadline expires.",
+        "false_positive": "Parent cancellation or expiry can bound lifetime. Named CancelFuncs may be called later, deferred inside a closure, or transferred to an owner; this check does not flag those lifecycles.",
+        "test": "Retain the returned CancelFunc and test cancellation on every completion path, including early errors.",
     },
     "SP379": {
         "why": "A sync.Mutex is locked without an immediate defer Unlock, risking permanent deadlock on early return or panic.",
@@ -3689,7 +3690,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP621": {
         "why": "Calling .unwrap() or .expect() in Rust HTTP handlers causes worker threads to panic upon encountering unexpected inputs.",
         "attack": "Malicious input payload causes runtime panic, degrading service availability and consuming CPU.",
-        "false_positive": "Initialization code before starting the HTTP server listener.",
+        "false_positive": "A panic is not necessarily input-triggered. This bounded check requires an Actix/Rocket route attribute or an Axum routing binding to a unique local function; arbitrary library/build/test unwraps and explicit Some/Ok constructors stay silent.",
         "test": "Handle errors gracefully with ? operator or match returning appropriate HTTP error responses.",
     },
     "SP622": {
@@ -5971,7 +5972,7 @@ RULES: tuple[Rule, ...] = (
         "high",
         "medium",
         compile_pattern(
-            r"""(?:(?<![\w.$])open\s*\(\s*(?:f["'][^"']*\{|`[^`]*\$\{)|(?:fs\.)?(?:readFile|readFileSync|writeFileSync|createReadStream|unlink|rmSync)\s*\(\s*`[^`]*\$\{|(?:path\.)?join\s*\([^)]*(?:req\.|params|query|user_input)|(?:Path|path)\.Combine\s*\([^)]*(?:Request|request|Query|Form|Route))"""
+            r"""(?:(?<![\w.$])open\s*\(\s*(?:f["'][^"']*\{|`[^`]*\$\{)|(?:fs\.)?(?:readFile|readFileSync|writeFileSync|createReadStream|unlink|rmSync)\s*\(\s*`[^`]*\$\{|(?<![\w.])(?:(?:os\.)?path\.)?join\s*\([^)]*(?:req\.|params|query|user_input)|(?:Path|path)\.Combine\s*\([^)]*(?:Request|request|Query|Form|Route))"""
         ),
         "A filesystem operation constructs paths directly from variables without visible normalization.",
         "Normalize with realpath/resolve and verify the path remains inside the base directory.",
@@ -6328,12 +6329,12 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP136",
-        "Go error explicitly discarded",
+        "Go err value explicitly discarded (type unresolved)",
         "reliability",
         "medium",
         "low",
-        compile_pattern(r"""_, _\s*:?=|\b_\s*=\s*err\b"""),
-        "Return values including errors are discarded, hiding failures until they surface as corruption downstream.",
+        compile_pattern(r"""\b_\s*=\s*err\b"""),
+        "An err value is explicitly discarded; if it is an error, a failure may be ignored. Tuple arity alone does not establish an error return.",
         "Handle the error or annotate the discard with an explicit reason comment.",
         "CWE-754",
         "OWASP ASVS V7",
@@ -9221,12 +9222,12 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP377",
-        "Go http.Server missing ReadHeaderTimeout causing Slowloris vulnerability",
+        "Go http.Server has no effective header-read deadline",
         "reliability",
         "high",
         "high",
         compile_pattern(r"""&http\.Server\s*\{[^\}]*(?!ReadHeaderTimeout\s*:)[^\}]*\}"""),
-        "A Go http.Server omits ReadHeaderTimeout, leaving the server vulnerable to Slowloris connection pool exhaustion.",
+        "A standard net/http.Server literal has no effective header-read deadline; slow clients can retain connections if this configuration is served without an upstream deadline.",
         "Set `ReadHeaderTimeout: 5 * time.Second` and `WriteTimeout: 10 * time.Second` on http.Server.",
         "CWE-400",
         "Reliability",
@@ -9234,15 +9235,15 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP378",
-        "Go context.WithCancel or WithTimeout missing defer cancel call",
+        "Go cancelable context discards its cancellation function",
         "reliability",
         "high",
         "high",
         compile_pattern(
-            r"""ctx,\s*([a-zA-Z0-9_]+)\s*:=\s*context\.(?:WithCancel|WithTimeout|WithDeadline)\s*\([^\)]+\)(?![\s\S]*defer\s+\1\(\))"""
+            r"""\b\w+\s*,\s*_\s*:?=\s*context\.(?:WithCancel|WithTimeout|WithDeadline)\s*\("""
         ),
-        "A Go cancelable context does not call `defer cancel()`, leaking associated timer goroutines and context trees.",
-        "Add `defer cancel()` immediately after context creation.",
+        "A standard-library context constructor's CancelFunc is discarded, preventing its owner from explicitly releasing the derived context or timer.",
+        "Retain the cancellation function and call it when the work ends, usually with defer cancel().",
         "CWE-400",
         "Reliability",
         frozenset({".go"}),
@@ -9604,7 +9605,7 @@ RULES: tuple[Rule, ...] = (
         "security",
         "high",
         "high",
-        compile_pattern(r"""ALLOWED_HOSTS\s*=\s*\[["']\*["']\]"""),
+        compile_pattern(r"""\b(?-i:ALLOWED_HOSTS)\s*=\s*\[["']\*["']\]"""),
         "Django ALLOWED_HOSTS accepts any hostname, disabling host header validation.",
         "Set ALLOWED_HOSTS to explicit trusted domains.",
         "CWE-20",
@@ -13377,7 +13378,9 @@ RULES: tuple[Rule, ...] = (
 # Derived from metadata (not a hand-maintained ID list) so new provider-token
 # rules inherit placeholder filtering, comment scanning, and document scanning.
 SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
-MINIMIZED_EVIDENCE_RULE_IDS = frozenset({"SP591", *(f"SP{number}" for number in range(666, 684))})
+MINIMIZED_EVIDENCE_RULE_IDS = frozenset(
+    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 684))}
+)
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
 
 # Rules whose evidence is the CONTENT of a string literal (URL query shapes,
@@ -14248,6 +14251,7 @@ def has_mcp_context(relative_path: str, source_text: str) -> bool:
 FILE_LEVEL_RULE_IDS = frozenset(
     {
         "SP210",
+        "SP212",
         "SP220",
         "SP583",
         "SP599",
@@ -14293,6 +14297,9 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP681",
         "SP682",
         "SP683",
+        "SP377",
+        "SP378",
+        "SP621",
     }
 )
 
@@ -14324,7 +14331,7 @@ def applicable_line_rules(
     return resolved
 
 
-def github_run_expression_lines(source_text: str) -> list[int]:
+def github_run_expression_lines(source_text: str, rule_id: str = "SP210") -> list[int]:
     """Recognize ordinary workflow step run scalars, not env/with/prose.
 
     This is intentionally a narrow YAML reader: block mappings, sequence steps,
@@ -14336,7 +14343,31 @@ def github_run_expression_lines(source_text: str) -> list[int]:
     scalar_run = False
     quote: str | None = None
     result: list[int] = []
-    pattern = find_rule("SP210").pattern
+    pattern = find_rule(rule_id).pattern
+    pending: list[tuple[int, str]] = []
+    folded = False
+
+    def matches_command(value: str) -> bool:
+        if rule_id != "SP212":
+            return pattern.search(value) is not None
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        try:
+            lexer = shlex.shlex(value, posix=True, punctuation_chars=";&|<>")
+            lexer.whitespace_split = True
+            words = list(lexer)
+        except ValueError:
+            return False
+        command: list[str] = []
+        for word in [*words, ";"]:
+            if word in {";", "&&", "||", "|", "&"}:
+                if command in (["env"], ["printenv"], ["set"]):
+                    return True
+                command = []
+            else:
+                command.append(word)
+        return False
 
     def scalar_text(value: str, active_quote: str | None = None) -> tuple[str, str | None]:
         index = 0
@@ -14358,18 +14389,43 @@ def github_run_expression_lines(source_text: str) -> list[int]:
             index += 1
         return value, active_quote
 
+    def flush_environment_scalar() -> None:
+        if not pending:
+            return
+        if folded:
+            if matches_command(" ".join(value.strip() for _, value in pending)):
+                result.append(pending[0][0])
+        elif not any("<<" in value for _, value in pending):
+            # Heredoc bodies and multi-line shell quotes are data, not commands.
+            # Heredocs are deliberately unresolved rather than partially parsed.
+            shell_quote: str | None = None
+            for number, value in pending:
+                previous = shell_quote
+                _, shell_quote = scalar_text(value, shell_quote)
+                if previous is None and shell_quote is None and matches_command(value):
+                    result.append(number)
+        pending.clear()
+
     for line_number, line in enumerate(source_text.splitlines(), 1):
         if quote is not None:
             value, quote = scalar_text(line, quote)
-            if scalar_run and pattern.search(value):
+            if scalar_run and rule_id == "SP212":
+                pending.append((line_number, value))
+                if quote is None:
+                    # YAML quoted scalars fold physical newlines into spaces.
+                    flush_environment_scalar()
+            elif scalar_run and matches_command(value):
                 result.append(line_number)
             continue
         indent = len(line) - len(line.lstrip(" "))
         if scalar_indent is not None:
             if not line.strip() or indent > scalar_indent:
-                if scalar_run and pattern.search(line):
+                if scalar_run and rule_id == "SP212":
+                    pending.append((line_number, line))
+                elif scalar_run and matches_command(line):
                     result.append(line_number)
                 continue
+            flush_environment_scalar()
             scalar_indent = None
         match = re.match(r"""^( *)(?:- +)?(?:([\w-]+)|"([\w-]+)"|'([\w-]+)')\s*:\s*(.*)$""", line)
         if match is None:
@@ -14389,14 +14445,19 @@ def github_run_expression_lines(source_text: str) -> list[int]:
         value, end_quote = scalar_text(raw_value)
         if re.fullmatch(r"[|>][1-9+-]{0,2}\s*", value):
             scalar_indent = key_indent
+            folded = value.startswith(">")
         else:
-            if scalar_run and pattern.search(value):
+            if scalar_run and rule_id == "SP212" and end_quote and raw_value.startswith(('"', "'")):
+                folded = True
+                pending.append((line_number, value))
+            elif scalar_run and matches_command(value):
                 result.append(line_number)
             # Only a quote at the start creates a YAML quoted scalar. Shell
             # quotes in a plain run command do not consume subsequent YAML.
             quote = end_quote if raw_value.startswith(('"', "'")) else None
         if not value.strip():
             stack.append((key_indent, key))
+    flush_environment_scalar()
     return result
 
 
@@ -14922,8 +14983,8 @@ def find_regex_issues(
                 if value in {"printf", "fprintf", "sprintf", "snprintf", "syslog", "std"}
             }
         )
-    if suffix in {".lua", ".luau", ".rs"}:
-        language = "rust" if suffix == ".rs" else "lua"
+    if suffix in {".lua", ".luau", ".rs", ".go"}:
+        language = "go" if suffix == ".go" else "rust" if suffix == ".rs" else "lua"
         try:
             spans = polyglot_checks.signature_spans(source_text, language)
         except polyglot_checks.LexicalLimitError as exc:
@@ -14946,13 +15007,26 @@ def find_regex_issues(
                 end_column=end_column,
                 minimal_evidence="reqwest Client builder explicitly enables an invalid-certificate/hostname TLS switch"
                 if rule_id == "SP104"
-                else None,
+                else {
+                    "SP377": "net/http.Server literal has no effective header-read deadline",
+                    "SP378": "context constructor explicitly discards its CancelFunc",
+                    "SP621": "panic-prone unwrap/expect in a locally bound HTTP route handler",
+                }.get(rule_id),
             )
             # New Rust TLS variants are advisory until representative review.
             findings.append(replace(finding, tier="advisory") if rule_id == "SP104" else finding)
     if is_github_workflow and suffix in {".yml", ".yaml"}:
         for line_number in github_run_expression_lines(source_text):
             append_file_level_finding(findings, "SP210", relative_path, lines, line_number)
+        for line_number in github_run_expression_lines(source_text, "SP212"):
+            append_file_level_finding(
+                findings,
+                "SP212",
+                relative_path,
+                lines,
+                line_number,
+                minimal_evidence="workflow run command dumps the complete environment",
+            )
     if suffix in JS_CONFIG_SUFFIXES and any(
         marker in source_text
         for marker in (

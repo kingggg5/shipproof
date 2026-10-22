@@ -32,7 +32,6 @@
     "docs/launch/ai-code-failure-modes.md",
     "docs/production-playbook.md",
     "docs/releasing.md",
-    "docs/roadmap.md",
     "docs/rule-assurance.md",
     "docs/rules.md",
     "examples/capacity/generated-load-test.js",

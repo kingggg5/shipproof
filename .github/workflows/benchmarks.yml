@@ -131,9 +131,9 @@ jobs:
         with:
           toolchain: "1.85.0"
       - name: Clean-corpus precision evaluation
-        run: python scripts/eval-clean-corpus.py --json --labels | tee benchmark-clean-corpus.json
+        run: python scripts/eval-clean-corpus.py --paired --json --labels | tee benchmark-clean-corpus.json
       - name: Precision thresholds
-        run: python scripts/check-precision-trend.py --report benchmark-clean-corpus.json
+        run: python scripts/check-precision-trend.py --require-paired --report benchmark-clean-corpus.json
       - name: Upload clean-corpus artifact
         if: always() && hashFiles('benchmark-clean-corpus.json') != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

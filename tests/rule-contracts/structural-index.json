@@ -21,8 +21,8 @@
       "path": "structural-go.v2.json",
       "engine": "structural",
       "ecosystem": "go",
-      "rule_count": 1,
-      "sha256": "55608c386cc30b0411be0b0e71efa52aa15a09694390f0b2f3b487a7fe0c8890"
+      "rule_count": 3,
+      "sha256": "2306036ed9ae8fb6748e8e8ac05e63220cdfe77487973ab2f7a8c1a96e6f4ad7"
     },
     {
       "path": "structural-graphql.v2.json",
@@ -35,8 +35,8 @@
       "path": "structural-infrastructure.v2.json",
       "engine": "structural",
       "ecosystem": "infrastructure",
-      "rule_count": 1,
-      "sha256": "12499a99860b958e4416c9109af9d81c49d6137cd0112587c42f3041ab15224e"
+      "rule_count": 2,
+      "sha256": "feff2776ca4f890c5f7e30fe1f84a0f716defccbf21c5ae3cad75f7bd6027ed0"
     },
     {
       "path": "structural-javascript.v2.json",
@@ -72,6 +72,13 @@
       "ecosystem": "react",
       "rule_count": 1,
       "sha256": "9e2dfc6dbceb530c65498b20877cab492e1bb86c33133d155caf348589a3868b"
+    },
+    {
+      "path": "structural-rust.v2.json",
+      "engine": "structural",
+      "ecosystem": "rust",
+      "rule_count": 1,
+      "sha256": "543fa0443bf62bc87d0ffd2be2323055c58244a543750837901faea9af0b47ec"
     },
     {
       "path": "structural-typescript.v2.json",

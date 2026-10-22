@@ -537,56 +537,6 @@
       }
     },
     {
-      "rule_id": "SP621",
-      "title": "Rust unwrap or expect invoked in HTTP route handler risking thread panic",
-      "category": "reliability",
-      "expected_severity": "high",
-      "expected_confidence": "high",
-      "cwe": "CWE-754",
-      "frameworks": [],
-      "false_positive_analysis": "Initialization code before starting the HTTP server listener.",
-      "cases": {
-        "positive": [
-          {
-            "path": "contract-fixtures/rust/sp621-positive-a.rs",
-            "source_hex": "2e6578706563742829",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "adb658bca9269261f0712c55"
-          },
-          {
-            "path": "contract-fixtures/rust/sp621-positive-b.rs",
-            "source_hex": "2e65787065637428293b0a",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "0446223f6e9c592d62e56933"
-          }
-        ],
-        "negative": [
-          {
-            "path": "contract-fixtures/rust/sp621-negative-a.rs",
-            "source_hex": "216578706563742829"
-          },
-          {
-            "path": "contract-fixtures/rust/sp621-negative-b.rs",
-            "source_hex": "206578706563742829"
-          }
-        ],
-        "adversarial": [
-          {
-            "path": "contract-fixtures/rust/sp621-adversarial-a.rs",
-            "source_hex": "586578706563742829",
-            "expected": false,
-            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
-          }
-        ]
-      }
-    },
-    {
       "rule_id": "SP646",
       "title": "iOS URLSession configured to unconditionally trust all SSL certificates",
       "category": "security",

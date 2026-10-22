@@ -428,12 +428,12 @@
           },
           {
             "path": "contract-fixtures/common/sp110-positive-b.py",
-            "source_hex": "706174682e6a6f696e0920282020757365725f696e7075743b0a",
+            "source_hex": "6f732e706174682e6a6f696e20092820207265712e3b0a",
             "expected_line": 1,
             "expected_confidence": "medium",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "c365b154a5d5d2369c80d4b4"
+            "expected_fingerprint": "796324011ad61337695a10a7"
           },
           {
             "path": "contract-fixtures/common/sp110-positive-c.py",

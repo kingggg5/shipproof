@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Narrow workflow, path-join, Django, Go deadline/cancellation, and Rust route-handler precision signatures while preserving reviewed positives. Add paired clean-corpus evaluation with untouched originals, reviewed byte-level edits in separate quiet copies, source/action pins, hashes, receipts, and positive-recall validation under unchanged quiet thresholds. The local 30-package/867-file measurement retains 130 original findings (54 high/critical); quiet copies have 72 findings, zero high/critical, and 16 gate medium findings. The ten existing labels are unchanged; this is corpus-scoped evidence, not a universal precision claim.
+
 - Preserve optional Zod 3 support while adding Zod 4 (`^3.25.76 || ^4.6.7`). Test
   all five read-only MCP tools through source and real packed consumers, with
   pinned peers on Node 20/22/24. Missing peers fail the opt-in matrix instead of

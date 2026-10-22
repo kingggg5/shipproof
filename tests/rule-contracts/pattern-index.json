@@ -8,7 +8,7 @@
       "engine": "pattern",
       "ecosystem": "common",
       "rule_count": 263,
-      "sha256": "96f723f2a484a0ebbfa0417cfdf7b164d86dc4ce3ddd24851ca7c187acd58aca"
+      "sha256": "9698a6615eb5a307a0691a9092cd4f7ac1c9682f319fe680854b424328639582"
     },
     {
       "path": "pattern-container.v2.json",
@@ -42,15 +42,15 @@
       "path": "pattern-go.v2.json",
       "engine": "pattern",
       "ecosystem": "go",
-      "rule_count": 23,
-      "sha256": "744f168b45feeaec0bea469b8d586472e066573ba3132dc106e175c21e052546"
+      "rule_count": 21,
+      "sha256": "122aef4db5f695fa6daee3bc1dfae0c1a356aa246b10126a019c33d7be9d19ab"
     },
     {
       "path": "pattern-infrastructure.v2.json",
       "engine": "pattern",
       "ecosystem": "infrastructure",
-      "rule_count": 59,
-      "sha256": "6c0a36d0e335aa3f9c02ef58ed2209a56c88a8721099c149c9270951a365cec1"
+      "rule_count": 58,
+      "sha256": "e50dc323e4fecb20df89d58e7367235a15a7ef981cce3aa7dcd51da3cc27e8dd"
     },
     {
       "path": "pattern-java.v2.json",
@@ -85,14 +85,14 @@
       "engine": "pattern",
       "ecosystem": "python",
       "rule_count": 57,
-      "sha256": "5f5605ff263dd0d8d0dae43e11c26d1de68dc08253f4e0589444f747219605d9"
+      "sha256": "ab1c488c2c2915e07518d8d776e5c2f2d1002277217c24321c5e914f8bd682cb"
     },
     {
       "path": "pattern-rust.v2.json",
       "engine": "pattern",
       "ecosystem": "rust",
-      "rule_count": 13,
-      "sha256": "c660ac9a5bea5cc5bd58b877a9d67c618411142ae657ddfd81e342259ef64fe3"
+      "rule_count": 12,
+      "sha256": "db29b940557999d893ff4c0aaf2e9302fa03637ee1e4f5db2849e9d34532be56"
     },
     {
       "path": "pattern-sql.v2.json",

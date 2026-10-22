@@ -21,7 +21,7 @@ ShipProof คือ production gate ที่พัฒนาขึ้นต้�
 
 ShipProof ไม่ใช่ certification, penetration test, formal proof หรือสิ่งทดแทน threat modeling เฉพาะผลิตภัณฑ์และ runtime test มันทำให้ assumption มองเห็นได้ รายงานความแข็งแรงของหลักฐานที่มี และคงอำนาจการตัดสินใจไว้ที่มนุษย์สำหรับ action ที่มีผลตามมา
 
-**แหล่งข้อมูลโครงการ:** [เว็บไซต์](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](docs/roadmap.md) · [Citation](CITATION.cff)
+**แหล่งข้อมูลโครงการ:** [เว็บไซต์](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) · [Citation](CITATION.cff)
 
 <p align="center">
   <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
@@ -167,6 +167,8 @@ ShipProof ให้ความสำคัญกับ precision สูงก�
 
 ตัวอย่างเช่น `SP631` ต้องเห็นการประกาศ Edge runtime จริงพร้อม native runtime import; Node.js ปกติหรือข้อความที่พูดถึง runtime/ledger ไม่ใช่หลักฐานว่าใช้ Edge ดู [ขอบเขตกฎ](docs/rules.md)
 
+ขอบเขต precision ต้องเห็นคำสั่งใน workflow `run` ไม่ใช่ metadata, แยก string join ออกจาก file path และรักษาตัวพิมพ์ใหญ่ของ Django `ALLOWED_HOSTS` ส่วน Go นับ `ReadTimeout` ที่เป็นบวกเป็น fallback ของ header deadline และแจ้งเมื่อทิ้ง `CancelFunc` ชัดเจน ไม่ใช่เพียงเรียกฟังก์ชันที่ตั้งชื่อไว้ภายหลังหรือใน deferred closure สำหรับ Rust ต้องมี local Actix/Rocket route attribute หรือ Axum routing binding จึงตรวจ panic ใน handler ทั้งหมดเป็นการตรวจ source ที่มีขอบเขต ไม่ใช่ความแม่นยำสากล
+
 - **Inline suppression:** เติม `# shipproof-ignore SP101` หรือ `// shipproof-ignore SP101` บนบรรทัดนั้นหรือบรรทัดก่อนหน้า marker มีผลเฉพาะใน comment เท่านั้น และระบุหลาย rule พร้อมกันได้ เช่น `# shipproof-ignore SP101 SP102`
 - **Confidence filtering:** รันด้วย `--min-confidence high` เพื่อเห็น heuristic findings ที่มี confidence สูง แต่ยังต้องตรวจสอบยืนยัน
 - **หมายเหตุด้านความแม่นยำ:** Finding ของ workflow ขึ้นกับ interpolation ในบริบทการรัน, ไฟล์ environment ต้องตรวจจาก Git index จริง (ไม่ใช่ข้อความใน `.gitignore`), BullMQ ต้องมีการปิด stalled checks อย่างชัดเจน, fetch ต้องเป็นคำขออิสระที่อยู่ติดกันใน component เดียวกัน และ non-null ต้อง dereference จาก JSON; ไม่ได้อ้างความแม่นยำสากล
@@ -294,7 +296,7 @@ candidate จาก research จะกลายเป็น executable `SPxxx` r
 | [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 research slots แยก ecosystem/CWE | ไม่มี |
 | [Executable rule table](docs/rules.md#detection-rules-reference) | 652 detectors ผ่าน review | Emit versioned findings |
 
-ดู [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md) และ [delivery roadmap](docs/roadmap.md) สำหรับขอบเขต operational และ acceptance gates อ้างอิง release ด้วย [CITATION.cff](CITATION.cff)
+ดู [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md) และ [delivery roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) สำหรับขอบเขต operational และ acceptance gates อ้างอิง release ด้วย [CITATION.cff](CITATION.cff)
 
 ## การกำกับดูแลโครงการ
 

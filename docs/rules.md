@@ -6,6 +6,8 @@ Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1
 
 Run `shipproof explain SP108` for why a rule exists, its attack scenario, false-positive boundary, and regression-test guidance.
 
+`SP136` remains a low-confidence regex signature for an explicit `_ = err` assignment. It does not infer Go types or identify an error return from tuple arity.
+
 `SP666`–`SP683` are runtime advisory findings pending representative-repository
 review; lowering the severity or proof floor does not make them blocking.
 These cohorts, `SP591` and advisory Rust TLS evidence expose only normalized risk
@@ -43,6 +45,12 @@ exceeding 50,000 tokens records `parser_limit` in the completeness ledger.
 Luau interpolated strings, typed/guarded handlers, aliases and complex Rust
 types remain outside these signatures; a silent result does not establish their
 safety. No submitted source is executed by these checks.
+
+Go deadline/cancellation and Rust route-context checks share the bounded native
+lexer (50,000 tokens, 128 delimiter levels). Go comments do not nest; Rust comments
+do. Dynamic configuration, custom bindings, complex imports and unsupported
+route forms are unresolved. `SP212` recognizes bare environment-dump commands in
+step `run` scalars, not YAML metadata, command arguments or heredoc data.
 
 `SP631` requires an explicit literal Edge runtime declaration and a native runtime import. It does not classify ordinary Node.js serverless code, comments, quoted examples, or type-only imports as Edge execution. Its boundary follows the official [runtime configuration](https://github.com/vercel/next.js/blob/canary/docs/01-app/03-api-reference/03-file-conventions/02-route-segment-config/runtime.mdx) and [Edge API limitations](https://github.com/vercel/next.js/blob/canary/docs/01-app/03-api-reference/07-edge.mdx), checked through Context7 on 2026-09-04. This local structural check does not resolve computed/multiline declarations, ambiguous JSX/template contexts, build-time polyfills, or deployment settings.
 
@@ -236,7 +244,7 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP133`** | MEDIUM | Security | ASP.NET debug compilation enabled | Regex |
 | **`SP134`** | HIGH | Security | Assertion used as authorization | Regex |
 | **`SP135`** | HIGH | Security | Unbounded C string function | Regex |
-| **`SP136`** | MEDIUM | Reliability | Go error explicitly discarded | Regex |
+| **`SP136`** | MEDIUM | Reliability | Go err value explicitly discarded (type unresolved) | Regex |
 | **`SP137`** | HIGH | Security | Server-side template injection | Python AST |
 | **`SP138`** | HIGH | Security | Timing-attack vulnerable comparison | Regex |
 | **`SP139`** | HIGH | Security | Insecure temporary file creation | Regex |
@@ -312,7 +320,7 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP209`** | HIGH | Supply-chain | GitHub Actions pull_request_target checkout of PR head | Regex |
 | **`SP210`** | HIGH | Security | GitHub Actions workflow script injection | Structural |
 | **`SP211`** | MEDIUM | Security | GitHub Actions workflow missing explicit permissions | Regex |
-| **`SP212`** | HIGH | Security | CI/CD step printing environment variables to console | Regex |
+| **`SP212`** | HIGH | Security | CI/CD step printing environment variables to console | Structural |
 | **`SP213`** | HIGH | Supply-chain | npm script with unsafe-perm | Regex |
 | **`SP214`** | MEDIUM | Supply-chain | Pip install without pinned versions | Regex |
 | **`SP215`** | HIGH | Security | Terraform AWS S3 bucket with public ACL | Regex |
@@ -457,8 +465,8 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP374`** | HIGH | Reliability | Go sync.WaitGroup Wait called inside spawned goroutine causing deadlock | Regex |
 | **`SP375`** | HIGH | Scale | Go sql.DB connection pool configured with unbounded connections | Regex |
 | **`SP376`** | HIGH | Reliability | Go HTTP client using zero-timeout DefaultClient | Regex |
-| **`SP377`** | HIGH | Reliability | Go http.Server missing ReadHeaderTimeout causing Slowloris vulnerability | Regex |
-| **`SP378`** | HIGH | Reliability | Go context.WithCancel or WithTimeout missing defer cancel call | Regex |
+| **`SP377`** | HIGH | Reliability | Go http.Server has no effective header-read deadline | Structural |
+| **`SP378`** | HIGH | Reliability | Go cancelable context discards its cancellation function | Structural |
 | **`SP379`** | MEDIUM | Reliability | Go Mutex lock acquired without immediate defer Unlock | Regex |
 | **`SP380`** | HIGH | Scale | Java Executors newCachedThreadPool unbounded thread creation | Regex |
 | **`SP381`** | HIGH | Scale | Java CompletableFuture join called on main thread | Regex |
@@ -690,7 +698,7 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP618`** | MEDIUM | Reliability | Redis cache key set without expiration TTL parameter | Regex |
 | **`SP619`** | HIGH | Reliability | Kafka consumer configured with enable.auto.commit risking message loss | Regex |
 | **`SP620`** | HIGH | Scale | PostgreSQL migration adding non-null column with volatile default acquiring table lock | Regex |
-| **`SP621`** | HIGH | Reliability | Rust unwrap or expect invoked in HTTP route handler risking thread panic | Regex |
+| **`SP621`** | HIGH | Reliability | Rust unwrap or expect invoked in HTTP route handler risking thread panic | Structural |
 | **`SP622`** | HIGH | Reliability | Go deferred file or response Close in write operation without error check | Regex |
 | **`SP623`** | CRITICAL | Security | Java dynamic JNDI lookup via InitialContext allowing remote code execution | Regex |
 | **`SP624`** | HIGH | Security | Non-cryptographic PRNG used to generate security token or key | Regex |

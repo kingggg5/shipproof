@@ -1,25 +1,29 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "tool": {
     "name": "ShipProof",
-    "version": "0.10.0",
+    "version": "0.12.0",
     "command": "eval-clean-corpus"
   },
   "verdict": "PASS_WITH_EVIDENCE",
   "platform": "Windows-11-10.0.26200-SP0",
   "python": "3.12.10",
-  "manifest_sha256": "98b46bf1dd22a31d66992f7789ee43c1a925fbe8b2f89df63b29c023d267e3cc",
+  "manifest_sha256": "8b2a12f93dcb5371c5c8eeff189c304e92f9271f1ac3b8987c76ed4813516843",
+  "manifest_canonical_sha256": "5573f2272a84d359669b91aa302edd34fd4ffc041ae059227074f75d8b9f162b",
   "limitations": [
     "Installed packages are not a vulnerability-free guarantee; findings stay unreviewed until labeled.",
     "Digests cover scannable source files only so compiled wheels do not make the fingerprint platform-specific.",
-    "This opt-in maintainer workflow requires network access and is never part of the default scanner path."
+    "This opt-in maintainer workflow requires network access and is never part of the default scanner path.",
+    "The default completeness ledger includes opaque non-source metadata; source omissions invalidate this benchmark. A quiet benchmark leg is not a complete application security verdict."
   ],
   "summary": {
-    "packages": 15,
-    "files": 524,
-    "app_findings": 63,
-    "blocked_packages": [],
-    "blocked_count": 0
+    "packages": 30,
+    "files": 867,
+    "app_findings": 130,
+    "blocked_packages": [
+      "chi"
+    ],
+    "blocked_count": 1
   },
   "packages": [
     {
@@ -30,7 +34,7 @@
       "license_spdx": "BSD-3-Clause",
       "source_sha256": "5293e154cb0d8b93cc05521693900012b5fa8211afc67441e18feec441f26c5a",
       "files": 25,
-      "seconds": 1.44,
+      "seconds": 1.39,
       "findings": 4,
       "app_findings": 4,
       "by_severity": {
@@ -44,6 +48,23 @@
       },
       "verdict": "CONDITIONAL",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "unreviewed",
       "app_finding_records": [
         {
@@ -101,6 +122,8 @@
       ],
       "labels": {
         "unreviewed": 4,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -114,7 +137,7 @@
       "license_spdx": "Apache-2.0",
       "source_sha256": "2e1a64e19857c433fef6e850b6ed6b5e3a96550d93dafcbfec08fa3431acefa4",
       "files": 18,
-      "seconds": 0.71,
+      "seconds": 0.86,
       "findings": 0,
       "app_findings": 0,
       "by_severity": {},
@@ -122,10 +145,27 @@
       "by_rule": {},
       "verdict": "PASS_WITH_EVIDENCE",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "reviewed",
       "app_finding_records": [],
       "labels": {
         "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -139,7 +179,7 @@
       "license_spdx": "MIT",
       "source_sha256": "97a51367609c3acd17d2833512884a1f78d4293099136ac4c0b46d9f872e7e29",
       "files": 55,
-      "seconds": 3.0,
+      "seconds": 3.13,
       "findings": 2,
       "app_findings": 2,
       "by_severity": {
@@ -156,6 +196,23 @@
       },
       "verdict": "CONDITIONAL",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "unreviewed",
       "app_finding_records": [
         {
@@ -186,10 +243,39 @@
         }
       ],
       "labels": {
-        "unreviewed": 2,
-        "by_rule": {},
-        "by_severity": {},
-        "by_proof_level": {}
+        "unreviewed": 1,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 1,
+        "by_rule": {
+          "SP356": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        },
+        "by_severity": {
+          "medium": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        },
+        "by_proof_level": {
+          "L0": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        }
       }
     },
     {
@@ -200,7 +286,7 @@
       "license_spdx": "BSD-3-Clause",
       "source_sha256": "e258d3829191550a2f2f8d1e27c903aa62a927695a5dcbca0108df6c4910fc7f",
       "files": 55,
-      "seconds": 3.35,
+      "seconds": 3.12,
       "findings": 10,
       "app_findings": 10,
       "by_severity": {
@@ -214,6 +300,23 @@
       },
       "verdict": "CONDITIONAL",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 3,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "unreviewed",
       "app_finding_records": [
         {
@@ -349,6 +452,8 @@
       ],
       "labels": {
         "unreviewed": 10,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -362,7 +467,7 @@
       "license_spdx": "BSD-3-Clause",
       "source_sha256": "6b49d3bb7f0aa995da547e8a2532f9b36137d319d952fd507292d6408758040f",
       "files": 23,
-      "seconds": 1.48,
+      "seconds": 2.47,
       "findings": 4,
       "app_findings": 4,
       "by_severity": {
@@ -379,6 +484,23 @@
       },
       "verdict": "CONDITIONAL",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "unreviewed",
       "app_finding_records": [
         {
@@ -435,10 +557,39 @@
         }
       ],
       "labels": {
-        "unreviewed": 4,
-        "by_rule": {},
-        "by_severity": {},
-        "by_proof_level": {}
+        "unreviewed": 3,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 1,
+        "by_rule": {
+          "SP121": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        },
+        "by_severity": {
+          "medium": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        },
+        "by_proof_level": {
+          "L0": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        }
       }
     },
     {
@@ -449,7 +600,7 @@
       "license_spdx": "BSD-3-Clause",
       "source_sha256": "ff9c8a36395a262fb73d62bc968d96bcb2a5d71e4a6f87c5fc0b42cbd666b95f",
       "files": 17,
-      "seconds": 1.63,
+      "seconds": 1.51,
       "findings": 18,
       "app_findings": 18,
       "by_severity": {
@@ -463,6 +614,23 @@
       },
       "verdict": "CONDITIONAL",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "unreviewed",
       "app_finding_records": [
         {
@@ -702,6 +870,8 @@
       ],
       "labels": {
         "unreviewed": 18,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -715,7 +885,7 @@
       "license_spdx": "BSD-3-Clause",
       "source_sha256": "03258c05e68a3754d2c4218feb82b398c8c09f9a77a59b735b141c18ff08d2eb",
       "files": 25,
-      "seconds": 3.21,
+      "seconds": 1.99,
       "findings": 11,
       "app_findings": 11,
       "by_severity": {
@@ -729,6 +899,23 @@
       },
       "verdict": "CONDITIONAL",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "unreviewed",
       "app_finding_records": [
         {
@@ -877,6 +1064,8 @@
       ],
       "labels": {
         "unreviewed": 11,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -890,7 +1079,7 @@
       "license_spdx": "MIT",
       "source_sha256": "071a2fc706ef7631f4e08b5e4c6dcf74d8fa8847aab4941dd7b398477c375c34",
       "files": 37,
-      "seconds": 1.92,
+      "seconds": 2.13,
       "findings": 3,
       "app_findings": 3,
       "by_severity": {
@@ -907,6 +1096,23 @@
       },
       "verdict": "CONDITIONAL",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "unreviewed",
       "app_finding_records": [
         {
@@ -950,10 +1156,39 @@
         }
       ],
       "labels": {
-        "unreviewed": 3,
-        "by_rule": {},
-        "by_severity": {},
-        "by_proof_level": {}
+        "unreviewed": 2,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 1,
+        "by_rule": {
+          "SP310": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        },
+        "by_severity": {
+          "medium": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        },
+        "by_proof_level": {
+          "L1": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          }
+        }
       }
     },
     {
@@ -964,7 +1199,7 @@
       "license_spdx": "MIT",
       "source_sha256": "d64b8604ab048ff50ee7b9a898471ccca96bb64a4153fe34bee958ae3ec66b9e",
       "files": 105,
-      "seconds": 8.44,
+      "seconds": 7.63,
       "findings": 11,
       "app_findings": 11,
       "by_severity": {
@@ -982,6 +1217,23 @@
       },
       "verdict": "CONDITIONAL",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 2,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "unreviewed",
       "app_finding_records": [
         {
@@ -1129,10 +1381,47 @@
         }
       ],
       "labels": {
-        "unreviewed": 11,
-        "by_rule": {},
-        "by_severity": {},
-        "by_proof_level": {}
+        "unreviewed": 4,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 7,
+        "by_rule": {
+          "SP106": {
+            "true_positive": 0,
+            "false_positive": 2,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 2,
+            "precision": 0.0
+          },
+          "SP308": {
+            "true_positive": 0,
+            "false_positive": 5,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 5,
+            "precision": 0.0
+          }
+        },
+        "by_severity": {
+          "medium": {
+            "true_positive": 0,
+            "false_positive": 7,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 7,
+            "precision": 0.0
+          }
+        },
+        "by_proof_level": {
+          "L0": {
+            "true_positive": 0,
+            "false_positive": 7,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 7,
+            "precision": 0.0
+          }
+        }
       }
     },
     {
@@ -1143,7 +1432,7 @@
       "license_spdx": "MIT",
       "source_sha256": "27392e012c63428a59cc6d8766c6f27ef1418e7d5f652a1004ad548f5400b641",
       "files": 10,
-      "seconds": 0.17,
+      "seconds": 0.11,
       "findings": 0,
       "app_findings": 0,
       "by_severity": {},
@@ -1151,10 +1440,27 @@
       "by_rule": {},
       "verdict": "PASS_WITH_EVIDENCE",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "reviewed",
       "app_finding_records": [],
       "labels": {
         "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -1168,7 +1474,7 @@
       "license_spdx": "MIT",
       "source_sha256": "e99104f0c32acd24e0d567a03f969c921229ee1bd618069a612b1ee6fa64e7ab",
       "files": 4,
-      "seconds": 0.05,
+      "seconds": 0.04,
       "findings": 0,
       "app_findings": 0,
       "by_severity": {},
@@ -1176,10 +1482,27 @@
       "by_rule": {},
       "verdict": "PASS_WITH_EVIDENCE",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "reviewed",
       "app_finding_records": [],
       "labels": {
         "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -1193,7 +1516,7 @@
       "license_spdx": "MIT",
       "source_sha256": "ac6ddb455aa0ed13e6b5b43ea3ca4ab3c5f902f8c6d909f41d9382c8f1a8ce3c",
       "files": 129,
-      "seconds": 1.74,
+      "seconds": 1.61,
       "findings": 0,
       "app_findings": 0,
       "by_severity": {},
@@ -1201,10 +1524,27 @@
       "by_rule": {},
       "verdict": "PASS_WITH_EVIDENCE",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "reviewed",
       "app_finding_records": [],
       "labels": {
         "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -1218,7 +1558,7 @@
       "license_spdx": "MIT",
       "source_sha256": "e1a90570b8364fa8bd96dbdbb8cd9c9695e677db11a165d0d3ff529bee0b7e62",
       "files": 5,
-      "seconds": 0.06,
+      "seconds": 0.05,
       "findings": 0,
       "app_findings": 0,
       "by_severity": {},
@@ -1226,10 +1566,27 @@
       "by_rule": {},
       "verdict": "PASS_WITH_EVIDENCE",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "reviewed",
       "app_finding_records": [],
       "labels": {
         "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -1243,7 +1600,7 @@
       "license_spdx": "MIT",
       "source_sha256": "267726562874a7581c7b5b4e21bf832706d5549182a560b28a4b2821ec066df3",
       "files": 9,
-      "seconds": 0.08,
+      "seconds": 0.06,
       "findings": 0,
       "app_findings": 0,
       "by_severity": {},
@@ -1251,10 +1608,27 @@
       "by_rule": {},
       "verdict": "PASS_WITH_EVIDENCE",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "reviewed",
       "app_finding_records": [],
       "labels": {
         "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -1268,7 +1642,7 @@
       "license_spdx": "MIT",
       "source_sha256": "b0ad994a5eece245449ca06b5af8804088dd67091bc776f2bf29a7118e8937b1",
       "files": 7,
-      "seconds": 0.11,
+      "seconds": 0.15,
       "findings": 0,
       "app_findings": 0,
       "by_severity": {},
@@ -1276,10 +1650,1605 @@
       "by_rule": {},
       "verdict": "PASS_WITH_EVIDENCE",
       "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
       "finding_review_status": "reviewed",
       "app_finding_records": [],
       "labels": {
         "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "starlette",
+      "status": "scanned",
+      "ecosystem": "python",
+      "version": "0.50.0",
+      "license_spdx": "BSD-3-Clause",
+      "source_sha256": "c18da0ecac1a4383342f97664e0d12c68cbc0398de2057f0ba3e6716462ea904",
+      "files": 34,
+      "seconds": 1.27,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "CONDITIONAL",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "itsdangerous",
+      "status": "scanned",
+      "ecosystem": "python",
+      "version": "2.2.0",
+      "license_spdx": "BSD-3-Clause",
+      "source_sha256": "a89153169ce28af1b9d51d0594ace8b3444cc5c67bea161f6310fda529a2647b",
+      "files": 8,
+      "seconds": 0.17,
+      "findings": 3,
+      "app_findings": 3,
+      "by_severity": {
+        "low": 2,
+        "medium": 1
+      },
+      "by_confidence": {
+        "high": 1,
+        "low": 2
+      },
+      "by_rule": {
+        "SP061": 2,
+        "SP140": 1
+      },
+      "verdict": "CONDITIONAL",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "unreviewed",
+      "app_finding_records": [
+        {
+          "rule_id": "SP140",
+          "severity": "medium",
+          "confidence": "high",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "signer.py",
+          "line": 45,
+          "fingerprint": "9b1d4437d3bbd441f81f827b",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP061",
+          "severity": "low",
+          "confidence": "low",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "signer.py",
+          "line": 231,
+          "fingerprint": "289186de5ca04c128fbb8942",
+          "detection": "pattern",
+          "tier": "advisory",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP061",
+          "severity": "low",
+          "confidence": "low",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "timed.py",
+          "line": 114,
+          "fingerprint": "bc428f06c552bdd4f06d9d4d",
+          "detection": "pattern",
+          "tier": "advisory",
+          "match_confidence": "high"
+        }
+      ],
+      "labels": {
+        "unreviewed": 3,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "markupsafe",
+      "status": "scanned",
+      "ecosystem": "python",
+      "version": "3.0.2",
+      "license_spdx": "BSD-3-Clause",
+      "source_sha256": "52075d4b207590b59cfcb1978f17c75fcd3fb0e61bc8ae9979327b3c005781fd",
+      "files": 4,
+      "seconds": 0.07,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "CONDITIONAL",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 2,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "sniffio",
+      "status": "scanned",
+      "ecosystem": "python",
+      "version": "1.3.1",
+      "license_spdx": "Apache-2.0",
+      "source_sha256": "3146c09a6e9a01afc765f3190c9f009c3420b199b2bc65cc6c254942134e4efd",
+      "files": 5,
+      "seconds": 0.03,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "CONDITIONAL",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "anyio",
+      "status": "scanned",
+      "ecosystem": "python",
+      "version": "4.10.0",
+      "license_spdx": "MIT",
+      "source_sha256": "0ca058c1cf23a9e95535baddb34cb9dc9f18686e311a2c2d7416c8c1fc433f09",
+      "files": 41,
+      "seconds": 1.73,
+      "findings": 5,
+      "app_findings": 5,
+      "by_severity": {
+        "high": 1,
+        "low": 1,
+        "medium": 3
+      },
+      "by_confidence": {
+        "low": 1,
+        "medium": 4
+      },
+      "by_rule": {
+        "SP106": 3,
+        "SP102": 1,
+        "SP061": 1
+      },
+      "verdict": "REVIEW",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "unreviewed",
+      "app_finding_records": [
+        {
+          "rule_id": "SP102",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "_backends/_trio.py",
+          "line": 1135,
+          "fingerprint": "d6eaf828976f7b9ca248cd2b",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP106",
+          "severity": "medium",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "to_interpreter.py",
+          "line": 123,
+          "fingerprint": "5e97525a68823c181b1eabed",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "medium"
+        },
+        {
+          "rule_id": "SP106",
+          "severity": "medium",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "to_process.py",
+          "line": 86,
+          "fingerprint": "955bd430c754c22241919e74",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "medium"
+        },
+        {
+          "rule_id": "SP106",
+          "severity": "medium",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "to_process.py",
+          "line": 210,
+          "fingerprint": "99312cd7cdd2e9a5ae5d7403",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "medium"
+        },
+        {
+          "rule_id": "SP061",
+          "severity": "low",
+          "confidence": "low",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "_core/_exceptions.py",
+          "line": 47,
+          "fingerprint": "d8d814d783a59dfc673fc738",
+          "detection": "pattern",
+          "tier": "advisory",
+          "match_confidence": "high"
+        }
+      ],
+      "labels": {
+        "unreviewed": 5,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "ms",
+      "status": "scanned",
+      "ecosystem": "javascript",
+      "version": "2.1.3",
+      "license_spdx": "MIT",
+      "source_sha256": "f5914582c7b88ac069e4a14d59b5df708c28260fd59d94fad47af1d4b5ae406c",
+      "files": 4,
+      "seconds": 0.02,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "PASS_WITH_EVIDENCE",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "bytes",
+      "status": "scanned",
+      "ecosystem": "javascript",
+      "version": "3.1.2",
+      "license_spdx": "MIT",
+      "source_sha256": "4d00dd0dcc590986273307fb9969144e079e516efcfdc91e6e0ca154efb7b7e1",
+      "files": 5,
+      "seconds": 0.03,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "PASS_WITH_EVIDENCE",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "methods",
+      "status": "scanned",
+      "ecosystem": "javascript",
+      "version": "1.1.2",
+      "license_spdx": "MIT",
+      "source_sha256": "b1dc52a48e97b200e8d6c8286f8bb6b25bb8e9148c2134d134b0bd76460d913b",
+      "files": 5,
+      "seconds": 0.02,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "PASS_WITH_EVIDENCE",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "vary",
+      "status": "scanned",
+      "ecosystem": "javascript",
+      "version": "1.1.2",
+      "license_spdx": "MIT",
+      "source_sha256": "58d950c9d047d16eafd20a2766113c40d6f711b30b7ebecdfbb0e7aa24d23ea4",
+      "files": 5,
+      "seconds": 0.03,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "PASS_WITH_EVIDENCE",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "negotiator",
+      "status": "scanned",
+      "ecosystem": "javascript",
+      "version": "0.6.4",
+      "license_spdx": "MIT",
+      "source_sha256": "474af9651e1feb27bd8b557eed862d9c2dfb2ba3e18ef9507362eb256c8bf7fc",
+      "files": 9,
+      "seconds": 0.1,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "PASS_WITH_EVIDENCE",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "chi",
+      "status": "scanned",
+      "ecosystem": "go",
+      "version": "v5.2.2",
+      "license_spdx": "MIT",
+      "source_sha256": "8a2cc3b13d14ca4b182f9808d7439e9e5231f938899ae969dd0da8e6b36248f2",
+      "files": 77,
+      "seconds": 0.72,
+      "findings": 19,
+      "app_findings": 7,
+      "by_severity": {
+        "high": 4,
+        "medium": 3
+      },
+      "by_confidence": {
+        "high": 2,
+        "low": 1,
+        "medium": 4
+      },
+      "by_rule": {
+        "SP203": 2,
+        "SP309": 2,
+        "SP377": 1,
+        "SP378": 1,
+        "SP131": 1
+      },
+      "verdict": "BLOCK",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 1,
+        "binary": 3,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "unreviewed",
+      "app_finding_records": [
+        {
+          "rule_id": "SP377",
+          "severity": "high",
+          "confidence": "high",
+          "proof_level": "L1",
+          "scope": "app",
+          "path": "_examples/graceful/main.go",
+          "line": 19,
+          "fingerprint": "a558df86c8fcc07cfe90f6bb",
+          "detection": "structural",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP378",
+          "severity": "high",
+          "confidence": "high",
+          "proof_level": "L1",
+          "scope": "app",
+          "path": "_examples/graceful/main.go",
+          "line": 31,
+          "fingerprint": "bc14dc603764bbe907c7a784",
+          "detection": "structural",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 30,
+          "fingerprint": "522c386a84095b855b1cf5d8",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 36,
+          "fingerprint": "3d93aa6dead915dfad2ac07c",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP309",
+          "severity": "medium",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "_examples/graceful/main.go",
+          "line": 27,
+          "fingerprint": "a8b841e164d182b3e3728c21",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "medium"
+        },
+        {
+          "rule_id": "SP309",
+          "severity": "medium",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": "_examples/graceful/main.go",
+          "line": 33,
+          "fingerprint": "a8b841e164d182b3e3728c21",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "medium"
+        },
+        {
+          "rule_id": "SP131",
+          "severity": "medium",
+          "confidence": "low",
+          "proof_level": "L1",
+          "scope": "app",
+          "path": "_examples/graceful/main.go",
+          "line": 19,
+          "fingerprint": "4f316ebae6b6e5f608b70923",
+          "detection": "structural",
+          "tier": "gate",
+          "match_confidence": "low"
+        }
+      ],
+      "labels": {
+        "unreviewed": 7,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "mux",
+      "status": "scanned",
+      "ecosystem": "go",
+      "version": "v1.8.1",
+      "license_spdx": "BSD-3-Clause",
+      "source_sha256": "ee44a1442e4959bbe796195087823b09c58b5c9b65d849684506b2be432c76fb",
+      "files": 25,
+      "seconds": 0.56,
+      "findings": 14,
+      "app_findings": 14,
+      "by_severity": {
+        "high": 11,
+        "medium": 3
+      },
+      "by_confidence": {
+        "medium": 14
+      },
+      "by_rule": {
+        "SP203": 11,
+        "SP262": 3
+      },
+      "verdict": "REVIEW",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 1,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "unreviewed",
+      "app_finding_records": [
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/issues.yml",
+          "line": 18,
+          "fingerprint": "f5c977bc3eadcff9f251d32c",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/security.yml",
+          "line": 20,
+          "fingerprint": "89e4c838d4f342c56cda0f28",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/security.yml",
+          "line": 23,
+          "fingerprint": "377e247d5daa91469f24b521",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/security.yml",
+          "line": 29,
+          "fingerprint": "7c81f6ec5314025b36be1a60",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/security.yml",
+          "line": 34,
+          "fingerprint": "f956d1a2103030fae1e1ef3b",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/test.yml",
+          "line": 21,
+          "fingerprint": "3b95d3858545794270403de6",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/test.yml",
+          "line": 24,
+          "fingerprint": "2d6e9ef0340b55a93202667c",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/test.yml",
+          "line": 33,
+          "fingerprint": "57baeda29d7c9889d501c50e",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/verify.yml",
+          "line": 20,
+          "fingerprint": "2621456517bb93338ee4959c",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/verify.yml",
+          "line": 23,
+          "fingerprint": "b2ff8753bd81f6a1ae592eb2",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/verify.yml",
+          "line": 29,
+          "fingerprint": "cba18a6499c854b25e98b55f",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP262",
+          "severity": "medium",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/security.yml",
+          "line": 34,
+          "fingerprint": "f829b9359fedd02775d41da2",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP262",
+          "severity": "medium",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/test.yml",
+          "line": 33,
+          "fingerprint": "36f8809e64b9b1ae3f19a883",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP262",
+          "severity": "medium",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/verify.yml",
+          "line": 29,
+          "fingerprint": "bfc0a9090b593728c7ae862d",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        }
+      ],
+      "labels": {
+        "unreviewed": 14,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "pkg-errors",
+      "status": "scanned",
+      "ecosystem": "go",
+      "version": "v0.9.1",
+      "license_spdx": "BSD-2-Clause",
+      "source_sha256": "f655846ef386ff6c754d520ec49cb4839a6b110af6bc38ac43b8a71367ee2443",
+      "files": 16,
+      "seconds": 0.12,
+      "findings": 0,
+      "app_findings": 0,
+      "by_severity": {},
+      "by_confidence": {},
+      "by_rule": {},
+      "verdict": "PASS_WITH_EVIDENCE",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "reviewed",
+      "app_finding_records": [],
+      "labels": {
+        "unreviewed": 0,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "anyhow",
+      "status": "scanned",
+      "ecosystem": "rust",
+      "version": "1.0.99",
+      "license_spdx": "MIT",
+      "source_sha256": "454a12ede6e816df77884a782a789dda2345beee1819c733f90068e4b959a1c5",
+      "files": 43,
+      "seconds": 0.52,
+      "findings": 20,
+      "app_findings": 20,
+      "by_severity": {
+        "high": 20
+      },
+      "by_confidence": {
+        "medium": 20
+      },
+      "by_rule": {
+        "SP203": 20
+      },
+      "verdict": "REVIEW",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 12,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "unreviewed",
+      "app_finding_records": [
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 17,
+          "fingerprint": "8fdc1e0842c81ed389fa04c1",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 30,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 31,
+          "fingerprint": "cbed79036c765806d6e72ca3",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 45,
+          "fingerprint": "f9235f3e5ba852cf8da9cfe9",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 63,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 64,
+          "fingerprint": "cbed79036c765806d6e72ca3",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 78,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 79,
+          "fingerprint": "31967fbad2e8a04ec933de6e",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 90,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 91,
+          "fingerprint": "f17e9ad3a8ec48f82010b9b1",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 105,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 106,
+          "fingerprint": "31967fbad2e8a04ec933de6e",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 109,
+          "fingerprint": "0e8780e0939b10261ed4809f",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 118,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 119,
+          "fingerprint": "31967fbad2e8a04ec933de6e",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 131,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 132,
+          "fingerprint": "f33b2c3a434b5ff797e0212b",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 144,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 145,
+          "fingerprint": "f17e9ad3a8ec48f82010b9b1",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 146,
+          "fingerprint": "00efac7e79186c94c71e05f5",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        }
+      ],
+      "labels": {
+        "unreviewed": 20,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
+        "by_rule": {},
+        "by_severity": {},
+        "by_proof_level": {}
+      }
+    },
+    {
+      "package": "thiserror",
+      "status": "scanned",
+      "ecosystem": "rust",
+      "version": "2.0.16",
+      "license_spdx": "MIT",
+      "source_sha256": "64d2a963f0f8e2f1b5ca86878600873812a5230dd5afef60df3c69352603e8ed",
+      "files": 62,
+      "seconds": 0.2,
+      "findings": 18,
+      "app_findings": 18,
+      "by_severity": {
+        "high": 18
+      },
+      "by_confidence": {
+        "medium": 18
+      },
+      "by_rule": {
+        "SP203": 18
+      },
+      "verdict": "REVIEW",
+      "scan_profile": "library",
+      "completeness": {
+        "is_complete": false,
+        "reasons": [
+          "binary"
+        ],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 0,
+        "binary": 42,
+        "symlinks": 0,
+        "excluded": 0,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "finding_review_status": "unreviewed",
+      "app_finding_records": [
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 17,
+          "fingerprint": "8fdc1e0842c81ed389fa04c1",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 30,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 31,
+          "fingerprint": "cbed79036c765806d6e72ca3",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 45,
+          "fingerprint": "f9235f3e5ba852cf8da9cfe9",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 59,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 60,
+          "fingerprint": "e3567430b669eb8a72ed0196",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 72,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 73,
+          "fingerprint": "31967fbad2e8a04ec933de6e",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 86,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 87,
+          "fingerprint": "31967fbad2e8a04ec933de6e",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 90,
+          "fingerprint": "0e8780e0939b10261ed4809f",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 99,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 100,
+          "fingerprint": "31967fbad2e8a04ec933de6e",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 112,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 113,
+          "fingerprint": "f33b2c3a434b5ff797e0212b",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 125,
+          "fingerprint": "99b743c7597059bed862b2e0",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 126,
+          "fingerprint": "f17e9ad3a8ec48f82010b9b1",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        },
+        {
+          "rule_id": "SP203",
+          "severity": "high",
+          "confidence": "medium",
+          "proof_level": "L0",
+          "scope": "app",
+          "path": ".github/workflows/ci.yml",
+          "line": 127,
+          "fingerprint": "00efac7e79186c94c71e05f5",
+          "detection": "pattern",
+          "tier": "gate",
+          "match_confidence": "high"
+        }
+      ],
+      "labels": {
+        "unreviewed": 18,
+        "reviewed_confirmed": 0,
+        "reviewed_provisional": 0,
         "by_rule": {},
         "by_severity": {},
         "by_proof_level": {}
@@ -1288,10 +3257,2848 @@
   ],
   "unavailable": [],
   "label_report": {
-    "records": 0,
-    "by_rule": {},
+    "records": 10,
+    "by_rule": {
+      "SP356": {
+        "true_positive": 0,
+        "false_positive": 1,
+        "needs_context": 0,
+        "duplicate": 0,
+        "reviewed": 1,
+        "precision": 0.0
+      },
+      "SP121": {
+        "true_positive": 0,
+        "false_positive": 1,
+        "needs_context": 0,
+        "duplicate": 0,
+        "reviewed": 1,
+        "precision": 0.0
+      },
+      "SP310": {
+        "true_positive": 0,
+        "false_positive": 1,
+        "needs_context": 0,
+        "duplicate": 0,
+        "reviewed": 1,
+        "precision": 0.0
+      },
+      "SP106": {
+        "true_positive": 0,
+        "false_positive": 2,
+        "needs_context": 0,
+        "duplicate": 0,
+        "reviewed": 2,
+        "precision": 0.0
+      },
+      "SP308": {
+        "true_positive": 0,
+        "false_positive": 5,
+        "needs_context": 0,
+        "duplicate": 0,
+        "reviewed": 5,
+        "precision": 0.0
+      }
+    },
     "fp_budget_violations": [],
-    "unreviewed": 63,
-    "unreviewed_high_critical": 0
+    "unreviewed": 120,
+    "unreviewed_high_critical": 54
+  },
+  "paired": {
+    "schema_version": 1,
+    "plan_canonical_sha256": "ff54cffe6c1656e89d2ebda620ae3241c72840cf87447668070387e64455576a",
+    "quiet": {
+      "summary": {
+        "packages": 30,
+        "files": 867,
+        "app_findings": 72,
+        "blocked_packages": [],
+        "blocked_count": 0
+      },
+      "packages": [
+        {
+          "package": "flask",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "3.1.3",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "5293e154cb0d8b93cc05521693900012b5fa8211afc67441e18feec441f26c5a",
+          "files": 25,
+          "seconds": 1.28,
+          "findings": 4,
+          "app_findings": 4,
+          "by_severity": {
+            "low": 4
+          },
+          "by_confidence": {
+            "low": 4
+          },
+          "by_rule": {
+            "SP061": 4
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "app.py",
+              "line": 945,
+              "fingerprint": "7fd998b6446c69ced6b9fc18",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "app.py",
+              "line": 1515,
+              "fingerprint": "4b6adb9f1f1ff8672c814f84",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "cli.py",
+              "line": 658,
+              "fingerprint": "9d8e4664593a0f180ecb3560",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "config.py",
+              "line": 163,
+              "fingerprint": "f25193eef9d656313d772094",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 4,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "requests",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "2.33.1",
+          "license_spdx": "Apache-2.0",
+          "source_sha256": "2e1a64e19857c433fef6e850b6ed6b5e3a96550d93dafcbfec08fa3431acefa4",
+          "files": 18,
+          "seconds": 0.82,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "fastapi",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "0.140.12",
+          "license_spdx": "MIT",
+          "source_sha256": "97a51367609c3acd17d2833512884a1f78d4293099136ac4c0b46d9f872e7e29",
+          "files": 55,
+          "seconds": 3.27,
+          "findings": 2,
+          "app_findings": 2,
+          "by_severity": {
+            "low": 1,
+            "medium": 1
+          },
+          "by_confidence": {
+            "low": 1,
+            "medium": 1
+          },
+          "by_rule": {
+            "SP356": 1,
+            "SP061": 1
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP356",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "openapi/models.py",
+              "line": 57,
+              "fingerprint": "c82479d3a99ef431ed9f8ccb",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "routing.py",
+              "line": 292,
+              "fingerprint": "c4142be86464b689393d2746",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 1,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 1,
+            "by_rule": {
+              "SP356": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            },
+            "by_severity": {
+              "medium": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            },
+            "by_proof_level": {
+              "L0": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            }
+          }
+        },
+        {
+          "package": "werkzeug",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "3.1.8",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "e258d3829191550a2f2f8d1e27c903aa62a927695a5dcbca0108df6c4910fc7f",
+          "files": 55,
+          "seconds": 3.01,
+          "findings": 10,
+          "app_findings": 10,
+          "by_severity": {
+            "low": 10
+          },
+          "by_confidence": {
+            "low": 10
+          },
+          "by_rule": {
+            "SP061": 10
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 3,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "datastructures/file_storage.py",
+              "line": 142,
+              "fingerprint": "4a7bcf3376c4b4feeb19e9c2",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "debug/__init__.py",
+              "line": 371,
+              "fingerprint": "bec6e8211ff22d234627260b",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "debug/console.py",
+              "line": 178,
+              "fingerprint": "002ddef70f0db93cd063c64a",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "debug/repr.py",
+              "line": 220,
+              "fingerprint": "15dc8511e4f731bc74e9588a",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "debug/repr.py",
+              "line": 237,
+              "fingerprint": "15dc8511e4f731bc74e9588a",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "debug/repr.py",
+              "line": 260,
+              "fingerprint": "15dc8511e4f731bc74e9588a",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "middleware/lint.py",
+              "line": 223,
+              "fingerprint": "b070eff5bace625a1b357847",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "serving.py",
+              "line": 388,
+              "fingerprint": "ea07c623440abc58e1fafc33",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "test.py",
+              "line": 646,
+              "fingerprint": "64ac12a01b74481e997846ec",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "test.py",
+              "line": 663,
+              "fingerprint": "64ac12a01b74481e997846ec",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 10,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "httpx",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "0.28.1",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "6b49d3bb7f0aa995da547e8a2532f9b36137d319d952fd507292d6408758040f",
+          "files": 23,
+          "seconds": 1.56,
+          "findings": 4,
+          "app_findings": 4,
+          "by_severity": {
+            "low": 3,
+            "medium": 1
+          },
+          "by_confidence": {
+            "low": 3,
+            "medium": 1
+          },
+          "by_rule": {
+            "SP061": 3,
+            "SP121": 1
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP121",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_client.py",
+              "line": 553,
+              "fingerprint": "8220b69da9b89cb3a6ebf15b",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_transports/asgi.py",
+              "line": 171,
+              "fingerprint": "1eda04b1d775edb21fc9ae60",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_utils.py",
+              "line": 232,
+              "fingerprint": "3b64242420127ef050b977e5",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_utils.py",
+              "line": 240,
+              "fingerprint": "3b64242420127ef050b977e5",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 3,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 1,
+            "by_rule": {
+              "SP121": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            },
+            "by_severity": {
+              "medium": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            },
+            "by_proof_level": {
+              "L0": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            }
+          }
+        },
+        {
+          "package": "click",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "8.3.3",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "ff9c8a36395a262fb73d62bc968d96bcb2a5d71e4a6f87c5fc0b42cbd666b95f",
+          "files": 17,
+          "seconds": 1.47,
+          "findings": 18,
+          "app_findings": 18,
+          "by_severity": {
+            "low": 18
+          },
+          "by_confidence": {
+            "low": 18
+          },
+          "by_rule": {
+            "SP061": 18
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 74,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 121,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 133,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 136,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 146,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 154,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 163,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 167,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 528,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 552,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 575,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 593,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_compat.py",
+              "line": 600,
+              "fingerprint": "f617f841fce7ed9225da7236",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_winconsole.py",
+              "line": 208,
+              "fingerprint": "aec5a47b0f7fb08e4c00529b",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "core.py",
+              "line": 2609,
+              "fingerprint": "3f48fcd5d1bf38b522414dbd",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "testing.py",
+              "line": 500,
+              "fingerprint": "713d943a77cdce9205cb41f1",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "testing.py",
+              "line": 510,
+              "fingerprint": "713d943a77cdce9205cb41f1",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "utils.py",
+              "line": 42,
+              "fingerprint": "9f3dcc478df4089e283307ec",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 18,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "jinja2",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "3.1.6",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "03258c05e68a3754d2c4218feb82b398c8c09f9a77a59b735b141c18ff08d2eb",
+          "files": 25,
+          "seconds": 2.01,
+          "findings": 11,
+          "app_findings": 11,
+          "by_severity": {
+            "low": 11
+          },
+          "by_confidence": {
+            "low": 11
+          },
+          "by_rule": {
+            "SP061": 11
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "bccache.py",
+              "line": 391,
+              "fingerprint": "06c4235ca8d49eaca8854464",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "bccache.py",
+              "line": 406,
+              "fingerprint": "06c4235ca8d49eaca8854464",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "environment.py",
+              "line": 476,
+              "fingerprint": "b20b40aa4432f658c5bfb813",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "environment.py",
+              "line": 1294,
+              "fingerprint": "b20b40aa4432f658c5bfb813",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "environment.py",
+              "line": 1317,
+              "fingerprint": "b20b40aa4432f658c5bfb813",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "environment.py",
+              "line": 1347,
+              "fingerprint": "b20b40aa4432f658c5bfb813",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "environment.py",
+              "line": 1372,
+              "fingerprint": "b20b40aa4432f658c5bfb813",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "nativetypes.py",
+              "line": 111,
+              "fingerprint": "1c62aa9f844ce4ed19682696",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "nativetypes.py",
+              "line": 126,
+              "fingerprint": "1c62aa9f844ce4ed19682696",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "sandbox.py",
+              "line": 298,
+              "fingerprint": "45d4f607a139f1f330af2a9d",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "tests.py",
+              "line": 174,
+              "fingerprint": "fbdfae986d3a27e9efb97629",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 11,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "urllib3",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "2.6.3",
+          "license_spdx": "MIT",
+          "source_sha256": "071a2fc706ef7631f4e08b5e4c6dcf74d8fa8847aab4941dd7b398477c375c34",
+          "files": 37,
+          "seconds": 1.91,
+          "findings": 3,
+          "app_findings": 3,
+          "by_severity": {
+            "low": 2,
+            "medium": 1
+          },
+          "by_confidence": {
+            "high": 1,
+            "low": 2
+          },
+          "by_rule": {
+            "SP061": 2,
+            "SP310": 1
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP310",
+              "severity": "medium",
+              "confidence": "high",
+              "proof_level": "L1",
+              "scope": "app",
+              "path": "connectionpool.py",
+              "line": 1173,
+              "fingerprint": "0a3433cf3f36c87f253b34f0",
+              "detection": "ast",
+              "tier": "gate",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "http2/connection.py",
+              "line": 313,
+              "fingerprint": "34c7a33b761f1e57349ef4db",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "util/connection.py",
+              "line": 129,
+              "fingerprint": "791d290662bb844f2c96292a",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 2,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 1,
+            "by_rule": {
+              "SP310": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            },
+            "by_severity": {
+              "medium": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            },
+            "by_proof_level": {
+              "L1": {
+                "true_positive": 0,
+                "false_positive": 1,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 1,
+                "precision": 0.0
+              }
+            }
+          }
+        },
+        {
+          "package": "pydantic",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "2.13.3",
+          "license_spdx": "MIT",
+          "source_sha256": "d64b8604ab048ff50ee7b9a898471ccca96bb64a4153fe34bee958ae3ec66b9e",
+          "files": 105,
+          "seconds": 7.9,
+          "findings": 11,
+          "app_findings": 11,
+          "by_severity": {
+            "low": 4,
+            "medium": 7
+          },
+          "by_confidence": {
+            "low": 4,
+            "medium": 7
+          },
+          "by_rule": {
+            "SP308": 5,
+            "SP061": 4,
+            "SP106": 2
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 2,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP106",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "deprecated/parse.py",
+              "line": 54,
+              "fingerprint": "60bfc914345f3c650b8521d1",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP106",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "v1/parse.py",
+              "line": 42,
+              "fingerprint": "3461dfe3b897d9c9100d3b16",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP308",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "v1/networks.py",
+              "line": 114,
+              "fingerprint": "2c6f083d46a4ddedae81dd1b",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP308",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "v1/networks.py",
+              "line": 130,
+              "fingerprint": "328484cfda57689217054de9",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP308",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "v1/networks.py",
+              "line": 142,
+              "fingerprint": "93cc58c5d613687a19a7c7f0",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP308",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "v1/networks.py",
+              "line": 153,
+              "fingerprint": "956b9d78cb880c60362a972f",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP308",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "v1/networks.py",
+              "line": 162,
+              "fingerprint": "168219a1ccd0bac8d94469c2",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_internal/_core_utils.py",
+              "line": 85,
+              "fingerprint": "541821368a82203805e8f6ea",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_internal/_typing_extra.py",
+              "line": 356,
+              "fingerprint": "c6a2713f35bb52a485068a45",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "json_schema.py",
+              "line": 1201,
+              "fingerprint": "5c0572cbc380476be8096d75",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "v1/_hypothesis_plugin.py",
+              "line": 226,
+              "fingerprint": "6a3294aa9ef2001f942d5c30",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 4,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 7,
+            "by_rule": {
+              "SP106": {
+                "true_positive": 0,
+                "false_positive": 2,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 2,
+                "precision": 0.0
+              },
+              "SP308": {
+                "true_positive": 0,
+                "false_positive": 5,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 5,
+                "precision": 0.0
+              }
+            },
+            "by_severity": {
+              "medium": {
+                "true_positive": 0,
+                "false_positive": 7,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 7,
+                "precision": 0.0
+              }
+            },
+            "by_proof_level": {
+              "L0": {
+                "true_positive": 0,
+                "false_positive": 7,
+                "needs_context": 0,
+                "duplicate": 0,
+                "reviewed": 7,
+                "precision": 0.0
+              }
+            }
+          }
+        },
+        {
+          "package": "body-parser",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "2.3.0",
+          "license_spdx": "MIT",
+          "source_sha256": "27392e012c63428a59cc6d8766c6f27ef1418e7d5f652a1004ad548f5400b641",
+          "files": 10,
+          "seconds": 0.11,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "cors",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "2.8.6",
+          "license_spdx": "MIT",
+          "source_sha256": "e99104f0c32acd24e0d567a03f969c921229ee1bd618069a612b1ee6fa64e7ab",
+          "files": 4,
+          "seconds": 0.04,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "ajv",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "8.20.0",
+          "license_spdx": "MIT",
+          "source_sha256": "ac6ddb455aa0ed13e6b5b43ea3ca4ab3c5f902f8c6d909f41d9382c8f1a8ce3c",
+          "files": 129,
+          "seconds": 1.4,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "cookie",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "0.7.2",
+          "license_spdx": "MIT",
+          "source_sha256": "e1a90570b8364fa8bd96dbdbb8cd9c9695e677db11a165d0d3ff529bee0b7e62",
+          "files": 5,
+          "seconds": 0.05,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "cross-spawn",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "7.0.6",
+          "license_spdx": "MIT",
+          "source_sha256": "267726562874a7581c7b5b4e21bf832706d5549182a560b28a4b2821ec066df3",
+          "files": 9,
+          "seconds": 0.05,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "debug",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "4.4.3",
+          "license_spdx": "MIT",
+          "source_sha256": "b0ad994a5eece245449ca06b5af8804088dd67091bc776f2bf29a7118e8937b1",
+          "files": 7,
+          "seconds": 0.1,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "starlette",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "0.50.0",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "c18da0ecac1a4383342f97664e0d12c68cbc0398de2057f0ba3e6716462ea904",
+          "files": 34,
+          "seconds": 1.21,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "itsdangerous",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "2.2.0",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "a89153169ce28af1b9d51d0594ace8b3444cc5c67bea161f6310fda529a2647b",
+          "files": 8,
+          "seconds": 0.18,
+          "findings": 3,
+          "app_findings": 3,
+          "by_severity": {
+            "low": 2,
+            "medium": 1
+          },
+          "by_confidence": {
+            "high": 1,
+            "low": 2
+          },
+          "by_rule": {
+            "SP061": 2,
+            "SP140": 1
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP140",
+              "severity": "medium",
+              "confidence": "high",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "signer.py",
+              "line": 45,
+              "fingerprint": "9b1d4437d3bbd441f81f827b",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "signer.py",
+              "line": 231,
+              "fingerprint": "289186de5ca04c128fbb8942",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "timed.py",
+              "line": 114,
+              "fingerprint": "bc428f06c552bdd4f06d9d4d",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 3,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "markupsafe",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "3.0.2",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "52075d4b207590b59cfcb1978f17c75fcd3fb0e61bc8ae9979327b3c005781fd",
+          "files": 4,
+          "seconds": 0.07,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 2,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "sniffio",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "1.3.1",
+          "license_spdx": "Apache-2.0",
+          "source_sha256": "3146c09a6e9a01afc765f3190c9f009c3420b199b2bc65cc6c254942134e4efd",
+          "files": 5,
+          "seconds": 0.03,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "anyio",
+          "status": "scanned",
+          "ecosystem": "python",
+          "version": "4.10.0",
+          "license_spdx": "MIT",
+          "source_sha256": "838faf45eb079abe327174f5f30fa4fc098e660fe4d766f934643d92b3d20b95",
+          "files": 41,
+          "seconds": 1.76,
+          "findings": 4,
+          "app_findings": 4,
+          "by_severity": {
+            "low": 1,
+            "medium": 3
+          },
+          "by_confidence": {
+            "low": 1,
+            "medium": 3
+          },
+          "by_rule": {
+            "SP106": 3,
+            "SP061": 1
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP106",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "to_interpreter.py",
+              "line": 123,
+              "fingerprint": "5e97525a68823c181b1eabed",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP106",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "to_process.py",
+              "line": 86,
+              "fingerprint": "955bd430c754c22241919e74",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP106",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "to_process.py",
+              "line": 210,
+              "fingerprint": "99312cd7cdd2e9a5ae5d7403",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP061",
+              "severity": "low",
+              "confidence": "low",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_core/_exceptions.py",
+              "line": 47,
+              "fingerprint": "d8d814d783a59dfc673fc738",
+              "detection": "pattern",
+              "tier": "advisory",
+              "match_confidence": "high"
+            }
+          ],
+          "labels": {
+            "unreviewed": 4,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "ms",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "2.1.3",
+          "license_spdx": "MIT",
+          "source_sha256": "f5914582c7b88ac069e4a14d59b5df708c28260fd59d94fad47af1d4b5ae406c",
+          "files": 4,
+          "seconds": 0.02,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "bytes",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "3.1.2",
+          "license_spdx": "MIT",
+          "source_sha256": "4d00dd0dcc590986273307fb9969144e079e516efcfdc91e6e0ca154efb7b7e1",
+          "files": 5,
+          "seconds": 0.03,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "methods",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "1.1.2",
+          "license_spdx": "MIT",
+          "source_sha256": "b1dc52a48e97b200e8d6c8286f8bb6b25bb8e9148c2134d134b0bd76460d913b",
+          "files": 5,
+          "seconds": 0.02,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "vary",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "1.1.2",
+          "license_spdx": "MIT",
+          "source_sha256": "58d950c9d047d16eafd20a2766113c40d6f711b30b7ebecdfbb0e7aa24d23ea4",
+          "files": 5,
+          "seconds": 0.03,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "negotiator",
+          "status": "scanned",
+          "ecosystem": "javascript",
+          "version": "0.6.4",
+          "license_spdx": "MIT",
+          "source_sha256": "474af9651e1feb27bd8b557eed862d9c2dfb2ba3e18ef9507362eb256c8bf7fc",
+          "files": 9,
+          "seconds": 0.09,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "chi",
+          "status": "scanned",
+          "ecosystem": "go",
+          "version": "v5.2.2",
+          "license_spdx": "MIT",
+          "source_sha256": "63febdd011c32d12fe57faae19a164d1d1455e7d04eb3e29947bcd8054e4f91f",
+          "files": 77,
+          "seconds": 0.75,
+          "findings": 14,
+          "app_findings": 2,
+          "by_severity": {
+            "medium": 2
+          },
+          "by_confidence": {
+            "medium": 2
+          },
+          "by_rule": {
+            "SP309": 2
+          },
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 1,
+            "binary": 3,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "unreviewed",
+          "app_finding_records": [
+            {
+              "rule_id": "SP309",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_examples/graceful/main.go",
+              "line": 27,
+              "fingerprint": "a8b841e164d182b3e3728c21",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            },
+            {
+              "rule_id": "SP309",
+              "severity": "medium",
+              "confidence": "medium",
+              "proof_level": "L0",
+              "scope": "app",
+              "path": "_examples/graceful/main.go",
+              "line": 34,
+              "fingerprint": "a8b841e164d182b3e3728c21",
+              "detection": "pattern",
+              "tier": "gate",
+              "match_confidence": "medium"
+            }
+          ],
+          "labels": {
+            "unreviewed": 2,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "mux",
+          "status": "scanned",
+          "ecosystem": "go",
+          "version": "v1.8.1",
+          "license_spdx": "BSD-3-Clause",
+          "source_sha256": "d77a5924c5075d68e52f4be41545f737db974ad9265892bf55ce26215d22c60a",
+          "files": 25,
+          "seconds": 0.62,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 1,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "pkg-errors",
+          "status": "scanned",
+          "ecosystem": "go",
+          "version": "v0.9.1",
+          "license_spdx": "BSD-2-Clause",
+          "source_sha256": "f655846ef386ff6c754d520ec49cb4839a6b110af6bc38ac43b8a71367ee2443",
+          "files": 16,
+          "seconds": 0.14,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "PASS_WITH_EVIDENCE",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": true,
+            "reasons": [],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 0,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "anyhow",
+          "status": "scanned",
+          "ecosystem": "rust",
+          "version": "1.0.99",
+          "license_spdx": "MIT",
+          "source_sha256": "c13ebfac889fa8662eea4f9ffe7fdd4fc264f53d498ea716a6753a34c21f3a09",
+          "files": 43,
+          "seconds": 0.52,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 12,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        },
+        {
+          "package": "thiserror",
+          "status": "scanned",
+          "ecosystem": "rust",
+          "version": "2.0.16",
+          "license_spdx": "MIT",
+          "source_sha256": "97837cc67be1078cc9515ac12d1a5565df7aac2d086e3132f7f1c15279dabfa9",
+          "files": 62,
+          "seconds": 0.19,
+          "findings": 0,
+          "app_findings": 0,
+          "by_severity": {},
+          "by_confidence": {},
+          "by_rule": {},
+          "verdict": "CONDITIONAL",
+          "scan_profile": "library",
+          "completeness": {
+            "is_complete": false,
+            "reasons": [
+              "binary"
+            ],
+            "unreadable": 0,
+            "parser_limit": 0,
+            "line_limit": 0,
+            "oversized": 0,
+            "containers": 0,
+            "assets": 0,
+            "binary": 42,
+            "symlinks": 0,
+            "excluded": 0,
+            "databases": 0,
+            "baseline_excluded": 0
+          },
+          "finding_review_status": "reviewed",
+          "app_finding_records": [],
+          "labels": {
+            "unreviewed": 0,
+            "reviewed_confirmed": 0,
+            "reviewed_provisional": 0,
+            "by_rule": {},
+            "by_severity": {},
+            "by_proof_level": {}
+          }
+        }
+      ],
+      "label_report": {
+        "records": 10,
+        "by_rule": {
+          "SP356": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          },
+          "SP121": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          },
+          "SP310": {
+            "true_positive": 0,
+            "false_positive": 1,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 1,
+            "precision": 0.0
+          },
+          "SP106": {
+            "true_positive": 0,
+            "false_positive": 2,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 2,
+            "precision": 0.0
+          },
+          "SP308": {
+            "true_positive": 0,
+            "false_positive": 5,
+            "needs_context": 0,
+            "duplicate": 0,
+            "reviewed": 5,
+            "precision": 0.0
+          }
+        },
+        "fp_budget_violations": [],
+        "unreviewed": 62,
+        "unreviewed_high_critical": 0
+      }
+    },
+    "receipts": [
+      {
+        "package": "flask",
+        "source_sha256": "5293e154cb0d8b93cc05521693900012b5fa8211afc67441e18feec441f26c5a",
+        "remediated_source_sha256": "5293e154cb0d8b93cc05521693900012b5fa8211afc67441e18feec441f26c5a",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "requests",
+        "source_sha256": "2e1a64e19857c433fef6e850b6ed6b5e3a96550d93dafcbfec08fa3431acefa4",
+        "remediated_source_sha256": "2e1a64e19857c433fef6e850b6ed6b5e3a96550d93dafcbfec08fa3431acefa4",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "fastapi",
+        "source_sha256": "97a51367609c3acd17d2833512884a1f78d4293099136ac4c0b46d9f872e7e29",
+        "remediated_source_sha256": "97a51367609c3acd17d2833512884a1f78d4293099136ac4c0b46d9f872e7e29",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "werkzeug",
+        "source_sha256": "e258d3829191550a2f2f8d1e27c903aa62a927695a5dcbca0108df6c4910fc7f",
+        "remediated_source_sha256": "e258d3829191550a2f2f8d1e27c903aa62a927695a5dcbca0108df6c4910fc7f",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "httpx",
+        "source_sha256": "6b49d3bb7f0aa995da547e8a2532f9b36137d319d952fd507292d6408758040f",
+        "remediated_source_sha256": "6b49d3bb7f0aa995da547e8a2532f9b36137d319d952fd507292d6408758040f",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "click",
+        "source_sha256": "ff9c8a36395a262fb73d62bc968d96bcb2a5d71e4a6f87c5fc0b42cbd666b95f",
+        "remediated_source_sha256": "ff9c8a36395a262fb73d62bc968d96bcb2a5d71e4a6f87c5fc0b42cbd666b95f",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "jinja2",
+        "source_sha256": "03258c05e68a3754d2c4218feb82b398c8c09f9a77a59b735b141c18ff08d2eb",
+        "remediated_source_sha256": "03258c05e68a3754d2c4218feb82b398c8c09f9a77a59b735b141c18ff08d2eb",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "urllib3",
+        "source_sha256": "071a2fc706ef7631f4e08b5e4c6dcf74d8fa8847aab4941dd7b398477c375c34",
+        "remediated_source_sha256": "071a2fc706ef7631f4e08b5e4c6dcf74d8fa8847aab4941dd7b398477c375c34",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "pydantic",
+        "source_sha256": "d64b8604ab048ff50ee7b9a898471ccca96bb64a4153fe34bee958ae3ec66b9e",
+        "remediated_source_sha256": "d64b8604ab048ff50ee7b9a898471ccca96bb64a4153fe34bee958ae3ec66b9e",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "body-parser",
+        "source_sha256": "27392e012c63428a59cc6d8766c6f27ef1418e7d5f652a1004ad548f5400b641",
+        "remediated_source_sha256": "27392e012c63428a59cc6d8766c6f27ef1418e7d5f652a1004ad548f5400b641",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "cors",
+        "source_sha256": "e99104f0c32acd24e0d567a03f969c921229ee1bd618069a612b1ee6fa64e7ab",
+        "remediated_source_sha256": "e99104f0c32acd24e0d567a03f969c921229ee1bd618069a612b1ee6fa64e7ab",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "ajv",
+        "source_sha256": "ac6ddb455aa0ed13e6b5b43ea3ca4ab3c5f902f8c6d909f41d9382c8f1a8ce3c",
+        "remediated_source_sha256": "ac6ddb455aa0ed13e6b5b43ea3ca4ab3c5f902f8c6d909f41d9382c8f1a8ce3c",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "cookie",
+        "source_sha256": "e1a90570b8364fa8bd96dbdbb8cd9c9695e677db11a165d0d3ff529bee0b7e62",
+        "remediated_source_sha256": "e1a90570b8364fa8bd96dbdbb8cd9c9695e677db11a165d0d3ff529bee0b7e62",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "cross-spawn",
+        "source_sha256": "267726562874a7581c7b5b4e21bf832706d5549182a560b28a4b2821ec066df3",
+        "remediated_source_sha256": "267726562874a7581c7b5b4e21bf832706d5549182a560b28a4b2821ec066df3",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "debug",
+        "source_sha256": "b0ad994a5eece245449ca06b5af8804088dd67091bc776f2bf29a7118e8937b1",
+        "remediated_source_sha256": "b0ad994a5eece245449ca06b5af8804088dd67091bc776f2bf29a7118e8937b1",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "starlette",
+        "source_sha256": "c18da0ecac1a4383342f97664e0d12c68cbc0398de2057f0ba3e6716462ea904",
+        "remediated_source_sha256": "c18da0ecac1a4383342f97664e0d12c68cbc0398de2057f0ba3e6716462ea904",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "itsdangerous",
+        "source_sha256": "a89153169ce28af1b9d51d0594ace8b3444cc5c67bea161f6310fda529a2647b",
+        "remediated_source_sha256": "a89153169ce28af1b9d51d0594ace8b3444cc5c67bea161f6310fda529a2647b",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "markupsafe",
+        "source_sha256": "52075d4b207590b59cfcb1978f17c75fcd3fb0e61bc8ae9979327b3c005781fd",
+        "remediated_source_sha256": "52075d4b207590b59cfcb1978f17c75fcd3fb0e61bc8ae9979327b3c005781fd",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "sniffio",
+        "source_sha256": "3146c09a6e9a01afc765f3190c9f009c3420b199b2bc65cc6c254942134e4efd",
+        "remediated_source_sha256": "3146c09a6e9a01afc765f3190c9f009c3420b199b2bc65cc6c254942134e4efd",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "anyio",
+        "source_sha256": "0ca058c1cf23a9e95535baddb34cb9dc9f18686e311a2c2d7416c8c1fc433f09",
+        "remediated_source_sha256": "838faf45eb079abe327174f5f30fa4fc098e660fe4d766f934643d92b3d20b95",
+        "positive_expected": 1,
+        "positive_observed": 1,
+        "edits": [
+          {
+            "path": "_backends/_trio.py",
+            "before_sha256": "b51183b68b3ac66aa61a5b2d7c8f301231af859ab4cbf4984da3369bccdab515",
+            "after_sha256": "756b5acd812f1489a1e97a4b5e9182880282f8d6d961d227b8088e9878036e0f"
+          }
+        ]
+      },
+      {
+        "package": "ms",
+        "source_sha256": "f5914582c7b88ac069e4a14d59b5df708c28260fd59d94fad47af1d4b5ae406c",
+        "remediated_source_sha256": "f5914582c7b88ac069e4a14d59b5df708c28260fd59d94fad47af1d4b5ae406c",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "bytes",
+        "source_sha256": "4d00dd0dcc590986273307fb9969144e079e516efcfdc91e6e0ca154efb7b7e1",
+        "remediated_source_sha256": "4d00dd0dcc590986273307fb9969144e079e516efcfdc91e6e0ca154efb7b7e1",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "methods",
+        "source_sha256": "b1dc52a48e97b200e8d6c8286f8bb6b25bb8e9148c2134d134b0bd76460d913b",
+        "remediated_source_sha256": "b1dc52a48e97b200e8d6c8286f8bb6b25bb8e9148c2134d134b0bd76460d913b",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "vary",
+        "source_sha256": "58d950c9d047d16eafd20a2766113c40d6f711b30b7ebecdfbb0e7aa24d23ea4",
+        "remediated_source_sha256": "58d950c9d047d16eafd20a2766113c40d6f711b30b7ebecdfbb0e7aa24d23ea4",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "negotiator",
+        "source_sha256": "474af9651e1feb27bd8b557eed862d9c2dfb2ba3e18ef9507362eb256c8bf7fc",
+        "remediated_source_sha256": "474af9651e1feb27bd8b557eed862d9c2dfb2ba3e18ef9507362eb256c8bf7fc",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "chi",
+        "source_sha256": "8a2cc3b13d14ca4b182f9808d7439e9e5231f938899ae969dd0da8e6b36248f2",
+        "remediated_source_sha256": "63febdd011c32d12fe57faae19a164d1d1455e7d04eb3e29947bcd8054e4f91f",
+        "positive_expected": 4,
+        "positive_observed": 4,
+        "edits": [
+          {
+            "path": ".github/workflows/ci.yml",
+            "before_sha256": "76b84acaa2b789cb750c248152dd67b14f419792eed85c2c8675d168529be605",
+            "after_sha256": "04c427573c2b467ee978cf5bb62a06e0eebf45b72985683ed74063462fbd2db6"
+          },
+          {
+            "path": "_examples/graceful/main.go",
+            "before_sha256": "b642f761971c48ecaf181a0e7fbbe313f893cb5e2a595b3cfe001f916e3bc4b6",
+            "after_sha256": "37af097b4e68f52734aac64e2f68822e71d43cae7446db03998868d80af12988"
+          }
+        ]
+      },
+      {
+        "package": "mux",
+        "source_sha256": "ee44a1442e4959bbe796195087823b09c58b5c9b65d849684506b2be432c76fb",
+        "remediated_source_sha256": "d77a5924c5075d68e52f4be41545f737db974ad9265892bf55ce26215d22c60a",
+        "positive_expected": 11,
+        "positive_observed": 11,
+        "edits": [
+          {
+            "path": ".github/workflows/issues.yml",
+            "before_sha256": "1b1fc06708b0fc109258d07e8786ca8a2d1a3c6e94032017c0ad88bba4d6b5fe",
+            "after_sha256": "0c301ab6301664f65afb6592b4f1c1265fa2920f060875b4a7b3a2541019be21"
+          },
+          {
+            "path": ".github/workflows/security.yml",
+            "before_sha256": "2abe88f16be4de770dbff66fa3d372ffcc66da154b64bcd8aa5fde66aac44e5c",
+            "after_sha256": "91ffa4323693c534f0c5b2f184b281f36b8f20e2b4c98786be72ba3fb442b592"
+          },
+          {
+            "path": ".github/workflows/test.yml",
+            "before_sha256": "03eb0f40f30f4a24b9dcb8c6c83e6a0a7783054a805077a06c5de1a213def3c5",
+            "after_sha256": "3edf29990290736a0895cdce930c1141f3de92810fd11f7c02511151d7191c15"
+          },
+          {
+            "path": ".github/workflows/verify.yml",
+            "before_sha256": "e2e623c45861ae316954acb7b9b7c4a55d1065d3cd29f6c184062cbfd323ae1d",
+            "after_sha256": "bf65d7ed4be5a9629c124b3654af451b4efc89d6af09216ca2a29ae26bac349a"
+          }
+        ]
+      },
+      {
+        "package": "pkg-errors",
+        "source_sha256": "f655846ef386ff6c754d520ec49cb4839a6b110af6bc38ac43b8a71367ee2443",
+        "remediated_source_sha256": "f655846ef386ff6c754d520ec49cb4839a6b110af6bc38ac43b8a71367ee2443",
+        "positive_expected": 0,
+        "positive_observed": 0,
+        "edits": []
+      },
+      {
+        "package": "anyhow",
+        "source_sha256": "454a12ede6e816df77884a782a789dda2345beee1819c733f90068e4b959a1c5",
+        "remediated_source_sha256": "c13ebfac889fa8662eea4f9ffe7fdd4fc264f53d498ea716a6753a34c21f3a09",
+        "positive_expected": 20,
+        "positive_observed": 20,
+        "edits": [
+          {
+            "path": ".github/workflows/ci.yml",
+            "before_sha256": "abf9b3c18079cb2066daf02f3873e53a725af3a66d8d6774ed7b8c1523738328",
+            "after_sha256": "45e8e69d067d28eb0355d607711c6e2b5dc209d125a09eada7914a904dbcd568"
+          }
+        ]
+      },
+      {
+        "package": "thiserror",
+        "source_sha256": "64d2a963f0f8e2f1b5ca86878600873812a5230dd5afef60df3c69352603e8ed",
+        "remediated_source_sha256": "97837cc67be1078cc9515ac12d1a5565df7aac2d086e3132f7f1c15279dabfa9",
+        "positive_expected": 18,
+        "positive_observed": 18,
+        "edits": [
+          {
+            "path": ".github/workflows/ci.yml",
+            "before_sha256": "f159cecae599edbdec739810d542db84d53c7e6378c9445c6ba3d1d16297acc8",
+            "after_sha256": "9addb92c4dc217c8749e52178ac4e97bf84627e95c293519d4f05a7cfc29deee"
+          }
+        ]
+      }
+    ]
   }
 }
