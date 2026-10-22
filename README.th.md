@@ -309,7 +309,7 @@ npm run check
 python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 ```
 
-Core runtime ใช้แค่ Node กับ Python standard library; Ruff เป็น dev-only CI ทดสอบ Node 20/22/24 และ Python 3.10/3.11/3.12/3.13/3.14, ตรวจ package allowlist แบบเป๊ะ, smoke-test packed artifact และรัน CodeQL สำหรับ Python กับ JavaScript/TypeScript
+Core runtime ใช้แค่ Node กับ Python standard library; Ruff เป็น dev-only ส่วน MCP adapter แบบ optional ใช้ MCP SDK และรองรับ Zod 3 กับ 4 (`^3.25.76 || ^4.6.7`) โดยติดตั้ง peers เอง CI ทดสอบ Node 20/22/24 และ Python 3.10/3.11/3.12/3.13/3.14, ตรวจ package allowlist แบบเป๊ะ, smoke-test packed artifact และรัน CodeQL สำหรับ Python กับ JavaScript/TypeScript
 
 scoped npm manifest และ manual OIDC workflow พร้อมสำหรับ public npm release ในอนาคต แต่จนกว่าเจ้าของจะสร้าง package, protected environment และ trusted-publisher relationship ให้ใช้วิธีติดตั้งจาก GitHub ด้านบนก่อน โครงการไม่อ้างว่าเผยแพร่ package ที่ยังไม่มีใน registry ดู [docs/releasing.md](docs/releasing.md) สำหรับ release discipline
 

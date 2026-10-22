@@ -75,6 +75,7 @@
     "test": "npm run test:node && npm run test:python",
     "test:node": "node tests/node/cli.test.mjs && node tests/node/platform.test.mjs && node tests/node/policy.test.mjs && node tests/node/golden-parity.test.mjs && node tests/node/command-contracts.test.mjs && node tests/node/k6-determinism.test.mjs && node tests/node/e2e.test.mjs && node tests/node/mcp-handshake.test.mjs && node tests/node/package-manifest.test.mjs && node tests/node/hardening.test.mjs",
     "test:mcp": "node tests/node/mcp-handshake.test.mjs",
+    "test:mcp:peers": "node scripts/package-smoke.mjs --mcp-peer",
     "test:node:coverage": "node --experimental-test-coverage --test-coverage-include=lib/policy.mjs --test-coverage-include=lib/safe-path.mjs --test-coverage-include=lib/cli.mjs --test-coverage-include=lib/evidence.mjs --test-coverage-include=lib/runtime.mjs --test-coverage-include=scripts/run-action.mjs --test-coverage-lines=70 tests/node/all.test.mjs",
     "test:python": "python -m unittest discover -s tests -p test_*.py -v && python -m unittest discover -s examples/demo-api/fixtures/after/tests -v",
     "test:python:coverage": "python -m coverage erase && python -m coverage run -m unittest discover -s tests -p test_*.py -v && python -m coverage run --append -m unittest discover -s examples/demo-api/fixtures/after/tests -v && python -m coverage report && python -m coverage xml",
@@ -85,7 +86,7 @@
   },
   "peerDependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",
-    "zod": "3.25.76"
+    "zod": "^3.25.76 || ^4.6.7"
   },
   "peerDependenciesMeta": {
     "@modelcontextprotocol/sdk": {
@@ -97,7 +98,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",
-    "zod": "3.25.76"
+    "zod": "4.6.7"
   },
   "overrides": {
     "fast-uri": "3.1.8",

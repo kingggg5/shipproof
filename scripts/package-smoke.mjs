@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -34,7 +34,18 @@ function npmCliPath() {
   throw new Error(`npm CLI not found next to Node at ${candidates.join(" or ")}`);
 }
 
-function main() {
+function requestedMcpPeer(argumentsList) {
+  if (argumentsList.length === 0) return null;
+  if (
+    argumentsList.length !== 2 || argumentsList[0] !== "--mcp-peer"
+    || !["3.25.76", "4.6.7"].includes(argumentsList[1])
+  ) {
+    throw new Error("expected --mcp-peer with a tested version: 3.25.76 or 4.6.7");
+  }
+  return argumentsList[1];
+}
+
+function main(peerVersion) {
   const workDirectory = mkdtempSync(join(tmpdir(), "shipproof-package-smoke-"));
   const consumerDirectory = join(workDirectory, "consumer");
   mkdirSync(consumerDirectory);
@@ -141,6 +152,33 @@ function main() {
     assert.equal(mcpWithoutPeers.status, 2, mcpWithoutPeers.stderr);
     assert.match(mcpWithoutPeers.stderr, /MCP support is unavailable/);
 
+    if (peerVersion) {
+      // Explicit maintainer mode only: the default smoke test remains peer-free.
+      const peers = runProcess(process.execPath, [
+        npmCliPath(), "install", tarballPath, "--ignore-scripts", "--no-audit", "--no-fund",
+        "--no-save", "--package-lock=false", "@modelcontextprotocol/sdk@1.32.1",
+        `zod@${peerVersion}`,
+      ], { cwd: consumerDirectory, timeout: 180_000 });
+      assert.equal(peers.status, 0, peers.stderr || peers.error?.message);
+      const testsDirectory = join(consumerDirectory, "tests", "node");
+      mkdirSync(testsDirectory, { recursive: true });
+      const contractPath = join(testsDirectory, "mcp-handshake.test.mjs");
+      copyFileSync(join(PACKAGE_ROOT, "tests", "node", "mcp-handshake.test.mjs"), contractPath);
+      const handshake = runProcess(process.execPath, [contractPath], {
+        cwd: consumerDirectory,
+        timeout: 120_000,
+        env: {
+          ...process.env,
+          SHIPPROOF_MCP_REQUIRE_PEERS: "1",
+          SHIPPROOF_MCP_EXPECT_ZOD: peerVersion,
+          SHIPPROOF_MCP_SERVER_ENTRY: join(installedPackageRoot, "lib", "mcp-server.mjs"),
+        },
+      });
+      assert.equal(handshake.status, 0, handshake.stdout + handshake.stderr);
+      assert.doesNotMatch(handshake.stdout, /# SKIP/);
+      console.log(`packed MCP contracts: PASS (Zod ${peerVersion}, SDK 1.32.1)`);
+    }
+
     console.log(
       `package smoke: PASS (tarball ${tarballName}, isolated CLI/Action, optional MCP failure, 2 skills, ${VERSION})`,
     );
@@ -150,7 +188,7 @@ function main() {
 }
 
 try {
-  main();
+  main(requestedMcpPeer(process.argv.slice(2)));
 } catch (error) {
   console.error(`package smoke: FAIL — ${error.message}`);
   process.exitCode = 1;

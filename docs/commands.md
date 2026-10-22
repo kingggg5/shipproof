@@ -242,9 +242,23 @@ Adapters are fixed: repository-local TypeScript `tsc --noEmit`, `go vet ./...` w
 Install the optional peers in the same npm project, then start the local stdio server:
 
 ```bash
-npm install --save-dev @modelcontextprotocol/sdk@1.29.0 zod@3.25.76
+npm install --save-dev @modelcontextprotocol/sdk@1.32.1 zod@3.25.76
 shipproof mcp
 ```
+
+The Zod peer range is `^3.25.76 || ^4.6.7`, supporting Zod 3 and 4. To use Zod 4, install the optional peers with:
+
+```bash
+npm install --save-dev @modelcontextprotocol/sdk@1.32.1 zod@4.6.7
+```
+
+Both peer versions use the same five-tool contract. Capacity `users` must be a
+positive safe integer (at most `9007199254740991`) with either Zod major.
+Maintainers can explicitly run `npm run test:mcp:peers -- 3.25.76` or
+`npm run test:mcp:peers -- 4.6.7` to install peers in a fresh packed consumer and
+exercise all five tools. These opt-in tests access npm; ordinary CLI use and the
+default package smoke test do not install MCP peers. CI also tests both pinned
+peer versions against Node 20/22/24, with missing peers treated as a test failure.
 
 The server registers five tools: `shipproof_scan`, `shipproof_budget`, `shipproof_capacity`, `shipproof_explain`, and `shipproof_lint_snippet`. `shipproof_explain` accepts `context_level` with the same `summary`, `overview`, and `full` contract as the CLI. `SHIPPROOF_MCP_ROOT` selects the only accessible repository root. The adapter canonicalizes existing paths, rejects traversal and symlink escape, and bounds scanner subprocesses.
 

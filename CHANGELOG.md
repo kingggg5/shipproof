@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Preserve optional Zod 3 support while adding Zod 4 (`^3.25.76 || ^4.6.7`). Test
+  all five read-only MCP tools through source and real packed consumers, with
+  pinned peers on Node 20/22/24. Missing peers fail the opt-in matrix instead of
+  silently skipping it; default CLI/package smoke paths do not install peers.
+- Apply the same positive safe-integer bound to MCP capacity users with both Zod
+  majors, rejecting values above `Number.MAX_SAFE_INTEGER` before invoking Python.
+
 ## 0.12.0 - 2026-10-22
 
 - Add offline PHP2Shell declared-version advisory SP683 for CVE-2026-109618 and CVE-2026-109619 (disclosed 2026-10-21). Compare supported PHP branch fixes separately, follow final static FPM/Apache image stages, and keep vendor/backport/deployment uncertainty explicit. No live PHP, container or registry probing is added.
