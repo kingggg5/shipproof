@@ -180,6 +180,14 @@ class StructureTests(unittest.TestCase):
             for path in sorted((ROOT / ".github" / "workflows").glob("*.yml"))
         )
         expected = {
+            "actions/checkout": (
+                "3d3c42e5aac5ba805825da76410c181273ba90b1",
+                "v7.0.1",
+            ),
+            "actions/upload-artifact": (
+                "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+                "v7.0.1",
+            ),
             "actions/setup-python": (
                 "5fda3b95a4ea91299a34e894583c3862153e4b97",
                 "v7.0.0",
@@ -189,8 +197,8 @@ class StructureTests(unittest.TestCase):
                 "v7.0.0",
             ),
             "github/codeql-action/(?:init|analyze|upload-sarif)": (
-                "db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28",
-                "v4.37.8",
+                "cdf488f595d80d6e07e03d4674febd5ab45fa938",
+                "v4.37.9",
             ),
         }
         for action_pattern, expected_pin in expected.items():
@@ -199,6 +207,9 @@ class StructureTests(unittest.TestCase):
                 workflow_text,
             )
             self.assertTrue(matches, action_pattern)
+            self.assertEqual(
+                len(matches), len(re.findall(rf"uses: {action_pattern}@", workflow_text))
+            )
             self.assertEqual(set(matches), {expected_pin}, action_pattern)
 
     def test_dependabot_keeps_major_updates_out_of_bulk_groups(self):
@@ -209,6 +220,16 @@ class StructureTests(unittest.TestCase):
             config,
         )
         self.assertIsNotNone(npm_group)
+
+    def test_dependabot_groups_codeql_component_updates(self):
+        config = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+        actions_config = config.split("  - package-ecosystem: github-actions\n", 1)[1].split(
+            "  - package-ecosystem:", 1
+        )[0]
+        self.assertIn(
+            "codeql-actions:\n        patterns:\n          - github/codeql-action/*",
+            actions_config,
+        )
 
     def test_skill_frontmatter_has_no_placeholders(self):
         for name in SKILL_NAMES:
