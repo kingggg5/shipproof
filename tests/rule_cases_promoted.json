@@ -353,6 +353,18 @@
           },
           {
             "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions() { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvar setCookie = (IResponseCookies cookies, string value) => {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n};"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nAction<IResponseCookies, string> setCookie = (IResponseCookies cookies, string value) => {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n};"
+          },
+          {
+            "path": "cookies-transport.cs",
             "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(HttpResponse cookies, string value) {\n cookies.Cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
           },
           {
@@ -400,6 +412,14 @@
           {
             "path": "cookies-transport.cs",
             "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false, Extensions = { \"Secure\", \"HttpOnly\" } });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, reviewedOptions);\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CustomOptions { HttpOnly = false });\n}"
           },
           {
             "path": "cookies-transport.cs",
@@ -2266,6 +2286,18 @@
           },
           {
             "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions() { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvar setCookie = (IResponseCookies cookies, string value) => {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n};"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nAction<IResponseCookies, string> setCookie = (IResponseCookies cookies, string value) => {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n};"
+          },
+          {
+            "path": "cookies-transport.cs",
             "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(HttpResponse cookies, string value) {\n cookies.Cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
           },
           {
@@ -2313,6 +2345,14 @@
           {
             "path": "cookies-transport.cs",
             "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false, Extensions = { \"Secure\", \"HttpOnly\" } });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, reviewedOptions);\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CustomOptions { Secure = false });\n}"
           },
           {
             "path": "cookies-transport.cs",

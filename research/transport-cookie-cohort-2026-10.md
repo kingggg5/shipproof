@@ -16,6 +16,7 @@ cases, exercised through the real file walker, plus redaction and gate tests.
   **SP056/SP084**, not duplicate IDs. Require a typed ASP.NET Core cookie/response/
   context parameter and direct `Append` with a sensitive literal name and an
   inline `CookieOptions` initializer explicitly setting HttpOnly/Secure false.
+  Method and typed block-lambda parameters are supported; expression bodies are unresolved.
   Missing properties, ordinary preferences, unknown types and policy middleware
   remain outside this narrow signature. External cookie policy can override local
   options; no final browser header or exploit is inferred.
@@ -65,8 +66,8 @@ self-scan and unchanged paired-corpus precision. Record actual results below.
 
 ## Executed evidence
 
-The original authoring generator supplies **115 cases** across two new IDs and
-two C# extensions: 22 positives, 77 negatives/unresolved counterparts and 16
+The original authoring generator supplies **125 cases** across two new IDs and
+two C# extensions: 28 positives, 81 negatives/unresolved counterparts and 16
 adversarial cases. All run through the real repository walker. Additional checks
 cover suffix routing, oversized expressions, malformed lexical contexts, typed
 parameter scope, raw/interpolated C# strings, advisory gates, inline ignores,
@@ -80,7 +81,8 @@ rejected with an effective one-byte cap. In particular 4,294,967,296 became zero
 4,294,967,297 became one and still rejected the frame. The default server cap was
 104,857,600. TLS context construction accepted legacy floors and rejected a
 conflicting secureProtocol/minVersion pair; no handshake was tested.
-DefaultHttpContext cookies omitted both flags for false and emitted both for true.
+DefaultHttpContext cookies omitted both flags for false and emitted both for true;
+typed block lambdas and explicit empty constructors preserved that behavior.
 The ws package was installed only in ignored test scratch space with lifecycle
 scripts disabled; it is not a scanner or development dependency.
 
@@ -104,11 +106,11 @@ Final local verification:
 | Check | Result |
 | --- | --- |
 | `npm run check` | Pass: 908 Python tests (3 Windows symlink privilege skips), 2 demo tests, Node suites, manifest and isolated package smoke |
-| Python coverage | 86% overall; new cookie helper 93%, shared JS configuration helper 96%; unchanged 80% floor |
+| Python coverage | 86% overall; new cookie helper 95%, shared JS configuration helper 96%; unchanged 80% floor |
 | MCP SDK 1.32.1 / Node 24.22.1 | All five tools, including new snippets, passed with Zod 3.25.76 and 4.6.7 from source and fresh packed consumers; zero peer skips |
 | Self-scan high gate | Exit 0, 479 selected files, 0 application / 32 intentional test findings, complete selected-file coverage |
 | Rule assurance | 656/656 complete, no partial/uncontracted/metadata debt; 104 realistic-negative contracts, 552 near-miss-only, 419 high/critical realistic-negative debt unchanged |
-| Package | 109 files, 485,582 packed / 1,868,341 unpacked bytes; original ceilings unchanged |
+| Package | 109 files, 485,592 packed / 1,868,410 unpacked bytes; original ceilings unchanged |
 | Catalog / freshness | All 5,000 candidate identities preserved; derived duplicate references refreshed. Transport, TS, Node and PHP/native generators current |
 
 Root dependencies were restored from the lockfile after the MCP matrix. There are

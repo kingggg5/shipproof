@@ -15056,7 +15056,7 @@ def find_regex_issues(
         tokens = js_context_tokens(source_text)
         pairs, depths = js_context_structure([value for value, _ in tokens])
         if depths:
-            for rule_id, offset in dotnet_cookie_checks.signature_lines(tokens, pairs):
+            for rule_id, offset in dotnet_cookie_checks.signature_offsets(tokens, pairs):
                 line_number = source_text.count("\n", 0, offset) + 1
                 previous = len(findings)
                 flag = "HttpOnly" if rule_id == "SP056" else "Secure"

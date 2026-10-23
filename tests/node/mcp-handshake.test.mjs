@@ -207,6 +207,7 @@ test(
         ["socket.ts", "import {WebSocketServer} from 'ws'; new WebSocketServer({noServer:true,maxPayload:4294967296});", ["SP687"]],
         ["socket.ts", "import {WebSocketServer} from 'ws'; new WebSocketServer({noServer:true,maxPayload:65536});", []],
         ["cookies.cs", 'using Microsoft.AspNetCore.Http; void Set(IResponseCookies cookies, string value) { cookies.Append("session", value, new CookieOptions { HttpOnly = false, Secure = false }); }', ["SP056", "SP084"]],
+        ["cookies.cs", 'using Microsoft.AspNetCore.Http; var set = (HttpContext context, string value) => { context.Response.Cookies.Append("session", value, new CookieOptions() { HttpOnly = false, Secure = false }); };', ["SP056", "SP084"]],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);

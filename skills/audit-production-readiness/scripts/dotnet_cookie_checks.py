@@ -27,7 +27,9 @@ SENSITIVE_NAMES = frozenset(
 )
 
 
-def signature_lines(tokens: list[tuple[str, int]], pairs: dict[int, int]) -> list[tuple[str, int]]:
+def signature_offsets(
+    tokens: list[tuple[str, int]], pairs: dict[int, int]
+) -> list[tuple[str, int]]:
     values = [value for value, _ in tokens]
     types = {*RECEIVERS, "CookieOptions"}
     # Using aliases, local types, dynamic dispatch and policy hooks need semantic analysis.
@@ -40,7 +42,7 @@ def signature_lines(tokens: list[tuple[str, int]], pairs: dict[int, int]) -> lis
             and values[i + 1] in types | {"Microsoft"}
         ):
             return []
-        if value == "using" and "=" in values[i + 1 : min(i + 12, len(values))]:
+        if value == "using" and values[i + 2 : i + 3] == ["="]:
             return []
     imported = any(values[i : i + 7] == ["using", *NAMESPACE[:-1], ";"] for i in range(len(values)))
 
@@ -80,6 +82,8 @@ def signature_lines(tokens: list[tuple[str, int]], pairs: dict[int, int]) -> lis
                 -1,
             )
             body = pairs.get(parameter_open, -2) + 1
+            if values[body : body + 1] == ["=>"]:
+                body += 1
             if (
                 not end < use < pairs.get(body, -1)
                 or values[body : body + 1] != ["{"]

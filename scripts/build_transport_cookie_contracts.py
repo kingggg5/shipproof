@@ -211,6 +211,21 @@ def cookie_records() -> list[dict]:
                 "rule_id": rule_id,
                 "positive": [
                     cookie_case(source),
+                    cookie_case(source.replace("new CookieOptions {", "new CookieOptions() {")),
+                    cookie_case(
+                        source.replace(
+                            "void SetCookie(IResponseCookies cookies, string value) {",
+                            "var setCookie = (IResponseCookies cookies, string value) => {",
+                        )
+                        + ";"
+                    ),
+                    cookie_case(
+                        source.replace(
+                            "void SetCookie(IResponseCookies cookies, string value) {",
+                            "Action<IResponseCookies, string> setCookie = (IResponseCookies cookies, string value) => {",
+                        )
+                        + ";"
+                    ),
                     cookie_case(
                         source.replace("IResponseCookies", "HttpResponse").replace(
                             "cookies.Append", "cookies.Cookies.Append"
@@ -243,6 +258,10 @@ def cookie_records() -> list[dict]:
                     )
                 ]
                 + [
+                    cookie_case(
+                        source.replace(f"new CookieOptions {{ {flag} = false }}", "reviewedOptions")
+                    ),
+                    cookie_case(source.replace("new CookieOptions", "new CustomOptions")),
                     cookie_case(source.replace('"session"', '"theme"')),
                     cookie_case(source.replace('"session"', "cookieName")),
                     cookie_case(
