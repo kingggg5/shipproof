@@ -34,7 +34,9 @@ def version_status(version: str) -> str:
     return "unknown"
 
 
-def docker_runtime(source: str) -> tuple[str, int] | None:
+def docker_runtime(
+    source: str, image_pattern: re.Pattern[str] = WEB_IMAGE
+) -> tuple[str, int] | None:
     """Follow static stage aliases to the final FROM; never resolve a registry."""
     if "<<" in source:  # Heredocs can contain instruction-looking data.
         return None
@@ -86,7 +88,7 @@ def docker_runtime(source: str) -> tuple[str, int] | None:
         if match is None:
             continue
         image, alias = match.groups()
-        pinned = WEB_IMAGE.fullmatch(image)
+        pinned = image_pattern.fullmatch(image)
         if pinned:
             final = (pinned["version"], number)
         elif image.lower() in stages:

@@ -18,7 +18,7 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 
 ข้อมูลต่อไปนี้เป็น snapshot วันที่ 2026-08-27 ไม่ใช่ตัวเลขรับประกันในอนาคตหรือผลทดสอบรอบ recheck:
 
-- executable scanner rules: 652
+- executable scanner rules: 654
 - research inventory: 7,800 catalogued candidates plus 1,000 reserved promotion slots (`SP651–SP9450`)
 - language-specific research candidates: 5,000 (`SP4451–SP9450`)
 - project Python test cases ที่ discover ได้: 636 พร้อม Node, package และ end-to-end suites

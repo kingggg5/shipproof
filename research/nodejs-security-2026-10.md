@@ -3,6 +3,10 @@
 Reviewed **22 October 2026**. This is read-only research, not an exploitation
 test, an independent vulnerability confirmation, or a new executable rule.
 
+Follow-up: the user subsequently authorized the Node 24.22.1 installation and
+declaration advisories. See the [installation, MCP and rule verification](node-runtime-validation.md).
+The observations below retain the original research context.
+
 ## Result
 
 The latest reviewed security baseline is **22.23.4 / 24.22.1 / 26.12.1**, released

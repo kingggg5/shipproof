@@ -2593,6 +2593,378 @@
       "expected_confidence": "high",
       "blocking_eligible": false,
       "false_positive_analysis": "Advisory, not a deployed-vulnerability assertion. Requires an exact .php-version/.tool-versions pin or the final static official PHP FPM/Apache image stage. CLI images, Composer constraints, floating/prerelease/vendor versions, custom registries and unresolved digests stay silent. Check vendor patch evidence for backported builds."
+    },
+    {
+      "rule_id": "SP684",
+      "sources": [
+        {
+          "url": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
+          "claim": "The dated upstream bulletin links fixed Node releases 22.23.4, 24.22.1 and 26.12.1; it does not establish application reachability or complete introduced-version ranges."
+        },
+        {
+          "url": "https://github.com/docker-library/official-images/blob/master/library/node",
+          "claim": "The official Node image has exact-version and supported variant tags. A floating tag, custom registry or digest override does not establish an exact runtime release."
+        }
+      ],
+      "positive": [
+        {
+          "path": ".nvmrc",
+          "source": "v24.22.0\n"
+        },
+        {
+          "path": ".node-version",
+          "source": "22.23.3\n"
+        },
+        {
+          "path": ".tool-versions",
+          "source": "python 3.12.10\nnodejs 26.12.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.15.0\n"
+        },
+        {
+          "path": ".node-version",
+          "source": "22.22.99\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.0-bookworm-slim AS base\nFROM base AS runtime\n"
+        },
+        {
+          "path": "Containerfile",
+          "source": "FROM --platform=linux/amd64 docker.io/library/node:22.23.3-alpine3.23\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM library/node:26.12.0-slim\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": ".nvmrc",
+          "source": "lts/*\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "node\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "system\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.22\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.22.0-1+deb12u1\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.22.0-rc.1\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.022.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "27.0.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.22.1\n24.22.0\n"
+        },
+        {
+          "path": "package.json",
+          "source": "{\"engines\":{\"node\":\">=18\"},\"devDependencies\":{\"node\":\"24.22.0\"}}"
+        },
+        {
+          "path": ".tool-versions",
+          "source": "nodejs 24.22.0 system\n"
+        },
+        {
+          "path": ".tool-versions",
+          "source": "nodejs 24.22.0\nnodejs 24.22.1\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM custom/node:24.22.0\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.0-vendorfixed\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.0@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.0 AS build\nFROM nginx:1.27\nCOPY --from=build /app /app\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.0 AS unused\nFROM node:24.22.1 AS runtime\n"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "source": "jobs:\n  test:\n    steps:\n      - uses: actions/setup-node@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n        with:\n          node-version: '20.19.0'\n"
+        },
+        {
+          "path": "app.js",
+          "source": "const documentation = \"Node.js 24.22.0\";\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "22.23.4\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "22.24.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.22.1\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.23.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "26.12.1\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "26.13.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "20.19.0\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.1\nRUN cat <<'EOF'\nFROM node:24.22.0\nEOF\n",
+          "expected": false,
+          "rationale": "A FROM-looking line inside heredoc data does not establish a runtime image. This unsupported context remains unresolved rather than replacing the final stage."
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.1\nRUN echo text \\\n FROM node:24.22.0\n",
+          "expected": false,
+          "rationale": "A continued RUN instruction contains text, not a new runtime stage. Physical-line matching would incorrectly replace the patched base image."
+        },
+        {
+          "path": "Dockerfile",
+          "source": "ARG BASE=node:24.22.0\nFROM ${BASE}\n",
+          "expected": false,
+          "rationale": "Build arguments are overridable. This offline rule does not resolve the effective build input and must not claim that the declared default was deployed."
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.0 AS duplicate\nFROM duplicate AS duplicate\n",
+          "expected": false,
+          "rationale": "Repeated stage aliases are ambiguous; an invalid or unresolved build graph cannot establish an effective final runtime version."
+        }
+      ],
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory only. Requires one exact .nvmrc/.node-version/.tool-versions pin or a final static official Node image. Engines ranges, floating/prerelease/vendor pins, custom images, digest overrides and ambiguous declarations stay silent. Development pins do not establish production deployment."
+    },
+    {
+      "rule_id": "SP685",
+      "sources": [
+        {
+          "url": "https://github.com/nodejs/Release/blob/main/schedule.json",
+          "claim": "The upstream EOL dates for branches 18/20/21/23/25 have passed in October 2026. Vendor extended support is a separate question, and engine compatibility ranges are not deployment pins."
+        },
+        {
+          "url": "https://asdf-vm.com/manage/configuration.html#tool-versions",
+          "claim": "asdf documents tool/version entries, comments, custom paths and multiple fallback versions. Only a single exact nodejs entry supports this rule's declared-version evidence."
+        },
+        {
+          "url": "https://github.com/nvm-sh/nvm#nvmrc",
+          "claim": "nvm documents one version per .nvmrc with comments, whitespace and aliases. This signature accepts exact releases; aliases, reserved key/value forms and ambiguous entries remain unresolved."
+        }
+      ],
+      "positive": [
+        {
+          "path": ".nvmrc",
+          "source": "18.20.8\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "20.19.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "21.7.3\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "23.11.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "25.0.0\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:20.19.0-bookworm-slim\n"
+        },
+        {
+          "path": ".tool-versions",
+          "source": "nodejs 20.19.0\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": ".nvmrc",
+          "source": "lts/*\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "node\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "system\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.22\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "20.19.0-1+deb12u1\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "20.19.0-rc.1\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "20.019.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "27.0.0\n"
+        },
+        {
+          "path": ".nvmrc",
+          "source": "24.22.1\n20.19.0\n"
+        },
+        {
+          "path": "package.json",
+          "source": "{\"engines\":{\"node\":\">=18\"},\"devDependencies\":{\"node\":\"20.19.0\"}}"
+        },
+        {
+          "path": ".tool-versions",
+          "source": "nodejs 20.19.0 system\n"
+        },
+        {
+          "path": ".tool-versions",
+          "source": "nodejs 20.19.0\nnodejs 24.22.1\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM custom/node:20.19.0\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:20.19.0-vendorfixed\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:20.19.0@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:20.19.0 AS build\nFROM nginx:1.27\nCOPY --from=build /app /app\n"
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:20.19.0 AS unused\nFROM node:24.22.1 AS runtime\n"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "source": "jobs:\n  test:\n    steps:\n      - uses: actions/setup-node@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n        with:\n          node-version: '20.19.0'\n"
+        },
+        {
+          "path": "app.js",
+          "source": "const documentation = \"Node.js 20.19.0\";\n"
+        },
+        {
+          "path": ".node-version",
+          "source": "22.23.3\n"
+        },
+        {
+          "path": ".node-version",
+          "source": "22.23.4\n"
+        },
+        {
+          "path": ".node-version",
+          "source": "24.22.0\n"
+        },
+        {
+          "path": ".node-version",
+          "source": "24.22.1\n"
+        },
+        {
+          "path": ".node-version",
+          "source": "26.12.1\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.1\nRUN cat <<'EOF'\nFROM node:20.19.0\nEOF\n",
+          "expected": false,
+          "rationale": "A FROM-looking line inside heredoc data does not establish a runtime image. This unsupported context remains unresolved rather than replacing the final stage."
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:24.22.1\nRUN echo text \\\n FROM node:20.19.0\n",
+          "expected": false,
+          "rationale": "A continued RUN instruction contains text, not a new runtime stage. Physical-line matching would incorrectly replace the patched base image."
+        },
+        {
+          "path": "Dockerfile",
+          "source": "ARG BASE=node:20.19.0\nFROM ${BASE}\n",
+          "expected": false,
+          "rationale": "Build arguments are overridable. This offline rule does not resolve the effective build input and must not claim that the declared default was deployed."
+        },
+        {
+          "path": "Dockerfile",
+          "source": "FROM node:20.19.0 AS duplicate\nFROM duplicate AS duplicate\n",
+          "expected": false,
+          "rationale": "Repeated stage aliases are ambiguous; an invalid or unresolved build graph cannot establish an effective final runtime version."
+        },
+        {
+          "path": ".nvmrc",
+          "source": "# historical Node 20.19.0\n24.22.1\n",
+          "expected": false,
+          "rationale": "A comment describing an old release must not override the one active pin for a maintained runtime branch."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory only, with known EOL branches 18/20/21/23/25. Exact runtime pins are distinct from supported-engine ranges and compatibility CI. Verify vendor support or backports before treating the deployed component as unmaintained."
     }
   ]
 }

@@ -191,6 +191,17 @@ test(
       assert.equal(snippet.structuredContent.root, realpathSync.native(repositoryRoot));
       assert.equal(snippet.structuredContent.summary.files_scanned, 1);
 
+      for (const [code, expectedRule] of [["24.22.0", "SP684"], ["20.19.0", "SP685"], ["24.22.1", null]]) {
+        const result = await client.callTool({
+          name: "shipproof_lint_snippet",
+          arguments: { filename: ".nvmrc", code },
+        });
+        assert.equal(result.isError, undefined);
+        const advisories = result.structuredContent.findings.filter((finding) => ["SP684", "SP685"].includes(finding.rule_id));
+        assert.deepEqual(advisories.map((finding) => finding.rule_id), expectedRule ? [expectedRule] : []);
+        assert.ok(advisories.every((finding) => finding.tier === "advisory"));
+      }
+
       for (const [name, argumentsValue] of [
         ["shipproof_scan", { path: 42 }],
         ["shipproof_budget", { baseline: 42, current: "current.json", budget: "budget.json" }],

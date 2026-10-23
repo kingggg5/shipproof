@@ -65,13 +65,13 @@ Node.js 20+ ทำหน้าที่ CLI ส่วน Python 3.10+ จำเ�
 
 ## ขอบเขตและสถานะโครงการ
 
-ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **652 deterministic rules** สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
+ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **654 deterministic rules** สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
 
 | หัวข้อ | Contract ปัจจุบัน |
 | :--- | :--- |
 | Release ล่าสุด | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่ง scanner-backed |
-| Executable rules | 652 (`SP001`–`SP683`, มีช่องว่างสงวนไว้ตั้งใจ) |
+| Executable rules | 654 (`SP001`–`SP685`, มีช่องว่างสงวนไว้ตั้งใจ) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates และ reserved promotion slots 1,000 รายการ; ไม่มีอะไรเป็น finding จนกว่าจะ promote |
 | Exit codes | `0` ผ่าน, `1` gate fail, `2` evidence ไม่ถูกต้อง/ไม่พร้อม |
@@ -139,7 +139,7 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 ## กฎการตรวจจับ
 
-**652 deterministic executable rules** (`SP001`–`SP683`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
+**654 deterministic executable rules** (`SP001`–`SP685`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
 
 โค้ดปัจจุบันเพิ่ม advisory checks สำหรับ Roblox/Luau ในไฟล์ `.lua`/`.luau`
 (`SP671`–`SP672`) และ Rust invalid reference initialization (`SP673`) พร้อม
@@ -159,6 +159,8 @@ final official FPM/Apache image ที่ระบุชัด ไม่เด�
 เครื่องที่มี vendor backport ยังมีช่องโหว่ ต้องตรวจแพตช์และเวอร์ชันที่รันจริงเพิ่มเติม
 ดู [ขอบเขตการตรวจ PHP2Shell](docs/rules.md#php2shell-version-evidence)
 
+`SP684` ตรวจ Node.js pin ที่เก่ากว่าแพตช์เดือนตุลาคม 2026 และ `SP685` ตรวจสาขา upstream EOL ทั้งสองเป็น advisory ดู [รูปแบบที่รองรับและข้อจำกัด](docs/rules.md#nodejs-version-declarations)
+
 catalog ฉบับเต็ม, severity, category และวิธี detection ต่อกฎ พร้อม mapping ecosystem/framework ที่กำหนดว่า structural check แต่ละตัวรันที่ไหน: อยู่ที่ **[docs/rules.md](docs/rules.md)**
 
 ## ควบคุม False Positive
@@ -167,7 +169,7 @@ ShipProof ให้ความสำคัญกับ precision สูงก�
 
 ตัวอย่างเช่น `SP631` ต้องเห็นการประกาศ Edge runtime จริงพร้อม native runtime import; Node.js ปกติหรือข้อความที่พูดถึง runtime/ledger ไม่ใช่หลักฐานว่าใช้ Edge ดู [ขอบเขตกฎ](docs/rules.md)
 
-ขอบเขต precision ต้องเห็นคำสั่งใน workflow `run` ไม่ใช่ metadata, แยก string join ออกจาก file path และรักษาตัวพิมพ์ใหญ่ของ Django `ALLOWED_HOSTS` ส่วน Go นับ `ReadTimeout` ที่เป็นบวกเป็น fallback ของ header deadline และแจ้งเมื่อทิ้ง `CancelFunc` ชัดเจน ไม่ใช่เพียงเรียกฟังก์ชันที่ตั้งชื่อไว้ภายหลังหรือใน deferred closure สำหรับ Rust ต้องมี local Actix/Rocket route attribute หรือ Axum routing binding จึงตรวจ panic ใน handler ทั้งหมดเป็นการตรวจ source ที่มีขอบเขต ไม่ใช่ความแม่นยำสากล
+กฎต้องอาศัยบริบทของคำสั่งและ framework ที่เกี่ยวข้อง พร้อมเคสโค้ดปกติที่ต้องไม่เตือน ดู [ขอบเขตการตรวจ](docs/rules.md)
 
 - **Inline suppression:** เติม `# shipproof-ignore SP101` หรือ `// shipproof-ignore SP101` บนบรรทัดนั้นหรือบรรทัดก่อนหน้า marker มีผลเฉพาะใน comment เท่านั้น และระบุหลาย rule พร้อมกันได้ เช่น `# shipproof-ignore SP101 SP102`
 - **Confidence filtering:** รันด้วย `--min-confidence high` เพื่อเห็น heuristic findings ที่มี confidence สูง แต่ยังต้องตรวจสอบยืนยัน
@@ -294,7 +296,7 @@ candidate จาก research จะกลายเป็น executable `SPxxx` r
 | [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 hypotheses จาก model-assisted mapped กับ source | ไม่มี |
 | [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 CVE/CWE/community signals | ไม่มี |
 | [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 research slots แยก ecosystem/CWE | ไม่มี |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 652 detectors ผ่าน review | Emit versioned findings |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 654 detectors ผ่าน review | Emit versioned findings |
 
 ดู [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md) และ [delivery roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) สำหรับขอบเขต operational และ acceptance gates อ้างอิง release ด้วย [CITATION.cff](CITATION.cff)
 
@@ -313,7 +315,7 @@ python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 
 Core runtime ใช้แค่ Node กับ Python standard library; Ruff เป็น dev-only ส่วน MCP adapter แบบ optional ใช้ MCP SDK และรองรับ Zod 3 กับ 4 (`^3.25.76 || ^4.6.7`) โดยติดตั้ง peers เอง CI ทดสอบ Node 20/22/24 และ Python 3.10/3.11/3.12/3.13/3.14, ตรวจ package allowlist แบบเป๊ะ, smoke-test packed artifact และรัน CodeQL สำหรับ Python กับ JavaScript/TypeScript
 
-scoped npm manifest และ manual OIDC workflow พร้อมสำหรับ public npm release ในอนาคต แต่จนกว่าเจ้าของจะสร้าง package, protected environment และ trusted-publisher relationship ให้ใช้วิธีติดตั้งจาก GitHub ด้านบนก่อน โครงการไม่อ้างว่าเผยแพร่ package ที่ยังไม่มีใน registry ดู [docs/releasing.md](docs/releasing.md) สำหรับ release discipline
+scoped npm manifest และ manual OIDC workflow พร้อมสำหรับ public npm release ในอนาคต แต่จนกว่าเจ้าของจะสร้าง package, protected environment และ trusted-publisher relationship ให้ใช้วิธีติดตั้งจาก GitHub ด้านบนก่อน โครงการไม่อ้างว่าเผยแพร่ package ที่ยังไม่มีใน registry ดู [docs/releasing.md](https://github.com/kingggg5/shipproof/blob/main/docs/releasing.md) สำหรับ release discipline
 
 ## License, citation และ security
 

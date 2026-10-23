@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add offline Node.js declaration advisories SP684/SP685 for the October 2026
+  branch security baselines and known upstream EOL branches. Exact version files
+  and final static official Node images produce one version-only advisory per
+  declaration; deployment, API reachability, and vendor backports remain unverified.
+  Reuse the static Docker resolver without a new dependency or network path.
+- Reduce native lexer work with cheap token-prefix checks while retaining token
+  positions and lexical error limits; add a reproducible maintainer benchmark.
+
 - Narrow workflow, path-join, Django, Go deadline/cancellation, and Rust route-handler precision signatures while preserving reviewed positives. Add paired clean-corpus evaluation with untouched originals, reviewed byte-level edits in separate quiet copies, source/action pins, hashes, receipts, and positive-recall validation under unchanged quiet thresholds. The local 30-package/867-file measurement retains 130 original findings (54 high/critical); quiet copies have 72 findings, zero high/critical, and 16 gate medium findings. The ten existing labels are unchanged; this is corpus-scoped evidence, not a universal precision claim.
 
 - Preserve optional Zod 3 support while adding Zod 4 (`^3.25.76 || ^4.6.7`). Test

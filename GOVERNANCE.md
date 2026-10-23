@@ -55,7 +55,7 @@ The public compatibility surface includes command names and options, exit codes,
 
 ## Releases
 
-Releases follow [docs/releasing.md](docs/releasing.md). A release requires green CI, exact package-content verification, packed-artifact smoke tests, a clean high-severity self-scan, synchronized version metadata, and release notes. Publication failures must fail closed; moving tags are updated only after the immutable release succeeds.
+Releases follow the [source release guide](https://github.com/kingggg5/shipproof/blob/main/docs/releasing.md). A release requires green CI, exact package-content verification, packed-artifact smoke tests, a clean high-severity self-scan, synchronized version metadata, and release notes. Publication failures must fail closed; moving tags are updated only after the immutable release succeeds.
 
 ## Security and private decisions
 

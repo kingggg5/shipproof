@@ -36,6 +36,7 @@ from pathlib import Path
 
 import archive_inspect
 import js_config_checks
+import node_advisories
 import php_advisories
 import polyglot_checks
 import precision as precision_policy
@@ -170,6 +171,8 @@ TEXT_NAMES = {
     ".gitmodules",
     ".npmignore",
     ".php-version",
+    ".node-version",
+    ".nvmrc",
     ".tool-versions",
     ".gitkeep",
     "license",
@@ -4064,6 +4067,18 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "Unpatched web-serving PHP can suffer memory corruption before application code executes. A declared version does not establish deployment, reachability, a working exploit or absence of vendor backports.",
         "false_positive": "Advisory, not a deployed-vulnerability assertion. Requires an exact .php-version/.tool-versions pin or the final static official PHP FPM/Apache image stage. CLI images, Composer constraints, floating/prerelease/vendor versions, custom registries and unresolved digests stay silent. Check vendor patch evidence for backported builds.",
         "test": "Upgrade each supported branch to at least 8.2.35, 8.3.36, 8.4.27 or 8.5.12, or verify a vendor backport. Restart web workers and verify the deployed binary; application guards or disabling upload progress are not a complete fix.",
+    },
+    "SP684": {
+        "why": "An exact declared Node.js release predates the 2026-10-21 security baseline for its supported major branch.",
+        "attack": "The upstream update addresses DNS, TLS, HTTP, Brotli and other runtime issues. A pin does not prove which APIs run, when a flaw was introduced or whether a vendor backported fixes.",
+        "false_positive": "Advisory only. Requires one exact .nvmrc/.node-version/.tool-versions pin or a final static official Node image. Engines ranges, floating/prerelease/vendor pins, custom images, digest overrides and ambiguous declarations stay silent. Development pins do not establish production deployment.",
+        "test": "Verify the installed binary and vendor patch record against 22.23.4, 24.22.1 or 26.12.1, then restart affected processes and run integration tests.",
+    },
+    "SP685": {
+        "why": "The declared Node.js major branch was beyond upstream support in the reviewed October 2026 release schedule.",
+        "attack": "An upstream EOL branch no longer receives routine upstream security fixes; actual maintenance can depend on a separately verified commercial vendor.",
+        "false_positive": "Advisory only, with known EOL branches 18/20/21/23/25. Exact runtime pins are distinct from supported-engine ranges and compatibility CI. Verify vendor support or backports before treating the deployed component as unmaintained.",
+        "test": "Migrate deployment to a maintained patched branch and test CLI/MCP behavior, or document the vendor's continuing security support.",
     },
     "SP096": {
         "why": "Skill files with instruction injection patterns can hijack agent behavior.",
@@ -13372,6 +13387,30 @@ RULES: tuple[Rule, ...] = (
         "CWE-1395",
         "PHP runtime supply-chain advisories",
     ),
+    Rule(
+        "SP684",
+        "Declared Node.js version predates October 2026 security baseline",
+        "security",
+        "high",
+        "high",
+        compile_pattern(r"$^"),
+        "The declared Node.js pin predates its branch's 2026-10-21 security release; deployment, affected APIs and vendor backports remain unverified.",
+        "Verify Node 22.23.4/24.22.1/26.12.1 or a vendor-fixed build and restart affected processes. Offline snapshot reviewed 2026-10-22.",
+        "CWE-1395",
+        "Node.js runtime security advisories",
+    ),
+    Rule(
+        "SP685",
+        "Declared Node.js branch is past upstream support",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "The declared Node.js branch is upstream EOL in the October 2026 schedule; separate vendor security support is not established by this pin.",
+        "Move deployment to a maintained patched branch or verify ongoing vendor security support. Offline snapshot reviewed 2026-10-22.",
+        "CWE-1104",
+        "Runtime support lifecycle",
+    ),
 )
 
 # Secret rules are exactly the rules that redact credential material in evidence.
@@ -13379,7 +13418,7 @@ RULES: tuple[Rule, ...] = (
 # rules inherit placeholder filtering, comment scanning, and document scanning.
 SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
 MINIMIZED_EVIDENCE_RULE_IDS = frozenset(
-    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 684))}
+    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 686))}
 )
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
 
@@ -13865,7 +13904,19 @@ HASH_COMMENT_SUFFIXES = frozenset(
         ".service",
     }
 )
-HASH_COMMENT_NAMES = frozenset({"dockerfile", "containerfile", "makefile", "procfile", ".env"})
+HASH_COMMENT_NAMES = frozenset(
+    {
+        "dockerfile",
+        "containerfile",
+        "makefile",
+        "procfile",
+        ".env",
+        ".nvmrc",
+        ".node-version",
+        ".php-version",
+        ".tool-versions",
+    }
+)
 SLASH_COMMENT_SUFFIXES = frozenset(
     {
         ".js",
@@ -14297,6 +14348,8 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP681",
         "SP682",
         "SP683",
+        "SP684",
+        "SP685",
         "SP377",
         "SP378",
         "SP621",
@@ -14964,6 +15017,18 @@ def find_regex_issues(
                 lines,
                 line_number,
                 minimal_evidence=f"Declared upstream PHP version: {version}",
+            )
+    if path.name.lower() in node_advisories.DECLARATION_NAMES:
+        for rule_id, version, line_number in node_advisories.advisory_declarations(
+            path, source_text
+        ):
+            append_file_level_finding(
+                findings,
+                rule_id,
+                relative_path,
+                lines,
+                line_number,
+                minimal_evidence=f"Declared upstream Node.js version: {version}",
             )
     # Keep this public helper safe for direct callers too. File/snippet scans
     # already enforce the line budget, but rule-contract builders and tests can
