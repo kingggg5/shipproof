@@ -2254,7 +2254,7 @@
       "expected_confidence": "medium",
       "cwe": "CWE-319",
       "frameworks": [],
-      "false_positive_analysis": "Internal localhost mock servers during offline tests.",
+      "false_positive_analysis": "Local mock transports need review. Dart HTTP requires an imported package:http call, literal external HTTP URI and Authorization header; that variant is advisory. Loopback/private IPs, bare HTTP URL text, custom bindings and visible runWithClient overrides stay silent. Header values and cross-file overrides remain unverified; legacy FTP/Telnet signatures are unchanged.",
       "cases": {
         "positive": [
           {

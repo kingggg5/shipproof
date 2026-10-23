@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from collections.abc import Sequence
 from pathlib import Path
 
 MODULES = frozenset(
@@ -14,7 +15,9 @@ MODULES = frozenset(
         "https",
         "tls",
         "ws",
+        "react",
         "buffer",
+        "zlib",
         "electron",
         "puppeteer",
         "puppeteer-core",
@@ -22,6 +25,139 @@ MODULES = frozenset(
 )
 IDENTIFIER = re.compile(r"[A-Za-z_$][\w$]*", re.ASCII)
 MAX_EXPRESSION_TOKENS = 512
+
+
+def js_context_tokens(source: str) -> list[tuple[str, int]]:
+    """Small bounded lexical view for precision checks, not a JS parser.
+
+    Comments, strings, and regex literals remain opaque. Template interpolation
+    and excessive token counts are unresolved, never affirmative evidence.
+    """
+    tokens: list[tuple[str, int]] = []
+    paren_context: list[str] = []
+    regex_after_control = False
+    index = 0
+    token_pattern = re.compile(
+        r"[A-Za-z_$][\w$]*|\d+(?:\.\d+)?|=>|\.\.\.|\?\.|===|!==|==|!=|&&|\|\||[^\s]", re.ASCII
+    )
+    regex_prefixes = {
+        "=",
+        "(",
+        "[",
+        "{",
+        ",",
+        ":",
+        ";",
+        "!",
+        "?",
+        "return",
+        "=>",
+        "&&",
+        "||",
+        "throw",
+        "case",
+        "yield",
+        "typeof",
+        "void",
+        "delete",
+        "else",
+        "do",
+    }
+    while index < len(source):
+        char = source[index]
+        if char.isspace():
+            index += 1
+            continue
+        if source.startswith("//", index):
+            end = source.find("\n", index + 2)
+            index = len(source) if end < 0 else end + 1
+            continue
+        if source.startswith("/*", index):
+            end = source.find("*/", index + 2)
+            if end < 0:
+                return []
+            index = end + 2
+            continue
+        start = index
+        if char in {'"', "'", "`"}:
+            index += 1
+            while index < len(source):
+                if source[index] == "\\":
+                    index += 2
+                    continue
+                if char == "`" and source.startswith("${", index):
+                    return []
+                if source[index] == char:
+                    index += 1
+                    break
+                index += 1
+            else:
+                return []
+            tokens.append((source[start:index], start))
+            regex_after_control = False
+        elif char == "/" and (not tokens or tokens[-1][0] in regex_prefixes or regex_after_control):
+            index += 1
+            in_class = False
+            while index < len(source) and source[index] not in "\r\n":
+                if source[index] == "\\":
+                    index += 2
+                    continue
+                if source[index] == "[":
+                    in_class = True
+                elif source[index] == "]":
+                    in_class = False
+                elif source[index] == "/" and not in_class:
+                    index += 1
+                    break
+                index += 1
+            else:
+                return []
+            while index < len(source) and source[index].isalpha():
+                index += 1
+            tokens.append((source[start:index], start))
+            regex_after_control = False
+        elif char == "/" and tokens and tokens[-1][0] == "}":
+            # Object-division versus a new statement regex needs a full parser.
+            # Do not interpret regex text as constructors or JSON dereferences.
+            return []
+        else:
+            match = token_pattern.match(source, index)
+            if match is None:
+                return []
+            value = match.group()
+            regex_after_control = False
+            if value == "(":
+                paren_context.append(tokens[-1][0] if tokens else "")
+            elif value == ")" and paren_context:
+                regex_after_control = paren_context.pop() in {
+                    "if",
+                    "while",
+                    "for",
+                    "with",
+                    "switch",
+                    "catch",
+                }
+            tokens.append((value, start))
+            index = match.end()
+        if len(tokens) > 50_000:
+            return []
+    return tokens
+
+
+def js_context_structure(values: Sequence[str]) -> tuple[dict[int, int], list[int]]:
+    pairs: dict[int, int] = {}
+    stack: list[int] = []
+    depths: list[int] = []
+    for index, value in enumerate(values):
+        depths.append(len(stack))
+        if value in {"(", "{", "["}:
+            stack.append(index)
+        elif value in {")", "}", "]"}:
+            if not stack or {"(": ")", "{": "}", "[": "]"}[values[stack[-1]]] != value:
+                return {}, []
+            opening = stack.pop()
+            pairs[opening] = index
+    return ({}, []) if stack else (pairs, depths)
 
 
 def literal(value: str) -> str | None:
@@ -35,7 +171,7 @@ def module_name(value: str) -> str:
     module = literal(value) or ""
     if module.startswith("node:"):
         builtin = module[5:]
-        return builtin if builtin in {"buffer", "crypto", "http", "https", "tls"} else ""
+        return builtin if builtin in {"buffer", "crypto", "http", "https", "tls", "zlib"} else ""
     return module
 
 
@@ -246,6 +382,36 @@ def client_runtime_imports(
     return result
 
 
+def next_server_hook_indices(path, values, pairs, depths, frameworks, directives) -> list[int]:
+    if not (
+        frameworks is not None
+        and "nextjs" in frameworks
+        and re.search(r"(?:^|/)app/(?:[^/]+/)*(?:page|layout)\.(?:tsx|jsx)$", path.as_posix())
+        and not directives.intersection({'"use client"', "'use client'"})
+        and any(
+            values[i : i + 2] == ["export", "default"] and depths[i] == 0
+            for i in range(len(values))
+        )
+    ):
+        return []
+    react = imports(values, pairs, depths)
+    for index, value in enumerate(values):
+        if value not in react or index == react[value][2]:
+            continue
+        module, member, _position = react[value]
+        cursor = index + 1
+        if member == "*" and values[cursor : cursor + 1] == ["."] and cursor + 1 < len(values):
+            member = values[cursor + 1]
+            cursor += 2
+        if (
+            module == "react"
+            and member in {"useState", "useEffect", "useLayoutEffect", "useReducer"}
+            and values[cursor : cursor + 1] == ["("]
+        ):
+            return [index]
+    return []
+
+
 def signature_spans(
     path: Path,
     tokens: list[tuple[str, int]],
@@ -268,6 +434,101 @@ def signature_spans(
         span = options.get(key)
         return span is not None and values[span[0] : span[1]] == [expected]
 
+    # Any local Promise declaration, type use, escape or member reassignment is
+    # unresolved. Do not guess builtin identity from a method's spelling alone.
+    native_promise = all(
+        (index == 0 or values[index - 1] not in {".", "?."})
+        and values[index + 1 : index + 2] == ["."]
+        and values[index + 3 : index + 4] == ["("]
+        for index, value in enumerate(values)
+        if value == "Promise"
+    )
+    reverse = {end: start for start, end in pairs.items()}
+    for index, value in enumerate(values):
+        if (
+            native_promise
+            and index
+            and values[index - 1] == "await"
+            and values[index + 7 : index + 8] not in (["."], ["?."], ["["])
+            and values[index : index + 7]
+            == [
+                "Promise",
+                ".",
+                "race",
+                "(",
+                "[",
+                "]",
+                ")",
+            ]
+        ):
+            emit(
+                "SP694",
+                index,
+                index + 7,
+                "Promise.race: literal empty input cannot settle this promise",
+            )
+        if value != "." or values[index + 1 : index + 2] not in (["sort"], ["toSorted"]):
+            continue
+        if values[index + 2 : index + 3] != ["("]:
+            continue
+        array = reverse.get(index - 1, -1)
+        if (
+            array < 0
+            or values[array] != "["
+            or (
+                array
+                and values[array - 1] not in {"=", "return", "(", "[", ",", ":", "=>", ";", "{"}
+            )
+            or "prototype" in values
+        ):
+            continue
+        items = segments(values, pairs, array)
+        if len(items) < 2 or any(values[first] == "..." for first, _ in items):
+            continue
+        arguments = segments(values, pairs, index + 2)
+        if len(arguments) != 1:
+            continue
+        first, last = arguments[0]
+        parameters = segments(values, pairs, first) if values[first] == "(" else []
+        if len(parameters) != 2:
+            continue
+        names = []
+        for start, stop in parameters:
+            chunk = values[start:stop]
+            if (
+                len(chunk) == 1
+                or (len(chunk) == 3 and chunk[1] == ":" and IDENTIFIER.fullmatch(chunk[2]))
+            ) and IDENTIFIER.fullmatch(chunk[0]):
+                names.append(chunk[0])
+        body = pairs.get(first, last) + 1
+        if len(names) != 2 or names[0] == names[1] or values[body : body + 1] != ["=>"]:
+            continue
+        body += 1
+        if values[body : body + 1] == ["{"]:
+            if pairs.get(body) != last - 1 or values[body + 1 : body + 2] != ["return"]:
+                continue
+            body += 2
+            last -= 1
+            if values[last - 1 : last] == [";"]:
+                last -= 1
+        elif values[body : body + 1] == ["("] and pairs.get(body) == last - 1:
+            body += 1
+            last -= 1
+        expression = values[body:last]
+        if (
+            len(expression) in {3, 4}
+            and expression[0] in names
+            and expression[-1] in names
+            and expression[0] != expression[-1]
+            and expression[1:-1] in (["<"], [">"], ["<", "="], [">", "="])
+        ):
+            emit(
+                "SP695",
+                index,
+                pairs[index + 2] + 1,
+                "Native array sort comparator returns a boolean instead of a signed comparison",
+            )
+
     if path.name.lower() in {"next.config.ts", "next.config.js", "next.config.mjs"}:
         for opening in exported_config(values, pairs, depths, path.suffix.lower() != ".mjs"):
             options = properties(values, pairs, (opening, pairs.get(opening, opening) + 1))
@@ -275,6 +536,32 @@ def signature_spans(
             if is_value(images, "dangerouslyAllowLocalIP", "true"):
                 start, end = images["dangerouslyAllowLocalIP"]
                 emit("SP674", start - 2, end, "images.dangerouslyAllowLocalIP = true")
+            if (
+                is_value(images, "dangerouslyAllowSVG", "true")
+                and any(
+                    is_value(images, "contentDispositionType", quote + "inline" + quote)
+                    for quote in ("'", '"')
+                )
+                and any(
+                    is_value(images, "contentSecurityPolicy", quote * 2) for quote in ("'", '"')
+                )
+                and (
+                    "loader" not in images
+                    or any(
+                        is_value(images, "loader", quote + "default" + quote)
+                        for quote in ("'", '"')
+                    )
+                )
+                and "loaderFile" not in images
+                and ("unoptimized" not in images or is_value(images, "unoptimized", "false"))
+                and "output" not in options
+            ):
+                emit(
+                    "SP688",
+                    opening,
+                    pairs[opening] + 1,
+                    "Next image options: SVG enabled, inline disposition and explicitly empty CSP",
+                )
 
     for index, value in enumerate(values):
         if value not in bindings or (index and values[index - 1] in {".", "?."}):
@@ -301,6 +588,41 @@ def signature_spans(
         if not args or any(values[start] == "..." for start, _ in args):
             continue
         closing = pairs[cursor]
+        if module in {"http", "https"} and member == "createServer":
+            options = properties(values, pairs, args[0])
+            if is_value(options, "requestTimeout", "0") and is_value(
+                options, "headersTimeout", "0"
+            ):
+                emit(
+                    "SP693",
+                    index,
+                    closing + 1,
+                    f"{module}.createServer: requestTimeout=0 and headersTimeout=0",
+                )
+        if (
+            module == "zlib"
+            and member
+            in {
+                "gzipSync",
+                "gunzipSync",
+                "deflateSync",
+                "deflateRawSync",
+                "inflateSync",
+                "inflateRawSync",
+                "unzipSync",
+                "brotliCompressSync",
+                "brotliDecompressSync",
+            }
+            and index
+            and values[index - 1] == "await"
+            and len(args) in {1, 2}
+        ):
+            emit(
+                "SP698",
+                index - 1,
+                closing + 1,
+                f"await zlib.{member}: compression completes synchronously before the await",
+            )
         if (module == "tls" and member in {"createSecureContext", "createServer", "connect"}) or (
             module == "https" and member in {"createServer", "request", "get"}
         ):
@@ -364,9 +686,15 @@ def signature_spans(
                         closing + 1,
                         "ws.WebSocketServer: maxPayload becomes a nonpositive signed-32-bit limit",
                     )
-        if module == "jsonwebtoken" and member == "verify" and len(args) in {3, 4}:
+        if module == "jsonwebtoken" and member in {"sign", "verify"} and len(args) in {3, 4}:
             options = properties(values, pairs, args[2])
-            if any(
+            algorithm = options.get("algorithm")
+            signing_algorithm = (
+                literal(values[algorithm[0]])
+                if algorithm and algorithm[1] == algorithm[0] + 1 and "header" not in options
+                else None
+            )
+            if member == "verify" and any(
                 is_value(options, key, "true") for key in ("ignoreExpiration", "ignoreNotBefore")
             ):
                 flags = ", ".join(
@@ -375,12 +703,27 @@ def signature_spans(
                     if is_value(options, key, "true")
                 )
                 emit("SP675", index, closing + 1, "jsonwebtoken.verify: " + flags)
-            if is_value(options, "allowInvalidAsymmetricKeyTypes", "true"):
+            if is_value(options, "allowInvalidAsymmetricKeyTypes", "true") and (
+                member == "verify"
+                or signing_algorithm
+                in {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512"}
+            ):
                 emit(
                     "SP676",
                     index,
                     closing + 1,
-                    "jsonwebtoken.verify: allowInvalidAsymmetricKeyTypes=true",
+                    f"jsonwebtoken.{member}: allowInvalidAsymmetricKeyTypes=true",
+                )
+            if (
+                member == "sign"
+                and is_value(options, "allowInsecureKeySizes", "true")
+                and signing_algorithm in {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512"}
+            ):
+                emit(
+                    "SP692",
+                    index,
+                    closing + 1,
+                    "jsonwebtoken.sign: RSA key-size safeguard explicitly disabled",
                 )
         elif (
             module == "crypto"
@@ -444,8 +787,19 @@ def signature_spans(
             option = args[0]
             if values[option[0]] != "{" and member != "createServer" and len(args) > 1:
                 option = args[1]
-            if is_value(properties(values, pairs, option), "insecureHTTPParser", "true"):
+            options = properties(values, pairs, option)
+            if "httpValidation" not in options and is_value(options, "insecureHTTPParser", "true"):
                 emit("SP679", index, closing + 1, f"{module}.{member}: insecureHTTPParser=true")
+            elif "insecureHTTPParser" not in options and any(
+                is_value(options, "httpValidation", quote + "insecure" + quote)
+                for quote in ("'", '"')
+            ):
+                emit(
+                    "SP679",
+                    index,
+                    closing + 1,
+                    f"{module}.{member}: httpValidation=insecure (requires a supporting Node version)",
+                )
         elif (
             module == "electron"
             and member == "BrowserWindow"

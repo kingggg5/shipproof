@@ -585,42 +585,46 @@
       "expected_confidence": "high",
       "cwe": "CWE-400",
       "frameworks": [],
-      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
+      "false_positive_analysis": "Legacy name-only db receiver signature: actual sql.DB identity and later reconfiguration need review. No-idle-retention configurations and finite open caps stay silent.",
       "cases": {
         "positive": [
           {
             "path": "contract-fixtures/go/sp375-positive-a.go",
-            "source_hex": "64622e5365744d617849646c65436f6e6e73202820302029",
+            "source_hex": "64622e5365744d61784f70656e436f6e6e73202820302029",
             "expected_line": 1,
             "expected_confidence": "high",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "037eaed106498b1ef131b543"
+            "expected_fingerprint": "d7911a8c5bbb82f268de86ec"
           },
           {
             "path": "contract-fixtures/go/sp375-positive-b.go",
-            "source_hex": "64622e5365744d617849646c65436f6e6e732009282009302009293b0a",
+            "source_hex": "64622e5365744d61784f70656e436f6e6e730920280920300920293b0a",
             "expected_line": 1,
             "expected_confidence": "high",
             "expected_detection": "pattern",
             "expected_proof_level": "L0",
-            "expected_fingerprint": "cf36743ef73bd9f007e8106f"
+            "expected_fingerprint": "213a3826b70d957d99003f13"
           }
         ],
         "negative": [
           {
             "path": "contract-fixtures/go/sp375-negative-a.go",
-            "source_hex": "21622e5365744d617849646c65436f6e6e73202820302029"
+            "source_hex": "21622e5365744d61784f70656e436f6e6e73202820302029"
           },
           {
             "path": "contract-fixtures/go/sp375-negative-b.go",
-            "source_hex": "20622e5365744d617849646c65436f6e6e73202820302029"
+            "source_hex": "20622e5365744d61784f70656e436f6e6e73202820302029"
+          },
+          {
+            "path": "contract-fixtures/go/sp375-negative-c.go",
+            "source_hex": "7061636b61676520706f6f6c0a696d706f7274202264617461626173652f73716c220a66756e6320636f6e666967757265286462202a73716c2e444229207b0a2064622e5365744d61784f70656e436f6e6e73283235290a2064622e5365744d617849646c65436f6e6e732830290a7d0a"
           }
         ],
         "adversarial": [
           {
             "path": "contract-fixtures/go/sp375-adversarial-a.go",
-            "source_hex": "58622e5365744d617849646c65436f6e6e73202820302029",
+            "source_hex": "58622e5365744d61784f70656e436f6e6e73202820302029",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
           }

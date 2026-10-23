@@ -5,6 +5,101 @@
   "ecosystem": "python",
   "rules": [
     {
+      "rule_id": "SP346",
+      "title": "Python asyncio create_task reference dropped causing garbage collection",
+      "category": "reliability",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "cwe": "CWE-400",
+      "frameworks": [],
+      "false_positive_analysis": "Requires an import-bound standalone expression call. Await, return, assignment, task-group ownership, local shadows, escaped bindings and visible custom/eager factories stay silent. Cross-file task-factory ownership remains unknown.",
+      "cases": {
+        "positive": [
+          {
+            "path": "contract-fixtures/python/sp346-positive-0/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020206173796e63696f2e6372656174655f7461736b28776f726b2829290a",
+            "expected_line": 5,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "370325e6811a94b5022a5212"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-positive-1/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f206173207461736b730a6173796e632064656620776f726b28293a0a202020206177616974207461736b732e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020207461736b732e6372656174655f7461736b28776f726b2829290a",
+            "expected_line": 5,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "d2d718c4e1e4069bdf2875ac"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-positive-2/tasks.py",
+            "source_hex": "66726f6d206173796e63696f20696d706f7274206372656174655f7461736b20617320737061776e2c20736c6565700a6173796e632064656620776f726b28293a0a20202020617761697420736c6565702830290a6173796e6320646566206c61756e636828293a0a20202020737061776e28776f726b2829290a",
+            "expected_line": 5,
+            "expected_confidence": "high",
+            "expected_detection": "ast",
+            "expected_proof_level": "L1",
+            "expected_fingerprint": "2ef764a10cac87b507747fd9"
+          }
+        ],
+        "negative": [
+          {
+            "path": "contract-fixtures/python/sp346-negative-0/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020206177616974206173796e63696f2e6372656174655f7461736b28776f726b2829290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-negative-1/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a2020202072657475726e206173796e63696f2e6372656174655f7461736b28776f726b2829290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-negative-2/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020207461736b203d206173796e63696f2e6372656174655f7461736b28776f726b2829290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-negative-3/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020207461736b732e616464286173796e63696f2e6372656174655f7461736b28776f726b282929290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-negative-4/tasks.py",
+            "source_hex": "696d706f727420637573746f6d206173206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020206173796e63696f2e6372656174655f7461736b28776f726b2829290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-negative-5/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e6368286173796e63696f293a0a202020206173796e63696f2e6372656174655f7461736b28776f726b2829290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-negative-6/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020206173796e63696f2e6372656174655f7461736b28776f726b28292c2065616765725f73746172743d54727565290a"
+          },
+          {
+            "path": "contract-fixtures/python/sp346-negative-7/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020206173796e63696f2e6372656174655f7461736b28776f726b2829290a6c6f6f702e7365745f7461736b5f666163746f727928666163746f7279290a"
+          }
+        ],
+        "adversarial": [
+          {
+            "path": "contract-fixtures/python/sp346-adversarial-0/tasks.py",
+            "source_hex": "2320696d706f7274206173796e63696f0a23206173796e632064656620776f726b28293a0a2320202020206177616974206173796e63696f2e736c6565702830290a23206173796e6320646566206c61756e636828293a0a2320202020206173796e63696f2e6372656174655f7461736b28776f726b2829290a2320",
+            "expected": false,
+            "rationale": "A quoted/commented call cannot construct or schedule a native task, so it cannot establish a discarded live-task reference."
+          },
+          {
+            "path": "contract-fixtures/python/sp346-adversarial-1/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a696d706f727420637573746f6d206173206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020206173796e63696f2e6372656174655f7461736b28776f726b2829290a",
+            "expected": false,
+            "rationale": "Multiple imports with the same binding invalidate native identity; the later module may provide a different task-ownership contract."
+          },
+          {
+            "path": "contract-fixtures/python/sp346-adversarial-2/tasks.py",
+            "source_hex": "696d706f7274206173796e63696f0a6173796e632064656620776f726b28293a0a202020206177616974206173796e63696f2e736c6565702830290a6173796e6320646566206c61756e636828293a0a202020206173796e63696f2e6372656174655f7461736b284e6f6e65290a",
+            "expected": false,
+            "rationale": "A literal invalid coroutine argument raises before a background task is constructed; it is not evidence that a task reference was lost."
+          }
+        ]
+      }
+    },
+    {
       "rule_id": "SP107",
       "title": "Credentialed wildcard CORS",
       "category": "security",

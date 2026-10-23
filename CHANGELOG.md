@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+- Add six medium advisory rules SP693–SP698 for explicitly disabled HTTP receive
+  deadlines, directly awaited empty asynchronous races, boolean array comparators,
+  removed XML entity limits, an unverified local logging listener, and directly
+  awaited synchronous compression. Narrow SP346 to import-bound standalone task
+  creation, correct SP375's idle/open connection distinction, and retire SP348:
+  Python's executor default is bounded. The cohort does not claim deployment
+  impact. See measured tests and limits in the [cohort record](research/broad-quality-cohort-2026-10.md).
+- Move the explanation dictionary into a pure-data module while preserving its
+  public import API. Keep benchmark maintainer notes in the source checkout;
+  runtime benchmark drivers remain shipped and package ceilings are unchanged.
+
+- Add advisory Roblox/Luau checks SP690/SP691 for a locally constructed remote
+  passing a client argument directly to `require` or `Destroy`, and SP692 for
+  imported JWT signing with an explicit RS/PS algorithm and insecure RSA-size
+  opt-out. Extend SP672 to the supported simple RemoteFunction callback, SP676
+  to qualifying signing calls, and SP679 to Node's explicit insecure validation
+  mode. Local source evidence does not establish deployment or actual key
+  strength; evaluation results are pending. See the [cohort record](research/luau-typescript-cohort-2026-10.md).
+
+- Add advisory SP688 for the explicit Next.js SVG inline/empty-CSP combination
+  and SP689 for a typed Kestrel null body limit. Extend SP170 to a bounded Dart
+  `package:http` external-HTTP Authorization case and SP056/SP084 to typed C#
+  `CookieAuthenticationOptions`; narrow SP596 to qualifying Next.js app entries.
+  These source-bounded checks do not establish deployment behavior or zero false
+  positives. Field evaluation is in progress; final precision/performance counts
+  are not yet available.
+
 - Add nonblocking transport advisories SP686/SP687 for legacy Node TLS options
   and `ws` payload-cap opt-outs/32-bit overflow; omitted payload limits remain
   finite. Extend SP056/SP084 with explicit typed C# CookieOptions false flags.

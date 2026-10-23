@@ -1699,8 +1699,10 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertTrue(any(f.rule_id == "SP595" for f in findings))
 
     def test_sp596_client_hook_in_server_component(self):
-        source = "export default function ServerPage() {\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}"
-        findings = self.findings("page.tsx", source)
+        source = "import { useState } from 'react';\nexport default function ServerPage() {\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}"
+        findings = find_regex_issues(
+            Path("app/page.tsx"), "app/page.tsx", source, detected_frameworks=frozenset({"nextjs"})
+        )
         self.assertTrue(any(f.rule_id == "SP596" for f in findings))
 
     def test_sp597_server_component_waterfall_fetch(self):

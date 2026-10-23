@@ -1,3 +1,4 @@
+import inspect
 import json
 import re
 import sys
@@ -9,7 +10,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills" / "audit-production-readiness" / "scripts"))
 
 from capacity_model import VERSION as CAPACITY_VERSION  # noqa: E402
-from scan_repo import RULES  # noqa: E402
+from scan_repo import RULES, scan_repository  # noqa: E402
 from scan_repo import VERSION as SCAN_VERSION  # noqa: E402
 
 sys.path.insert(0, str(ROOT / "skills" / "engineer-production-systems" / "scripts"))
@@ -19,6 +20,11 @@ SKILL_NAMES = ("engineer-production-systems", "audit-production-readiness")
 
 
 class StructureTests(unittest.TestCase):
+    def test_runtime_sources_fit_the_default_self_scan_file_budget(self):
+        limit = inspect.signature(scan_repository).parameters["max_file_bytes"].default
+        for path in (ROOT / "skills/audit-production-readiness/scripts").glob("*.py"):
+            self.assertLessEqual(path.stat().st_size, limit, path.name)
+
     def test_plugin_manifest_points_to_skill(self):
         manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["name"], "shipproof")

@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "baseline_revision": "5d48e8755f8f2bb5dc2fd0f49814bb50a8fb1edc",
+  "baseline_scanner_sources_sha256": "1245940dcf8fdc886d7cfec46dd9afd31aadff71f019afeec12e4b3b8c240f35",
+  "candidate_scanner_sources_sha256": "954a04ed9c8fbb71e97fe43c2533c9d7f776289c5ef7366d8e118c6845a26a09",
+  "projects": [
+    {
+      "repository": "umami-software/umami",
+      "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+      "source_files": 1393,
+      "source_tree_sha256": "7b769f55655729a1df7c6d5e6cbed89c3a47e16ff18be9d32537d01a69d3c757",
+      "findings_before": 171,
+      "findings_after": 171,
+      "added_or_removed_fingerprints": 0,
+      "complete": true
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "revision": "2883bc9d75974fbde43570804594940b5c2b5aca",
+      "source_files": 111,
+      "source_tree_sha256": "d8314c45bfda96c7763ec7254cace21d85c68fe4aecc3b71745f7ced7d48f83d",
+      "findings_before": 13,
+      "findings_after": 13,
+      "added_or_removed_fingerprints": 0,
+      "complete": true
+    },
+    {
+      "repository": "ardalis/CleanArchitecture",
+      "revision": "e7c79be54ba0b001a5b332c1efe935f520b9db4b",
+      "source_files": 362,
+      "source_tree_sha256": "ef4e96472377630296359fd9ba8f25de5660f0fd658958c393bebd4c37d1b5cb",
+      "findings_before": 10,
+      "findings_after": 10,
+      "added_or_removed_fingerprints": 0,
+      "complete": true
+    },
+    {
+      "repository": "davidfowl/TodoApp",
+      "revision": "307a1eadbbd77a3004c318f2377e4818bc400af6",
+      "source_files": 40,
+      "source_tree_sha256": "e1d504f61749e461de42bab6ceebe85f9bb55e930d98c6fdb9465f7c4e7f951f",
+      "findings_before": 1,
+      "findings_after": 1,
+      "added_or_removed_fingerprints": 0,
+      "complete": true
+    },
+    {
+      "repository": "localsend/localsend",
+      "revision": "6e37efd5fe750299758b6778d2b150b31af3b95d",
+      "source_files": 393,
+      "source_tree_sha256": "45abc855b75027414990db6149080cd1043336b1291cbf29c2b5ad4dbbc17cc7",
+      "findings_before": 1,
+      "findings_after": 1,
+      "added_or_removed_fingerprints": 0,
+      "complete": true
+    },
+    {
+      "repository": "GitJournal/GitJournal",
+      "revision": "c8a67e098db06335762f822d7733c330f4bd0d6b",
+      "source_files": 307,
+      "source_tree_sha256": "8f43d0a68c435835aef7dfadfa634e14d340d7a2a0ad0163fd26c3f32842d741",
+      "findings_before": 5,
+      "findings_after": 5,
+      "added_or_removed_fingerprints": 0,
+      "complete": true
+    },
+    {
+      "repository": "Sleitnick/Knit",
+      "revision": "bb1ecf3dea69ca89147b9abe802a8c14399cb5e5",
+      "source_files": 6,
+      "source_tree_sha256": "ee00d975b122ca8ee86313f7324c063cd98ccbf901cf98a1f0a58d1aff88b06e",
+      "findings_before": 0,
+      "findings_after": 0,
+      "added_or_removed_fingerprints": 0,
+      "complete": true
+    },
+    {
+      "repository": "evaera/roblox-lua-promise",
+      "revision": "031d429c82ee458a849e79fa523523bd349d7695",
+      "source_files": 3,
+      "source_tree_sha256": "9769a6c5da46137c282304560d82ab3f003f090698f7f86585a25f3e692ba852",
+      "findings_before": 0,
+      "findings_after": 0,
+      "added_or_removed_fingerprints": 0,
+      "complete": true
+    }
+  ],
+  "raw_report_sha256": {
+    "corpus-paired": "dc31ddac57b9701f4b3ab21a3bb11c8022d0c29452c1ff5d39379647575c2baa",
+    "field-final": "401c7ccae90dfe27042c8ebdd07dd3a55a7c7eaaf7fb7110d437c5aab7ab70de",
+    "luau-final": "f22964e2e44cde0552d8d2a54f7657586792b081938c95f997228428ee2d1a0e",
+    "luau-before": "e04711aee8b8ddbfbf8d7544efc01e452330258a5bcb4699f05928c8794dea0d",
+    "field-before": "5c84266e95630181bd78e2f94e51a057ec777332b0bd7256abafe886034cd70d"
+  },
+  "authored_cases": {
+    "positive": 28,
+    "negative_or_unresolved": 70,
+    "adversarial": 25
+  },
+  "limitations": [
+    "Source compatibility replay, not independent precision/recall, runtime execution or a clean-project certification.",
+    "Six existing field snapshots plus two small Luau libraries; all existing observations retained without relabeling.",
+    "The existing paired corpus covers 30 packages / 867 files per leg and retained all 54 original high/critical signatures.",
+    "Authored cases and bounded native API probes are separate positive evidence; deployment and workload size remain unknown."
+  ]
+}

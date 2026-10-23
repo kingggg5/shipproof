@@ -49,6 +49,17 @@ ADVISORY_RULE_IDS = frozenset(
         "SP685",  # Upstream support status, distinct from vendor support.
         "SP686",  # Local protocol selection, not a negotiated connection.
         "SP687",  # Local message cap, not demonstrated denial of service.
+        "SP688",  # Image configuration, not an attacker-controlled SVG response.
+        "SP689",  # Local body limit; upstream/per-request controls are unknown.
+        "SP690",  # Client-selected module; deployment/asset permissions unknown.
+        "SP691",  # Direct instance deletion; deployment/ownership unknown.
+        "SP692",  # RSA size guard opt-out, not proof of a weak deployed key.
+        "SP693",  # Ingress config, not a deployed slow-request attack.
+        "SP694",  # Local noncompletion; surrounding cancellation is unknown.
+        "SP695",  # Comparator contract, not a claim about all input ordering.
+        "SP696",  # XML expansion settings, not proven hostile input.
+        "SP697",  # Loopback configuration listener, not remote exploitability.
+        "SP698",  # Synchronous API behavior; input size and CPU cost unknown.
     }
 )
 

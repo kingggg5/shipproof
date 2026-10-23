@@ -63,6 +63,22 @@ class BenchmarkScannerTests(unittest.TestCase):
             self.assertEqual(findings, [])
             self.assertTrue(stats["completeness"]["is_complete"])
 
+    def test_luau_profile_is_deterministic_guarded_source(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            first_signature = benchmark_scanner.write_fixture(Path(first), 12, "luau-remotes", 512)
+            second_signature = benchmark_scanner.write_fixture(
+                Path(second), 12, "luau-remotes", 512
+            )
+            self.assertEqual(first_signature, second_signature)
+            self.assertEqual(first_signature[1], 12 * 512)
+            self.assertEqual(len(list(Path(first).rglob("*.luau"))), 12)
+            findings, stats = benchmark_scanner.load_scanner().scan_repository(Path(first))
+            self.assertEqual(findings, [])
+            self.assertEqual(stats["files_scanned"], 12)
+            self.assertTrue(stats["completeness"]["is_complete"])
+
 
 if __name__ == "__main__":
     unittest.main()
