@@ -135,6 +135,86 @@ def xml_precision_lines(source: str, tokenize, structure) -> list[int]:
     return list(dict.fromkeys(hits))
 
 
+def xml_entity_offsets(tokens, pairs) -> list[tuple[str, int]]:
+    """Only an inline, locally named settings object consumed by XmlReader.Create."""
+    values = [value for value, _ in tokens]
+    types = {"XmlReader", "XmlReaderSettings", "DtdProcessing", "System"}
+    if "#" in values or "dynamic" in values:
+        return []
+    for index, value in enumerate(values[:-1]):
+        if (
+            value in {"class", "struct", "record", "interface", "var", "const"}
+            and values[index + 1] in types
+        ):
+            return []
+        if value == "using" and values[index + 2 : index + 3] == ["="]:
+            return []
+        if value == "XmlReader" and values[index + 1 : index + 4] != [".", "Create", "("]:
+            return []
+    imported = any(
+        values[index : index + 5] == ["using", "System", ".", "Xml", ";"]
+        for index in range(len(values))
+    )
+
+    def qualified(start, name):
+        if values[start : start + 3] == ["global", ":", ":"]:
+            start += 3
+        if values[start : start + 5] == ["System", ".", "Xml", ".", name]:
+            return start + 5
+        return start + 1 if imported and values[start : start + 1] == [name] else -1
+
+    def zero(expression):
+        return expression in (["0"], ["0", "L"], ["0", "l"])
+
+    hits = []
+    for index in range(len(values)):
+        if index and values[index - 1] in {".", ":"}:
+            continue
+        member = qualified(index, "XmlReader")
+        if member < 0 or values[member : member + 3] != [".", "Create", "("]:
+            continue
+        args = segments(values, pairs, member + 2)
+        if len(args) != 2:
+            continue
+        start, stop = args[1]
+        if values[start] != "new":
+            continue
+        opening = qualified(start + 1, "XmlReaderSettings")
+        if opening < 0:
+            continue
+        if values[opening : opening + 2] == ["(", ")"]:
+            opening += 2
+        if values[opening : opening + 1] != ["{"] or pairs.get(opening) != stop - 1:
+            continue
+        options = {}
+        for first, last in segments(values, pairs, opening):
+            if values[first + 1 : first + 2] != ["="] or values[first] in options:
+                options = {}
+                break
+            options[values[first]] = (first + 2, last)
+        dtd = options.get("DtdProcessing")
+        entity = options.get("MaxCharactersFromEntities")
+        document = options.get("MaxCharactersInDocument")
+        if set(options) - {
+            "DtdProcessing",
+            "MaxCharactersFromEntities",
+            "MaxCharactersInDocument",
+            "XmlResolver",
+        }:
+            continue  # Other reader modes/validation settings need their own model.
+        if not dtd or not entity or not zero(values[entity[0] : entity[1]]):
+            continue
+        enum = qualified(dtd[0], "DtdProcessing")
+        if (
+            enum < 0
+            or values[enum : dtd[1]] != [".", "Parse"]
+            or (document and not zero(values[document[0] : document[1]]))
+        ):
+            continue
+        hits.append(("SP696", tokens[index][1]))
+    return hits
+
+
 def signature_offsets(
     tokens: list[tuple[str, int]], pairs: dict[int, int]
 ) -> list[tuple[str, int]]:

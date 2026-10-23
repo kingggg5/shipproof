@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Add six medium advisory rules SP693–SP698 for explicitly disabled HTTP receive
+  deadlines, directly awaited empty asynchronous races, boolean array comparators,
+  removed XML entity limits, an unverified local logging listener, and directly
+  awaited synchronous compression. Narrow SP346 to import-bound standalone task
+  creation, correct SP375's idle/open connection distinction, and retire SP348:
+  Python's executor default is bounded. The cohort does not claim deployment
+  impact. See measured tests and limits in the [cohort record](research/broad-quality-cohort-2026-10.md).
+- Move the explanation dictionary into a pure-data module while preserving its
+  public import API. Keep benchmark maintainer notes in the source checkout;
+  runtime benchmark drivers remain shipped and package ceilings are unchanged.
+
 - Add advisory Roblox/Luau checks SP690/SP691 for a locally constructed remote
   passing a client argument directly to `require` or `Destroy`, and SP692 for
   imported JWT signing with an explicit RS/PS algorithm and insecure RSA-size

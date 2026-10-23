@@ -65,13 +65,13 @@ Node.js 20+ ทำหน้าที่ CLI ส่วน Python 3.10+ จำเ�
 
 ## ขอบเขตและสถานะโครงการ
 
-ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **661 deterministic rules** (`SP001`–`SP692`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
+ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **666 deterministic rules** (`SP001`–`SP698`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
 
 | หัวข้อ | Contract ปัจจุบัน |
 | :--- | :--- |
 | Release ล่าสุด | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่ง scanner-backed |
-| Executable rules | 661 (`SP001`–`SP692`, มีช่องว่างสงวนไว้ตั้งใจ) |
+| Executable rules | 666 (`SP001`–`SP698`, มีช่องว่างสงวนไว้ตั้งใจ) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates และ reserved promotion slots 1,000 รายการ; ไม่มีอะไรเป็น finding จนกว่าจะ promote |
 | Exit codes | `0` ผ่าน, `1` gate fail, `2` evidence ไม่ถูกต้อง/ไม่พร้อม |
@@ -139,17 +139,23 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 ## กฎการตรวจจับ
 
-**661 deterministic executable rules** (`SP001`–`SP692`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
+**666 deterministic executable rules** (`SP001`–`SP698`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
 
-ขอบเขต advisory เพิ่มเติมของ Roblox/Luau และ TypeScript:
+ขอบเขต advisory จาก cohort Roblox/Luau, TypeScript และ broad quality:
 
 | Rule | Catalog title | ขอบเขต advisory |
 | :--- | :--- | :--- |
 | `SP690` | Roblox remote directly requires a client-selected module | ต้องมี remote จาก `Instance.new`, handler ที่ไม่ถูก escape, สองพารามิเตอร์แบบง่ายที่ระบุ type ได้ และ sink ตรง statement เดียว; alias, guard, parameter ซับซ้อน และ deployment ยังไม่ทราบ |
 | `SP691` | Roblox remote directly destroys a client-selected instance | ต้องมี remote จาก `Instance.new`, handler ที่ไม่ถูก escape, สองพารามิเตอร์แบบง่ายที่ระบุ type ได้ และ sink ตรง statement เดียว; alias, guard, parameter ซับซ้อน และ deployment ยังไม่ทราบ |
 | `SP692` | JWT RSA signing key-size safeguard explicitly disabled | ต้องมี imported `jsonwebtoken.sign`, algorithm RS/PS ที่ระบุชัด และไม่มี header override; ไม่ทราบความแข็งแรงของ key จริง |
+| `SP693` | Node HTTP receive deadlines explicitly disabled | ต้องมี imported server options ที่กำหนด request/header timeout เป็น 0 ทั้งคู่; ยังไม่ทราบ bounds ภายนอก |
+| `SP694` | Direct await of an empty asynchronous race | ต้อง await `[]` โดยตรงใน native `Promise.race` หรือ Dart `Future.any` ที่ import `dart:async`; ไม่รวม wrapper และ binding ซับซ้อน |
+| `SP695` | Native array sort comparator returns a boolean | ต้องเป็น literal array อย่างน้อย 2 elements และ comparator แบบง่ายที่คืน boolean |
+| `SP696` | XML entity expansion limit explicitly removed | ต้องส่ง inline settings เข้า `XmlReader.Create` โดยตรง เปิด DTD, limit entity เป็น 0 และไม่มี document cap; ไม่ได้พิสูจน์ external entity |
+| `SP697` | Unverified logging configuration listener explicitly started | ต้อง import `logging.config.listen` โดยตรง, port literal ที่ valid, `verify=None` และเรียก `start()` ทันที; listener ปกติรับเฉพาะ loopback |
+| `SP698` | Awaited synchronous compression still blocks the caller | ต้อง await synchronous zlib call ที่ import มาโดยตรง; ไม่ทราบขนาด input และงานจริง |
 
-Finding เหล่านี้เป็น advisory จาก source ในเครื่อง ไม่ใช่หลักฐานว่า deployment ถูกเปิดใช้หรือ exploit ได้ ดู [บันทึก cohort](research/luau-typescript-cohort-2026-10.md)
+Finding เหล่านี้เป็น advisory จาก source ในเครื่อง ไม่ใช่หลักฐานว่า deployment ถูกเปิดใช้หรือ exploit ได้ ดู [บันทึก Luau/TypeScript cohort](research/luau-typescript-cohort-2026-10.md) และ [บันทึก broad-quality cohort](research/broad-quality-cohort-2026-10.md)
 
 โค้ดปัจจุบันเพิ่ม advisory checks สำหรับ Roblox/Luau ในไฟล์ `.lua`/`.luau`
 (`SP671`–`SP672`) และ Rust invalid reference initialization (`SP673`) พร้อม
@@ -183,7 +189,9 @@ final official FPM/Apache image ที่ระบุชัด ไม่เด�
 
 `SP686`/`SP687` เป็น advisory สำหรับ Node TLS แบบเก่า (ไม่ยืนยัน handshake) และ `ws maxPayload` ที่แปลงเป็น signed 32-bit แล้วไม่เป็นบวก ส่วน C# typed `CookieAuthenticationOptions` ขยาย `SP056`/`SP084` โดย middleware อาจ override ได้ ส่วน HTTP ของ Dart `SP170` ต้องมี imported `package:http`, external HTTP literal และคีย์ Authorization แบบ literal แต่ยังไม่ยืนยันค่าหรือการส่งจริง กฎ FTP/Telnet เดิมไม่เปลี่ยน ดู [ขอบเขต transport](docs/rules.md#transport-and-cookie-options)
 
-`SP688`/`SP689` เป็น medium advisory สำหรับ Next.js exported image config ที่เปิด SVG พร้อม inline disposition และ CSP ว่างอย่างชัดเจน กับ typed Kestrel options ที่กำหนด request-body limit เป็น null ตามลำดับ ขอบเขตนี้ตรวจ config เฉพาะจุด ไม่ได้ยืนยัน exploitability หรือ caps จาก proxy/per-request; field cohort TypeScript/.NET/Dart ยังอยู่ระหว่าง review และยังไม่มีผล precision หรือ performance สรุป ดู [บันทึก field cohort](research/field-cohort-ts-dotnet-dart-2026-10.md)
+field cohort TypeScript/.NET/Dart ก่อนหน้านี้บันทึก advisory `SP688`/`SP689` สำหรับ Next.js image config และ Kestrel options ที่มีขอบเขตแคบ config ใน source ไม่ได้ยืนยัน exploitability หรือ caps จาก proxy/per-request ดู [บันทึก field cohort](research/field-cohort-ts-dotnet-dart-2026-10.md)
+
+cohort broad quality เพิ่ม advisory `SP693`–`SP698`, ปรับขอบเขต `SP346`/`SP375` และ retire `SP348` ตรวจเฉพาะหลักฐานจาก source ไม่อ้างผลใน deployment มีเคสทดสอบ, native API probes, ผลเทียบซอร์สจริง และงบประสิทธิภาพใน [บันทึก cohort](research/broad-quality-cohort-2026-10.md)
 
 catalog ฉบับเต็ม, severity, category และวิธี detection ต่อกฎ พร้อม mapping ecosystem/framework ที่กำหนดว่า structural check แต่ละตัวรันที่ไหน: อยู่ที่ **[docs/rules.md](docs/rules.md)**
 
@@ -317,10 +325,12 @@ candidate จาก research จะกลายเป็น executable `SPxxx` r
 
 | Research artifact | ขอบเขต | ผลต่อ runtime |
 | :--- | :--- | :--- |
-| [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 hypotheses จาก model-assisted mapped กับ source | ไม่มี |
-| [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 CVE/CWE/community signals | ไม่มี |
-| [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 research slots แยก ecosystem/CWE | ไม่มี |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 661 detectors | Emit versioned findings |
+| [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 non-executable hypotheses จาก model-assisted mapped กับ source | ไม่มี |
+| [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 non-executable candidates ตามช่วงเวลา | ไม่มี |
+| [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 non-executable candidates แยก ecosystem/CWE | ไม่มี |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 666 detectors | Emit versioned findings |
+
+รายการ expert/annual 2,800 รายการและ language catalog 5,000 รายการเป็น research candidates ไม่ใช่ executable rules และยัง emit findings ไม่ได้จนกว่าจะ promote แยกต่างหาก
 
 ดู [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md) และ [delivery roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) สำหรับขอบเขต operational และ acceptance gates อ้างอิง release ด้วย [CITATION.cff](CITATION.cff)
 

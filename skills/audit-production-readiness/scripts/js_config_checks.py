@@ -17,6 +17,7 @@ MODULES = frozenset(
         "ws",
         "react",
         "buffer",
+        "zlib",
         "electron",
         "puppeteer",
         "puppeteer-core",
@@ -170,7 +171,7 @@ def module_name(value: str) -> str:
     module = literal(value) or ""
     if module.startswith("node:"):
         builtin = module[5:]
-        return builtin if builtin in {"buffer", "crypto", "http", "https", "tls"} else ""
+        return builtin if builtin in {"buffer", "crypto", "http", "https", "tls", "zlib"} else ""
     return module
 
 
@@ -433,6 +434,101 @@ def signature_spans(
         span = options.get(key)
         return span is not None and values[span[0] : span[1]] == [expected]
 
+    # Any local Promise declaration, type use, escape or member reassignment is
+    # unresolved. Do not guess builtin identity from a method's spelling alone.
+    native_promise = all(
+        (index == 0 or values[index - 1] not in {".", "?."})
+        and values[index + 1 : index + 2] == ["."]
+        and values[index + 3 : index + 4] == ["("]
+        for index, value in enumerate(values)
+        if value == "Promise"
+    )
+    reverse = {end: start for start, end in pairs.items()}
+    for index, value in enumerate(values):
+        if (
+            native_promise
+            and index
+            and values[index - 1] == "await"
+            and values[index + 7 : index + 8] not in (["."], ["?."], ["["])
+            and values[index : index + 7]
+            == [
+                "Promise",
+                ".",
+                "race",
+                "(",
+                "[",
+                "]",
+                ")",
+            ]
+        ):
+            emit(
+                "SP694",
+                index,
+                index + 7,
+                "Promise.race: literal empty input cannot settle this promise",
+            )
+        if value != "." or values[index + 1 : index + 2] not in (["sort"], ["toSorted"]):
+            continue
+        if values[index + 2 : index + 3] != ["("]:
+            continue
+        array = reverse.get(index - 1, -1)
+        if (
+            array < 0
+            or values[array] != "["
+            or (
+                array
+                and values[array - 1] not in {"=", "return", "(", "[", ",", ":", "=>", ";", "{"}
+            )
+            or "prototype" in values
+        ):
+            continue
+        items = segments(values, pairs, array)
+        if len(items) < 2 or any(values[first] == "..." for first, _ in items):
+            continue
+        arguments = segments(values, pairs, index + 2)
+        if len(arguments) != 1:
+            continue
+        first, last = arguments[0]
+        parameters = segments(values, pairs, first) if values[first] == "(" else []
+        if len(parameters) != 2:
+            continue
+        names = []
+        for start, stop in parameters:
+            chunk = values[start:stop]
+            if (
+                len(chunk) == 1
+                or (len(chunk) == 3 and chunk[1] == ":" and IDENTIFIER.fullmatch(chunk[2]))
+            ) and IDENTIFIER.fullmatch(chunk[0]):
+                names.append(chunk[0])
+        body = pairs.get(first, last) + 1
+        if len(names) != 2 or names[0] == names[1] or values[body : body + 1] != ["=>"]:
+            continue
+        body += 1
+        if values[body : body + 1] == ["{"]:
+            if pairs.get(body) != last - 1 or values[body + 1 : body + 2] != ["return"]:
+                continue
+            body += 2
+            last -= 1
+            if values[last - 1 : last] == [";"]:
+                last -= 1
+        elif values[body : body + 1] == ["("] and pairs.get(body) == last - 1:
+            body += 1
+            last -= 1
+        expression = values[body:last]
+        if (
+            len(expression) in {3, 4}
+            and expression[0] in names
+            and expression[-1] in names
+            and expression[0] != expression[-1]
+            and expression[1:-1] in (["<"], [">"], ["<", "="], [">", "="])
+        ):
+            emit(
+                "SP695",
+                index,
+                pairs[index + 2] + 1,
+                "Native array sort comparator returns a boolean instead of a signed comparison",
+            )
+
     if path.name.lower() in {"next.config.ts", "next.config.js", "next.config.mjs"}:
         for opening in exported_config(values, pairs, depths, path.suffix.lower() != ".mjs"):
             options = properties(values, pairs, (opening, pairs.get(opening, opening) + 1))
@@ -492,6 +588,41 @@ def signature_spans(
         if not args or any(values[start] == "..." for start, _ in args):
             continue
         closing = pairs[cursor]
+        if module in {"http", "https"} and member == "createServer":
+            options = properties(values, pairs, args[0])
+            if is_value(options, "requestTimeout", "0") and is_value(
+                options, "headersTimeout", "0"
+            ):
+                emit(
+                    "SP693",
+                    index,
+                    closing + 1,
+                    f"{module}.createServer: requestTimeout=0 and headersTimeout=0",
+                )
+        if (
+            module == "zlib"
+            and member
+            in {
+                "gzipSync",
+                "gunzipSync",
+                "deflateSync",
+                "deflateRawSync",
+                "inflateSync",
+                "inflateRawSync",
+                "unzipSync",
+                "brotliCompressSync",
+                "brotliDecompressSync",
+            }
+            and index
+            and values[index - 1] == "await"
+            and len(args) in {1, 2}
+        ):
+            emit(
+                "SP698",
+                index - 1,
+                closing + 1,
+                f"await zlib.{member}: compression completes synchronously before the await",
+            )
         if (module == "tls" and member in {"createSecureContext", "createServer", "connect"}) or (
             module == "https" and member in {"createServer", "request", "get"}
         ):

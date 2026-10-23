@@ -28,11 +28,11 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 
 Candidate ID ไม่ได้แปลว่ามี detector แล้ว จำนวน research slots จึงห้ามนำไปรวมกับ executable rule count ในเอกสารหรือการตลาด
 
-## Current field-cohort status — 2026-10-23
+## Previous field-cohort status — 2026-10-23
 
-- executable scanner rules: 661
+- historical executable scanner rules: 661
 
-The registry now contains 661 executable rules through SP692. The Luau/TypeScript
+The registry then contained 661 executable rules through SP692. The Luau/TypeScript
 continuation adds SP690–SP692 and extends SP672/SP676/SP679 without duplicate
 IDs; see the [cohort evidence](../research/luau-typescript-cohort-2026-10.md).
 The bounded
@@ -44,6 +44,23 @@ precision claim. See the [cohort evidence and limits](../research/field-cohort-t
 
 The failure catalog is maintainer-source-only and excluded from npm to preserve
 package ceilings; see the [catalog](knowledge/failure-catalog.md).
+
+## Current broad-quality cohort status — 2026-10-23
+
+- executable scanner rules: 666
+
+The registry now contains 666 executable rules through SP698. The six additions,
+SP693–SP698, are medium advisory checks with bounded source syntax. SP346 now
+matches only import-bound standalone `asyncio.create_task` expressions that are
+not awaited, returned, or assigned. SP375 no longer treats `SetMaxIdleConns(0)` as
+an unlimited open-connection cap. SP348 is retired because the Python executor's
+default is bounded; its ID will not be reused.
+
+The cohort record describes its limits and pending verification. No test or
+performance metrics are claimed, and the source checks do not establish deployed
+impact or a universal false-positive rate. The 2,800 expert/annual and 5,000
+language-catalog entries remain non-executable candidates. See the
+[broad-quality cohort record](../research/broad-quality-cohort-2026-10.md).
 
 ## หลักการตัดสินใจ
 

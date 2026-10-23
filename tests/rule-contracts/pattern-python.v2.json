@@ -598,56 +598,6 @@
       }
     },
     {
-      "rule_id": "SP346",
-      "title": "Python asyncio create_task reference dropped causing garbage collection",
-      "category": "reliability",
-      "expected_severity": "high",
-      "expected_confidence": "high",
-      "cwe": "CWE-400",
-      "frameworks": [],
-      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-      "cases": {
-        "positive": [
-          {
-            "path": "contract-fixtures/python/sp346-positive-a.py",
-            "source_hex": "096177616974096173796e63696f2e6372656174655f7461736b2028202920",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "b55cce3f1ce4e64955c845ff"
-          },
-          {
-            "path": "contract-fixtures/python/sp346-positive-b.py",
-            "source_hex": "096177616974096173796e63696f2e6372656174655f7461736b2028202920",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "dacbdd765b8c74bde70bc5d0"
-          }
-        ],
-        "negative": [
-          {
-            "path": "contract-fixtures/python/sp346-negative-a.py",
-            "source_hex": "216177616974096173796e63696f2e6372656174655f7461736b2028202920"
-          },
-          {
-            "path": "contract-fixtures/python/sp346-negative-b.py",
-            "source_hex": "586177616974096173796e63696f2e6372656174655f7461736b2028202920"
-          }
-        ],
-        "adversarial": [
-          {
-            "path": "contract-fixtures/python/sp346-adversarial-a.py",
-            "source_hex": "202f2a20696e646972656374202a2f20096177616974096173796e63696f2e6372656174655f7461736b2028202920",
-            "expected": false,
-            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
-          }
-        ]
-      }
-    },
-    {
       "rule_id": "SP347",
       "title": "Python asyncio gather without return_exceptions handling",
       "category": "reliability",
@@ -682,56 +632,6 @@
           {
             "path": "contract-fixtures/python/sp347-adversarial-a.py",
             "source_hex": "5873796e63696f2e67617468657220282029",
-            "expected": false,
-            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
-          }
-        ]
-      }
-    },
-    {
-      "rule_id": "SP348",
-      "title": "Python ThreadPoolExecutor instantiated without max_workers limit",
-      "category": "scale",
-      "expected_severity": "high",
-      "expected_confidence": "high",
-      "cwe": "CWE-400",
-      "frameworks": [],
-      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-      "cases": {
-        "positive": [
-          {
-            "path": "contract-fixtures/python/sp348-positive-a.py",
-            "source_hex": "546872656164506f6f6c4578656375746f7220282029",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "2807bd113ac053368edc6429"
-          },
-          {
-            "path": "contract-fixtures/python/sp348-positive-b.py",
-            "source_hex": "546872656164506f6f6c4578656375746f720920280920293b0a",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "a499c6af033578291711ff45"
-          }
-        ],
-        "negative": [
-          {
-            "path": "contract-fixtures/python/sp348-negative-a.py",
-            "source_hex": "216872656164506f6f6c4578656375746f7220282029"
-          },
-          {
-            "path": "contract-fixtures/python/sp348-negative-b.py",
-            "source_hex": "206872656164506f6f6c4578656375746f7220282029"
-          }
-        ],
-        "adversarial": [
-          {
-            "path": "contract-fixtures/python/sp348-adversarial-a.py",
-            "source_hex": "586872656164506f6f6c4578656375746f7220282029",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
           }

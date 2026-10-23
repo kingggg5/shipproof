@@ -43,7 +43,7 @@
       "engine": "pattern",
       "ecosystem": "go",
       "rule_count": 21,
-      "sha256": "122aef4db5f695fa6daee3bc1dfae0c1a356aa246b10126a019c33d7be9d19ab"
+      "sha256": "e01486eca27b04554d762218ba37dcfd0904b639274efbb3bcecfb5464c060dc"
     },
     {
       "path": "pattern-infrastructure.v2.json",
@@ -84,8 +84,8 @@
       "path": "pattern-python.v2.json",
       "engine": "pattern",
       "ecosystem": "python",
-      "rule_count": 57,
-      "sha256": "ab1c488c2c2915e07518d8d776e5c2f2d1002277217c24321c5e914f8bd682cb"
+      "rule_count": 55,
+      "sha256": "a7a76b68287257fde7639c68c37739f1f0f2d5817c335b9bad641709c397b683"
     },
     {
       "path": "pattern-rust.v2.json",

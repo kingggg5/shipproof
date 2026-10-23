@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 661 deterministic executable rules (`SP001`-`SP692`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
+ShipProof applies 666 deterministic executable rules (`SP001`-`SP698`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -8,9 +8,18 @@ Run `shipproof explain SP108` for why a rule exists, its attack scenario, false-
 
 `SP136` remains a low-confidence regex signature for an explicit `_ = err` assignment. It does not infer Go types or identify an error return from tuple arity.
 
+`SP346` now uses Python AST context and is limited to an import-bound standalone
+`asyncio.create_task(...)` expression that is not awaited, returned, or assigned.
+Its existing severity and eligibility remain. `SP348` is retired and its ID will
+not be reused: `ThreadPoolExecutor` supplies a bounded default worker count, so
+omitting `max_workers` alone is not an unbounded-pool signal. `SP375` reports
+`SetMaxOpenConns(0)`; `SetMaxIdleConns(0)` retains no idle connections and does
+not disable the open-connection cap. Its legacy name-only `db` receiver match
+otherwise remains.
+
 `SP666`–`SP687` are runtime advisory findings pending representative-repository
 review; lowering the severity or proof floor does not make them blocking.
-`SP688`–`SP692` are additional source-level advisories with their own bounded
+`SP688`–`SP698` are additional source-level advisories with their own bounded
 syntax below; none establish deployment behavior or exploitability.
 These cohorts, `SP591` and advisory Rust TLS evidence expose only normalized risk
 details. Unrelated arguments/comments and neighboring source are omitted from
@@ -107,6 +116,27 @@ per-request limits may still apply. The field cohort has bounded source scope;
 results do not imply zero false positives or final precision/performance counts.
 See the [field-cohort research record](../research/field-cohort-ts-dotnet-dart-2026-10.md).
 
+## Broad quality cohort — 2026-10-23
+
+`SP693` requires directly imported Node HTTP(S) server options with both literal
+`requestTimeout: 0` and `headersTimeout: 0`; upstream and per-request bounds remain
+unknown. `SP694` requires a direct await of a literal empty array passed to native
+`Promise.race`, or to Dart `Future.any` with explicit `dart:async` import. Standard
+Promise methods need no import; wrappers, inferred/custom bindings and complex
+syntax are unresolved. `SP695` is limited to a literal array with at least two
+elements and a simple sort callback whose comparator returns only a boolean.
+
+`SP696` requires inline settings passed directly to `XmlReader.Create`, with DTD
+parsing enabled, entity-character limit zero and no finite document-size cap. It
+describes internal entity-expansion limits, not proof of external entity access.
+`SP697` requires directly imported `logging.config.listen`, a literal valid port,
+`verify=None` and immediate `start()`. The standard listener binds to loopback;
+this does not prove remote code execution. `SP698` requires a directly awaited,
+imported Node synchronous zlib call; input size and actual work remain unknown.
+All six are medium advisory findings and do not establish deployment behavior.
+The cohort evaluation is pending; no test or performance metrics are claimed. See
+the [cohort record](../research/broad-quality-cohort-2026-10.md).
+
 ## Node.js version declarations
 
 `SP684` is a high-severity advisory for an exact declared Node.js release before
@@ -168,16 +198,18 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **React, Vue, Angular, SolidJS** | `package.json` (`react`, `vue`, `@angular/core`, `solid-js`) | Exposed service role keys (`SP503`), Credential logging in client bundles (`SP204`), Unsanitized SVG uploads (`SP112`), Raw HTML injection (`SP116`), Angular sanitizer bypass (`SP125`), Vue `v-html` (`SP415`), Array index keys (`SP414`) |
 | **Express, Fastify, NestJS, Koa, Hono, Elysia** | `package.json` (`express`, `fastify`, `@nestjs/core`, `koa`, `hono`, `elysia`) | Missing security headers/helmet (`SP401`), Rate-limited auth routes (`SP402`), CSRF on cookie sessions (`SP407`), Open redirects (`SP121`), SSRF via request URLs (`SP124`), Raw error object leaks (`SP406`), Body parser limits (`SP412`), Unhandled stream pipes (`SP336`), In-memory session leaks (`SP337`), Synchronous crypto in event loop (`SP339`), `process.exit` in handlers (`SP343`), Insecure Stripe webhooks (`SP502`), Unmetered AI routes (`SP501`) |
 | **Prisma, Drizzle, TypeORM, Mongoose, Supabase** | `package.json` (`@prisma/client`, `drizzle-orm`, `typeorm`, `mongoose`, `@supabase/*`) | Raw SQL interpolation (`SP103`), Non-singleton DB clients in serverless (`SP313`), Supabase RLS bypass (`SP503`), Unbounded queries (`SP302`), Missing connection pool limits (`SP328`), Per-row commit locks (`SP326`) |
-| **FastAPI, Starlette, Litestar, Sanic** | `pyproject.toml`, `requirements.txt` | Unprotected admin routes (`SP108`), Missing `response_model` (`SP409`), Wildcard CORS credentials (`SP419`), N+1 queries in loops (`SP307`), Unbounded pagination (`SP305`), Missing HTTP timeouts (`SP304`), Dropped asyncio task refs (`SP335`), ThreadPool per request (`SP344`) |
+| **FastAPI, Starlette, Litestar, Sanic** | `pyproject.toml`, `requirements.txt` | Unprotected admin routes (`SP108`), Missing `response_model` (`SP409`), Wildcard CORS credentials (`SP419`), N+1 queries in loops (`SP307`), Unbounded pagination (`SP305`), Missing HTTP timeouts (`SP304`), Dropped asyncio task refs (`SP335`, `SP346`), ThreadPool per request (`SP344`), local logging configuration listener (`SP697`) |
 | **Django & Flask** | `pyproject.toml`, `requirements.txt` | Hardcoded `SECRET_KEY` (`SP404`), Wildcard `ALLOWED_HOSTS` (`SP405`), Debug enabled (`SP201`, `SP411`), Flask hardcoded `secret_key` (`SP410`), String-interpolated SQL (`SP103`), SSTI via `render_template_string` (`SP137`) |
 | **Go (Gin, Echo, Fiber, Chi)** | `go.mod` | Missing server timeouts (`SP131`), Ignored errors (`SP136`), Response body leak (`SP315`), Goroutine context leaks (`SP309`), Unbuffered channel deadlocks (`SP332`), WaitGroup race conditions (`SP333`), Insecure secret fallbacks (`SP004`), Outbound request timeouts (`SP304`), Unbounded concurrency (`SP306`) |
 | **Rust (Actix-web, Axum, Rocket)** | `Cargo.toml`, `.rs` | Committed keys/credentials (`SP001`, `SP002`, `SP003`), direct reqwest TLS bypass (`SP104`, advisory), invalid zero-initialized references (`SP673`, advisory), SSRF to metadata (`SP109`), credential logging (`SP204`) |
 | **Roblox / Luau** | `.lua`, `.luau` local source files | HttpService response executed as source (`SP671`), direct client-source execution in simple RemoteEvent/RemoteFunction callbacks (`SP672`), client-selected module require (`SP690`), client-selected instance destruction (`SP691`), provider-secret checks. Initial support excludes general Lua data-flow and binary place files. |
-| **JS / TypeScript configuration** | Runtime ESM/const-require imports; `next.config.*` exports | Image private-IP opt-out (`SP674`), JWT time/key-type opt-outs on verify/sign (`SP675`, `SP676`), short GCM tags (`SP677`), direct uninitialized Buffer read (`SP678`), lenient HTTP parsing including insecure validation opt-out (`SP679`), Electron origin/privilege boundaries (`SP680`, `SP681`), Chromium sandbox opt-out (`SP682`), RSA signing key-size safeguard opt-out (`SP692`). All are advisory. |
+| **JS / TypeScript configuration** | Runtime ESM/const-require imports; `next.config.*` exports | Image private-IP opt-out (`SP674`), JWT time/key-type opt-outs on verify/sign (`SP675`, `SP676`), short GCM tags (`SP677`), direct uninitialized Buffer read (`SP678`), lenient HTTP parsing including insecure validation opt-out (`SP679`), Electron origin/privilege boundaries (`SP680`, `SP681`), Chromium sandbox opt-out (`SP682`), RSA signing key-size safeguard opt-out (`SP692`), disabled HTTP receive deadlines (`SP693`), empty Promise.race await (`SP694`), boolean array comparator (`SP695`), awaited sync zlib (`SP698`). All are advisory. |
 | **PHP (Laravel, Symfony)** | `composer.json` | Dynamic code evaluation (`SP101`), SQL injection interpolation (`SP103`, `SP128`), Path traversal (`SP110`), Loose equality credential comparison (`SP127`), Reflected XSS (`SP129`), Open redirect (`SP130`), Object injection (`SP113`) |
 | **Ruby (Rails, Sinatra)** | `Gemfile` | Secret key leakage (`SP003`), Unsafe deserialization with Marshal/YAML (`SP106`), Debug mode enabled (`SP201`), CSRF forgery disabled (`SP417`), Dynamic code execution (`SP101`), Missing payment idempotency (`SP504`) |
 | **Java / Kotlin (Spring Boot, Quarkus, Micronaut)** | `pom.xml`, `build.gradle`, `build.gradle.kts` | Committed keys/credentials (`SP001`, `SP002`, `SP003`), Insecure CORS with credentials (`SP107`), Path traversal (`SP110`), Spring Boot actuator public exposure (`SP416`), Binary ObjectInputStream deserialization (`SP168`) |
 | **C# / .NET (ASP.NET Core, Web API)** | `*.csproj`, `packages.config` | Sync-over-async thread starvation (`SP132`), `debug="true"` configuration (`SP133`), Unconditional `UseDeveloperExceptionPage` (`SP418`), Insecure deserialization (`SP106`) |
+| **Dart async APIs** | `.dart` source with explicit `dart:async` import | Directly awaited empty `Future.any` input (`SP694`); wrappers, type inference and complex bindings are unresolved. Advisory. |
+| **C# XML settings** | `.cs` source | Inline XmlReader settings passed to `XmlReader.Create` remove the entity-character limit while enabling DTD parsing (`SP696`); this is not proof of external entity access. Advisory. |
 | **C / C++** | `CMakeLists.txt`, `Makefile` | Unbounded legacy string manipulation `strcpy`/`gets` (`SP135`), Insecure temporary file permissions (`SP139`, `SP169`) |
 | **Containers, Kubernetes & CI/CD** | `Dockerfile`, Compose, Kubernetes YAML, `.github/workflows` | Root/container privilege (`SP205`, `SP637`–`SP640`), mutable dependencies (`SP202`, `SP203`), workflow trust boundaries (`SP209`, `SP210`, `SP658`–`SP660`), Kubernetes RBAC/admission posture (`SP656`, `SP657`, `SP661`) |
 
@@ -510,9 +542,8 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP343`** | HIGH | Reliability | process.exit called inside request handler | Regex |
 | **`SP344`** | MEDIUM | Scale | ThreadPoolExecutor instantiated per request | Regex |
 | **`SP345`** | HIGH | Scale | Global lock held across async I/O call | Regex |
-| **`SP346`** | HIGH | Reliability | Python asyncio create_task reference dropped causing garbage collection | Regex |
+| **`SP346`** | HIGH | Reliability | Python asyncio create_task reference dropped causing garbage collection | Structural |
 | **`SP347`** | MEDIUM | Reliability | Python asyncio gather without return_exceptions handling | Regex |
-| **`SP348`** | HIGH | Scale | Python ThreadPoolExecutor instantiated without max_workers limit | Regex |
 | **`SP349`** | HIGH | Scale | Python ProcessPoolExecutor created inside async request handler | Regex |
 | **`SP350`** | HIGH | Scale | Python SQLAlchemy engine created without pool_size and max_overflow bounds | Regex |
 | **`SP351`** | HIGH | Reliability | Python SQLAlchemy session created without scoped session or context manager | Regex |
@@ -846,4 +877,10 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP690`** | MEDIUM | Security | Roblox remote directly requires a client-selected module | Structural |
 | **`SP691`** | MEDIUM | Security | Roblox remote directly destroys a client-selected instance | Structural |
 | **`SP692`** | MEDIUM | Security | JWT RSA signing key-size safeguard explicitly disabled | Structural |
+| **`SP693`** | MEDIUM | Scale | Node HTTP receive deadlines explicitly disabled | Structural |
+| **`SP694`** | MEDIUM | Correctness | Direct await of an empty asynchronous race | Structural |
+| **`SP695`** | MEDIUM | Correctness | Native array sort comparator returns a boolean | Structural |
+| **`SP696`** | MEDIUM | Security | XML entity expansion limit explicitly removed | Structural |
+| **`SP697`** | MEDIUM | Security | Unverified logging configuration listener explicitly started | Structural |
+| **`SP698`** | MEDIUM | Performance | Awaited synchronous compression still blocks the caller | Structural |
 

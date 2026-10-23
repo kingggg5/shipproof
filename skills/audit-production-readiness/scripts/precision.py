@@ -54,6 +54,12 @@ ADVISORY_RULE_IDS = frozenset(
         "SP690",  # Client-selected module; deployment/asset permissions unknown.
         "SP691",  # Direct instance deletion; deployment/ownership unknown.
         "SP692",  # RSA size guard opt-out, not proof of a weak deployed key.
+        "SP693",  # Ingress config, not a deployed slow-request attack.
+        "SP694",  # Local noncompletion; surrounding cancellation is unknown.
+        "SP695",  # Comparator contract, not a claim about all input ordering.
+        "SP696",  # XML expansion settings, not proven hostile input.
+        "SP697",  # Loopback configuration listener, not remote exploitability.
+        "SP698",  # Synchronous API behavior; input size and CPU cost unknown.
     }
 )
 

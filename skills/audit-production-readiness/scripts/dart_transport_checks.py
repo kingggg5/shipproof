@@ -44,12 +44,66 @@ def external_http(value: str | None) -> bool:
         return False
 
 
+def empty_race_offsets(stream, pairs) -> list[tuple[str, int]]:
+    values = [value for value, _, _ in stream]
+    prefixes = {}
+    bare = False
+    ambiguous_bare = False
+    for index, value in enumerate(values):
+        if value != "import":
+            continue
+        library = literal(values[index + 1]) if index + 1 < len(values) else None
+        if values[index + 2 : index + 3] == [";"]:
+            bare |= library == "dart:async"
+            ambiguous_bare |= library not in {"dart:async", "dart:core"}
+        if (
+            library == "dart:async"
+            and values[index + 2 : index + 3] == ["as"]
+            and values[index + 4 : index + 5] == [";"]
+        ):
+            prefixes[values[index + 3]] = index + 3
+    for index, value in enumerate(values):
+        if value == "Future" and values[index + 1 : index + 2] != ["."]:
+            bare = False
+        if (
+            value in prefixes
+            and index != prefixes[value]
+            and (
+                (index and values[index - 1] == ".")
+                or values[index + 1 : index + 4] != [".", "Future", "."]
+            )
+        ):
+            prefixes.pop(value, None)
+    hits = []
+    for index in range(1, len(values)):
+        if values[index - 1] != "await":
+            continue
+        cursor = index
+        if values[index] in prefixes:
+            cursor += 2
+        elif not (bare and not ambiguous_bare and values[index] == "Future"):
+            continue
+        if values[cursor : cursor + 4] != ["Future", ".", "any", "("]:
+            continue
+        args = segments(values, pairs, cursor + 3)
+        if len(args) != 1:
+            continue
+        start, end = args[0]
+        closing = pairs[cursor + 3]
+        if values[start:end] in (["[", "]"], ["const", "[", "]"]) and values[
+            closing + 1 : closing + 2
+        ] not in (["."], ["?."], ["["]):
+            hits.append(("SP694", stream[index][1]))
+    return hits
+
+
 def signature_offsets(source: str) -> list[tuple[str, int]]:
     stream = tokens(source, "dart")
     values = [value for value, _, _ in stream]
     pairs = delimiter_pairs(values)
     if "runWithClient" in values or "part" in values:
         return []
+    hits = empty_race_offsets(stream, pairs)
     bindings = {}
     for index, value in enumerate(values):
         if (
@@ -76,8 +130,7 @@ def signature_offsets(source: str) -> list[tuple[str, int]]:
         ):
             bindings.pop(value, None)
         if value == "Uri" and values[index + 1 : index + 2] != ["."]:
-            return []
-    hits = []
+            return hits
     for index, value in enumerate(values):
         if value not in bindings or index == bindings[value]:
             continue

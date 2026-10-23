@@ -219,12 +219,29 @@ test(
         ["sign.ts", "import {sign} from 'jsonwebtoken'; sign(payload,key,{algorithm:'RS256',allowInsecureKeySizes:true});", ["SP692"]],
         ["sign.ts", "import {sign} from 'jsonwebtoken'; sign(payload,key,{algorithm:'RS256',allowInvalidAsymmetricKeyTypes:true});", ["SP676"]],
         ["http.ts", "import {createServer} from 'node:http'; createServer({httpValidation:'insecure'},handler);", ["SP679"]],
+        ["deadlines.ts", "import {createServer} from 'node:http'; createServer({requestTimeout:0,headersTimeout:0});", ["SP693"]],
+        ["wait.ts", "async function wait() { await Promise.race([]); }", ["SP694"]],
+        ["wait.dart", "import 'dart:async'; void main() async { await Future.any([]); }", ["SP694"]],
+        ["sort.ts", "const sorted = [3,1,2].sort((a,b)=>a>b);", ["SP695"]],
+        ["reader.cs", "using System.Xml; XmlReader.Create(input,new XmlReaderSettings{DtdProcessing=DtdProcessing.Parse,MaxCharactersFromEntities=0});", ["SP696"]],
+        ["listener.py", "import logging.config\nlogging.config.listen(9030,verify=None).start()", ["SP697"]],
+        ["compression.ts", "import {gzipSync} from 'node:zlib'; async function pack(data) { return await gzipSync(data); }", ["SP698"]],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);
-        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP170", "SP672", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692"].includes(finding.rule_id));
+        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP170", "SP672", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692", "SP693", "SP694", "SP695", "SP696", "SP697", "SP698"].includes(finding.rule_id));
         assert.deepEqual(findings.map((finding) => finding.rule_id).sort(), expectedRules);
         assert.ok(findings.every((finding) => finding.tier === "advisory" && finding.proof_level === "L1"));
+      }
+
+      for (const [filename, code] of [
+        ["task.py", "import asyncio\nasync def run():\n    await asyncio.create_task(work())\n"],
+        ["pool.py", "from concurrent.futures import ThreadPoolExecutor\npool=ThreadPoolExecutor()"],
+        ["pool.go", 'package pool\nimport "database/sql"\nfunc configure(db *sql.DB) { db.SetMaxIdleConns(0) }'],
+      ]) {
+        const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
+        assert.equal(result.isError, undefined);
+        assert.ok(result.structuredContent.findings.every((finding) => !["SP346", "SP348", "SP375"].includes(finding.rule_id)));
       }
 
       for (const [name, argumentsValue] of [

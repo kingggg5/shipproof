@@ -3950,6 +3950,584 @@
       "expected_confidence": "high",
       "blocking_eligible": false,
       "false_positive_analysis": "Advisory: actual key strength is unknown. Require explicit RS/PS algorithm and true opt-out; HMAC, EC, defaults, header overrides and ambiguous imports stay silent."
+    },
+    {
+      "rule_id": "SP693",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/http.html#serverrequesttimeout",
+          "claim": "The receive deadlines can be explicitly disabled with zero; other ingress controls and exposure remain unknown."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: direct HTTP(S) imports and two literal zero options only. Defaults, finite caps, clients, spreads and shadowed imports stay silent. Trusted streams or independent ingress controls may be intentional.",
+      "positive": [
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:https';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer as serve} from 'node:http';\nserve({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "const {createServer} = require('node:http');\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:30000, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:5000}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:deadline}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0,...bounded}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0,headersTimeout:5000}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from './transport';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {request} from 'node:http';\nrequest({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import type {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "server.ts",
+          "source": "/* import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n */",
+          "expected": false,
+          "rationale": "A commented example cannot configure a live HTTP server."
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\nfunction build(createServer: Factory) { return createServer({requestTimeout:0, headersTimeout:0}, handler);\n}",
+          "expected": false,
+          "rationale": "A parameter shadows the native HTTP factory and its option semantics."
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, ['headersTimeout']:0}, handler);\n",
+          "expected": false,
+          "rationale": "Computed property identity and override order remain unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP694",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/race",
+          "claim": "An empty Promise.race cannot settle; a direct await does not progress through it."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/754.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        },
+        {
+          "url": "https://api.dart.dev/dart-async/Future/any.html",
+          "claim": "Dart Future.any never completes when its iterable is empty; runtime type identity and wrappers require separate resolution."
+        }
+      ],
+      "false_positive_analysis": "Advisory: literal empty inputs and direct await only. Standalone pending sentinels, chained wrappers, unknown/type-only/custom bindings and nonempty input stay silent. Dart requires an explicit dart:async import.",
+      "positive": [
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([ /* no participants */ ]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "export const run = async () => { await Promise.race(\n[]\n); };"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async' as tasks;\nvoid main() async { await tasks.Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.any(const []); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([Promise.resolve(1)]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.all([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race(entries); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { const never = Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([]).timeout(1000); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await local.Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "import Promise from 'bluebird';\nasync function wait() { await Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "const Promise = custom;\nasync function wait() { await Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.any([Future.value(1)]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.wait([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { final never = Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.any([]).timeout(const Duration(seconds: 1)); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'custom.dart';\nvoid main() async { await Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main(Future) async { await Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nimport 'custom.dart';\nvoid main() async { await Future.any([]); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "wait.ts",
+          "source": "// async function wait() { await Promise.race([]); }\n",
+          "expected": false,
+          "rationale": "Code-shaped comments must remain data rather than awaited races."
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait(Promise: Scheduler) { await Promise.race([]); }\n",
+          "expected": false,
+          "rationale": "An explicitly shadowed scheduler is not the native Promise class."
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([,,,]); }\n",
+          "expected": false,
+          "rationale": "A sparse array yields undefined participants and is not an empty iterable."
+        },
+        {
+          "path": "wait.dart",
+          "source": "/* import 'dart:async';\nvoid main() async { await Future.any([]); }\n */",
+          "expected": false,
+          "rationale": "Comment contents do not create a native asynchronous wait."
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nclass Future {}\nvoid main() async { await Future.any([]); }\n",
+          "expected": false,
+          "rationale": "A local Future type is not the imported standard library class."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP695",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#sorting_with_non-well-formed_comparator",
+          "claim": "Comparators must provide consistent signed ordering results; boolean comparators can yield engine-dependent or unintended order."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/682.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: only literal native arrays with at least two entries and a simple two-parameter comparison callback. Custom receivers, spreads, numeric comparators, complex bodies and visible prototype changes stay unresolved.",
+      "positive": [
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const toSorteded = [3,1,2].toSorted((a,b) => a < b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a: number,b: number) => { return a >= b; });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a,b) => a - b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a,b) => b - a);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a,b) => a > b ? 1 : a < b ? -1 : 0);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = custom.sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [].sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [1].sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [...items].sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort(compare);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort[(a,b) => a > b];\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "sort.ts",
+          "source": "/* const sorted = [3,1,2].sort((a,b) => a > b);\n */",
+          "expected": false,
+          "rationale": "Comparator-looking prose is not a native array operation."
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = matrix[3,1,2].sort((a,b) => a > b);\n",
+          "expected": false,
+          "rationale": "An indexed custom receiver is not an array literal despite its closing bracket."
+        },
+        {
+          "path": "sort.ts",
+          "source": "Array.prototype.sort = custom;\nconst sorted = [3,1,2].sort((a,b) => a > b);\n",
+          "expected": false,
+          "rationale": "Visible prototype replacement makes native sort semantics unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP696",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlreadersettings.maxcharactersfromentities",
+          "claim": "Zero removes the entity expansion cap; external resolver restrictions do not bound internal entity expansion."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/776.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: settings must be passed directly to XmlReader.Create. DTD prohibition, finite entity/document caps, aliases, custom types, duplicate fields and complex strings stay silent. Trusted finite XML can justify the setting.",
+      "positive": [
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0L, XmlResolver = null });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "var reader = System.Xml.XmlReader.Create(input, new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 128 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, MaxCharactersFromEntities = 0 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0, MaxCharactersInDocument = 1024 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = limit });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using Custom.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = CustomReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0, ConformanceLevel = ConformanceLevel.Fragment });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0, MaxCharactersFromEntities = 100 });\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "reader.cs",
+          "source": "/* using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n */",
+          "expected": false,
+          "rationale": "XML configuration in a comment cannot change parser bounds."
+        },
+        {
+          "path": "reader.cs",
+          "source": "class XmlReader {}\nusing System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n",
+          "expected": false,
+          "rationale": "A local reader type prevents native framework identity from being inferred."
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new OtherSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n",
+          "expected": false,
+          "rationale": "A settings-shaped custom object is not a native XmlReaderSettings instance."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP697",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://docs.python.org/3/library/logging.config.html#logging.config.listen",
+          "claim": "The standard logging listener accepts configuration on localhost; verification should authenticate bytes before object construction/evaluation."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/94.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: direct import, literal valid port, verify=None and immediate start only. Authenticated callbacks, mere construction, aliases, custom/escaped bindings and dynamic configuration stay unresolved.",
+      "positive": [
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "from logging.config import listen as serve\nserve(9030, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config as config\nconfig.listen(0, None).start()\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, verify=verify_signature).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, verify=None)\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(configured_port, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(-1, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(True, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import custom.config\ncustom.config.listen(9030, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, **options).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, verify=None, port=1).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.__dict__.update({'listen': safe})\nlogging.config.listen(9030,verify=None).start()"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "listener.py",
+          "source": "# import logging.config\n# logging.config.listen(9030, verify=None).start()\n# ",
+          "expected": false,
+          "rationale": "Commented listener examples cannot open a configuration channel."
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen = safe_listener\nlogging.config.listen(9030, verify=None).start()\n",
+          "expected": false,
+          "rationale": "Overwriting the listener invalidates the imported function identity."
+        },
+        {
+          "path": "listener.py",
+          "source": "import local as logging\nimport logging.config\nlogging.config.listen(9030, verify=None).start()\n",
+          "expected": false,
+          "rationale": "A conflicting import leaves the logging namespace unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP698",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/zlib.html",
+          "claim": "Synchronous compression executes on the calling thread before returning a value; await does not offload that work."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: directly awaited imported synchronous compression/decompression only. Small intentional work may be acceptable. Asynchronous APIs, streams, custom functions, shadows and calls not directly awaited stay silent.",
+      "positive": [
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzipSync(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync as encodeNow} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await encodeNow(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "const zlib = require('node:zlib');\nasync function encode(data: Uint8Array) { return await zlib.brotliCompressSync(data); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return gzipSync(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzip} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzip(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from './compression';\nasync function encode(data: Uint8Array) { return await gzipSync(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import type {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzipSync(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await runInWorker(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await Promise.resolve(gzipSync(data)); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "compression.ts",
+          "source": "/* import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzipSync(data); }\n */",
+          "expected": false,
+          "rationale": "Commented compression examples cannot block the calling thread."
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array, gzipSync: Compressor) { return await gzipSync(data); }\n",
+          "expected": false,
+          "rationale": "A local compressor parameter has unknown synchronous semantics."
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzipSync(...inputs); }\n",
+          "expected": false,
+          "rationale": "Spread arguments leave overload and invocation validity unresolved."
+        }
+      ]
     }
   ]
 }

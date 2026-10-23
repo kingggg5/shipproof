@@ -515,6 +515,40 @@ def precision_artifact_entry(rule: Any) -> dict[str, Any]:
 def build_payloads() -> dict[str, str]:
     rules = {rule.rule_id: rule for rule in RULES}
     grouped: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+    # SP346 moved from a line pattern to import-bound AST evidence. Preserve all
+    # authored cases in the existing legacy partition rather than reusing an ID.
+    from build_broad_quality_contracts import records as broad_records
+
+    task_row = next(row for row in broad_records() if row["rule_id"] == "SP346")
+    task_rule = rules["SP346"]
+    task_base = {"ecosystem": "python", "path": "tasks.py"}
+    task_cases: dict[str, list] = {"positive": [], "negative": [], "adversarial": []}
+    for kind in task_cases:
+        for index, case in enumerate(task_row[kind]):
+            case_id = f"{kind}-{index}"
+            if kind == "positive":
+                converted = positive_case(task_rule, task_base, case_id, case["source"])
+            else:
+                path = structural_case_path("SP346", task_base, case_id)
+                if structural_findings("SP346", path, case["source"]):
+                    raise ValueError("SP346 safe/unresolved contract unexpectedly matched")
+                converted = {"path": path, **encoded_text(case["source"])}
+                if kind == "adversarial":
+                    converted.update(expected=case["expected"], rationale=case["rationale"])
+            task_cases[kind].append(converted)
+    grouped["python"].append(
+        {
+            "rule_id": "SP346",
+            "title": task_rule.title,
+            "category": task_rule.category,
+            "expected_severity": task_rule.severity,
+            "expected_confidence": task_rule.confidence,
+            "cwe": task_rule.cwe,
+            "frameworks": [],
+            "false_positive_analysis": task_row["false_positive_analysis"],
+            "cases": task_cases,
+        }
+    )
     for rule_id, base in sorted(STRUCTURAL_CASES.items(), key=lambda item: rule_number(item[0])):
         if rule_id in PRECISION_RULE_IDS:
             continue

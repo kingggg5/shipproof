@@ -12,7 +12,7 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 661 | Versioned behavior; covered by structure and regression tests |
+| Executable scanner rules | 666 | Current executable registry through SP698 |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
@@ -33,10 +33,16 @@ distinction instead of promoting those keyword matches into confirmed vulnerabil
 
 The [2026-10 TypeScript/.NET/Dart field-cohort record](../research/field-cohort-ts-dotnet-dart-2026-10.md)
 documents bounded detector scope and duplicate decisions for SP688/SP689, SP170,
-SP056/SP084, and the SP596 correction. Evaluation is still in progress: this is
-not a zero-false-positive claim, and no final cohort precision or performance
-counts are available. The maintainer-only [failure catalog](https://github.com/kingggg5/shipproof/blob/main/docs/knowledge/failure-catalog.md)
+SP056/SP084, and the SP596 correction. This prior cohort's bounded evaluation
+record is complete and historical; it is not a zero-false-positive claim, and no
+final cohort precision or performance counts are asserted. The maintainer-only [failure catalog](https://github.com/kingggg5/shipproof/blob/main/docs/knowledge/failure-catalog.md)
 is excluded from npm packaging to preserve package size ceilings.
+
+The [2026-10 broad-quality cohort record](../research/broad-quality-cohort-2026-10.md)
+documents SP693–SP698, the SP346/SP375 scope repairs, and retirement of SP348.
+The six new rules are advisory. Evaluation is pending, with no test or performance
+metrics claimed. The 2,800 expert/annual and 5,000 language-catalog entries remain
+non-executable research candidates and cannot emit findings.
 
 ## Reading protocol
 
