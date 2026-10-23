@@ -21,6 +21,61 @@ class LexicalLimitError(ValueError):
     """Unsupported incomplete lexical input or exhausted token budget."""
 
 
+def dart_literal_end(source: str, start: int, nesting: int = 0) -> int:
+    """Skip raw, multiline and interpolated Dart strings without evaluating them."""
+    if nesting > 32:
+        raise LexicalLimitError("Dart interpolation nesting exceeded")
+    raw = source[start] == "r"
+    quote_start = start + int(raw)
+    quote = source[quote_start]
+    delimiter = quote * 3 if source.startswith(quote * 3, quote_start) else quote
+    cursor = quote_start + len(delimiter)
+    while cursor < len(source):
+        if source.startswith(delimiter, cursor):
+            return cursor + len(delimiter)
+        if not raw and source[cursor] == "\\":
+            cursor += 2
+            continue
+        if not raw and source.startswith("${", cursor):
+            cursor += 2
+            depth = 1
+            while cursor < len(source) and depth:
+                char = source[cursor]
+                if char in {"'", '"'} or (
+                    char == "r" and source[cursor + 1 : cursor + 2] in {"'", '"'}
+                ):
+                    cursor = dart_literal_end(source, cursor, nesting + 1)
+                elif source.startswith("//", cursor):
+                    end = source.find("\n", cursor)
+                    cursor = len(source) if end < 0 else end
+                elif source.startswith("/*", cursor):
+                    comment_depth = 1
+                    cursor += 2
+                    while cursor < len(source) and comment_depth:
+                        if source.startswith("/*", cursor):
+                            comment_depth += 1
+                            cursor += 2
+                        elif source.startswith("*/", cursor):
+                            comment_depth -= 1
+                            cursor += 2
+                        else:
+                            cursor += 1
+                        if comment_depth > 128:
+                            raise LexicalLimitError("Dart comment nesting exceeded")
+                else:
+                    depth += int(char == "{") - int(char == "}")
+                    if depth > 128:
+                        raise LexicalLimitError("Dart interpolation braces exceeded")
+                    cursor += 1
+            if depth:
+                raise LexicalLimitError("unterminated Dart interpolation")
+            continue
+        if len(delimiter) == 1 and source[cursor] in "\r\n":
+            raise LexicalLimitError("newline in Dart single-line literal")
+        cursor += 1
+    raise LexicalLimitError("unterminated Dart literal")
+
+
 def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
     result: list[tuple[str, int, int]] = []
 
@@ -72,8 +127,10 @@ def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
                 depth = 1
                 index += 2
                 while index < len(source) and depth:
-                    if language == "rust" and source.startswith("/*", index):
+                    if language in {"rust", "dart"} and source.startswith("/*", index):
                         depth += 1
+                        if language == "dart" and depth > 128:
+                            raise LexicalLimitError("Dart comment nesting exceeded")
                         index += 2
                     elif source.startswith("*/", index):
                         depth -= 1
@@ -103,6 +160,12 @@ def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
                     record(source[index:end], start, end)
                     index = end
                     continue
+        if language == "dart" and (
+            char in {"'", '"'} or (char == "r" and source[index + 1 : index + 2] in {"'", '"'})
+        ):
+            index = dart_literal_end(source, start)
+            record(source[start:index], start, index)
+            continue
         if char in ({"'", '"', "`"} if language == "lua" else {"'", '"'}):
             index += 1
             while index < len(source):

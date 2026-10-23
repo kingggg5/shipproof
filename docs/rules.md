@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 656 deterministic executable rules (`SP001`-`SP687`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
+ShipProof applies 658 deterministic executable rules (`SP001`-`SP689`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -30,6 +30,11 @@ is not a TypeScript compiler result or proof that the application is safe.
 The Next.js signature accepts only `next.config.js`, `.mjs` and `.ts`; shadowed
 CommonJS module objects, multiple exports and unsupported config extensions stay
 silent rather than being treated as deployed image configuration.
+
+`SP596` is limited to a declared Next.js project with an app page/layout entry,
+an imported React client hook call, and no actual client directive. Shared
+components and ordinary React files do not each require their own directive;
+this is not a complete client/server module-graph analysis.
 
 `SP591` is a medium advisory for an explicit client-module/value-import boundary,
 not a confirmed credential leak or compiled-bundle result. Whole `import type`
@@ -62,11 +67,25 @@ For imported `ws` server constructors, literal `maxPayload` zero or a bounded
 decimal integer becoming nonpositive after signed-32-bit conversion disables
 the cap; omission has a finite default. Unknown overrides remain unresolved.
 
-Existing `SP056`/`SP084` gain a C# variant, not new IDs: typed ASP.NET cookie,
-response, or context parameters must directly `Append` a sensitive literal name
-with inline `CookieOptions` explicitly setting `HttpOnly`/`Secure` false.
-Missing flags stay silent; middleware can override this local configuration.
-See the [source and boundary record](https://github.com/kingggg5/shipproof/blob/main/research/transport-cookie-cohort-2026-10.md).
+Existing `SP056`/`SP084` gain an additional C# variant, not new IDs: a typed
+`CookieAuthenticationOptions` parameter explicitly assigns `false` to
+`Cookie.HttpOnly` or `CookieSecurePolicy.None` to `Cookie.SecurePolicy`. These
+local options may be overridden by middleware. Dart HTTP coverage of `SP170`
+requires imported `package:http`, a literal external HTTP URI and an explicit
+Authorization key. Header values and transport remain unverified. This variant
+is advisory; bare HTTP URL text and custom objects stay quiet. Existing FTP/Telnet
+signatures are unchanged. See the
+[source and boundary record](https://github.com/kingggg5/shipproof/blob/main/research/field-cohort-ts-dotnet-dart-2026-10.md).
+
+`SP688` and `SP689` are medium, nonblocking structural advisories. `SP688` requires
+an exported Next.js image configuration that enables SVG, sets inline content
+disposition, and explicitly empties image CSP together. It does not establish
+attacker control or deployed response behavior. `SP689` requires a typed
+`KestrelServerOptions` parameter explicitly assigning
+`Limits.MaxRequestBodySize = null`; omission retains defaults, and proxy or
+per-request limits may still apply. The field cohort has bounded source scope;
+results do not imply zero false positives or final precision/performance counts.
+See the [field-cohort research record](../research/field-cohort-ts-dotnet-dart-2026-10.md).
 
 ## Node.js version declarations
 
@@ -802,4 +821,6 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP685`** | MEDIUM | Security | Declared Node.js branch is past upstream support | Structural |
 | **`SP686`** | MEDIUM | Security | Node TLS configuration selects a legacy protocol | Structural |
 | **`SP687`** | MEDIUM | Security | WebSocket server payload limit is disabled or overflows | Structural |
+| **`SP688`** | MEDIUM | Security | Next.js SVG image delivery explicitly removes browser safeguards | Structural |
+| **`SP689`** | MEDIUM | Security | Kestrel request-body size limit explicitly disabled | Structural |
 

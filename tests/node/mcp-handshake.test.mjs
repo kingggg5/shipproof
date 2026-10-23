@@ -208,10 +208,14 @@ test(
         ["socket.ts", "import {WebSocketServer} from 'ws'; new WebSocketServer({noServer:true,maxPayload:65536});", []],
         ["cookies.cs", 'using Microsoft.AspNetCore.Http; void Set(IResponseCookies cookies, string value) { cookies.Append("session", value, new CookieOptions { HttpOnly = false, Secure = false }); }', ["SP056", "SP084"]],
         ["cookies.cs", 'using Microsoft.AspNetCore.Http; var set = (HttpContext context, string value) => { context.Response.Cookies.Append("session", value, new CookieOptions() { HttpOnly = false, Secure = false }); };', ["SP056", "SP084"]],
+        ["next.config.ts", "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};", ["SP688"]],
+        ["server.cs", "using Microsoft.AspNetCore.Server.Kestrel.Core; void Configure(KestrelServerOptions options) { options.Limits.MaxRequestBodySize = null; }", ["SP689"]],
+        ["client.dart", "import 'package:http/http.dart' as http; Future<void> send(String bearer) async { await http.get(Uri.parse('http://service.example.org'), headers: {'Authorization': bearer}); }", ["SP170"]],
+        ["client.dart", "import 'package:http/http.dart' as http; Future<void> send(String bearer) async { await http.get(Uri.parse('https://service.example.org'), headers: {'Authorization': bearer}); }", []],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);
-        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP686", "SP687"].includes(finding.rule_id));
+        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP170", "SP686", "SP687", "SP688", "SP689"].includes(finding.rule_id));
         assert.deepEqual(findings.map((finding) => finding.rule_id).sort(), expectedRules);
         assert.ok(findings.every((finding) => finding.tier === "advisory" && finding.proof_level === "L1"));
       }

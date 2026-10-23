@@ -508,9 +508,9 @@
             "rationale": "A typed parameter in one method must not establish the identity of a similarly named field in a different method."
           }
         ],
-        "false_positive_analysis": "Names alone do not establish a credential. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit HttpOnly=false; it is advisory because middleware can override flags. Verify the final browser header."
+        "false_positive_analysis": "Names alone do not establish a credential. C# requires typed ASP.NET parameters and inline CookieOptions or a flat CookieAuthenticationOptions policy block with explicit HttpOnly=false. These variants are advisory because middleware can override flags; verify final headers."
       },
-      "false_positive_analysis": "Names alone do not establish a credential. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit HttpOnly=false; it is advisory because middleware can override flags. Verify the final browser header.",
+      "false_positive_analysis": "Names alone do not establish a credential. C# requires typed ASP.NET parameters and inline CookieOptions or a flat CookieAuthenticationOptions policy block with explicit HttpOnly=false. These variants are advisory because middleware can override flags; verify final headers.",
       "sources": [
         {
           "url": "https://cwe.mitre.org/data/definitions/1004.html",
@@ -2441,9 +2441,9 @@
             "rationale": "A typed parameter in one method must not establish the identity of a similarly named field in a different method."
           }
         ],
-        "false_positive_analysis": "Localhost-only development and upstream cookie policy require review. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit Secure=false; it is advisory, not final-header evidence."
+        "false_positive_analysis": "Local development and upstream policy require review. C# requires typed ASP.NET parameters with inline Secure=false or a flat authentication-cookie SecurePolicy=None assignment. SameAsRequest, branches and unresolved changes stay silent; local policy is advisory, not final-header evidence."
       },
-      "false_positive_analysis": "Localhost-only development and upstream cookie policy require review. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit Secure=false; it is advisory, not final-header evidence.",
+      "false_positive_analysis": "Local development and upstream policy require review. C# requires typed ASP.NET parameters with inline Secure=false or a flat authentication-cookie SecurePolicy=None assignment. SameAsRequest, branches and unresolved changes stay silent; local policy is advisory, not final-header evidence.",
       "sources": [
         {
           "url": "https://cwe.mitre.org/data/definitions/614.html",

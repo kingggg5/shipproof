@@ -1,6 +1,6 @@
 # ShipProof next development plan
 
-Last reviewed: 2026-09-04 (P0/P1 recheck; historical benchmark snapshot below is unchanged).
+Last reviewed: 2026-10-23 (current field-cohort scope added; dated baseline below remains historical).
 
 สถานะ: แผนหลักสำหรับเปลี่ยน research backlog ให้เป็น production evidence ที่เชื่อถือได้ โดยไม่เปิดกฎจำนวนมากแบบ big-bang และไม่ลดมาตรฐาน false-positive
 
@@ -18,7 +18,7 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 
 ข้อมูลต่อไปนี้เป็น snapshot วันที่ 2026-08-27 ไม่ใช่ตัวเลขรับประกันในอนาคตหรือผลทดสอบรอบ recheck:
 
-- executable scanner rules: 656
+- pre-cohort rule baseline: 656 at `09adda6` (2026-10-23, not the dated August measurement)
 - research inventory: 7,800 catalogued candidates plus 1,000 reserved promotion slots (`SP651–SP9450`)
 - language-specific research candidates: 5,000 (`SP4451–SP9450`)
 - project Python test cases ที่ discover ได้: 636 พร้อม Node, package และ end-to-end suites
@@ -27,6 +27,20 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 - default path: read-only, offline และไม่มี dependency เพิ่ม
 
 Candidate ID ไม่ได้แปลว่ามี detector แล้ว จำนวน research slots จึงห้ามนำไปรวมกับ executable rule count ในเอกสารหรือการตลาด
+
+## Current field-cohort status — 2026-10-23
+
+- executable scanner rules: 658
+
+The registry now contains 658 executable rules through SP689. The bounded
+TypeScript/.NET/Dart cohort adds SP688/SP689, extends SP170 and SP056/SP084,
+and narrows SP596. SP688 and SP689 are advisory regardless of their medium
+severity. Local pinned-snapshot evaluation and compatibility gates are complete;
+the scoped source review is not a universal zero-false-positive or independent
+precision claim. See the [cohort evidence and limits](../research/field-cohort-ts-dotnet-dart-2026-10.md).
+
+The failure catalog is maintainer-source-only and excluded from npm to preserve
+package ceilings; see the [catalog](knowledge/failure-catalog.md).
 
 ## หลักการตัดสินใจ
 

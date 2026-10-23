@@ -1,6 +1,6 @@
 # ShipProof research notebook
 
-Last cohort review: 2026-10-22; older notebook entries retain their original context.
+Last cohort review: 2026-10-23; older notebook entries retain their original context.
 
 This notebook records the external pages consulted while ShipProof was designed. It is intentionally separate from the [production playbook](production-playbook.md): the playbook contains ShipProof's operating model; this file preserves provenance, challenges assumptions, and makes later re-verification possible.
 
@@ -12,7 +12,7 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 656 | Versioned behavior; covered by structure and regression tests |
+| Executable scanner rules | 658 | Versioned behavior; covered by structure and regression tests |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
@@ -30,6 +30,13 @@ verifies the 21 October 2026 runtime advisories against PHP/GHSA and documents e
 branch cutoffs, vendor-backport uncertainty and the source-only evidence boundary.
 The 0.12 release also corrects syslog argument positions and the C# DTD/resolver
 distinction instead of promoting those keyword matches into confirmed vulnerabilities.
+
+The [2026-10 TypeScript/.NET/Dart field-cohort record](../research/field-cohort-ts-dotnet-dart-2026-10.md)
+documents bounded detector scope and duplicate decisions for SP688/SP689, SP170,
+SP056/SP084, and the SP596 correction. Evaluation is still in progress: this is
+not a zero-false-positive claim, and no final cohort precision or performance
+counts are available. The maintainer-only [failure catalog](https://github.com/kingggg5/shipproof/blob/main/docs/knowledge/failure-catalog.md)
+is excluded from npm packaging to preserve package size ceilings.
 
 ## Reading protocol
 

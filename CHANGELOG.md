@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add advisory SP688 for the explicit Next.js SVG inline/empty-CSP combination
+  and SP689 for a typed Kestrel null body limit. Extend SP170 to a bounded Dart
+  `package:http` external-HTTP Authorization case and SP056/SP084 to typed C#
+  `CookieAuthenticationOptions`; narrow SP596 to qualifying Next.js app entries.
+  These source-bounded checks do not establish deployment behavior or zero false
+  positives. Field evaluation is in progress; final precision/performance counts
+  are not yet available.
+
 - Add nonblocking transport advisories SP686/SP687 for legacy Node TLS options
   and `ws` payload-cap opt-outs/32-bit overflow; omitted payload limits remain
   finite. Extend SP056/SP084 with explicit typed C# CookieOptions false flags.

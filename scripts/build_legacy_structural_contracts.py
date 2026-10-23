@@ -201,12 +201,13 @@ STRUCTURAL_CASES: dict[str, dict[str, str]] = {
         "adversarial": "'use server';\nconst mutate = prisma.user['up' + 'date'];\nexport async function updateItem() { await mutate({ where: { id: '1' } }); }\n",
     },
     "SP596": {
-        "ecosystem": "react",
-        "path": "page.tsx",
-        "positive": "export default function Page() {\n  const [count] = useState(0);\n  return <div>{count}</div>;\n}\n",
-        "negative_a": "'use client';\nexport default function Page() {\n  const [count] = useState(0);\n  return <div>{count}</div>;\n}\n",
+        "ecosystem": "nextjs",
+        "path": "app/page.tsx",
+        "positive": "import {useState} from 'react';\nexport default function Page() {\n  const [count] = useState(0);\n  return <div>{count}</div>;\n}\n",
+        "negative_a": "'use client';\nimport {useState} from 'react';\nexport default function Page() {\n  const [count] = useState(0);\n  return <div>{count}</div>;\n}\n",
         "negative_b": "export default function Page() { return <div>static</div>; }\n",
-        "adversarial": "const stateHook = useState;\nexport default function Page() { const [count] = stateHook(0); return <div>{count}</div>; }\n",
+        "negative_c": "import {useState} from './local-state';\nexport default function Page() { const [count] = useState(0); return <div>{count}</div>; }\n",
+        "adversarial": "import {useState} from 'react';\nconst stateHook = useState;\nexport default function Page() { const [count] = stateHook(0); return <div>{count}</div>; }\n",
     },
     "SP598": {
         "ecosystem": "nextjs",

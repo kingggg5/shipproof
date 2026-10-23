@@ -1,16 +1,43 @@
-"""Narrow typed-parameter cookie checks, not general C# type/data-flow analysis."""
+"""Narrow typed ASP.NET option checks, not general C# type/data-flow analysis."""
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 
 from js_config_checks import IDENTIFIER, literal, segments
 
 NAMESPACE = ["Microsoft", ".", "AspNetCore", ".", "Http", "."]
+OPTION_NAMESPACES = {
+    "CookieAuthenticationOptions": [
+        "Microsoft",
+        ".",
+        "AspNetCore",
+        ".",
+        "Authentication",
+        ".",
+        "Cookies",
+        ".",
+    ],
+    "KestrelServerOptions": [
+        "Microsoft",
+        ".",
+        "AspNetCore",
+        ".",
+        "Server",
+        ".",
+        "Kestrel",
+        ".",
+        "Core",
+        ".",
+    ],
+}
 RECEIVERS = {
     "IResponseCookies": [".", "Append", "("],
     "HttpResponse": [".", "Cookies", ".", "Append", "("],
     "HttpContext": [".", "Response", ".", "Cookies", ".", "Append", "("],
+    "CookieAuthenticationOptions": [],
+    "KestrelServerOptions": [],
 }
 SENSITIVE_NAMES = frozenset(
     {
@@ -27,11 +54,92 @@ SENSITIVE_NAMES = frozenset(
 )
 
 
+def xml_precision_lines(source: str, tokenize, structure) -> list[int]:
+    """Narrow initializer-to-reader evidence; not a general C# parser."""
+    if any(marker in source for marker in ('@"', '$"', '"""')):
+        return []
+    tokens = tokenize(source)
+    values = [value for value, _ in tokens]
+    pairs, depths = structure(values)
+    if not depths:
+        return []
+    types = {"XmlReaderSettings", "XmlReader", "XmlUrlResolver", "DtdProcessing"}
+    if any(
+        values[i] in {"class", "struct", "record", "interface"} and values[i + 1] in types
+        for i in range(len(values) - 1)
+    ):
+        return []
+    if any(
+        values[i] == "using" and values[i + 1] in types and values[i + 2] == "="
+        for i in range(len(values) - 2)
+    ):
+        return []
+    if any(
+        values[i] in {"var", "const"} and values[i + 1] in types for i in range(len(values) - 1)
+    ):
+        return []
+    counts = Counter(values)
+
+    def qualified(start: int, name: str) -> int:
+        if values[start : start + 5] == ["System", ".", "Xml", ".", name]:
+            return start + 5
+        return start + 1 if values[start : start + 1] == [name] else -1
+
+    hits = []
+    for index, value in enumerate(values):
+        if value != "new" or index < 2 or values[index - 1] != "=":
+            continue
+        if index < 3 or values[index - 3] not in {"var", "XmlReaderSettings"}:
+            continue
+        name = values[index - 2]
+        if not re.fullmatch(r"[A-Za-z_][\w]*", name) or counts[name] != 2:
+            continue
+        opening = qualified(index + 1, "XmlReaderSettings")
+        if opening < 0:
+            continue
+        if values[opening : opening + 2] == ["(", ")"]:
+            opening += 2
+        closing = pairs.get(opening)
+        if closing is None or values[opening] != "{":
+            continue
+        options = {}
+        for start, end in segments(values, pairs, opening):
+            if values[start + 1 : start + 2] != ["="] or values[start] in options:
+                options = {}
+                break
+            options[values[start]] = (start + 2, end)
+        dtd = options.get("DtdProcessing")
+        resolver = options.get("XmlResolver")
+        if dtd is None or resolver is None:
+            continue
+        dtd_end = qualified(dtd[0], "DtdProcessing")
+        resolver_type = qualified(resolver[0] + 1, "XmlUrlResolver")
+        if (
+            dtd_end < 0
+            or values[dtd_end : dtd[1]] != [".", "Parse"]
+            or values[resolver[0]] != "new"
+            or resolver_type < 0
+            or values[resolver_type : resolver[1]] != ["(", ")"]
+        ):
+            continue
+        for cursor in range(closing + 1, min(len(values), closing + 513)):
+            if cursor and values[cursor - 1] == ".":
+                continue
+            member = qualified(cursor, "XmlReader")
+            if member < 0 or values[member : member + 3] != [".", "Create", "("]:
+                continue
+            args = segments(values, pairs, member + 2)
+            if len(args) == 2 and values[args[1][0] : args[1][1]] == [name]:
+                hits.append(source.count("\n", 0, tokens[index][1]) + 1)
+                break
+    return list(dict.fromkeys(hits))
+
+
 def signature_offsets(
     tokens: list[tuple[str, int]], pairs: dict[int, int]
 ) -> list[tuple[str, int]]:
     values = [value for value, _ in tokens]
-    types = {*RECEIVERS, "CookieOptions"}
+    types = {*RECEIVERS, "CookieOptions", "CookieSecurePolicy"}
     # Using aliases, local types, dynamic dispatch and policy hooks need semantic analysis.
     if any(value in {"dynamic", "UseCookiePolicy", "CookiePolicyOptions", "#"} for value in values):
         return []
@@ -44,17 +152,27 @@ def signature_offsets(
             return []
         if value == "using" and values[i + 2 : i + 3] == ["="]:
             return []
-    imported = any(values[i : i + 7] == ["using", *NAMESPACE[:-1], ";"] for i in range(len(values)))
+    imports = {
+        name: any(
+            values[i : i + len(namespace) + 1] == ["using", *namespace[:-1], ";"]
+            for i in range(len(values))
+        )
+        for name in types
+        for namespace in [OPTION_NAMESPACES.get(name, NAMESPACE)]
+    }
 
     def type_end(start: int, expected: str) -> int:
+        namespace = OPTION_NAMESPACES.get(expected, NAMESPACE)
         global_name = values[start : start + 3] == ["global", ":", ":"]
         if global_name:
             start += 3
-        if values[start : start + 6] == NAMESPACE and values[start + 6 : start + 7] == [expected]:
-            return start + 7
+        if values[start : start + len(namespace)] == namespace and values[
+            start + len(namespace) : start + len(namespace) + 1
+        ] == [expected]:
+            return start + len(namespace) + 1
         return (
             start + 1
-            if not global_name and imported and values[start : start + 1] == [expected]
+            if not global_name and imports[expected] and values[start : start + 1] == [expected]
             else -1
         )
 
@@ -69,7 +187,7 @@ def signature_offsets(
             if end < 0 or end + 1 >= len(values) or values[end + 1] not in {",", ")"}:
                 continue
             name = values[end]
-            if not IDENTIFIER.fullmatch(name) or counts[name] != 2:
+            if not IDENTIFIER.fullmatch(name) or counts[name] < 2:
                 continue
             # A declaration and exactly one call, with no reassignment, shadow or escape.
             use = last_use[name]
@@ -90,6 +208,57 @@ def signature_offsets(
                 or values[use - 1] in {".", "?."}
                 or values[use + 1 : use + 1 + len(members)] != members
             ):
+                continue
+            if receiver in OPTION_NAMESPACES:
+                closing = pairs[body]
+                if closing - body > 512:
+                    continue
+                fields = {}
+                cursor = body + 1
+                uses = 0
+                while cursor < closing:
+                    prefix = [
+                        name,
+                        ".",
+                        "Cookie" if receiver == "CookieAuthenticationOptions" else "Limits",
+                        ".",
+                    ]
+                    if values[cursor : cursor + 4] != prefix or values[cursor + 5 : cursor + 6] != [
+                        "="
+                    ]:
+                        break
+                    key = values[cursor + 4]
+                    end_value = cursor + 6
+                    while end_value < closing and values[end_value] != ";":
+                        end_value += 1
+                    if end_value == closing:
+                        break
+                    allowed = (
+                        {"HttpOnly", "SecurePolicy"}
+                        if receiver == "CookieAuthenticationOptions"
+                        else {"MaxRequestBodySize"}
+                    )
+                    if key not in allowed:
+                        break
+                    fields[key] = (cursor + 6, end_value, cursor)
+                    uses += 1
+                    cursor = end_value + 1
+                if cursor != closing or uses + 1 != counts[name]:
+                    continue  # Branches, escapes and later reconfiguration are unresolved.
+                for key, (first, last, statement) in fields.items():
+                    rule = None
+                    if key == "HttpOnly" and values[first:last] == ["false"]:
+                        rule = "SP056"
+                    elif key == "SecurePolicy":
+                        enum_end = type_end(first, "CookieSecurePolicy")
+                        if enum_end >= 0 and values[enum_end:last] == [".", "None"]:
+                            rule = "SP084"
+                    elif key == "MaxRequestBodySize" and values[first:last] == ["null"]:
+                        rule = "SP689"
+                    if rule:
+                        hits.append((rule, tokens[statement][1]))
+                continue
+            if counts[name] != 2:
                 continue
             opening = use + len(members)
             args = segments(values, pairs, opening)

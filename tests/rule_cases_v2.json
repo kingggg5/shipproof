@@ -3291,6 +3291,224 @@
       "expected_confidence": "high",
       "blocking_eligible": false,
       "false_positive_analysis": "Advisory: trusted bounded workloads or independent transport controls can justify this setting. An omitted option has a finite default. Only direct imported server constructors and exact bounded decimal integers are checked, not clients or computed options."
+    },
+    {
+      "rule_id": "SP688",
+      "sources": [
+        {
+          "url": "https://nextjs.org/docs/app/api-reference/components/image#dangerouslyallowsvg",
+          "claim": "Next recommends a restrictive image CSP and attachment disposition when serving SVG; enabling SVG alone does not establish missing protections."
+        },
+        {
+          "url": "https://github.com/vercel/next.js/blob/canary/packages/next/src/server/image-optimizer.ts",
+          "claim": "The image response uses the configured CSP and disposition values. Empty CSP is not evidence of a restrictive policy; deployment may still add controls."
+        }
+      ],
+      "positive": [
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.js",
+          "source": "module.exports = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.mjs",
+          "source": "const config = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; export default config;"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'script-src none',contentSecurityPolicy:''}};"
+        }
+      ],
+      "negative": [
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:false,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'attachment',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:\"script-src 'none'; sandbox;\"}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:policy}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',unoptimized:true}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',loader:'custom'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',loaderFile:'./image-loader.ts'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',contentDispositionType:'attachment'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',...hardened}};"
+        },
+        {
+          "path": "settings.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {output:'export',images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const unused = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; export default {};"
+        },
+        {
+          "path": "next.config.cts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "next.config.ts",
+          "source": "/* export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; */",
+          "expected": false,
+          "rationale": "Export-shaped comment text cannot configure the optimizer or clear its response policy."
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',['contentSecurityPolicy']:''}};",
+          "expected": false,
+          "rationale": "Computed property identity stays unresolved rather than overriding known protective options."
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,\ncontentDispositionType:'inline',\ncontentSecurityPolicy:''}};",
+          "expected": true,
+          "rationale": "Multiline literal configuration preserves all three explicitly unsafe header choices."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "false_positive_analysis": "Advisory only. Trusted images or a reverse proxy can supply independent controls. SVG enablement alone, default/explicit protective CSP, attachment delivery, custom loaders, unoptimized images and output overrides stay silent.",
+      "blocking_eligible": false
+    },
+    {
+      "rule_id": "SP689",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.server.kestrel.core.kestrelserverlimits.maxrequestbodysize?view=aspnetcore-10.0",
+          "claim": "Kestrel's nullable body-size property disables this limit when null; a finite default and independent per-request or proxy limits must be distinguished."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Resource-consumption limits are a CWE-400 control, but an absent local cap alone does not prove endpoint reachability or exploitable exhaustion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvar configure = (KestrelServerOptions options) => {\n options.Limits.MaxRequestBodySize = null;\n};"
+        },
+        {
+          "path": "Server.cs",
+          "source": "void Configure(global::Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = 4096; options.Limits.MaxRequestBodySize = null;\n}"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = 4096;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n \n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = configuredLimit;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null; options.Limits.MaxRequestBodySize = 4096;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n if (development) options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n Customize(options); options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null; Register(options);\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Project.Server;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "class KestrelServerOptions {}\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using KestrelServerOptions = Project.Options;\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(dynamic options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Server.cs",
+          "source": "/*\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}*/",
+          "expected": false,
+          "rationale": "A comment cannot bind server options or disable a request-processing resource limit."
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = /* deliberately unbounded */ null;\n}",
+          "expected": true,
+          "rationale": "A comment inside the actual null assignment must not hide the explicit local limit opt-out."
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n}\nvoid Other() { options.Limits.MaxRequestBodySize = null;\n}",
+          "expected": false,
+          "rationale": "An options parameter from another method does not establish the type of a similarly named field."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "false_positive_analysis": "Advisory only. An independent cap or intentional streaming may justify this option. Require a locally bound standard options type and a flat literal configuration block; defaults, finite limits, reconfiguration, custom types and branching stay unresolved.",
+      "blocking_eligible": false
     }
   ]
 }

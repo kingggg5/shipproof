@@ -56,8 +56,8 @@
       "path": "structural-nextjs.v2.json",
       "engine": "structural",
       "ecosystem": "nextjs",
-      "rule_count": 7,
-      "sha256": "d50325e0b45a2cd5e51ddc9726fb9a01ac5b7e9e439e285f0c9c010a49344576"
+      "rule_count": 8,
+      "sha256": "c5a807e9031d1dfca57e87dd84380a939b618b7c7ae1483705bfedacfaa3b422"
     },
     {
       "path": "structural-python.v2.json",
@@ -65,13 +65,6 @@
       "ecosystem": "python",
       "rule_count": 8,
       "sha256": "f301ce9c307d451dee7365061045c2722c5d9c327e8058d9acc6da5b9365824b"
-    },
-    {
-      "path": "structural-react.v2.json",
-      "engine": "structural",
-      "ecosystem": "react",
-      "rule_count": 1,
-      "sha256": "9e2dfc6dbceb530c65498b20877cab492e1bb86c33133d155caf348589a3868b"
     },
     {
       "path": "structural-rust.v2.json",

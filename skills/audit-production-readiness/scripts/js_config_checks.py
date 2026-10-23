@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from collections.abc import Sequence
 from pathlib import Path
 
 MODULES = frozenset(
@@ -14,6 +15,7 @@ MODULES = frozenset(
         "https",
         "tls",
         "ws",
+        "react",
         "buffer",
         "electron",
         "puppeteer",
@@ -22,6 +24,139 @@ MODULES = frozenset(
 )
 IDENTIFIER = re.compile(r"[A-Za-z_$][\w$]*", re.ASCII)
 MAX_EXPRESSION_TOKENS = 512
+
+
+def js_context_tokens(source: str) -> list[tuple[str, int]]:
+    """Small bounded lexical view for precision checks, not a JS parser.
+
+    Comments, strings, and regex literals remain opaque. Template interpolation
+    and excessive token counts are unresolved, never affirmative evidence.
+    """
+    tokens: list[tuple[str, int]] = []
+    paren_context: list[str] = []
+    regex_after_control = False
+    index = 0
+    token_pattern = re.compile(
+        r"[A-Za-z_$][\w$]*|\d+(?:\.\d+)?|=>|\.\.\.|\?\.|===|!==|==|!=|&&|\|\||[^\s]", re.ASCII
+    )
+    regex_prefixes = {
+        "=",
+        "(",
+        "[",
+        "{",
+        ",",
+        ":",
+        ";",
+        "!",
+        "?",
+        "return",
+        "=>",
+        "&&",
+        "||",
+        "throw",
+        "case",
+        "yield",
+        "typeof",
+        "void",
+        "delete",
+        "else",
+        "do",
+    }
+    while index < len(source):
+        char = source[index]
+        if char.isspace():
+            index += 1
+            continue
+        if source.startswith("//", index):
+            end = source.find("\n", index + 2)
+            index = len(source) if end < 0 else end + 1
+            continue
+        if source.startswith("/*", index):
+            end = source.find("*/", index + 2)
+            if end < 0:
+                return []
+            index = end + 2
+            continue
+        start = index
+        if char in {'"', "'", "`"}:
+            index += 1
+            while index < len(source):
+                if source[index] == "\\":
+                    index += 2
+                    continue
+                if char == "`" and source.startswith("${", index):
+                    return []
+                if source[index] == char:
+                    index += 1
+                    break
+                index += 1
+            else:
+                return []
+            tokens.append((source[start:index], start))
+            regex_after_control = False
+        elif char == "/" and (not tokens or tokens[-1][0] in regex_prefixes or regex_after_control):
+            index += 1
+            in_class = False
+            while index < len(source) and source[index] not in "\r\n":
+                if source[index] == "\\":
+                    index += 2
+                    continue
+                if source[index] == "[":
+                    in_class = True
+                elif source[index] == "]":
+                    in_class = False
+                elif source[index] == "/" and not in_class:
+                    index += 1
+                    break
+                index += 1
+            else:
+                return []
+            while index < len(source) and source[index].isalpha():
+                index += 1
+            tokens.append((source[start:index], start))
+            regex_after_control = False
+        elif char == "/" and tokens and tokens[-1][0] == "}":
+            # Object-division versus a new statement regex needs a full parser.
+            # Do not interpret regex text as constructors or JSON dereferences.
+            return []
+        else:
+            match = token_pattern.match(source, index)
+            if match is None:
+                return []
+            value = match.group()
+            regex_after_control = False
+            if value == "(":
+                paren_context.append(tokens[-1][0] if tokens else "")
+            elif value == ")" and paren_context:
+                regex_after_control = paren_context.pop() in {
+                    "if",
+                    "while",
+                    "for",
+                    "with",
+                    "switch",
+                    "catch",
+                }
+            tokens.append((value, start))
+            index = match.end()
+        if len(tokens) > 50_000:
+            return []
+    return tokens
+
+
+def js_context_structure(values: Sequence[str]) -> tuple[dict[int, int], list[int]]:
+    pairs: dict[int, int] = {}
+    stack: list[int] = []
+    depths: list[int] = []
+    for index, value in enumerate(values):
+        depths.append(len(stack))
+        if value in {"(", "{", "["}:
+            stack.append(index)
+        elif value in {")", "}", "]"}:
+            if not stack or {"(": ")", "{": "}", "[": "]"}[values[stack[-1]]] != value:
+                return {}, []
+            opening = stack.pop()
+            pairs[opening] = index
+    return ({}, []) if stack else (pairs, depths)
 
 
 def literal(value: str) -> str | None:
@@ -246,6 +381,36 @@ def client_runtime_imports(
     return result
 
 
+def next_server_hook_indices(path, values, pairs, depths, frameworks, directives) -> list[int]:
+    if not (
+        frameworks is not None
+        and "nextjs" in frameworks
+        and re.search(r"(?:^|/)app/(?:[^/]+/)*(?:page|layout)\.(?:tsx|jsx)$", path.as_posix())
+        and not directives.intersection({'"use client"', "'use client'"})
+        and any(
+            values[i : i + 2] == ["export", "default"] and depths[i] == 0
+            for i in range(len(values))
+        )
+    ):
+        return []
+    react = imports(values, pairs, depths)
+    for index, value in enumerate(values):
+        if value not in react or index == react[value][2]:
+            continue
+        module, member, _position = react[value]
+        cursor = index + 1
+        if member == "*" and values[cursor : cursor + 1] == ["."] and cursor + 1 < len(values):
+            member = values[cursor + 1]
+            cursor += 2
+        if (
+            module == "react"
+            and member in {"useState", "useEffect", "useLayoutEffect", "useReducer"}
+            and values[cursor : cursor + 1] == ["("]
+        ):
+            return [index]
+    return []
+
+
 def signature_spans(
     path: Path,
     tokens: list[tuple[str, int]],
@@ -275,6 +440,32 @@ def signature_spans(
             if is_value(images, "dangerouslyAllowLocalIP", "true"):
                 start, end = images["dangerouslyAllowLocalIP"]
                 emit("SP674", start - 2, end, "images.dangerouslyAllowLocalIP = true")
+            if (
+                is_value(images, "dangerouslyAllowSVG", "true")
+                and any(
+                    is_value(images, "contentDispositionType", quote + "inline" + quote)
+                    for quote in ("'", '"')
+                )
+                and any(
+                    is_value(images, "contentSecurityPolicy", quote * 2) for quote in ("'", '"')
+                )
+                and (
+                    "loader" not in images
+                    or any(
+                        is_value(images, "loader", quote + "default" + quote)
+                        for quote in ("'", '"')
+                    )
+                )
+                and "loaderFile" not in images
+                and ("unoptimized" not in images or is_value(images, "unoptimized", "false"))
+                and "output" not in options
+            ):
+                emit(
+                    "SP688",
+                    opening,
+                    pairs[opening] + 1,
+                    "Next image options: SVG enabled, inline disposition and explicitly empty CSP",
+                )
 
     for index, value in enumerate(values):
         if value not in bindings or (index and values[index - 1] in {".", "?."}):

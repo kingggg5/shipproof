@@ -49,6 +49,8 @@ ADVISORY_RULE_IDS = frozenset(
         "SP685",  # Upstream support status, distinct from vendor support.
         "SP686",  # Local protocol selection, not a negotiated connection.
         "SP687",  # Local message cap, not demonstrated denial of service.
+        "SP688",  # Image configuration, not an attacker-controlled SVG response.
+        "SP689",  # Local body limit; upstream/per-request controls are unknown.
     }
 )
 

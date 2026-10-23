@@ -35,6 +35,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import archive_inspect
+import dart_transport_checks
 import dotnet_cookie_checks
 import js_config_checks
 import node_advisories
@@ -586,7 +587,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP056": {
         "why": "Without HttpOnly, any XSS can read session cookies via document.cookie and exfiltrate live sessions.",
         "attack": "Injected script posts document.cookie to an external endpoint, hijacking every visitor's session.",
-        "false_positive": "Names alone do not establish a credential. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit HttpOnly=false; it is advisory because middleware can override flags. Verify the final browser header.",
+        "false_positive": "Names alone do not establish a credential. C# requires typed ASP.NET parameters and inline CookieOptions or a flat CookieAuthenticationOptions policy block with explicit HttpOnly=false. These variants are advisory because middleware can override flags; verify final headers.",
         "test": "Set httpOnly: true and assert document.cookie no longer exposes the session value in a browser test.",
     },
     "SP057": {
@@ -754,7 +755,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP084": {
         "why": "Without Secure, session cookies ride plaintext HTTP and leak to passive network observers.",
         "attack": "Attacker on cafe Wi-Fi captures the cookie from an http:// downgrade request and hijacks the session.",
-        "false_positive": "Localhost-only development and upstream cookie policy require review. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit Secure=false; it is advisory, not final-header evidence.",
+        "false_positive": "Local development and upstream policy require review. C# requires typed ASP.NET parameters with inline Secure=false or a flat authentication-cookie SecurePolicy=None assignment. SameAsRequest, branches and unresolved changes stay silent; local policy is advisory, not final-header evidence.",
         "test": "Set secure: true and verify Set-Cookie carries Secure over HTTPS and is dropped over HTTP.",
     },
     "SP085": {
@@ -1234,7 +1235,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP170": {
         "why": "Cleartext protocols transmit credentials and payloads in plaintext across networks.",
         "attack": "Attacker on the same network captures plaintext credentials using packet sniffing.",
-        "false_positive": "Internal localhost mock servers during offline tests.",
+        "false_positive": "Local mock transports need review. Dart HTTP requires an imported package:http call, literal external HTTP URI and Authorization header; that variant is advisory. Loopback/private IPs, bare HTTP URL text, custom bindings and visible runWithClient overrides stay silent. Header values and cross-file overrides remain unverified; legacy FTP/Telnet signatures are unchanged.",
         "test": "Use HTTPS / SFTP URLs for all external service communication.",
     },
     "SP171": {
@@ -3544,7 +3545,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP596": {
         "why": "Calling client hooks (useState, useEffect) in Server Components without 'use client' causes React SSR compilation failures.",
         "attack": "Server crashes or fails build compilation when rendering pages with misplaced client hooks.",
-        "false_positive": "Components with 'use client' directive placed at the very top.",
+        "false_positive": "Only a declared Next.js app page/layout entry with an imported React hook call is checked. Ordinary React apps, shared components inheriting a client import boundary, type-only imports, shadows, unknown frameworks and actual client directives stay silent. This is not a complete RSC module-graph analysis.",
         "test": "Add 'use client' at the top of the file or extract stateful logic into a separate Client Component.",
     },
     "SP597": {
@@ -4092,6 +4093,18 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "Oversized messages may consume memory before application handlers run. Network reachability, external limits and a working denial of service are not established.",
         "false_positive": "Advisory: trusted bounded workloads or independent transport controls can justify this setting. An omitted option has a finite default. Only direct imported server constructors and exact bounded decimal integers are checked, not clients or computed options.",
         "test": "Set a positive payload cap below 2^31 bytes and test oversized-message rejection; retain zero, overflow, default, shadow and spread regressions.",
+    },
+    "SP688": {
+        "why": "Exported Next image settings combine SVG delivery, inline disposition and explicitly empty image CSP.",
+        "attack": "An untrusted SVG opened directly could expose active content; image ownership, reachable optimizer and final deployment headers are not proven by local configuration.",
+        "false_positive": "Advisory only. Trusted images or a reverse proxy can supply independent controls. SVG enablement alone, default/explicit protective CSP, attachment delivery, custom loaders, unoptimized images and output overrides stay silent.",
+        "test": "Restore a restrictive image CSP and attachment delivery; test default, protected, computed and overwritten options without treating ordinary SVG support as a vulnerability.",
+    },
+    "SP689": {
+        "why": "A typed Kestrel options callback explicitly assigns a null request-body size limit.",
+        "attack": "Without another body bound, large requests can increase resource use. Per-request limits, proxy caps, application streaming and deployment remain unknown; no denial of service is demonstrated.",
+        "false_positive": "Advisory only. An independent cap or intentional streaming may justify this option. Require a locally bound standard options type and a flat literal configuration block; defaults, finite limits, reconfiguration, custom types and branching stay unresolved.",
+        "test": "Retain a workload-appropriate finite limit, or verify an independent cap with bounded integration tests. Never interpret an omitted option or null on an unrelated object as unlimited Kestrel input.",
     },
     "SP096": {
         "why": "Skill files with instruction injection patterns can hijack agent behavior.",
@@ -13450,6 +13463,32 @@ RULES: tuple[Rule, ...] = (
         "WebSocket message resource bound",
         JS_CONFIG_SUFFIXES,
     ),
+    Rule(
+        "SP688",
+        "Next.js SVG image delivery explicitly removes browser safeguards",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "Exported image options enable SVG, inline disposition and an explicitly empty CSP.",
+        "Use attachment delivery and a restrictive image CSP; verify final response headers and trusted image origins.",
+        "CWE-79",
+        "Next.js image response boundary",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP689",
+        "Kestrel request-body size limit explicitly disabled",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "A typed Kestrel configuration explicitly assigns Limits.MaxRequestBodySize = null.",
+        "Set a finite body limit or verify an independent per-request/proxy cap and bounded streaming behavior.",
+        "CWE-400",
+        "ASP.NET request resource bounds",
+        frozenset({".cs"}),
+    ),
 )
 
 # Secret rules are exactly the rules that redact credential material in evidence.
@@ -13457,7 +13496,7 @@ RULES: tuple[Rule, ...] = (
 # rules inherit placeholder filtering, comment scanning, and document scanning.
 SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
 MINIMIZED_EVIDENCE_RULE_IDS = frozenset(
-    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 688))}
+    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 690))}
 )
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
 
@@ -14110,7 +14149,7 @@ RULE_FRAMEWORK_HINTS = {
     "SP410": frozenset({"flask"}),
     "SP591": frozenset({"nextjs", "react"}),
     "SP595": frozenset({"nextjs", "react"}),
-    "SP596": frozenset({"nextjs", "react"}),
+    "SP596": frozenset({"nextjs"}),
     "SP597": frozenset({"nextjs", "react"}),
     "SP598": frozenset({"nextjs", "react"}),
     "SP600": frozenset({"nextjs", "react"}),
@@ -14391,6 +14430,8 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP685",
         "SP686",
         "SP687",
+        "SP688",
+        "SP689",
         "SP377",
         "SP378",
         "SP621",
@@ -14421,6 +14462,18 @@ def applicable_line_rules(
             and not (rule.rule_id == "SP094" and is_manifest_name)
         )
     ]
+    if suffix == ".dart":
+        selected = [
+            replace(
+                rule,
+                pattern=compile_pattern(
+                    r"\b(?:ftp://[a-zA-Z0-9_.-]+:[^@\s/]+@|telnet://[a-zA-Z0-9_.-]+)"
+                ),
+            )
+            if rule.rule_id == "SP170"
+            else rule
+            for rule in selected
+        ]
     resolved = tuple(selected)
     APPLICABLE_RULES_CACHE[cache_key] = resolved
     return resolved
@@ -14557,136 +14610,11 @@ def github_run_expression_lines(source_text: str, rule_id: str = "SP210") -> lis
 
 
 def js_context_tokens(source: str) -> list[tuple[str, int]]:
-    """Small bounded lexical view for precision checks, not a JS parser.
-
-    Comments, strings, and regex literals remain opaque. Template interpolation
-    and excessive token counts are unresolved, never affirmative evidence.
-    """
-    tokens: list[tuple[str, int]] = []
-    paren_context: list[str] = []
-    regex_after_control = False
-    index = 0
-    token_pattern = re.compile(
-        r"[A-Za-z_$][\w$]*|\d+(?:\.\d+)?|=>|\.\.\.|\?\.|===|!==|==|!=|&&|\|\||[^\s]", re.ASCII
-    )
-    regex_prefixes = {
-        "=",
-        "(",
-        "[",
-        "{",
-        ",",
-        ":",
-        ";",
-        "!",
-        "?",
-        "return",
-        "=>",
-        "&&",
-        "||",
-        "throw",
-        "case",
-        "yield",
-        "typeof",
-        "void",
-        "delete",
-        "else",
-        "do",
-    }
-    while index < len(source):
-        char = source[index]
-        if char.isspace():
-            index += 1
-            continue
-        if source.startswith("//", index):
-            end = source.find("\n", index + 2)
-            index = len(source) if end < 0 else end + 1
-            continue
-        if source.startswith("/*", index):
-            end = source.find("*/", index + 2)
-            if end < 0:
-                return []
-            index = end + 2
-            continue
-        start = index
-        if char in {'"', "'", "`"}:
-            index += 1
-            while index < len(source):
-                if source[index] == "\\":
-                    index += 2
-                    continue
-                if char == "`" and source.startswith("${", index):
-                    return []
-                if source[index] == char:
-                    index += 1
-                    break
-                index += 1
-            else:
-                return []
-            tokens.append((source[start:index], start))
-            regex_after_control = False
-        elif char == "/" and (not tokens or tokens[-1][0] in regex_prefixes or regex_after_control):
-            index += 1
-            in_class = False
-            while index < len(source) and source[index] not in "\r\n":
-                if source[index] == "\\":
-                    index += 2
-                    continue
-                if source[index] == "[":
-                    in_class = True
-                elif source[index] == "]":
-                    in_class = False
-                elif source[index] == "/" and not in_class:
-                    index += 1
-                    break
-                index += 1
-            else:
-                return []
-            while index < len(source) and source[index].isalpha():
-                index += 1
-            tokens.append((source[start:index], start))
-            regex_after_control = False
-        elif char == "/" and tokens and tokens[-1][0] == "}":
-            # Object-division versus a new statement regex needs a full parser.
-            # Do not interpret regex text as constructors or JSON dereferences.
-            return []
-        else:
-            match = token_pattern.match(source, index)
-            if match is None:
-                return []
-            value = match.group()
-            regex_after_control = False
-            if value == "(":
-                paren_context.append(tokens[-1][0] if tokens else "")
-            elif value == ")" and paren_context:
-                regex_after_control = paren_context.pop() in {
-                    "if",
-                    "while",
-                    "for",
-                    "with",
-                    "switch",
-                    "catch",
-                }
-            tokens.append((value, start))
-            index = match.end()
-        if len(tokens) > 50_000:
-            return []
-    return tokens
+    return js_config_checks.js_context_tokens(source)
 
 
 def js_context_structure(values: Sequence[str]) -> tuple[dict[int, int], list[int]]:
-    pairs: dict[int, int] = {}
-    stack: list[int] = []
-    depths: list[int] = []
-    for index, value in enumerate(values):
-        depths.append(len(stack))
-        if value in {"(", "{", "["}:
-            stack.append(index)
-        elif value in {")", "}", "]"}:
-            if not stack or {"(": ")", "{": "}", "[": "]"}[values[stack[-1]]] != value:
-                return {}, []
-            opening = stack.pop()
-            pairs[opening] = index
-    return ({}, []) if stack else (pairs, depths)
+    return js_config_checks.js_context_structure(values)
 
 
 def js_shadowed_bindings(
@@ -14858,6 +14786,11 @@ def js_precision_lines(
         for index in js_config_checks.client_runtime_imports(values, pairs, depths):
             hits.append(("SP591", source.count("\n", 0, tokens[index][1]) + 1))
 
+    for index in js_config_checks.next_server_hook_indices(
+        path, values, pairs, depths, frameworks, directives
+    ):
+        hits.append(("SP596", source.count("\n", 0, tokens[index][1]) + 1))
+
     # Adjacent default-GET literal requests in one exported async Page/Layout.
     if (
         path.name.lower()
@@ -14946,84 +14879,7 @@ def js_precision_lines(
 
 
 def dotnet_xml_precision_lines(source: str) -> list[int]:
-    """Narrow initializer-to-reader evidence; not a general C# parser."""
-    if any(marker in source for marker in ('@"', '$"', '"""')):
-        return []
-    tokens = js_context_tokens(source)
-    values = [value for value, _ in tokens]
-    pairs, depths = js_context_structure(values)
-    if not depths:
-        return []
-    types = {"XmlReaderSettings", "XmlReader", "XmlUrlResolver", "DtdProcessing"}
-    if any(
-        values[i] in {"class", "struct", "record", "interface"} and values[i + 1] in types
-        for i in range(len(values) - 1)
-    ):
-        return []
-    if any(
-        values[i] == "using" and values[i + 1] in types and values[i + 2] == "="
-        for i in range(len(values) - 2)
-    ):
-        return []
-    if any(
-        values[i] in {"var", "const"} and values[i + 1] in types for i in range(len(values) - 1)
-    ):
-        return []
-    counts = Counter(values)
-
-    def qualified(start: int, name: str) -> int:
-        if values[start : start + 5] == ["System", ".", "Xml", ".", name]:
-            return start + 5
-        return start + 1 if values[start : start + 1] == [name] else -1
-
-    hits = []
-    for index, value in enumerate(values):
-        if value != "new" or index < 2 or values[index - 1] != "=":
-            continue
-        if index < 3 or values[index - 3] not in {"var", "XmlReaderSettings"}:
-            continue
-        name = values[index - 2]
-        if not re.fullmatch(r"[A-Za-z_][\w]*", name) or counts[name] != 2:
-            continue
-        opening = qualified(index + 1, "XmlReaderSettings")
-        if opening < 0:
-            continue
-        if values[opening : opening + 2] == ["(", ")"]:
-            opening += 2
-        closing = pairs.get(opening)
-        if closing is None or values[opening] != "{":
-            continue
-        options = {}
-        for start, end in js_config_checks.segments(values, pairs, opening):
-            if values[start + 1 : start + 2] != ["="] or values[start] in options:
-                options = {}
-                break
-            options[values[start]] = (start + 2, end)
-        dtd = options.get("DtdProcessing")
-        resolver = options.get("XmlResolver")
-        if dtd is None or resolver is None:
-            continue
-        dtd_end = qualified(dtd[0], "DtdProcessing")
-        resolver_type = qualified(resolver[0] + 1, "XmlUrlResolver")
-        if (
-            dtd_end < 0
-            or values[dtd_end : dtd[1]] != [".", "Parse"]
-            or values[resolver[0]] != "new"
-            or resolver_type < 0
-            or values[resolver_type : resolver[1]] != ["(", ")"]
-        ):
-            continue
-        for cursor in range(closing + 1, min(len(values), closing + 513)):
-            if cursor and values[cursor - 1] == ".":
-                continue
-            member = qualified(cursor, "XmlReader")
-            if member < 0 or values[member : member + 3] != [".", "Create", "("]:
-                continue
-            args = js_config_checks.segments(values, pairs, member + 2)
-            if len(args) == 2 and values[args[1][0] : args[1][1]] == [name]:
-                hits.append(source.count("\n", 0, tokens[index][1]) + 1)
-                break
-    return list(dict.fromkeys(hits))
+    return dotnet_cookie_checks.xml_precision_lines(source, js_context_tokens, js_context_structure)
 
 
 def find_regex_issues(
@@ -15049,8 +14905,10 @@ def find_regex_issues(
     lines = source_lines if lines is None else lines
     if (
         suffix == ".cs"
-        and "CookieOptions" in source_text
-        and "Append" in source_text
+        and any(
+            marker in source_text
+            for marker in ("CookieOptions", "CookieAuthenticationOptions", "KestrelServerOptions")
+        )
         and not any(marker in source_text for marker in ('@"', '$"', '"""'))
     ):
         tokens = js_context_tokens(source_text)
@@ -15059,17 +14917,36 @@ def find_regex_issues(
             for rule_id, offset in dotnet_cookie_checks.signature_offsets(tokens, pairs):
                 line_number = source_text.count("\n", 0, offset) + 1
                 previous = len(findings)
-                flag = "HttpOnly" if rule_id == "SP056" else "Secure"
+                excerpt = {
+                    "SP056": "ASP.NET Core cookie configuration explicitly sets HttpOnly=false",
+                    "SP084": "ASP.NET Core cookie configuration explicitly weakens Secure protection",
+                    "SP689": "Kestrel options explicitly assign Limits.MaxRequestBodySize=null",
+                }[rule_id]
                 append_file_level_finding(
                     findings,
                     rule_id,
                     relative_path,
                     lines,
                     line_number,
-                    minimal_evidence=f"ASP.NET Core cookie Append: explicit {flag}=false on a sensitive-name cookie",
+                    minimal_evidence=excerpt,
                 )
                 if len(findings) > previous:
                     findings[-1] = replace(findings[-1], tier="advisory")
+    if (
+        suffix == ".dart"
+        and "package:http/http.dart" in source_text
+        and "http:" in source_text.lower()
+    ):
+        try:
+            spans = dart_transport_checks.signature_offsets(source_text)
+        except polyglot_checks.LexicalLimitError as exc:
+            raise ScanCoverageError("parser_limit") from exc
+        for rule_id, offset in spans:
+            line_number = source_text.count("\n", 0, offset) + 1
+            previous = len(findings)
+            append_file_level_finding(findings, rule_id, relative_path, lines, line_number)
+            if len(findings) > previous:
+                findings[-1] = replace(findings[-1], tier="advisory")
     if suffix == ".cs" and "XmlReaderSettings" in source_text and "XmlResolver" in source_text:
         for line_number in dotnet_xml_precision_lines(source_text):
             append_file_level_finding(findings, "SP670", relative_path, lines, line_number)
@@ -15165,6 +15042,7 @@ def find_regex_issues(
             ".json",
             "use client",
             "dangerouslyAllowLocalIP",
+            "dangerouslyAllowSVG",
             "jsonwebtoken",
             "authTagLength",
             "allocUnsafe",
@@ -15174,11 +15052,12 @@ def find_regex_issues(
             "minVersion",
             "secureProtocol",
             "maxPayload",
+            "react",
         )
     ):
         excerpts: dict[tuple[str, int], str] = {}
         for rule_id, line_number in js_precision_lines(
-            path, source_text, detected_frameworks, excerpts
+            Path(relative_path.replace("\\", "/")), source_text, detected_frameworks, excerpts
         ):
             append_file_level_finding(
                 findings,
@@ -15455,22 +15334,6 @@ def find_regex_issues(
         )
         if mut_line:
             append_file_level_finding(findings, "SP595", relative_path, lines, mut_line)
-
-    if (
-        suffix in {".tsx", ".jsx"}
-        and "use client" not in source_text
-        and re.search(r"\b(?:useState|useEffect|useLayoutEffect|useReducer)\s*\(", source_text)
-    ):
-        hook_line = next(
-            (
-                i
-                for i, v in enumerate(lines, 1)
-                if re.search(r"\b(?:useState|useEffect|useLayoutEffect|useReducer)\s*\(", v)
-            ),
-            None,
-        )
-        if hook_line:
-            append_file_level_finding(findings, "SP596", relative_path, lines, hook_line)
 
     if (
         suffix in {".ts", ".js"}
