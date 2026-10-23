@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add nonblocking transport advisories SP686/SP687 for legacy Node TLS options
+  and `ws` payload-cap opt-outs/32-bit overflow; omitted payload limits remain
+  finite. Extend SP056/SP084 with explicit typed C# CookieOptions false flags.
+  Local options do not establish TLS negotiation or final middleware/browser behavior.
+
 - Add offline Node.js declaration advisories SP684/SP685 for the October 2026
   branch security baselines and known upstream EOL branches. Exact version files
   and final static official Node images produce one version-only advisory per

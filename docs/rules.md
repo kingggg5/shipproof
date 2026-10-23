@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 654 deterministic executable rules (`SP001`-`SP685`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
+ShipProof applies 656 deterministic executable rules (`SP001`-`SP687`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -8,7 +8,7 @@ Run `shipproof explain SP108` for why a rule exists, its attack scenario, false-
 
 `SP136` remains a low-confidence regex signature for an explicit `_ = err` assignment. It does not infer Go types or identify an error return from tuple arity.
 
-`SP666`–`SP685` are runtime advisory findings pending representative-repository
+`SP666`–`SP687` are runtime advisory findings pending representative-repository
 review; lowering the severity or proof floor does not make them blocking.
 These cohorts, `SP591` and advisory Rust TLS evidence expose only normalized risk
 details. Unrelated arguments/comments and neighboring source are omitted from
@@ -53,6 +53,20 @@ route forms are unresolved. `SP212` recognizes bare environment-dump commands in
 step `run` scalars, not YAML metadata, command arguments or heredoc data.
 
 `SP631` requires an explicit literal Edge runtime declaration and a native runtime import. It does not classify ordinary Node.js serverless code, comments, quoted examples, or type-only imports as Edge execution. Its boundary follows the official [runtime configuration](https://github.com/vercel/next.js/blob/canary/docs/01-app/03-api-reference/03-file-conventions/02-route-segment-config/runtime.mdx) and [Edge API limitations](https://github.com/vercel/next.js/blob/canary/docs/01-app/03-api-reference/07-edge.mdx), checked through Context7 on 2026-09-04. This local structural check does not resolve computed/multiline declarations, ambiguous JSX/template contexts, build-time polyfills, or deployment settings.
+
+## Transport and cookie options
+
+`SP686`/`SP687` are medium, nonblocking structural advisories. Imported Node
+TLS/HTTPS options selecting TLS 1.0/1.1 do not prove a successful handshake.
+For imported `ws` server constructors, literal `maxPayload` zero or a bounded
+decimal integer becoming nonpositive after signed-32-bit conversion disables
+the cap; omission has a finite default. Unknown overrides remain unresolved.
+
+Existing `SP056`/`SP084` gain a C# variant, not new IDs: typed ASP.NET cookie,
+response, or context parameters must directly `Append` a sensitive literal name
+with inline `CookieOptions` explicitly setting `HttpOnly`/`Secure` false.
+Missing flags stay silent; middleware can override this local configuration.
+See the [source and boundary record](https://github.com/kingggg5/shipproof/blob/main/research/transport-cookie-cohort-2026-10.md).
 
 ## Node.js version declarations
 
@@ -786,4 +800,6 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP683`** | MEDIUM | Security | Declared PHP version predates PHP2Shell fixes | Structural |
 | **`SP684`** | HIGH | Security | Declared Node.js version predates October 2026 security baseline | Structural |
 | **`SP685`** | MEDIUM | Security | Declared Node.js branch is past upstream support | Structural |
+| **`SP686`** | MEDIUM | Security | Node TLS configuration selects a legacy protocol | Structural |
+| **`SP687`** | MEDIUM | Security | WebSocket server payload limit is disabled or overflows | Structural |
 

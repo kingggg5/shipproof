@@ -2965,6 +2965,332 @@
       "expected_confidence": "high",
       "blocking_eligible": false,
       "false_positive_analysis": "Advisory only, with known EOL branches 18/20/21/23/25. Exact runtime pins are distinct from supported-engine ranges and compatibility CI. Verify vendor support or backports before treating the deployed component as unmaintained."
+    },
+    {
+      "rule_id": "SP686",
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/tls.html#tlscreatesecurecontextoptions",
+          "claim": "Node documents literal protocol floors/methods and conflicting options; OpenSSL security policy can still reject legacy handshakes."
+        },
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc8996.html",
+          "claim": "TLS 1.0 and 1.1 are deprecated. This does not prove that a configured protocol was actually negotiated."
+        }
+      ],
+      "positive": [
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1.1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "const tls = require('tls');\ntls.createServer({minVersion:'TLSv1',maxVersion:'TLSv1.2'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import https from 'node:https';\nhttps.request({hostname:'example.invalid',minVersion:'TLSv1.1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import * as tls from 'tls';\ntls.connect({port:443,secureProtocol:'TLSv1_1_client_method'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1.2',minVersion:'TLSv1'});"
+        }
+      ],
+      "negative": [
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1.2'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1.3'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:config.minimum});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',maxVersion:'invalid'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1.1',maxVersion:'TLSv1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',maxVersion:config.maximum});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({secureProtocol:'TLS_method'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({secureProtocol:'TLSv1_method',minVersion:'TLSv1.2'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',secureProtocol:'TLSv1_2_method'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',secureOptions:flags});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',secureContext:hardened});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',agent:customAgent});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',createConnection:connector});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',minVersion:'TLSv1.2'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({metadata:{minVersion:'TLSv1'}});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from './tls';\ncontext({minVersion:'TLSv1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import type {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\nfunction f(context: Factory) { context({minVersion:'TLSv1'});}"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext = hardened; context({minVersion:'TLSv1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\nconst alias = context; alias({minVersion:'TLSv1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import http from 'node:http';\nhttp.createServer({minVersion:'TLSv1'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import tls from 'tls';\ntls.connect(port,host,{minVersion:'TLSv1'});"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({minVersion:'TLSv1',...options});",
+          "expected": false,
+          "rationale": "A spread can change the effective TLS configuration; this rule does not execute or infer its value."
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext({['minVersion']:'TLSv1'});",
+          "expected": false,
+          "rationale": "Computed properties are outside the literal-options contract even when this isolated example looks simple."
+        },
+        {
+          "path": "transport.ts",
+          "source": "const example = \"import {createSecureContext as context} from 'node:tls';\\ncontext({minVersion:'TLSv1'});\";",
+          "expected": false,
+          "rationale": "Source-shaped string data must not establish runtime imports or a TLS configuration."
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {createSecureContext as context} from 'node:tls';\ncontext(\n{\nminVersion:'TLSv1' /* comment */});",
+          "expected": true,
+          "rationale": "Whitespace and an inline comment do not change the explicit imported protocol selection."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: legacy interoperability can be intentional and OpenSSL policy may still reject old protocols. Require options-first calls; unknown overrides, protocol masks, supplied secureContext and inconsistent ranges stay silent."
+    },
+    {
+      "rule_id": "SP687",
+      "sources": [
+        {
+          "url": "https://github.com/websockets/ws/blob/master/doc/ws.md",
+          "claim": "WebSocketServer defaults to a finite 100 MiB payload cap; zero disables it, and numeric values undergo signed-32-bit coercion."
+        },
+        {
+          "url": "https://github.com/websockets/ws/blob/master/lib/receiver.js",
+          "claim": "The receiver converts maxPayload with bitwise OR zero and enforces the cap only when positive, including decompressed message size."
+        },
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc6455.html#section-10.4",
+          "claim": "The WebSocket standard calls for protecting implementation resource limits and bounding frame and reassembled-message sizes; application-level consumption is not a substitute for every transport bound."
+        }
+      ],
+      "positive": [
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:0});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:2147483648});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:4294967295});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:4294967296});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:9007199254740991});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "const {WebSocketServer: Server} = require('ws');\nnew Server({port:8080,maxPayload:0});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import WebSocket from 'ws';\nnew WebSocket.Server({noServer:true,maxPayload:0});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:4096,maxPayload:0});"
+        }
+      ],
+      "negative": [
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:65536});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:104857600});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:2147483647});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:4294967297});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:9007199254740992});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:0.5});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:limits.message});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:'0'});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:-1});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:0,maxPayload:65536});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:0,...options});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,metadata:{maxPayload:0}});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from './ws';\nnew Server({noServer:true,maxPayload:0});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import type {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:0});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nServer({noServer:true,maxPayload:0});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nfunction open(Server: Factory) { new Server({noServer:true,maxPayload:0});}"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nconst alias = Server; new alias({noServer:true,maxPayload:0});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "import WebSocket from 'ws';\nnew WebSocket('wss://example.invalid',{maxPayload:0});"
+        },
+        {
+          "path": "transport.ts",
+          "source": "const Server = require('ws').WebSocketServer;\nnew Server({noServer:true,maxPayload:0});"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "transport.ts",
+          "source": "/*\nimport {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:0});\n*/",
+          "expected": false,
+          "rationale": "A full source example in a comment does not create a server or disable a message cap."
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:0,[setting]:65536});",
+          "expected": false,
+          "rationale": "A computed key might override the bound; the configuration is deliberately unresolved."
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999});",
+          "expected": false,
+          "rationale": "Huge numeric tokens must remain bounded and must not reach unbounded integer conversion."
+        },
+        {
+          "path": "transport.ts",
+          "source": "import {WebSocketServer as Server} from 'ws';\nnew Server({noServer:true,maxPayload:\n4294967296});",
+          "expected": true,
+          "rationale": "A plausible four-GiB setting wraps to zero; line breaks must not hide the ineffective resource bound."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: trusted bounded workloads or independent transport controls can justify this setting. An omitted option has a finite default. Only direct imported server constructors and exact bounded decimal integers are checked, not clients or computed options."
     }
   ]
 }

@@ -4,12 +4,12 @@ Version: `0.12.0`
 
 | Status | Rules | Meaning |
 | --- | ---: | --- |
-| Complete | 654 | Meets the current executable polarity minimum |
+| Complete | 656 | Meets the current executable polarity minimum |
 | Partial | 0 | Has a manifest but misses at least one minimum |
 | Uncontracted | 0 | No explicit machine-readable polarity manifest |
 | Metadata debt | 0 | Missing CWE, remediation, or explanation fields |
-| Realistic negatives | 100 | At least one negative that looks like production code |
-| Near-miss negatives only | 554 | Token-boundary negatives without production-shaped silence |
+| Realistic negatives | 104 | At least one negative that looks like production code |
+| Near-miss negatives only | 552 | Token-boundary negatives without production-shaped silence |
 | High/critical missing realistic negatives | 419 | Shrink-only transitional debt |
 
 Zero-debt executable-rule gate: **PASS**

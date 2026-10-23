@@ -346,6 +346,22 @@
           {
             "path": "login.js",
             "source": "res.cookie('refreshToken', value, { maxAge: 86400000 });"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(HttpResponse cookies, string value) {\n cookies.Cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(HttpContext cookies, string value) {\n cookies.Response.Cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "void SetCookie(global::Microsoft.AspNetCore.Http.IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new global::Microsoft.AspNetCore.Http.CookieOptions { HttpOnly = false });\n}"
           }
         ],
         "negative": [
@@ -364,6 +380,74 @@
           {
             "path": "login.py",
             "source": "resp.set_cookie('session', token, httponly=True)"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = true });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions {  });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = deploymentFlag });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false, HttpOnly = true });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false, Extensions = { \"Secure\", \"HttpOnly\" } });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"theme\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(cookieName, value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Project.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(CustomCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(global::IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "class CookieOptions {}\nusing Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using CookieOptions = Project.Options;\nusing Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n Customize(cookies);\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies = safeCookies;\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n var CookiePolicyOptions = policy;\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n other.cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies unused, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}"
           }
         ],
         "adversarial": [
@@ -378,11 +462,35 @@
             "source": "res.cookie('authToken', token, { httpOnly: false });",
             "expected": true,
             "rationale": "An explicit httpOnly:false is worse than omission; the negative lookahead correctly treats any non-true occurrence as missing protection."
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "/*\nusing Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}\n*/",
+            "expected": false,
+            "rationale": "A commented example cannot establish a typed cookie receiver or live Append call."
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.\nAppend(\"session\", value, new CookieOptions { HttpOnly = /* explicit opt-out */ false });\n}",
+            "expected": true,
+            "rationale": "Multiline member access and comments do not remove the explicitly disabled cookie protection."
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"se\\u0073sion\", value, new CookieOptions { HttpOnly = false });\n}",
+            "expected": false,
+            "rationale": "Escaped cookie names are unresolved rather than assumed to match the narrow literal-name set."
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n}\nvoid Other() { cookies.Append(\"session\", value, new CookieOptions { HttpOnly = false });\n}",
+            "expected": false,
+            "rationale": "A typed parameter in one method must not establish the identity of a similarly named field in a different method."
           }
         ],
-        "false_positive_analysis": "Non-session names (theme, locale, consent) avoid the sensitive-name hints and stay silent. Header-based cookie serialization is out of scope for the call shape and covered by review guidance instead."
+        "false_positive_analysis": "Names alone do not establish a credential. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit HttpOnly=false; it is advisory because middleware can override flags. Verify the final browser header."
       },
-      "false_positive_analysis": "Non-session names (theme, locale, consent) avoid the sensitive-name hints and stay silent. Header-based cookie serialization is out of scope for the call shape and covered by review guidance instead.",
+      "false_positive_analysis": "Names alone do not establish a credential. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit HttpOnly=false; it is advisory because middleware can override flags. Verify the final browser header.",
       "sources": [
         {
           "url": "https://cwe.mitre.org/data/definitions/1004.html",
@@ -391,6 +499,10 @@
         {
           "url": "https://owasp.org/www-project-application-security-verification-standard/",
           "claim": "OWASP ASVS maps CWE-1004 controls to the verification requirements in OWASP ASVS V3, which the remediation text follows."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.cookieoptions?view=aspnetcore-10.0",
+          "claim": "CookieOptions controls explicit HttpOnly and Secure flags; a typed Append establishes only local intent, while middleware can change the final response."
         }
       ]
     },
@@ -2147,6 +2259,22 @@
           {
             "path": "login.js",
             "source": "res.cookie('authToken', v, { maxAge: 3600000 });"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(HttpResponse cookies, string value) {\n cookies.Cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(HttpContext cookies, string value) {\n cookies.Response.Cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "void SetCookie(global::Microsoft.AspNetCore.Http.IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new global::Microsoft.AspNetCore.Http.CookieOptions { Secure = false });\n}"
           }
         ],
         "negative": [
@@ -2165,6 +2293,74 @@
           {
             "path": "api.js",
             "source": "res.cookie('csrf', tok, { sameSite: 'strict' });"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = true });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions {  });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = deploymentFlag });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false, Secure = true });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false, Extensions = { \"Secure\", \"HttpOnly\" } });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"theme\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(cookieName, value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Project.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(CustomCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(global::IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "class CookieOptions {}\nusing Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using CookieOptions = Project.Options;\nusing Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n Customize(cookies);\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies = safeCookies;\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n var CookiePolicyOptions = policy;\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n other.cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies unused, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}"
           }
         ],
         "adversarial": [
@@ -2179,10 +2375,35 @@
             "source": "res.cookie('session', token, { secure: false, httpOnly: true });",
             "expected": true,
             "rationale": "Explicit secure:false is worse than omission; the negative lookahead treats any non-true occurrence as missing transport protection."
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "/*\nusing Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}\n*/",
+            "expected": false,
+            "rationale": "A commented example cannot establish a typed cookie receiver or live Append call."
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.\nAppend(\"session\", value, new CookieOptions { Secure = /* explicit opt-out */ false });\n}",
+            "expected": true,
+            "rationale": "Multiline member access and comments do not remove the explicitly disabled cookie protection."
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n cookies.Append(\"se\\u0073sion\", value, new CookieOptions { Secure = false });\n}",
+            "expected": false,
+            "rationale": "Escaped cookie names are unresolved rather than assumed to match the narrow literal-name set."
+          },
+          {
+            "path": "cookies-transport.cs",
+            "source": "using Microsoft.AspNetCore.Http;\nvoid SetCookie(IResponseCookies cookies, string value) {\n}\nvoid Other() { cookies.Append(\"session\", value, new CookieOptions { Secure = false });\n}",
+            "expected": false,
+            "rationale": "A typed parameter in one method must not establish the identity of a similarly named field in a different method."
           }
-        ]
+        ],
+        "false_positive_analysis": "Localhost-only development and upstream cookie policy require review. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit Secure=false; it is advisory, not final-header evidence."
       },
-      "false_positive_analysis": "Any Secure occurrence suppresses the finding including explicit false, documented intentionally as review-first behavior. Non-session cookie names avoid the sensitive hints entirely.",
+      "false_positive_analysis": "Localhost-only development and upstream cookie policy require review. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit Secure=false; it is advisory, not final-header evidence.",
       "sources": [
         {
           "url": "https://cwe.mitre.org/data/definitions/614.html",
@@ -2191,6 +2412,10 @@
         {
           "url": "https://owasp.org/www-project-application-security-verification-standard/",
           "claim": "OWASP ASVS maps CWE-614 controls to the verification requirements in OWASP ASVS V3, which the remediation text follows."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.cookieoptions?view=aspnetcore-10.0",
+          "claim": "CookieOptions controls explicit HttpOnly and Secure flags; a typed Append establishes only local intent, while middleware can change the final response."
         }
       ]
     },

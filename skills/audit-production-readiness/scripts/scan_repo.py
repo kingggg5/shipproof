@@ -35,6 +35,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import archive_inspect
+import dotnet_cookie_checks
 import js_config_checks
 import node_advisories
 import php_advisories
@@ -585,7 +586,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP056": {
         "why": "Without HttpOnly, any XSS can read session cookies via document.cookie and exfiltrate live sessions.",
         "attack": "Injected script posts document.cookie to an external endpoint, hijacking every visitor's session.",
-        "false_positive": "Non-sensitive preference cookies matching the name hints are review noise; rename them if flagged.",
+        "false_positive": "Names alone do not establish a credential. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit HttpOnly=false; it is advisory because middleware can override flags. Verify the final browser header.",
         "test": "Set httpOnly: true and assert document.cookie no longer exposes the session value in a browser test.",
     },
     "SP057": {
@@ -753,7 +754,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP084": {
         "why": "Without Secure, session cookies ride plaintext HTTP and leak to passive network observers.",
         "attack": "Attacker on cafe Wi-Fi captures the cookie from an http:// downgrade request and hijacks the session.",
-        "false_positive": "Localhost-only development servers are exempt in practice by scoping config out of deploys.",
+        "false_positive": "Localhost-only development and upstream cookie policy require review. The C# extension requires a typed ASP.NET Core parameter, inline CookieOptions and explicit Secure=false; it is advisory, not final-header evidence.",
         "test": "Set secure: true and verify Set-Cookie carries Secure over HTTPS and is dropped over HTTP.",
     },
     "SP085": {
@@ -4080,6 +4081,18 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Advisory only, with known EOL branches 18/20/21/23/25. Exact runtime pins are distinct from supported-engine ranges and compatibility CI. Verify vendor support or backports before treating the deployed component as unmaintained.",
         "test": "Migrate deployment to a maintained patched branch and test CLI/MCP behavior, or document the vendor's continuing security support.",
     },
+    "SP686": {
+        "why": "An imported Node TLS/HTTPS options object explicitly selects TLS 1.0 or 1.1, deprecated by RFC 8996.",
+        "attack": "Legacy protocol negotiation can weaken transport protection; this local option does not prove a successful handshake, reachable listener or exploitable connection.",
+        "false_positive": "Advisory: legacy interoperability can be intentional and OpenSSL policy may still reject old protocols. Require options-first calls; unknown overrides, protocol masks, supplied secureContext and inconsistent ranges stay silent.",
+        "test": "Use TLS 1.2 or newer and verify peer negotiation. Keep safe defaults, shadowed imports and invalid conflicting configurations quiet.",
+    },
+    "SP687": {
+        "why": "A ws server maxPayload literal becomes zero or negative after signed-32-bit conversion, disabling its positive message-size bound.",
+        "attack": "Oversized messages may consume memory before application handlers run. Network reachability, external limits and a working denial of service are not established.",
+        "false_positive": "Advisory: trusted bounded workloads or independent transport controls can justify this setting. An omitted option has a finite default. Only direct imported server constructors and exact bounded decimal integers are checked, not clients or computed options.",
+        "test": "Set a positive payload cap below 2^31 bytes and test oversized-message rejection; retain zero, overflow, default, shadow and spread regressions.",
+    },
     "SP096": {
         "why": "Skill files with instruction injection patterns can hijack agent behavior.",
         "attack": "Attacker crafts a skill file with hidden instructions that override the agent's intended behavior.",
@@ -4668,7 +4681,7 @@ RULES: tuple[Rule, ...] = (
         "Set httpOnly (with Secure and SameSite) on every session-bearing cookie.",
         "CWE-1004",
         "OWASP ASVS V3",
-        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx", ".cs"}),
     ),
     Rule(
         "SP057",
@@ -5073,7 +5086,7 @@ RULES: tuple[Rule, ...] = (
         "Set secure alongside HttpOnly and SameSite on every session-bearing cookie.",
         "CWE-614",
         "OWASP ASVS V3",
-        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx"}),
+        frozenset({".js", ".mjs", ".cjs", ".ts", ".tsx", ".cs"}),
     ),
     Rule(
         "SP085",
@@ -13411,6 +13424,32 @@ RULES: tuple[Rule, ...] = (
         "CWE-1104",
         "Runtime support lifecycle",
     ),
+    Rule(
+        "SP686",
+        "Node TLS configuration selects a legacy protocol",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported TLS/HTTPS call explicitly selects a TLS 1.0/1.1 protocol floor or method.",
+        "Prefer TLS 1.2 or newer and verify negotiated protocols against deployment policy.",
+        "CWE-327",
+        "RFC 8996 deprecated transport protocols",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP687",
+        "WebSocket server payload limit is disabled or overflows",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported ws server's maxPayload becomes nonpositive after signed-32-bit conversion.",
+        "Set a workload-appropriate positive message cap below 2^31 bytes and test rejection.",
+        "CWE-400",
+        "WebSocket message resource bound",
+        JS_CONFIG_SUFFIXES,
+    ),
 )
 
 # Secret rules are exactly the rules that redact credential material in evidence.
@@ -13418,7 +13457,7 @@ RULES: tuple[Rule, ...] = (
 # rules inherit placeholder filtering, comment scanning, and document scanning.
 SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
 MINIMIZED_EVIDENCE_RULE_IDS = frozenset(
-    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 686))}
+    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 688))}
 )
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
 
@@ -14350,6 +14389,8 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP683",
         "SP684",
         "SP685",
+        "SP686",
+        "SP687",
         "SP377",
         "SP378",
         "SP621",
@@ -14371,6 +14412,7 @@ def applicable_line_rules(
         rule
         for rule in RULES
         if rule.rule_id not in FILE_LEVEL_RULE_IDS
+        and not (suffix == ".cs" and rule.rule_id in {"SP056", "SP084"})
         and not (rule.rule_id == "SP202" and not is_manifest_name)
         and not (is_document and not rule.redact and rule.rule_id not in DOCUMENT_SCAN_RULE_IDS)
         and not (
@@ -15005,6 +15047,29 @@ def find_regex_issues(
     if any(len(line) > MAX_SCAN_LINE_CHARS for line in source_lines):
         raise ScanCoverageError("line_limit")
     lines = source_lines if lines is None else lines
+    if (
+        suffix == ".cs"
+        and "CookieOptions" in source_text
+        and "Append" in source_text
+        and not any(marker in source_text for marker in ('@"', '$"', '"""'))
+    ):
+        tokens = js_context_tokens(source_text)
+        pairs, depths = js_context_structure([value for value, _ in tokens])
+        if depths:
+            for rule_id, offset in dotnet_cookie_checks.signature_lines(tokens, pairs):
+                line_number = source_text.count("\n", 0, offset) + 1
+                previous = len(findings)
+                flag = "HttpOnly" if rule_id == "SP056" else "Secure"
+                append_file_level_finding(
+                    findings,
+                    rule_id,
+                    relative_path,
+                    lines,
+                    line_number,
+                    minimal_evidence=f"ASP.NET Core cookie Append: explicit {flag}=false on a sensitive-name cookie",
+                )
+                if len(findings) > previous:
+                    findings[-1] = replace(findings[-1], tier="advisory")
     if suffix == ".cs" and "XmlReaderSettings" in source_text and "XmlResolver" in source_text:
         for line_number in dotnet_xml_precision_lines(source_text):
             append_file_level_finding(findings, "SP670", relative_path, lines, line_number)
@@ -15106,6 +15171,9 @@ def find_regex_issues(
             "insecureHTTPParser",
             "webPreferences",
             "puppeteer",
+            "minVersion",
+            "secureProtocol",
+            "maxPayload",
         )
     ):
         excerpts: dict[tuple[str, int], str] = {}
@@ -18525,6 +18593,7 @@ def read_finding_context(
         finding.rule_id in SECRET_RULE_IDS
         or finding.rule_id in MINIMIZED_EVIDENCE_RULE_IDS
         or (finding.rule_id == "SP104" and finding.tier == "advisory")
+        or (finding.rule_id in {"SP056", "SP084"} and finding.tier == "advisory")
     ):
         return [(finding.line, terminal_safe_text(finding.evidence))]
     return read_source_context(root, finding.path, finding.line, context=context)
