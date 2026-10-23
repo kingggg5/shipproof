@@ -1515,7 +1515,7 @@
           "claim": "CWE-94 covers treating externally supplied data as executable source and crossing an application's code-execution boundary."
         }
       ],
-      "false_positive_analysis": "Only an OnServerEvent Connect callback with two untyped parameters and an entire body of loadstring(secondParameter)() is recognized. The source is a client data argument, not the implicit Player. Guarded or complex handlers, fixed commands, aliases, comments, long strings, field methods and shadowed builtins stay silent. The local signature cannot prove Roblox deployment or LoadStringEnabled, and is advisory.",
+      "false_positive_analysis": "Only a two-parameter server remote callback with simple optional types and an entire body of loadstring(secondParameter)() is recognized, including OnServerInvoke and return. The source is client data, not the implicit Player. Guards, complex types, aliases, comments, long strings, member calls and shadowed builtins stay silent. Event identity, deployment and LoadStringEnabled remain unknown; this is advisory.",
       "positive": [
         {
           "path": "Remote.server.luau",
@@ -1560,8 +1560,8 @@
         {
           "path": "Typed.luau",
           "source": "remote.OnServerEvent:Connect(function(player: Player, code: string)\nloadstring(code)()\nend)\n",
-          "expected": false,
-          "rationale": "Typed parameters require additional Luau syntax handling. They are a documented unsupported shape rather than inferred data-flow evidence."
+          "expected": true,
+          "rationale": "Simple Luau type annotations do not validate client source at runtime. The same direct parameter-to-evaluator boundary remains present."
         },
         {
           "path": "Reassigned.lua",
@@ -1851,7 +1851,7 @@
           "claim": "CWE-347 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
         }
       ],
-      "false_positive_analysis": "Advisory: reviewed legacy migrations may need compatibility. Requires an unambiguous runtime jsonwebtoken import and final literal true; custom verify methods and type imports stay silent.",
+      "false_positive_analysis": "Advisory: legacy migrations may need compatibility. Requires a runtime import and final true; sign also requires an explicit asymmetric algorithm without header overrides. Custom bindings and type imports stay silent.",
       "positive": [
         {
           "path": "verify.ts",
@@ -2106,7 +2106,7 @@
           "claim": "CWE-444 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
         }
       ],
-      "false_positive_analysis": "Advisory: controlled legacy peers may need leniency. Requires a direct imported Node HTTP(S) API and literal true in the options argument. Custom request helpers, spreads, false overrides and data objects stay silent.",
+      "false_positive_analysis": "Advisory: imported HTTP(S), insecureHTTPParser=true or httpValidation=insecure on supporting Node versions. Legacy peers may need leniency. Conflicting switches, strict/relaxed modes, spreads and custom bindings stay silent.",
       "positive": [
         {
           "path": "http.ts",
@@ -3509,6 +3509,447 @@
       "expected_confidence": "high",
       "false_positive_analysis": "Advisory only. An independent cap or intentional streaming may justify this option. Require a locally bound standard options type and a flat literal configuration block; defaults, finite limits, reconfiguration, custom types and branching stay unresolved.",
       "blocking_eligible": false
+    },
+    {
+      "rule_id": "SP690",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
+          "claim": "Roblox warns against client-selected module execution and arbitrary instance deletion through remotes; server validation is required."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/829.html",
+          "claim": "Maps the local trust/authorization boundary, not demonstrated runtime exploitability."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local function register()\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: any)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player: Player, data: any)\nreturn require(data)\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local adminRemote = Instance.new(\"RemoteEvent\")\nadminRemote.OnServerEvent:Connect(function(player, data)\n-- inspect boundary\nrequire(data);\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote: RemoteEvent = Instance.new(\"RemoteEvent\")\nremote.Name = \"Actions\"\nremote.Parent = game.ReplicatedStorage\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player, data)\nreturn require(data)\nend and safeHandler\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\") == other\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\nlocal remote = Instance.new(\"RemoteEvent\")\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "function factory()\nlocal remote = Instance.new(\"RemoteEvent\")\nend\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(script.ServerActions)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nif not allowed(player, data) then return end\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata = serverOwnedValue\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"BindableEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnClientEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(player)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data, extra)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: {id: number})\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local alias = remote\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\ncontainer.remote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\").Custom\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnClientInvoke = function(player, data)\nreturn require(data)\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\nremote.OnServerEvent:Connect(function(player, data) print(data) end)\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Server.server.luau",
+          "source": "local sample = `outer {`inner local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n`} tail`\n",
+          "expected": false,
+          "rationale": "Nested interpolated strings must remain opaque; callback-shaped text inside them is not a callback registration."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "--[=[\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n]=]\n",
+          "expected": false,
+          "rationale": "A long comment cannot register a remote callback."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local sample = [==[\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n]==]\n",
+          "expected": false,
+          "rationale": "A long literal is data, not executable callback code."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local Instance = factories\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n",
+          "expected": false,
+          "rationale": "A local Instance factory cannot establish Roblox engine identity."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, player)\nrequire(data)\nend)\n",
+          "expected": false,
+          "rationale": "Duplicate parameter names invalidate client provenance."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "setfenv(1, customEnvironment)\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n",
+          "expected": false,
+          "rationale": "A modified global environment leaves builtin identity unresolved."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local unused, require = nil, customLoader\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n",
+          "expected": false,
+          "rationale": "A multi-local declaration shadows the native module loader."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "for require in loaders do\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\nend",
+          "expected": false,
+          "rationale": "A loop binding is not the Roblox builtin require."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: requires a local native remote and a single-statement callback. Fixed modules, guards, aliases, escaped/rebound receivers and complex types are unresolved; deployment is unknown."
+    },
+    {
+      "rule_id": "SP691",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
+          "claim": "Roblox warns against client-selected module execution and arbitrary instance deletion through remotes; server validation is required."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/862.html",
+          "claim": "Maps the local trust/authorization boundary, not demonstrated runtime exploitability."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local function register()\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: any)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player: Player, data: any)\nreturn data:Destroy()\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local adminRemote = Instance.new(\"RemoteEvent\")\nadminRemote.OnServerEvent:Connect(function(player, data)\n-- inspect boundary\ndata:Destroy();\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote: RemoteEvent = Instance.new(\"RemoteEvent\")\nremote.Name = \"Actions\"\nremote.Parent = game.ReplicatedStorage\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player, data)\nreturn data:Destroy()\nend and safeHandler\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\") == other\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\nlocal remote = Instance.new(\"RemoteEvent\")\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "function factory()\nlocal remote = Instance.new(\"RemoteEvent\")\nend\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nplayer.Character:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nif not allowed(player, data) then return end\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata = serverOwnedValue\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"BindableEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnClientEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nplayer:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data, extra)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: {id: number})\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local alias = remote\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\ncontainer.remote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\").Custom\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnClientInvoke = function(player, data)\nreturn data:Destroy()\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\nremote.OnServerEvent:Connect(function(player, data) print(data) end)\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Server.server.luau",
+          "source": "local sample = `outer {`inner local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n`} tail`\n",
+          "expected": false,
+          "rationale": "Nested interpolated strings must remain opaque; callback-shaped text inside them is not a callback registration."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "--[=[\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n]=]\n",
+          "expected": false,
+          "rationale": "A long comment cannot register a remote callback."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local sample = [==[\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n]==]\n",
+          "expected": false,
+          "rationale": "A long literal is data, not executable callback code."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local Instance = factories\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n",
+          "expected": false,
+          "rationale": "A local Instance factory cannot establish Roblox engine identity."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, player)\ndata:Destroy()\nend)\n",
+          "expected": false,
+          "rationale": "Duplicate parameter names invalidate client provenance."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "setfenv(1, customEnvironment)\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n",
+          "expected": false,
+          "rationale": "A modified global environment leaves builtin identity unresolved."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: requires a single direct callback statement and local native remote. Guards, server-selected objects and ambiguous bindings stay silent. Runtime exposure and independent controls need review."
+    },
+    {
+      "rule_id": "SP692",
+      "sources": [
+        {
+          "url": "https://github.com/auth0/node-jsonwebtoken",
+          "claim": "RSA signing normally requires 2048-bit modulus; allowInsecureKeySizes explicitly disables the size safeguard."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/326.html",
+          "claim": "Inadequate key strength can weaken cryptographic protection; this signature proves an opt-out, not the actual key size."
+        }
+      ],
+      "positive": [
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign as issue} from 'jsonwebtoken';\nissue(payload, key, {algorithm:'PS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "const {sign} = require('jsonwebtoken');\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {\nalgorithm:'RS256',allowInsecureKeySizes:true}, callback);\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:false});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256'});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'HS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'ES256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true,allowInsecureKeySizes:false});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true,...hardened});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true,header:{alg:'HS256'}});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true,header:customHeader});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from './jwt-policy';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import type {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign = issueSafely;\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "sign.ts",
+          "source": "/* import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n */",
+          "expected": false,
+          "rationale": "Commented examples cannot invoke signing."
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nfunction issue(sign: Signer) { return sign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n}",
+          "expected": false,
+          "rationale": "A parameter shadows the imported function."
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',['allowInsecureKeySizes']:true});\n",
+          "expected": false,
+          "rationale": "Computed option keys stay unresolved rather than being treated as a proven signing configuration."
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'PS512',allowInsecureKeySizes:false,allowInsecureKeySizes:true});\n",
+          "expected": true,
+          "rationale": "The final literal setting wins for a supported RSA/PSS signing algorithm."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: actual key strength is unknown. Require explicit RS/PS algorithm and true opt-out; HMAC, EC, defaults, header overrides and ambiguous imports stay silent."
     }
   ]
 }

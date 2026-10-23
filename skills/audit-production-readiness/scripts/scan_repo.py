@@ -3999,9 +3999,9 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Vendor and review source locally, disable LoadStringEnabled when unnecessary, and assert fetched responses are treated as data rather than executable functions.",
     },
     "SP672": {
-        "why": "A RemoteEvent's data arguments are client controlled; passing them straight into loadstring crosses the client/server code-execution boundary.",
+        "why": "A server remote callback's data arguments come from the client; immediately executing them crosses a code-execution boundary.",
         "attack": "If server loadstring is enabled, a caller sends source as the second callback argument and the handler immediately executes it with server capabilities.",
-        "false_positive": "This advisory only recognizes a two-parameter callback with immediate loadstring invocation as its entire body. Guarded, typed, aliased and nested flows require separate review and are not classified by this signature.",
+        "false_positive": "Advisory: two simple optionally typed parameters and immediate execution as the entire body, including OnServerInvoke. Guards, aliases and complex types stay unresolved. Event-like objects and deployment need review; annotations do not validate inputs at runtime.",
         "test": "Replace code-bearing events with server-defined action IDs and validated argument schemas; verify clients cannot submit executable source.",
     },
     "SP673": {
@@ -4023,9 +4023,9 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Restore time-claim validation; verify expired and not-yet-active tokens are rejected on authentication paths.",
     },
     "SP676": {
-        "why": "jsonwebtoken verification permits asymmetric key types that do not match the selected signature algorithm.",
+        "why": "jsonwebtoken verify or explicit asymmetric sign options permit incompatible key types.",
         "attack": "The compatibility switch removes an algorithm/key-type check. Actual acceptance depends on the key, algorithm and crypto implementation; it does not disable all signature verification.",
-        "false_positive": "Advisory: reviewed legacy migrations may need compatibility. Requires an unambiguous runtime jsonwebtoken import and final literal true; custom verify methods and type imports stay silent.",
+        "false_positive": "Advisory: legacy migrations may need compatibility. Requires a runtime import and final true; sign also requires an explicit asymmetric algorithm without header overrides. Custom bindings and type imports stay silent.",
         "test": "Use a key of the expected type, remove allowInvalidAsymmetricKeyTypes, and test rejection of incompatible algorithm/key combinations.",
     },
     "SP677": {
@@ -4043,8 +4043,8 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP679": {
         "why": "A Node HTTP(S) call explicitly enables the lenient HTTP parser.",
         "attack": "Parser disagreement with another HTTP hop may enable request or response smuggling; a proxy topology and exploitable byte sequence are not established by this setting alone.",
-        "false_positive": "Advisory: controlled legacy peers may need leniency. Requires a direct imported Node HTTP(S) API and literal true in the options argument. Custom request helpers, spreads, false overrides and data objects stay silent.",
-        "test": "Leave insecureHTTPParser false and reject malformed messages consistently across all HTTP hops.",
+        "false_positive": "Advisory: imported HTTP(S), insecureHTTPParser=true or httpValidation=insecure on supporting Node versions. Legacy peers may need leniency. Conflicting switches, strict/relaxed modes, spreads and custom bindings stay silent.",
+        "test": "Retain strict HTTP validation and reject malformed messages consistently across HTTP hops.",
     },
     "SP680": {
         "why": "An imported Electron BrowserWindow explicitly disables webSecurity in its webPreferences.",
@@ -4105,6 +4105,24 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "Without another body bound, large requests can increase resource use. Per-request limits, proxy caps, application streaming and deployment remain unknown; no denial of service is demonstrated.",
         "false_positive": "Advisory only. An independent cap or intentional streaming may justify this option. Require a locally bound standard options type and a flat literal configuration block; defaults, finite limits, reconfiguration, custom types and branching stay unresolved.",
         "test": "Retain a workload-appropriate finite limit, or verify an independent cap with bounded integration tests. Never interpret an omitted option or null on an unrelated object as unlimited Kestrel input.",
+    },
+    "SP690": {
+        "why": "A locally created remote passes its client data argument directly to require.",
+        "attack": "The caller can select server-loaded code if asset permissions permit it.",
+        "false_positive": "Advisory: requires a local native remote and a single-statement callback. Fixed modules, guards, aliases, escaped/rebound receivers and complex types are unresolved; deployment is unknown.",
+        "test": "Map validated action IDs to server-owned modules; reject client-selected module IDs.",
+    },
+    "SP691": {
+        "why": "A locally created remote directly destroys its client-supplied instance argument.",
+        "attack": "A caller may delete a replicated instance without an ownership check in this handler.",
+        "false_positive": "Advisory: requires a single direct callback statement and local native remote. Guards, server-selected objects and ambiguous bindings stay silent. Runtime exposure and independent controls need review.",
+        "test": "Check ownership, allowed ancestors and authorization before deleting an instance.",
+    },
+    "SP692": {
+        "why": "An imported JWT sign call explicitly disables the RSA key-size safeguard.",
+        "attack": "The library can accept RSA keys below its normal 2048-bit minimum.",
+        "false_positive": "Advisory: actual key strength is unknown. Require explicit RS/PS algorithm and true opt-out; HMAC, EC, defaults, header overrides and ambiguous imports stay silent.",
+        "test": "Remove the opt-out, use adequate RSA keys and verify undersized keys are rejected.",
     },
     "SP096": {
         "why": "Skill files with instruction injection patterns can hijack agent behavior.",
@@ -13260,12 +13278,12 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP672",
-        "Roblox RemoteEvent executes client-supplied source",
+        "Roblox remote callback executes client-supplied source",
         "security",
         "medium",
         "medium",
         compile_pattern(r"$^"),
-        "An OnServerEvent callback immediately compiles and executes a client data argument.",
+        "A server remote callback immediately compiles and executes a client data argument.",
         "Use server-owned action handlers and validate client arguments; do not execute client-supplied code.",
         "CWE-94",
         "Roblox client-server boundary",
@@ -13312,12 +13330,12 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP676",
-        "JWT verification permits incompatible asymmetric key types",
+        "JWT permits incompatible asymmetric key types",
         "security",
         "medium",
         "high",
         compile_pattern(r"$^"),
-        "An imported jsonwebtoken verify call enables allowInvalidAsymmetricKeyTypes.",
+        "An imported jsonwebtoken verify/sign call enables allowInvalidAsymmetricKeyTypes.",
         "Use compatible algorithm/key pairs and remove this legacy compatibility opt-out.",
         "CWE-347",
         "JWT algorithm/key compatibility",
@@ -13356,7 +13374,7 @@ RULES: tuple[Rule, ...] = (
         "medium",
         "high",
         compile_pattern(r"$^"),
-        "An imported HTTP(S) call explicitly sets insecureHTTPParser to true.",
+        "An imported HTTP(S) call explicitly selects insecure HTTP parsing/validation.",
         "Keep strict parsing enabled and reject malformed HTTP consistently across intermediaries.",
         "CWE-444",
         "HTTP parser agreement",
@@ -13489,6 +13507,45 @@ RULES: tuple[Rule, ...] = (
         "ASP.NET request resource bounds",
         frozenset({".cs"}),
     ),
+    Rule(
+        "SP690",
+        "Roblox remote directly requires a client-selected module",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "A locally constructed remote passes client data directly to require.",
+        "Select reviewed modules server-side using validated action IDs.",
+        "CWE-829",
+        "Roblox module trust boundary",
+        frozenset({".lua", ".luau"}),
+    ),
+    Rule(
+        "SP691",
+        "Roblox remote directly destroys a client-selected instance",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "A locally constructed remote destroys its client data argument without a local guard.",
+        "Validate instance ownership, allowed ancestors and permission before deletion.",
+        "CWE-862",
+        "Roblox instance authorization",
+        frozenset({".lua", ".luau"}),
+    ),
+    Rule(
+        "SP692",
+        "JWT RSA signing key-size safeguard explicitly disabled",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "Imported JWT sign options explicitly enable undersized RSA keys.",
+        "Remove allowInsecureKeySizes and use a sufficiently strong RSA signing key.",
+        "CWE-326",
+        "JWT signing key strength",
+        JS_CONFIG_SUFFIXES,
+    ),
 )
 
 # Secret rules are exactly the rules that redact credential material in evidence.
@@ -13496,7 +13553,7 @@ RULES: tuple[Rule, ...] = (
 # rules inherit placeholder filtering, comment scanning, and document scanning.
 SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
 MINIMIZED_EVIDENCE_RULE_IDS = frozenset(
-    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 690))}
+    {"SP212", "SP377", "SP378", "SP591", "SP621", *(f"SP{number}" for number in range(666, 693))}
 )
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
 
@@ -14432,6 +14489,9 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP687",
         "SP688",
         "SP689",
+        "SP690",
+        "SP691",
+        "SP692",
         "SP377",
         "SP378",
         "SP621",
@@ -15047,6 +15107,7 @@ def find_regex_issues(
             "authTagLength",
             "allocUnsafe",
             "insecureHTTPParser",
+            "httpValidation",
             "webPreferences",
             "puppeteer",
             "minVersion",

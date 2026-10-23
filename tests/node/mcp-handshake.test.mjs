@@ -212,10 +212,17 @@ test(
         ["server.cs", "using Microsoft.AspNetCore.Server.Kestrel.Core; void Configure(KestrelServerOptions options) { options.Limits.MaxRequestBodySize = null; }", ["SP689"]],
         ["client.dart", "import 'package:http/http.dart' as http; Future<void> send(String bearer) async { await http.get(Uri.parse('http://service.example.org'), headers: {'Authorization': bearer}); }", ["SP170"]],
         ["client.dart", "import 'package:http/http.dart' as http; Future<void> send(String bearer) async { await http.get(Uri.parse('https://service.example.org'), headers: {'Authorization': bearer}); }", []],
+        ["modules.luau", 'local remote = Instance.new("RemoteFunction")\nremote.OnServerInvoke = function(player: Player, data: number) return require(data) end', ["SP690"]],
+        ["delete.lua", 'local remote = Instance.new("RemoteEvent")\nremote.OnServerEvent:Connect(function(player, data) data:Destroy() end)', ["SP691"]],
+        ["delete.luau", 'local remote = Instance.new("RemoteEvent")\nremote.OnServerEvent:Connect(function(player, data) if not owns(player, data) then return end data:Destroy() end)', []],
+        ["execute.luau", 'remote.OnServerInvoke = function(player: Player, data: string) return loadstring(data)() end', ["SP672"]],
+        ["sign.ts", "import {sign} from 'jsonwebtoken'; sign(payload,key,{algorithm:'RS256',allowInsecureKeySizes:true});", ["SP692"]],
+        ["sign.ts", "import {sign} from 'jsonwebtoken'; sign(payload,key,{algorithm:'RS256',allowInvalidAsymmetricKeyTypes:true});", ["SP676"]],
+        ["http.ts", "import {createServer} from 'node:http'; createServer({httpValidation:'insecure'},handler);", ["SP679"]],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);
-        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP170", "SP686", "SP687", "SP688", "SP689"].includes(finding.rule_id));
+        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP170", "SP672", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692"].includes(finding.rule_id));
         assert.deepEqual(findings.map((finding) => finding.rule_id).sort(), expectedRules);
         assert.ok(findings.every((finding) => finding.tier === "advisory" && finding.proof_level === "L1"));
       }

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add advisory Roblox/Luau checks SP690/SP691 for a locally constructed remote
+  passing a client argument directly to `require` or `Destroy`, and SP692 for
+  imported JWT signing with an explicit RS/PS algorithm and insecure RSA-size
+  opt-out. Extend SP672 to the supported simple RemoteFunction callback, SP676
+  to qualifying signing calls, and SP679 to Node's explicit insecure validation
+  mode. Local source evidence does not establish deployment or actual key
+  strength; evaluation results are pending. See the [cohort record](research/luau-typescript-cohort-2026-10.md).
+
 - Add advisory SP688 for the explicit Next.js SVG inline/empty-CSP combination
   and SP689 for a typed Kestrel null body limit. Extend SP170 to a bounded Dart
   `package:http` external-HTTP Authorization case and SP056/SP084 to typed C#

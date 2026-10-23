@@ -555,9 +555,15 @@ def signature_spans(
                         closing + 1,
                         "ws.WebSocketServer: maxPayload becomes a nonpositive signed-32-bit limit",
                     )
-        if module == "jsonwebtoken" and member == "verify" and len(args) in {3, 4}:
+        if module == "jsonwebtoken" and member in {"sign", "verify"} and len(args) in {3, 4}:
             options = properties(values, pairs, args[2])
-            if any(
+            algorithm = options.get("algorithm")
+            signing_algorithm = (
+                literal(values[algorithm[0]])
+                if algorithm and algorithm[1] == algorithm[0] + 1 and "header" not in options
+                else None
+            )
+            if member == "verify" and any(
                 is_value(options, key, "true") for key in ("ignoreExpiration", "ignoreNotBefore")
             ):
                 flags = ", ".join(
@@ -566,12 +572,27 @@ def signature_spans(
                     if is_value(options, key, "true")
                 )
                 emit("SP675", index, closing + 1, "jsonwebtoken.verify: " + flags)
-            if is_value(options, "allowInvalidAsymmetricKeyTypes", "true"):
+            if is_value(options, "allowInvalidAsymmetricKeyTypes", "true") and (
+                member == "verify"
+                or signing_algorithm
+                in {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512"}
+            ):
                 emit(
                     "SP676",
                     index,
                     closing + 1,
-                    "jsonwebtoken.verify: allowInvalidAsymmetricKeyTypes=true",
+                    f"jsonwebtoken.{member}: allowInvalidAsymmetricKeyTypes=true",
+                )
+            if (
+                member == "sign"
+                and is_value(options, "allowInsecureKeySizes", "true")
+                and signing_algorithm in {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512"}
+            ):
+                emit(
+                    "SP692",
+                    index,
+                    closing + 1,
+                    "jsonwebtoken.sign: RSA key-size safeguard explicitly disabled",
                 )
         elif (
             module == "crypto"
@@ -635,8 +656,19 @@ def signature_spans(
             option = args[0]
             if values[option[0]] != "{" and member != "createServer" and len(args) > 1:
                 option = args[1]
-            if is_value(properties(values, pairs, option), "insecureHTTPParser", "true"):
+            options = properties(values, pairs, option)
+            if "httpValidation" not in options and is_value(options, "insecureHTTPParser", "true"):
                 emit("SP679", index, closing + 1, f"{module}.{member}: insecureHTTPParser=true")
+            elif "insecureHTTPParser" not in options and any(
+                is_value(options, "httpValidation", quote + "insecure" + quote)
+                for quote in ("'", '"')
+            ):
+                emit(
+                    "SP679",
+                    index,
+                    closing + 1,
+                    f"{module}.{member}: httpValidation=insecure (requires a supporting Node version)",
+                )
         elif (
             module == "electron"
             and member == "BrowserWindow"

@@ -108,7 +108,7 @@ def records() -> list[dict]:
                     "claim": "CWE-94 covers treating externally supplied data as executable source and crossing an application's code-execution boundary.",
                 },
             ],
-            "false_positive_analysis": "Only an OnServerEvent Connect callback with two untyped parameters and an entire body of loadstring(secondParameter)() is recognized. The source is a client data argument, not the implicit Player. Guarded or complex handlers, fixed commands, aliases, comments, long strings, field methods and shadowed builtins stay silent. The local signature cannot prove Roblox deployment or LoadStringEnabled, and is advisory.",
+            "false_positive_analysis": "Only a two-parameter server remote callback with simple optional types and an entire body of loadstring(secondParameter)() is recognized, including OnServerInvoke and return. The source is client data, not the implicit Player. Guards, complex types, aliases, comments, long strings, member calls and shadowed builtins stay silent. Event identity, deployment and LoadStringEnabled remain unknown; this is advisory.",
             "positive": [
                 case("Remote.server.luau", event),
                 case(
@@ -142,8 +142,8 @@ def records() -> list[dict]:
                 case(
                     "Typed.luau",
                     event.replace("player, code", "player: Player, code: string"),
-                    expected=False,
-                    rationale="Typed parameters require additional Luau syntax handling. They are a documented unsupported shape rather than inferred data-flow evidence.",
+                    expected=True,
+                    rationale="Simple Luau type annotations do not validate client source at runtime. The same direct parameter-to-evaluator boundary remains present.",
                 ),
                 case(
                     "Reassigned.lua",

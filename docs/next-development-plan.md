@@ -30,9 +30,12 @@ Candidate ID ไม่ได้แปลว่ามี detector แล้ว �
 
 ## Current field-cohort status — 2026-10-23
 
-- executable scanner rules: 658
+- executable scanner rules: 661
 
-The registry now contains 658 executable rules through SP689. The bounded
+The registry now contains 661 executable rules through SP692. The Luau/TypeScript
+continuation adds SP690–SP692 and extends SP672/SP676/SP679 without duplicate
+IDs; see the [cohort evidence](../research/luau-typescript-cohort-2026-10.md).
+The bounded
 TypeScript/.NET/Dart cohort adds SP688/SP689, extends SP170 and SP056/SP084,
 and narrows SP596. SP688 and SP689 are advisory regardless of their medium
 severity. Local pinned-snapshot evaluation and compatibility gates are complete;

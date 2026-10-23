@@ -87,6 +87,15 @@ def fixture_source(index: int, profile: str, bytes_per_file: int) -> str:
     if profile == "clean":
         prefix = f"def normalize_{index}(value: str) -> str:\n    return value.strip()\n"
         padding = "# bounded benchmark padding\n"
+    elif profile == "luau-remotes":
+        prefix = (
+            'local remote = Instance.new("RemoteEvent")\n'
+            "remote.OnServerEvent:Connect(function(player: Player, item: Instance)\n"
+            "    if not owns(player, item) then return end\n"
+            "    item:Destroy()\n"
+            "end)\n"
+        )
+        padding = "-- bounded benchmark padding\n"
     elif profile == "typescript-config":
         sources = (
             "import {verify} from 'jsonwebtoken';\nexport function authenticate(token: string, key: string) { return verify(token, key, {ignoreExpiration: false, ignoreNotBefore: false, algorithms: ['RS256']}); }\n",
@@ -121,7 +130,13 @@ def write_fixture(
     for index in range(file_count):
         bucket = root / f"module-{index // 250:04d}"
         bucket.mkdir(exist_ok=True)
-        suffix = ".ts" if profile == "typescript-config" else ".py"
+        suffix = (
+            ".luau"
+            if profile == "luau-remotes"
+            else ".ts"
+            if profile == "typescript-config"
+            else ".py"
+        )
         path = bucket / f"service-{index:06d}{suffix}"
         source = fixture_source(index, profile, bytes_per_file)
         path.write_text(source, encoding="utf-8")
@@ -150,7 +165,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--samples", type=int, default=3, help="Measured scan samples")
     parser.add_argument(
         "--profile",
-        choices=("clean", "adversarial-regex", "typescript-config"),
+        choices=("clean", "adversarial-regex", "typescript-config", "luau-remotes"),
         default="clean",
         help="Generated finding-free workload shape",
     )

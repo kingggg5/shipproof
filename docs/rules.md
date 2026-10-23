@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 658 deterministic executable rules (`SP001`-`SP689`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
+ShipProof applies 661 deterministic executable rules (`SP001`-`SP692`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -10,6 +10,8 @@ Run `shipproof explain SP108` for why a rule exists, its attack scenario, false-
 
 `SP666`–`SP687` are runtime advisory findings pending representative-repository
 review; lowering the severity or proof floor does not make them blocking.
+`SP688`–`SP692` are additional source-level advisories with their own bounded
+syntax below; none establish deployment behavior or exploitability.
 These cohorts, `SP591` and advisory Rust TLS evidence expose only normalized risk
 details. Unrelated arguments/comments and neighboring source are omitted from
 report and fix-prompt contexts to avoid credential echo. Inspect the local source
@@ -31,6 +33,15 @@ The Next.js signature accepts only `next.config.js`, `.mjs` and `.ts`; shadowed
 CommonJS module objects, multiple exports and unsupported config extensions stay
 silent rather than being treated as deployed image configuration.
 
+`SP676` also covers imported `jsonwebtoken.sign` calls when an explicit RS/PS/ES
+algorithm and `allowInvalidAsymmetricKeyTypes: true` occur without header overrides;
+verification retains its existing boundary. `SP679` additionally recognizes
+`httpValidation: 'insecure'` on supporting Node versions. Strict/relaxed modes and
+conflicting legacy switches stay silent. Neither check establishes runtime behavior.
+`SP692` requires imported `jsonwebtoken.sign`, `allowInsecureKeySizes: true`, an
+explicit RS/PS algorithm, and no header override. It does not inspect the actual
+RSA key strength and remains advisory.
+
 `SP596` is limited to a declared Next.js project with an app page/layout entry,
 an imported React client hook call, and no actual client directive. Shared
 components and ordinary React files do not each require their own directive;
@@ -47,9 +58,18 @@ an unbounded parser. Oversized explicit limits remain covered by `SP412`.
 Luau and Rust additions use a bounded lexer to exclude quoted/long/raw strings
 and comments, including nested Rust comments. Unterminated lexical input or
 exceeding 50,000 tokens records `parser_limit` in the completeness ledger.
-Luau interpolated strings, typed/guarded handlers, aliases and complex Rust
-types remain outside these signatures; a silent result does not establish their
-safety. No submitted source is executed by these checks.
+Luau interpolated strings stay wholly opaque, including nested backticks; their
+expressions are not analyzed. Nesting beyond 32 strings or 128 braces records
+`parser_limit`. Aliases and complex Rust types remain outside these
+signatures; a silent result does not establish their safety. For `SP672`, simple
+optionally typed parameters and `OnServerInvoke` are supported, with the optional
+return accepted in either callback form; event ownership remains unresolved.
+New `SP690`/`SP691` signatures require a locally constructed `Instance.new`
+RemoteEvent/RemoteFunction, one unescaped receiver/handler, two simple optionally
+typed parameters, and a single direct sink statement (`require` or `Destroy`).
+Guards, aliases, custom or type-only-reference receivers, and complex parameters
+remain unresolved. These are advisory checks, not deployment evidence. No
+submitted source is executed by these checks.
 
 Go deadline/cancellation and Rust route-context checks share the bounded native
 lexer (50,000 tokens, 128 delimiter levels). Go comments do not nest; Rust comments
@@ -152,8 +172,8 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **Django & Flask** | `pyproject.toml`, `requirements.txt` | Hardcoded `SECRET_KEY` (`SP404`), Wildcard `ALLOWED_HOSTS` (`SP405`), Debug enabled (`SP201`, `SP411`), Flask hardcoded `secret_key` (`SP410`), String-interpolated SQL (`SP103`), SSTI via `render_template_string` (`SP137`) |
 | **Go (Gin, Echo, Fiber, Chi)** | `go.mod` | Missing server timeouts (`SP131`), Ignored errors (`SP136`), Response body leak (`SP315`), Goroutine context leaks (`SP309`), Unbuffered channel deadlocks (`SP332`), WaitGroup race conditions (`SP333`), Insecure secret fallbacks (`SP004`), Outbound request timeouts (`SP304`), Unbounded concurrency (`SP306`) |
 | **Rust (Actix-web, Axum, Rocket)** | `Cargo.toml`, `.rs` | Committed keys/credentials (`SP001`, `SP002`, `SP003`), direct reqwest TLS bypass (`SP104`, advisory), invalid zero-initialized references (`SP673`, advisory), SSRF to metadata (`SP109`), credential logging (`SP204`) |
-| **Roblox / Luau** | `.lua`, `.luau` local source files | HttpService response executed as source (`SP671`), immediate client-code execution in RemoteEvent callbacks (`SP672`), provider-secret checks. Initial support excludes general Lua data-flow and binary place files. |
-| **JS / TypeScript configuration** | Runtime ESM/const-require imports; `next.config.*` exports | Image private-IP opt-out (`SP674`), JWT time/key-type opt-outs (`SP675`, `SP676`), short GCM tags (`SP677`), direct uninitialized Buffer read (`SP678`), lenient HTTP parsing (`SP679`), Electron origin/privilege boundaries (`SP680`, `SP681`), Chromium sandbox opt-out (`SP682`). All are advisory. |
+| **Roblox / Luau** | `.lua`, `.luau` local source files | HttpService response executed as source (`SP671`), direct client-source execution in simple RemoteEvent/RemoteFunction callbacks (`SP672`), client-selected module require (`SP690`), client-selected instance destruction (`SP691`), provider-secret checks. Initial support excludes general Lua data-flow and binary place files. |
+| **JS / TypeScript configuration** | Runtime ESM/const-require imports; `next.config.*` exports | Image private-IP opt-out (`SP674`), JWT time/key-type opt-outs on verify/sign (`SP675`, `SP676`), short GCM tags (`SP677`), direct uninitialized Buffer read (`SP678`), lenient HTTP parsing including insecure validation opt-out (`SP679`), Electron origin/privilege boundaries (`SP680`, `SP681`), Chromium sandbox opt-out (`SP682`), RSA signing key-size safeguard opt-out (`SP692`). All are advisory. |
 | **PHP (Laravel, Symfony)** | `composer.json` | Dynamic code evaluation (`SP101`), SQL injection interpolation (`SP103`, `SP128`), Path traversal (`SP110`), Loose equality credential comparison (`SP127`), Reflected XSS (`SP129`), Open redirect (`SP130`), Object injection (`SP113`) |
 | **Ruby (Rails, Sinatra)** | `Gemfile` | Secret key leakage (`SP003`), Unsafe deserialization with Marshal/YAML (`SP106`), Debug mode enabled (`SP201`), CSRF forgery disabled (`SP417`), Dynamic code execution (`SP101`), Missing payment idempotency (`SP504`) |
 | **Java / Kotlin (Spring Boot, Quarkus, Micronaut)** | `pom.xml`, `build.gradle`, `build.gradle.kts` | Committed keys/credentials (`SP001`, `SP002`, `SP003`), Insecure CORS with credentials (`SP107`), Path traversal (`SP110`), Spring Boot actuator public exposure (`SP416`), Binary ObjectInputStream deserialization (`SP168`) |
@@ -805,11 +825,11 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP669`** | MEDIUM | Security | Dart credential stored in SharedPreferences | Regex |
 | **`SP670`** | MEDIUM | Security | C# XmlReader combines DTD parsing and external resolution | Structural |
 | **`SP671`** | MEDIUM | Security | Roblox executes an HTTP response as Luau source | Structural |
-| **`SP672`** | MEDIUM | Security | Roblox RemoteEvent executes client-supplied source | Structural |
+| **`SP672`** | MEDIUM | Security | Roblox remote callback executes client-supplied source | Structural |
 | **`SP673`** | MEDIUM | Correctness | Rust zero-initializes a reference type | Structural |
 | **`SP674`** | MEDIUM | Security | Next.js image optimizer permits private IP targets | Structural |
 | **`SP675`** | MEDIUM | Security | JWT verification skips time-claim validation | Structural |
-| **`SP676`** | MEDIUM | Security | JWT verification permits incompatible asymmetric key types | Structural |
+| **`SP676`** | MEDIUM | Security | JWT permits incompatible asymmetric key types | Structural |
 | **`SP677`** | MEDIUM | Security | Node AES-GCM uses a short authentication tag | Structural |
 | **`SP678`** | MEDIUM | Security | Node unsafe Buffer is immediately read as a string | Structural |
 | **`SP679`** | MEDIUM | Security | Node HTTP explicitly enables a lenient parser | Structural |
@@ -823,4 +843,7 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP687`** | MEDIUM | Security | WebSocket server payload limit is disabled or overflows | Structural |
 | **`SP688`** | MEDIUM | Security | Next.js SVG image delivery explicitly removes browser safeguards | Structural |
 | **`SP689`** | MEDIUM | Security | Kestrel request-body size limit explicitly disabled | Structural |
+| **`SP690`** | MEDIUM | Security | Roblox remote directly requires a client-selected module | Structural |
+| **`SP691`** | MEDIUM | Security | Roblox remote directly destroys a client-selected instance | Structural |
+| **`SP692`** | MEDIUM | Security | JWT RSA signing key-size safeguard explicitly disabled | Structural |
 

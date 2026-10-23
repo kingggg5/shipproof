@@ -65,13 +65,13 @@ Node.js 20+ ทำหน้าที่ CLI ส่วน Python 3.10+ จำเ�
 
 ## ขอบเขตและสถานะโครงการ
 
-ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **658 deterministic rules** (`SP001`–`SP689`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
+ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **661 deterministic rules** (`SP001`–`SP692`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
 
 | หัวข้อ | Contract ปัจจุบัน |
 | :--- | :--- |
 | Release ล่าสุด | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่ง scanner-backed |
-| Executable rules | 658 (`SP001`–`SP689`, มีช่องว่างสงวนไว้ตั้งใจ) |
+| Executable rules | 661 (`SP001`–`SP692`, มีช่องว่างสงวนไว้ตั้งใจ) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates และ reserved promotion slots 1,000 รายการ; ไม่มีอะไรเป็น finding จนกว่าจะ promote |
 | Exit codes | `0` ผ่าน, `1` gate fail, `2` evidence ไม่ถูกต้อง/ไม่พร้อม |
@@ -139,7 +139,17 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 ## กฎการตรวจจับ
 
-**658 deterministic executable rules** (`SP001`–`SP689`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
+**661 deterministic executable rules** (`SP001`–`SP692`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
+
+ขอบเขต advisory เพิ่มเติมของ Roblox/Luau และ TypeScript:
+
+| Rule | Catalog title | ขอบเขต advisory |
+| :--- | :--- | :--- |
+| `SP690` | Roblox remote directly requires a client-selected module | ต้องมี remote จาก `Instance.new`, handler ที่ไม่ถูก escape, สองพารามิเตอร์แบบง่ายที่ระบุ type ได้ และ sink ตรง statement เดียว; alias, guard, parameter ซับซ้อน และ deployment ยังไม่ทราบ |
+| `SP691` | Roblox remote directly destroys a client-selected instance | ต้องมี remote จาก `Instance.new`, handler ที่ไม่ถูก escape, สองพารามิเตอร์แบบง่ายที่ระบุ type ได้ และ sink ตรง statement เดียว; alias, guard, parameter ซับซ้อน และ deployment ยังไม่ทราบ |
+| `SP692` | JWT RSA signing key-size safeguard explicitly disabled | ต้องมี imported `jsonwebtoken.sign`, algorithm RS/PS ที่ระบุชัด และไม่มี header override; ไม่ทราบความแข็งแรงของ key จริง |
+
+Finding เหล่านี้เป็น advisory จาก source ในเครื่อง ไม่ใช่หลักฐานว่า deployment ถูกเปิดใช้หรือ exploit ได้ ดู [บันทึก cohort](research/luau-typescript-cohort-2026-10.md)
 
 โค้ดปัจจุบันเพิ่ม advisory checks สำหรับ Roblox/Luau ในไฟล์ `.lua`/`.luau`
 (`SP671`–`SP672`) และ Rust invalid reference initialization (`SP673`) พร้อม
@@ -147,11 +157,21 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 [ตารางกฎ](docs/rules.md) จำนวนกฎนี้อ้างอิง checkout ปัจจุบัน ส่วน release notes
 อ้างอิง artifact ของ tag นั้น
 
+ขอบเขต callback Luau รองรับ RemoteEvent และ RemoteFunction แบบง่ายที่ระบุ type
+ได้; `SP672` รู้จัก `OnServerInvoke` และ optional return แต่ยังไม่ resolve ownership
+ของ event
+
 เพิ่ม TypeScript/JavaScript cohort `SP674`–`SP682` สำหรับ JWT, Node, Next.js,
 Electron และ Puppeteer โดยตรวจ runtime import และค่าที่ปิดการป้องกันอย่างชัดเจน
 กฎชุดนี้เป็น advisory; type-only import ไม่ trigger `SP591` และถอด `SP429`
 ที่แจ้ง default JSON parser ของ Express ผิด ดู [ขอบเขตกฎ](docs/rules.md) และ
 [บันทึกแหล่งข้อมูล/เทส](https://github.com/kingggg5/shipproof/blob/main/research/typescript-cohort-2026-10.md)
+
+`SP676` รองรับ imported `jsonwebtoken.sign` ที่ระบุ algorithm RS/PS/ES อย่างชัดเจน
+โดยไม่มี header override; `SP679` รองรับ `httpValidation: 'insecure'` บน Node.js
+รุ่นที่รองรับ โดย strict/relaxed mode และ legacy switch ที่ขัดกันจะไม่แจ้ง
+`SP690`–`SP692` เป็น advisory ตามขอบเขตใน [บันทึก Luau/TypeScript cohort](research/luau-typescript-cohort-2026-10.md)
+ไม่ได้ยืนยัน deployment หรือความแข็งแรงของ RSA key จริง
 
 อัปเดตข้อมูลแบบ offline วันที่ **22 ตุลาคม 2026** เพิ่ม PHP2Shell
 (`CVE-2026-109618`, `CVE-2026-109619`) ผ่าน `SP683` สำหรับ PHP version pin และ
@@ -300,7 +320,7 @@ candidate จาก research จะกลายเป็น executable `SPxxx` r
 | [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 hypotheses จาก model-assisted mapped กับ source | ไม่มี |
 | [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 CVE/CWE/community signals | ไม่มี |
 | [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 research slots แยก ecosystem/CWE | ไม่มี |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 658 detectors | Emit versioned findings |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 661 detectors | Emit versioned findings |
 
 ดู [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md) และ [delivery roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) สำหรับขอบเขต operational และ acceptance gates อ้างอิง release ด้วย [CITATION.cff](CITATION.cff)
 

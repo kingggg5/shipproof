@@ -51,6 +51,9 @@ ADVISORY_RULE_IDS = frozenset(
         "SP687",  # Local message cap, not demonstrated denial of service.
         "SP688",  # Image configuration, not an attacker-controlled SVG response.
         "SP689",  # Local body limit; upstream/per-request controls are unknown.
+        "SP690",  # Client-selected module; deployment/asset permissions unknown.
+        "SP691",  # Direct instance deletion; deployment/ownership unknown.
+        "SP692",  # RSA size guard opt-out, not proof of a weak deployed key.
     }
 )
 

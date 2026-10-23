@@ -25,11 +25,11 @@ class FieldReplayTests(unittest.TestCase):
                 self.assertEqual(REPLAY.main(), 2)
             self.assertEqual(output.read_text(encoding="utf-8"), "original evidence")
 
-    def projection(self, root):
+    def projection(self, root, suffix=".ts"):
         source = b"const score = 1;\n"
         context = b'{"dependencies":{"react":"19.3.0"}}'
         license_text = b"Synthetic test license identity\n"
-        (root / "page.ts").write_bytes(source)
+        (root / ("page" + suffix)).write_bytes(source)
         (root / "package.json").write_bytes(context)
         (root / "LICENSE").write_bytes(license_text)
 
@@ -37,13 +37,23 @@ class FieldReplayTests(unittest.TestCase):
             return hashlib.sha256(value).hexdigest()
 
         return {
-            "source_extensions": [".ts"],
+            "source_extensions": [suffix],
             "expected_source_files": 1,
-            "source_tree_sha256": sha(f"page.ts\0{sha(source)}\n".encode()),
+            "source_tree_sha256": sha(f"page{suffix}\0{sha(source)}\n".encode()),
             "context_files": {"package.json": sha(context), "LICENSE": sha(license_text)},
             "license_path": "LICENSE",
             "license_sha256": sha(license_text),
         }
+
+    def test_lua_projections_keep_identity_checks(self):
+        for suffix in (".lua", ".luau"):
+            with self.subTest(suffix=suffix), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                spec = self.projection(root, suffix)
+                self.assertEqual(REPLAY.verify_projection(root, spec), frozenset({"page" + suffix}))
+                (root / ("page" + suffix)).write_text("return {}", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "pinned source inventory"):
+                    REPLAY.verify_projection(root, spec)
 
     def test_exact_source_and_framework_context_are_both_required(self):
         with tempfile.TemporaryDirectory() as directory:

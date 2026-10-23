@@ -63,6 +63,8 @@ def verify_projection(root: Path, spec: dict) -> frozenset[str]:
         ".cts",
         ".cs",
         ".dart",
+        ".lua",
+        ".luau",
     }:
         raise ValueError("unsupported language projection")
     if (
