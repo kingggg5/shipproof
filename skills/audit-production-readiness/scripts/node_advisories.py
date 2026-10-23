@@ -32,28 +32,27 @@ def version_rule(version: str) -> str | None:
 
 
 def advisory_declarations(path: Path, source: str) -> list[tuple[str, str, int]]:
-    name = path.name.lower()
+    name = path.name if path.name.startswith(".") else path.name.lower()
     if name not in DECLARATION_NAMES:
         return []
     declaration = None
     if name in {"dockerfile", "containerfile"}:
         declaration = docker_runtime(source, NODE_IMAGE)
     else:
-        lines = [
-            (line.split("#", 1)[0].strip(), number)
-            for number, line in enumerate(source.splitlines(), 1)
-        ]
-        if name == ".tool-versions":
-            entries = [
-                (line.split(), number) for line, number in lines if line.split()[:1] == ["nodejs"]
-            ]
-            if len(entries) == 1 and len(entries[0][0]) == 2:
-                fields, number = entries[0]
-                declaration = (fields[1], number)
-        else:
-            entries = [(line, number) for line, number in lines if line]
-            if len(entries) == 1:
-                declaration = entries[0]
+        for number, line in enumerate(source.splitlines(), 1):
+            value = line.split("#", 1)[0].strip()
+            if name == ".tool-versions":
+                fields = value.split()
+                if fields[:1] != ["nodejs"]:
+                    continue
+                if len(fields) != 2:
+                    return []
+                value = fields[1]
+            elif not value:
+                continue
+            if declaration is not None:
+                return []
+            declaration = (value, number)
     if declaration is None:
         return []
     version, number = declaration

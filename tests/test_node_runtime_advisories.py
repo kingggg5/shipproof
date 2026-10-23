@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import tracemalloc
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -135,6 +136,33 @@ class NodeRuntimeAdvisoryTests(unittest.TestCase):
                 polyglot_checks.tokens("\t " * 10000 + '"unterminated', language)
             with self.assertRaises(polyglot_checks.LexicalLimitError):
                 polyglot_checks.tokens("value; " * 26000, language)
+
+    def test_many_blank_lines_stay_within_memory_budget(self):
+        source = "\n" * 100_000 + "24.22.1\n"
+        was_tracing = tracemalloc.is_tracing()
+        tracemalloc.start()
+        baseline, _peak = tracemalloc.get_traced_memory()
+        tracemalloc.reset_peak()
+        try:
+            self.assertEqual(node_advisories.advisory_declarations(Path(".nvmrc"), source), [])
+            _current, peak = tracemalloc.get_traced_memory()
+        finally:
+            if not was_tracing:
+                tracemalloc.stop()
+        self.assertLess(
+            peak - baseline,
+            4_000_000,
+            "100KB version file exceeds the 4MB parser allocation budget",
+        )
+
+    def test_case_variant_filenames_do_not_claim_runtime_identity(self):
+        for filename in (".NVMRC", ".NODE-VERSION"):
+            with self.subTest(filename=filename), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / filename).write_text("24.22.0\n", encoding="utf-8")
+                findings, stats = scan_repo.scan_repository(root)
+                self.assertEqual(stats["files_scanned"], 1)
+                self.assertFalse(any(item.rule_id in {"SP684", "SP685"} for item in findings))
 
 
 if __name__ == "__main__":

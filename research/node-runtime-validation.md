@@ -41,13 +41,19 @@ types, unsafe integer inputs, traversal, Unicode byte limits, fresh scans after
 same-size/same-mtime changes, and the new Node advisories. Root dependencies were
 restored to the lockfile after the Zod 3 run; package metadata did not change.
 
-Local `npm run check` passed with 900 Python tests, three platform-related skips,
+Local `npm run check` passed with 902 Python tests, three platform-related skips,
 two demo tests, the Node suites, package boundaries and installed-tarball smoke.
 Self-scan reported zero application findings and complete selected-source coverage;
 32 deliberate test findings remain visible. All 654 executable rules have contracts.
 The 30-package/867-file paired corpus retained all 54 original high-signature
 locations; its remediated leg remained at zero high/critical and 16 gate medium
 findings. Existing precision thresholds, source manifest and labels are unchanged.
+
+Version-file review also covers case-sensitive dotfile names and a sparse-input
+memory regression. A 100,008-byte `.nvmrc` containing 100,000 blank lines used
+9,987,707 peak traced parser bytes before the fix and 801,367 after it. The parser
+retains one candidate and rejects a second declaration immediately. A regression
+test enforces a four-million-byte allocation ceiling for that input.
 
 ## Measured lexer change
 
