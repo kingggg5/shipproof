@@ -37,8 +37,12 @@ def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
             index += 1
             continue
         if language == "lua":
-            comment = source.startswith("--", index)
-            opening = LUA_LONG.match(source, index + 2 if comment else index)
+            comment = char == "-" and source.startswith("--", index)
+            opening = (
+                LUA_LONG.match(source, index + 2 if comment else index)
+                if comment or char == "["
+                else None
+            )
             if opening:
                 closing = "]" + opening[1] + "]"
                 end = source.find(closing, opening.end())
@@ -60,11 +64,11 @@ def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
                 index = end + 1
                 record(source[start:index], start, index)
                 continue
-            if source.startswith("//", index):
+            if char == "/" and source.startswith("//", index):
                 end = source.find("\n", index)
                 index = len(source) if end < 0 else end
                 continue
-            if source.startswith("/*", index):
+            if char == "/" and source.startswith("/*", index):
                 depth = 1
                 index += 2
                 while index < len(source) and depth:
@@ -79,7 +83,9 @@ def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
                 if depth:
                     raise LexicalLimitError("unterminated native block comment")
                 continue
-            raw = RUST_RAW.match(source, index) if language == "rust" else None
+            raw = (
+                RUST_RAW.match(source, index) if language == "rust" and char in {"r", "b"} else None
+            )
             if raw:
                 end = source.find('"' + raw[1], raw.end())
                 if end < 0:

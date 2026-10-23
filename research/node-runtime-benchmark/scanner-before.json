@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "tool": {
+    "name": "ShipProof",
+    "version": "0.12.0",
+    "command": "benchmark"
+  },
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10",
+  "cpu_count": 12,
+  "jobs": 1,
+  "profile": "clean",
+  "bytes_per_file": 128,
+  "fixture_bytes": 128000,
+  "fixture_sha256": "b2d84505a345da7718ce96f89e3d8eeb9e02752a8b102e2103094d8d185ff45c",
+  "warmup_passes": 1,
+  "sample_count": 5,
+  "samples_seconds": [
+    1.0268,
+    1.008,
+    1.0377,
+    1.0285,
+    0.9959
+  ],
+  "sample_finding_counts": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "sample_file_counts": [
+    1000,
+    1000,
+    1000,
+    1000,
+    1000
+  ],
+  "files": 1000,
+  "seconds": 1.0268,
+  "warm_seconds": 0.9959,
+  "median_seconds": 1.0268,
+  "p95_seconds": 1.0377,
+  "files_per_second": 973.9,
+  "warm_files_per_second": 1004.1,
+  "median_files_per_second": 973.9,
+  "peak_rss_mb": 60.71,
+  "findings": 0,
+  "verdict": "PASS_WITH_EVIDENCE",
+  "failed_budgets": [],
+  "unavailable_budgets": []
+}

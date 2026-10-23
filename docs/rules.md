@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 652 deterministic executable rules (`SP001`-`SP683`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
+ShipProof applies 654 deterministic executable rules (`SP001`-`SP685`, with deliberate reserved gaps). This page is the complete catalog: severity, category, detection method, and the ecosystem mapping that decides where each structural check runs.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -8,7 +8,7 @@ Run `shipproof explain SP108` for why a rule exists, its attack scenario, false-
 
 `SP136` remains a low-confidence regex signature for an explicit `_ = err` assignment. It does not infer Go types or identify an error return from tuple arity.
 
-`SP666`–`SP683` are runtime advisory findings pending representative-repository
+`SP666`–`SP685` are runtime advisory findings pending representative-repository
 review; lowering the severity or proof floor does not make them blocking.
 These cohorts, `SP591` and advisory Rust TLS evidence expose only normalized risk
 details. Unrelated arguments/comments and neighboring source are omitted from
@@ -53,6 +53,29 @@ route forms are unresolved. `SP212` recognizes bare environment-dump commands in
 step `run` scalars, not YAML metadata, command arguments or heredoc data.
 
 `SP631` requires an explicit literal Edge runtime declaration and a native runtime import. It does not classify ordinary Node.js serverless code, comments, quoted examples, or type-only imports as Edge execution. Its boundary follows the official [runtime configuration](https://github.com/vercel/next.js/blob/canary/docs/01-app/03-api-reference/03-file-conventions/02-route-segment-config/runtime.mdx) and [Edge API limitations](https://github.com/vercel/next.js/blob/canary/docs/01-app/03-api-reference/07-edge.mdx), checked through Context7 on 2026-09-04. This local structural check does not resolve computed/multiline declarations, ambiguous JSX/template contexts, build-time polyfills, or deployment settings.
+
+## Node.js version declarations
+
+`SP684` is a high-severity advisory for an exact declared Node.js release before
+its branch's 21 October 2026 security baseline: **22.23.4**, **24.22.1**, or
+**26.12.1**. These are branch remediation baselines, not inferred introduced-version
+ranges. `SP685` is a medium advisory for the known upstream EOL branches
+**18, 20, 21, 23, and 25** in the reviewed October 2026 schedule.
+
+Both checks remain nonblocking and emit at most one finding per exact declaration,
+with minimal version-only evidence. Supported declarations are `.nvmrc`,
+`.node-version`, the Node entry in `.tool-versions`, and a final static official
+Node Docker image, following local stage aliases through the existing resolver.
+The checks add no dependency or network path.
+
+Engines ranges, floating/prerelease/vendor pins, custom images, digest overrides,
+ambiguous declarations, and compatibility-CI versions remain outside these
+signatures. A declaration establishes neither the installed/deployed binary,
+vendor backport status, affected API use, nor runtime exploitability.
+
+Primary references: [Node.js October security bulletin](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases),
+[official release schedule](https://github.com/nodejs/Release/blob/main/schedule.json),
+and [official Node Docker image variants](https://github.com/nodejs/docker-node/blob/main/README.md#image-variants).
 
 ## PHP2Shell version evidence
 
@@ -761,4 +784,6 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **`SP681`** | MEDIUM | Security | Electron renderer enables Node without context isolation | Structural |
 | **`SP682`** | MEDIUM | Security | Puppeteer launches Chromium without its sandbox | Structural |
 | **`SP683`** | MEDIUM | Security | Declared PHP version predates PHP2Shell fixes | Structural |
+| **`SP684`** | HIGH | Security | Declared Node.js version predates October 2026 security baseline | Structural |
+| **`SP685`** | MEDIUM | Security | Declared Node.js branch is past upstream support | Structural |
 

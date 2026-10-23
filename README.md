@@ -67,13 +67,13 @@ Node.js 20+ runs the front-door CLI. Python 3.10+ is needed for `scan`, `check`,
 
 ## Scope and project status
 
-ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **652 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
+ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **654 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
 
 | Property | Current contract |
 | :--- | :--- |
 | Current release | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
-| Executable rules | 652 (`SP001`–`SP683`, with deliberate reserved gaps) |
+| Executable rules | 654 (`SP001`–`SP685`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates plus 1,000 reserved promotion slots; none are findings until promoted |
 | Exit codes | `0` pass, `1` policy gate failure, `2` invalid or unavailable evidence |
@@ -100,6 +100,8 @@ The offline advisory snapshot reviewed **22 October 2026** includes PHP2Shell
 final official FPM/Apache image declarations; it does not infer runtime versions
 from Composer constraints or prove deployed exposure. Verify vendor backports and
 upgrade the actual web runtime. See the [PHP2Shell boundaries](docs/rules.md#php2shell-version-evidence).
+
+`SP684` checks exact Node.js pins against the October 2026 security baseline; `SP685` checks upstream EOL. Both are advisory. See [supported declarations and limits](docs/rules.md#nodejs-version-declarations).
 
 | ShipProof guarantees | ShipProof does not claim |
 | :--- | :--- |
@@ -170,7 +172,7 @@ Full prompt samples, invariant analysis, token cost budgeting, worktree isolatio
 
 ## Detection rules
 
-**652 deterministic executable rules** (`SP001`–`SP683`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
+**654 deterministic executable rules** (`SP001`–`SP685`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
 
 The complete catalog, severity, category, and detection method per rule, plus the ecosystem/framework mapping that decides where each structural check runs, lives in **[docs/rules.md](docs/rules.md)**.
 
@@ -180,7 +182,7 @@ ShipProof prioritizes high precision over noisy alerts:
 
 For example, `SP631` requires an explicit Edge runtime declaration plus a native runtime import; ordinary Node.js code and prose mentioning a runtime or ledger are not Edge evidence. See the [rule boundary](docs/rules.md).
 
-Precision signatures require workflow `run` command context rather than metadata, distinguish string joins from file paths, and preserve the uppercase Django `ALLOWED_HOSTS` key. Go header deadlines include a positive `ReadTimeout` fallback; cancellation findings require an explicitly discarded `CancelFunc`, not a named function called later or inside a deferred closure. Rust panic findings require a local Actix/Rocket route attribute or Axum routing binding. These are bounded source checks, not universal precision claims.
+Precision signatures require relevant code and framework context. Realistic negative tests cover similar-looking safe code; see the [rule boundaries](docs/rules.md).
 
 - **Inline suppression:** Add `# shipproof-ignore SP101` or `// shipproof-ignore SP101` directly on the line or on the line immediately preceding it. The marker is honored only inside a comment (or at the start of a documentation line), never inside string data, and may list several rules at once (for example `# shipproof-ignore SP101 SP102`). Both the regex and the Python AST engines honor these markers.
 - **Confidence filtering:** Run with `--min-confidence high` to surface high-confidence heuristic findings; these still require verification.
@@ -338,7 +340,7 @@ All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
 ## Research & evaluation status
 
-The scanner ships 652 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready` and are mapped into the non-blocking SP666-SP668 wave; Wave D adds SP669-SP670 for Dart and C#/.NET; the other candidates remain research-only or rejected until their evidence boundary is met. See the [batch record](research/promotion-batch-a.json), [promotion waves](research/promotion-wave-b.md), and [broader plan](research/promotion-plan.json).
+The scanner ships 654 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready` and are mapped into the non-blocking SP666-SP668 wave; Wave D adds SP669-SP670 for Dart and C#/.NET; the other candidates remain research-only or rejected until their evidence boundary is met. See the [batch record](research/promotion-batch-a.json), [promotion waves](research/promotion-wave-b.md), and [broader plan](research/promotion-plan.json).
 
 Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
 
@@ -375,9 +377,9 @@ A research candidate becomes an executable `SPxxx` rule only after deduplication
 | [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 model-assisted, source-mapped hypotheses | None |
 | [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 time-bounded CVE/CWE/community signals | None |
 | [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 deduplicated ecosystem/CWE research slots | None |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 652 reviewed detectors | Emits versioned findings |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 654 reviewed detectors | Emits versioned findings |
 
-The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 652 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
+The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 654 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
 
 See the [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md), and [delivery roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) for operational boundaries and acceptance gates. Cite a release using [CITATION.cff](CITATION.cff). ShipProof deliberately avoids a single readiness score because one veto-level failure must not be averaged away by many clean checks.
 
@@ -396,7 +398,7 @@ python skills/audit-production-readiness/scripts/scan_repo.py . --fail-on high
 
 The core runtime uses only Node and the Python standard library; Ruff is development-only. The optional MCP adapter uses the MCP SDK and Zod as explicitly installed peers, supporting Zod 3 and 4 (`^3.25.76 || ^4.6.7`). CI tests Node 20/22/24 and Python 3.10/3.11/3.12/3.13/3.14, verifies an exact package allowlist, smoke-tests the packed artifact, and runs CodeQL for Python and JavaScript/TypeScript.
 
-The scoped npm manifest and manual OIDC workflow are ready for a future public npm release. Until the owner establishes the package, protected environment, and trusted-publisher relationship, use the GitHub npm install shown above; this project does not claim an unpublished registry release. See [docs/releasing.md](docs/releasing.md).
+The scoped npm manifest and manual OIDC workflow are ready for a future public npm release. Until the owner establishes the package, protected environment, and trusted-publisher relationship, use the GitHub npm install shown above; this project does not claim an unpublished registry release. See [docs/releasing.md](https://github.com/kingggg5/shipproof/blob/main/docs/releasing.md).
 
 ## License, citation, and security
 
