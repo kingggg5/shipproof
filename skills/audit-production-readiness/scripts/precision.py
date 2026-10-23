@@ -47,6 +47,8 @@ ADVISORY_RULE_IDS = frozenset(
         "SP683",  # Declared version, not deployed PHP patch/attack evidence.
         "SP684",  # Declared Node patch baseline; runtime/backports are unknown.
         "SP685",  # Upstream support status, distinct from vendor support.
+        "SP686",  # Local protocol selection, not a negotiated connection.
+        "SP687",  # Local message cap, not demonstrated denial of service.
     }
 )
 

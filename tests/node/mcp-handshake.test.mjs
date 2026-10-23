@@ -202,6 +202,20 @@ test(
         assert.ok(advisories.every((finding) => finding.tier === "advisory"));
       }
 
+      for (const [filename, code, expectedRules] of [
+        ["transport.ts", "import tls from 'node:tls'; tls.createSecureContext({minVersion:'TLSv1'});", ["SP686"]],
+        ["socket.ts", "import {WebSocketServer} from 'ws'; new WebSocketServer({noServer:true,maxPayload:4294967296});", ["SP687"]],
+        ["socket.ts", "import {WebSocketServer} from 'ws'; new WebSocketServer({noServer:true,maxPayload:65536});", []],
+        ["cookies.cs", 'using Microsoft.AspNetCore.Http; void Set(IResponseCookies cookies, string value) { cookies.Append("session", value, new CookieOptions { HttpOnly = false, Secure = false }); }', ["SP056", "SP084"]],
+        ["cookies.cs", 'using Microsoft.AspNetCore.Http; var set = (HttpContext context, string value) => { context.Response.Cookies.Append("session", value, new CookieOptions() { HttpOnly = false, Secure = false }); };', ["SP056", "SP084"]],
+      ]) {
+        const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
+        assert.equal(result.isError, undefined);
+        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP686", "SP687"].includes(finding.rule_id));
+        assert.deepEqual(findings.map((finding) => finding.rule_id).sort(), expectedRules);
+        assert.ok(findings.every((finding) => finding.tier === "advisory" && finding.proof_level === "L1"));
+      }
+
       for (const [name, argumentsValue] of [
         ["shipproof_scan", { path: 42 }],
         ["shipproof_budget", { baseline: 42, current: "current.json", budget: "budget.json" }],

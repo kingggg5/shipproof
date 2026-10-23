@@ -78,3 +78,18 @@ This wave intentionally adds research records instead of noisy findings. The nex
 These are extensions of existing root causes, not duplicate IDs. They are covered
 by walker-facing regression tests and remain subject to the same precision and
 representative-repository gate as the research catalog.
+
+## Current disposition update (2026-10-23)
+
+DOTNET-W1-09 is now **partially implemented** under existing SP056/SP084: a typed
+ASP.NET Core parameter, direct Append, sensitive literal cookie name and inline
+CookieOptions with explicit HttpOnly/Secure false. These C# signatures are advisory
+because middleware can alter the final header. CookieSecurePolicy/SameSite and
+general authentication option delegates remain unimplemented; see the
+[contract and validation](transport-cookie-cohort-2026-10.md).
+
+The historical Wave 2 statement about `SecurityContext(withTrustedRoots: false)`
+is superseded: an empty trust store does not disable certificate verification and
+the current SP104 does not report it alone. SP670 likewise now requires combined
+DTD parsing and external resolution with direct reader consumption, not either
+option by itself. Remaining source-to-sink proposals still require flow evidence.

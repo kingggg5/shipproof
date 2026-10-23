@@ -7,7 +7,18 @@ from collections import Counter
 from pathlib import Path
 
 MODULES = frozenset(
-    {"jsonwebtoken", "crypto", "http", "https", "buffer", "electron", "puppeteer", "puppeteer-core"}
+    {
+        "jsonwebtoken",
+        "crypto",
+        "http",
+        "https",
+        "tls",
+        "ws",
+        "buffer",
+        "electron",
+        "puppeteer",
+        "puppeteer-core",
+    }
 )
 IDENTIFIER = re.compile(r"[A-Za-z_$][\w$]*", re.ASCII)
 MAX_EXPRESSION_TOKENS = 512
@@ -24,7 +35,7 @@ def module_name(value: str) -> str:
     module = literal(value) or ""
     if module.startswith("node:"):
         builtin = module[5:]
-        return builtin if builtin in {"buffer", "crypto", "http", "https"} else ""
+        return builtin if builtin in {"buffer", "crypto", "http", "https", "tls"} else ""
     return module
 
 
@@ -290,6 +301,69 @@ def signature_spans(
         if not args or any(values[start] == "..." for start, _ in args):
             continue
         closing = pairs[cursor]
+        if (module == "tls" and member in {"createSecureContext", "createServer", "connect"}) or (
+            module == "https" and member in {"createServer", "request", "get"}
+        ):
+            # Only the options-first overload; URL/port overloads need more provenance.
+            options = properties(values, pairs, args[0])
+            versions = {"TLSv1": 10, "TLSv1.1": 11, "TLSv1.2": 12, "TLSv1.3": 13}
+
+            def string_option(key: str, options: dict = options) -> str | None:
+                span = options.get(key)
+                return literal(values[span[0]]) if span and span[1] == span[0] + 1 else None
+
+            floor = string_option("minVersion")
+            ceiling = string_option("maxVersion")
+            protocol = string_option("secureProtocol")
+            legacy_range = (
+                floor in {"TLSv1", "TLSv1.1"}
+                and "secureProtocol" not in options
+                and ("maxVersion" not in options or versions.get(ceiling, 0) >= versions[floor])
+            )
+            legacy_method = protocol in {
+                "TLSv1_method",
+                "TLSv1_client_method",
+                "TLSv1_server_method",
+                "TLSv1_1_method",
+                "TLSv1_1_client_method",
+                "TLSv1_1_server_method",
+            } and not {"minVersion", "maxVersion"}.intersection(options)
+            if (legacy_range or legacy_method) and not {
+                "secureOptions",
+                "secureContext",
+                "agent",
+                "_defaultAgent",
+                "createConnection",
+            }.intersection(options):
+                emit(
+                    "SP686",
+                    index,
+                    closing + 1,
+                    f"{module}.{member}: explicit legacy TLS protocol selection",
+                )
+        elif (
+            module == "ws"
+            and member in {"WebSocketServer", "Server"}
+            and index
+            and values[index - 1] == "new"
+        ):
+            options = properties(values, pairs, args[0])
+            span = options.get("maxPayload")
+            if (
+                span
+                and span[1] == span[0] + 1
+                and re.fullmatch(r"(?:0|[1-9][0-9]{0,15})", values[span[0]])
+            ):
+                size = int(values[span[0]])
+                # ws uses ToInt32, then checks only positive caps. Do not parse arbitrary expressions.
+                narrowed = size & 0xFFFFFFFF
+                if size <= 2**53 - 1 and (narrowed == 0 or narrowed >= 2**31):
+                    emit(
+                        "SP687",
+                        index,
+                        closing + 1,
+                        "ws.WebSocketServer: maxPayload becomes a nonpositive signed-32-bit limit",
+                    )
         if module == "jsonwebtoken" and member == "verify" and len(args) in {3, 4}:
             options = properties(values, pairs, args[2])
             if any(
