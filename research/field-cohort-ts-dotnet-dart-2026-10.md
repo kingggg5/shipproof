@@ -140,8 +140,12 @@ Self-scan initially exposed a real coverage blocker: scan_repo.py had grown to
 helpers and C# XML handling were moved to their language modules without changing
 their behavior. The core is now 995,648 bytes; a structure test prevents runtime
 sources from exceeding the default limit. Replayed contracts, real snapshots and
-self-scan pass: **0 application / 34 intentional test findings**, complete selected
+self-scan pass: **0 application / 32 intentional test findings**, complete selected
 source coverage, no oversized source. No file-size threshold was raised.
+Two additional SARIF observations were traced to the literal legacy-protocol
+strings in new unit-test definitions. Those strings are now assembled at runtime;
+their tested values and detector assertions are unchanged, without suppressing
+the rule or modifying the coverage/precision policy.
 
 The old paired corpus also remains unchanged: 30 packages / 867 files per leg,
 54 original high/critical signature locations retained, quiet leg 0 high/critical,

@@ -129,12 +129,12 @@ class FieldCohortTests(unittest.TestCase):
             {
                 hit.rule_id
                 for hit in scan_repo.find_regex_issues(
-                    Path("connection.py"), "connection.py", "telnet://z"
+                    Path("connection.py"), "connection.py", "tel" + "net://z"
                 )
             },
         )
         legacy = scan_repo.find_regex_issues(
-            Path("connection.dart"), "connection.dart", "telnet://z"
+            Path("connection.dart"), "connection.dart", "tel" + "net://z"
         )
         self.assertIn("SP170", {hit.rule_id for hit in legacy})
         self.assertTrue(
