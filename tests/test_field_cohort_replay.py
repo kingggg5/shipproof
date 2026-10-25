@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -46,7 +47,7 @@ class FieldReplayTests(unittest.TestCase):
         }
 
     def test_lua_projections_keep_identity_checks(self):
-        for suffix in (".lua", ".luau"):
+        for suffix in (".lua", ".luau", ".py"):
             with self.subTest(suffix=suffix), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 spec = self.projection(root, suffix)
@@ -54,6 +55,35 @@ class FieldReplayTests(unittest.TestCase):
                 (root / ("page" + suffix)).write_text("return {}", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "pinned source inventory"):
                     REPLAY.verify_projection(root, spec)
+
+    def test_incomplete_python_preserves_observations_without_passing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "sample"
+            project.mkdir()
+            spec = self.projection(project, ".py")  # JS syntax is invalid Python.
+            spec.update(slug="sample", repository="test/sample", revision="0" * 40)
+            manifest = root / "manifest.json"
+            manifest.write_text(
+                json.dumps({"schema_version": 1, "projects": [spec]}), encoding="utf-8"
+            )
+            report_path = root / "report.json"
+            with patch(
+                "sys.argv",
+                [
+                    "eval-field-cohort",
+                    "--workspace",
+                    str(root),
+                    "--manifest",
+                    str(manifest),
+                    "--output",
+                    str(report_path),
+                ],
+            ):
+                self.assertEqual(REPLAY.main(), 2)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["verdict"], "INCOMPLETE")
+            self.assertFalse(report["projects"][0]["summary"]["completeness"]["is_complete"])
 
     def test_exact_source_and_framework_context_are_both_required(self):
         with tempfile.TemporaryDirectory() as directory:

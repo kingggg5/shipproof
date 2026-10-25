@@ -226,10 +226,15 @@ test(
         ["reader.cs", "using System.Xml; XmlReader.Create(input,new XmlReaderSettings{DtdProcessing=DtdProcessing.Parse,MaxCharactersFromEntities=0});", ["SP696"]],
         ["listener.py", "import logging.config\nlogging.config.listen(9030,verify=None).start()", ["SP697"]],
         ["compression.ts", "import {gzipSync} from 'node:zlib'; async function pack(data) { return await gzipSync(data); }", ["SP698"]],
+        ["value.rs", "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }", ["SP699"]],
+        ["timer.ts", "import {setTimeout} from 'node:timers'; setTimeout(tick,30*24*60*60*1000);", ["SP700"]],
+        ["pool.py", "from sqlalchemy.pool import QueuePool\npool=QueuePool(connect,max_overflow=-1)", ["SP701"]],
+        ["reference.rs", "unsafe fn build() { let value = std::mem::uninitialized::<&u32>(); }", ["SP673"]],
+        ["tls.cs", "using System.Net.Security; async System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost=host, RemoteCertificateValidationCallback=(_,_,_,_)=>true }); }", ["SP104"]],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);
-        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP170", "SP672", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692", "SP693", "SP694", "SP695", "SP696", "SP697", "SP698"].includes(finding.rule_id));
+        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP104", "SP170", "SP672", "SP673", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692", "SP693", "SP694", "SP695", "SP696", "SP697", "SP698", "SP699", "SP700", "SP701"].includes(finding.rule_id));
         assert.deepEqual(findings.map((finding) => finding.rule_id).sort(), expectedRules);
         assert.ok(findings.every((finding) => finding.tier === "advisory" && finding.proof_level === "L1"));
       }
@@ -238,10 +243,12 @@ test(
         ["task.py", "import asyncio\nasync def run():\n    await asyncio.create_task(work())\n"],
         ["pool.py", "from concurrent.futures import ThreadPoolExecutor\npool=ThreadPoolExecutor()"],
         ["pool.go", 'package pool\nimport "database/sql"\nfunc configure(db *sql.DB) { db.SetMaxIdleConns(0) }'],
+        ["gather.py", "import asyncio\nasync def run():\n    return await asyncio.gather(work())"],
+        ["engine.py", "from sqlalchemy import create_engine\nengine=create_engine(url)"],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);
-        assert.ok(result.structuredContent.findings.every((finding) => !["SP346", "SP348", "SP375"].includes(finding.rule_id)));
+        assert.ok(result.structuredContent.findings.every((finding) => !["SP346", "SP347", "SP348", "SP350", "SP375"].includes(finding.rule_id)));
       }
 
       for (const [name, argumentsValue] of [

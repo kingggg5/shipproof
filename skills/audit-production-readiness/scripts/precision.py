@@ -60,6 +60,9 @@ ADVISORY_RULE_IDS = frozenset(
         "SP696",  # XML expansion settings, not proven hostile input.
         "SP697",  # Loopback configuration listener, not remote exploitability.
         "SP698",  # Synchronous API behavior; input size and CPU cost unknown.
+        "SP699",  # Literal validity violation; execution/reachability unknown.
+        "SP700",  # Delay coercion, not proof of a deployed timer storm.
+        "SP701",  # Local pool capacity, not measured database exhaustion.
     }
 )
 

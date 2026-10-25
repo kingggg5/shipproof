@@ -327,7 +327,7 @@ class StructureTests(unittest.TestCase):
             r"^\|\s*\*\*`(SP\d+)`\*\*\s*\|\s*(CRITICAL|HIGH|MEDIUM|LOW)\s*\|",
             re.MULTILINE,
         )
-        sources = (("docs/rules.md", english_row),)
+        sources = (("docs/rule-catalog.md", english_row),)
         for readme_name, row_pattern in sources:
             content = (ROOT / readme_name).read_text(encoding="utf-8")
             documented = {match.group(1): match.group(2) for match in row_pattern.finditer(content)}
@@ -344,6 +344,10 @@ class StructureTests(unittest.TestCase):
                 )
 
     def test_framework_table_rules_exist_in_scanner(self):
+        guide = (ROOT / "docs/rules.md").read_text(encoding="utf-8")
+        self.assertIn("## Detection Rules Reference", guide)
+        self.assertIn("/docs/rule-catalog.md", guide)
+        self.assertIn("shipproof explain SPxxx", guide)
         scanner_rule_ids = {rule.rule_id for rule in RULES}
         for doc_name in ("docs/rules.md",):
             content = (ROOT / doc_name).read_text(encoding="utf-8")

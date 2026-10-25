@@ -18,6 +18,8 @@ MODULES = frozenset(
         "react",
         "buffer",
         "zlib",
+        "timers",
+        "timers/promises",
         "electron",
         "puppeteer",
         "puppeteer-core",
@@ -171,8 +173,31 @@ def module_name(value: str) -> str:
     module = literal(value) or ""
     if module.startswith("node:"):
         builtin = module[5:]
-        return builtin if builtin in {"buffer", "crypto", "http", "https", "tls", "zlib"} else ""
+        return (
+            builtin
+            if builtin
+            in {"buffer", "crypto", "http", "https", "tls", "zlib", "timers", "timers/promises"}
+            else ""
+        )
     return module
+
+
+def constant_product(values: list[str]) -> int | None:
+    """Bounded exact decimal product, not JavaScript evaluation or constant propagation."""
+    if not values or len(values) > 17 or len(values) % 2 == 0:
+        return None
+    product = 1
+    for index, value in enumerate(values):
+        if index % 2:
+            if value != "*":
+                return None
+        else:
+            if not re.fullmatch(r"(?:0|[1-9][0-9]{0,15})", value):
+                return None
+            product *= int(value)
+            if product > 2**53 - 1:
+                return None
+    return product
 
 
 def segments(values: list[str], pairs: dict[int, int], opening: int) -> list[tuple[int, int]]:
@@ -588,6 +613,26 @@ def signature_spans(
         if not args or any(values[start] == "..." for start, _ in args):
             continue
         closing = pairs[cursor]
+        if module in {"timers", "timers/promises"} and member in {"setTimeout", "setInterval"}:
+            if module == "timers" and args:
+                callback = values[args[0][0]]
+                if (
+                    callback in {"null", "undefined", "true", "false", "[", "{"}
+                    or literal(callback) is not None
+                    or re.match(r"[0-9]", callback)
+                ):
+                    continue  # Known-invalid callback values cannot register a timer.
+            position = 1 if module == "timers" else 0
+            if len(args) > position:
+                first, last = args[position]
+                delay = constant_product(values[first:last])
+                if delay is not None and 2**31 - 1 < delay <= 2**53 - 1:
+                    emit(
+                        "SP700",
+                        index,
+                        closing + 1,
+                        f"{module}.{member}: constant delay exceeds 2147483647 ms and is clamped to 1 ms",
+                    )
         if module in {"http", "https"} and member == "createServer":
             options = properties(values, pairs, args[0])
             if is_value(options, "requestTimeout", "0") and is_value(

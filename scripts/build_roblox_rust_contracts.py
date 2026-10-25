@@ -170,13 +170,18 @@ def records() -> list[dict]:
                     "claim": "The Rust standard library documents that all-zero reference values are invalid and that constructing them with mem::zeroed causes undefined behavior.",
                 },
                 {
+                    "url": "https://doc.rust-lang.org/std/mem/fn.uninitialized.html",
+                    "claim": "The deprecated uninitialized constructor does not establish the valid initialized address required by references; reaching such construction violates validity.",
+                },
+                {
                     "url": "https://cwe.mitre.org/data/definitions/665.html",
                     "claim": "CWE-665 classifies improper initialization; this rule narrows that class to explicitly zero-initialized Rust references.",
                 },
             ],
-            "false_positive_analysis": "Requires a fully qualified std/core mem::zeroed turbofish whose type begins with a reference, followed by a direct empty call. Raw pointers, integers, Option references, MaybeUninit storage, shadowed modules, documentation strings and nested block comments are excluded. Aliases, inferred types and complex nested generic types remain unsupported. This is local invalid-state evidence, not an exploitability claim.",
+            "false_positive_analysis": "Requires qualified std/core zeroed or uninitialized construction whose type begins with a reference. Other types are outside this signature, not certified safe. MaybeUninit storage, visible module shadows/import ambiguity, raw identifiers, stringify token data and nested comments stay silent. This is local validity evidence, not reachability or exploitability.",
             "positive": [
                 case("main.rs", zero),
+                case("uninit.rs", zero.replace("zeroed", "uninitialized")),
                 case("lib.rs", zero.replace("std::", "core::").replace("&u32", "&mut i64")),
                 case(
                     "ffi.rs",

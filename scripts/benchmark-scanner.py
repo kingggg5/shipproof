@@ -87,6 +87,16 @@ def fixture_source(index: int, profile: str, bytes_per_file: int) -> str:
     if profile == "clean":
         prefix = f"def normalize_{index}(value: str) -> str:\n    return value.strip()\n"
         padding = "# bounded benchmark padding\n"
+    elif profile == "value-config":
+        sources = (
+            "import {setTimeout} from 'node:timers';\nsetTimeout(tick, 24 * 60 * 60 * 1000);\n",
+            "fn main() { let id = std::num::NonZeroU32::new(7); }\n",
+            "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=5, max_overflow=10)\n",
+        )
+        prefix = sources[index % 3]
+        padding = (
+            "# bounded benchmark padding\n" if index % 3 == 2 else "// bounded benchmark padding\n"
+        )
     elif profile == "luau-remotes":
         prefix = (
             'local remote = Instance.new("RemoteEvent")\n'
@@ -131,7 +141,9 @@ def write_fixture(
         bucket = root / f"module-{index // 250:04d}"
         bucket.mkdir(exist_ok=True)
         suffix = (
-            ".luau"
+            (".ts", ".rs", ".py")[index % 3]
+            if profile == "value-config"
+            else ".luau"
             if profile == "luau-remotes"
             else ".ts"
             if profile == "typescript-config"
@@ -165,7 +177,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--samples", type=int, default=3, help="Measured scan samples")
     parser.add_argument(
         "--profile",
-        choices=("clean", "adversarial-regex", "typescript-config", "luau-remotes"),
+        choices=("clean", "adversarial-regex", "typescript-config", "luau-remotes", "value-config"),
         default="clean",
         help="Generated finding-free workload shape",
     )

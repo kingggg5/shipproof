@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add advisory SP699–SP701 for unchecked Rust NonZero zero construction, Node timer
+  delay overflow, and explicitly unlimited SQLAlchemy QueuePool capacity. Extend
+  SP673 reference validity and typed .NET SP104 certificate-validation evidence.
+  Retire SP347/SP350's unsupported default assumptions; IDs are not reused.
+- Preserve incomplete pinned-source replay reports with a nonzero result, rather
+  than losing observations. Split the complete source catalog from the shipped
+  boundary guide; offline rule explanations and all catalog checks remain.
+
 - Add six medium advisory rules SP693–SP698 for explicitly disabled HTTP receive
   deadlines, directly awaited empty asynchronous races, boolean array comparators,
   removed XML entity limits, an unverified local logging listener, and directly

@@ -12,7 +12,7 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 666 | Current executable registry through SP698 |
+| Executable scanner rules | 667 | Current executable registry through SP701 |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |

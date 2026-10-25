@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "baseline_revision": "e4877bcc2ed4a104b318a5a6d6fc4fe3a8b67b73",
+  "baseline_scanner_sources_sha256": "954a04ed9c8fbb71e97fe43c2533c9d7f776289c5ef7366d8e118c6845a26a09",
+  "candidate_scanner_sources_sha256": "2145dd84bf475c854b1ed2e13a5385adeacf30ed55c2e6f43e68b4319953cc4c",
+  "projects": [
+    {
+      "repository": "fastapi/full-stack-fastapi-template",
+      "revision": "b1125d8839482cb7bbae603ddc6d0081bf87532e",
+      "selected_files": 43,
+      "scanned_files": 42,
+      "source_tree_sha256": "4472dd413f5bc0585f8381d8500da69551684fd21fb1aaa2bdf8fb62b2912b37",
+      "findings_before": 20,
+      "findings_after": 19,
+      "removed": 1,
+      "added": 0,
+      "complete": false
+    },
+    {
+      "repository": "PrefectHQ/prefect",
+      "revision": "e516d51cc39ee055b5539146ce94e432575abeb3",
+      "selected_files": 857,
+      "scanned_files": 857,
+      "source_tree_sha256": "f1ab07497a0e189eac2e40b0656922464ab1044bac9cd39a9362c1840ffbcb3f",
+      "findings_before": 375,
+      "findings_after": 364,
+      "removed": 11,
+      "added": 0,
+      "complete": true
+    },
+    {
+      "repository": "umami-software/umami",
+      "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+      "selected_files": 1393,
+      "scanned_files": 1393,
+      "source_tree_sha256": "7b769f55655729a1df7c6d5e6cbed89c3a47e16ff18be9d32537d01a69d3c757",
+      "findings_before": 171,
+      "findings_after": 171,
+      "removed": 0,
+      "added": 0,
+      "complete": true
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "revision": "2883bc9d75974fbde43570804594940b5c2b5aca",
+      "selected_files": 111,
+      "scanned_files": 111,
+      "source_tree_sha256": "d8314c45bfda96c7763ec7254cace21d85c68fe4aecc3b71745f7ced7d48f83d",
+      "findings_before": 13,
+      "findings_after": 13,
+      "removed": 0,
+      "added": 0,
+      "complete": true
+    },
+    {
+      "repository": "ardalis/CleanArchitecture",
+      "revision": "e7c79be54ba0b001a5b332c1efe935f520b9db4b",
+      "selected_files": 362,
+      "scanned_files": 362,
+      "source_tree_sha256": "ef4e96472377630296359fd9ba8f25de5660f0fd658958c393bebd4c37d1b5cb",
+      "findings_before": 10,
+      "findings_after": 10,
+      "removed": 0,
+      "added": 0,
+      "complete": true
+    },
+    {
+      "repository": "davidfowl/TodoApp",
+      "revision": "307a1eadbbd77a3004c318f2377e4818bc400af6",
+      "selected_files": 40,
+      "scanned_files": 40,
+      "source_tree_sha256": "e1d504f61749e461de42bab6ceebe85f9bb55e930d98c6fdb9465f7c4e7f951f",
+      "findings_before": 1,
+      "findings_after": 1,
+      "removed": 0,
+      "added": 0,
+      "complete": true
+    },
+    {
+      "repository": "localsend/localsend",
+      "revision": "6e37efd5fe750299758b6778d2b150b31af3b95d",
+      "selected_files": 393,
+      "scanned_files": 393,
+      "source_tree_sha256": "45abc855b75027414990db6149080cd1043336b1291cbf29c2b5ad4dbbc17cc7",
+      "findings_before": 1,
+      "findings_after": 1,
+      "removed": 0,
+      "added": 0,
+      "complete": true
+    },
+    {
+      "repository": "GitJournal/GitJournal",
+      "revision": "c8a67e098db06335762f822d7733c330f4bd0d6b",
+      "selected_files": 307,
+      "scanned_files": 307,
+      "source_tree_sha256": "8f43d0a68c435835aef7dfadfa634e14d340d7a2a0ad0163fd26c3f32842d741",
+      "findings_before": 5,
+      "findings_after": 5,
+      "removed": 0,
+      "added": 0,
+      "complete": true
+    },
+    {
+      "repository": "Sleitnick/Knit",
+      "revision": "bb1ecf3dea69ca89147b9abe802a8c14399cb5e5",
+      "selected_files": 6,
+      "scanned_files": 6,
+      "source_tree_sha256": "ee00d975b122ca8ee86313f7324c063cd98ccbf901cf98a1f0a58d1aff88b06e",
+      "findings_before": 0,
+      "findings_after": 0,
+      "removed": 0,
+      "added": 0,
+      "complete": true
+    },
+    {
+      "repository": "evaera/roblox-lua-promise",
+      "revision": "031d429c82ee458a849e79fa523523bd349d7695",
+      "selected_files": 3,
+      "scanned_files": 3,
+      "source_tree_sha256": "9769a6c5da46137c282304560d82ab3f003f090698f7f86585a25f3e692ba852",
+      "findings_before": 0,
+      "findings_after": 0,
+      "removed": 0,
+      "added": 0,
+      "complete": true
+    }
+  ],
+  "raw_report_sha256": {
+    "corpus-paired": "a2722f7d5eb307bd1b6163357626d335c36fcda406ea20dc028a59c51581b57b",
+    "luau-after": "19e27340d7c44d301ef2c9003cb37429fee4d57589bfc97eafda9159e2e5f7d8",
+    "python-baseline": "5e8a0757a56ad8a8063d80c84803ca495d912d0de09e46b03d631ddf797b2987",
+    "python-final": "0b178c1bc53039c8d3a78ac7ad3ce41573f48efbfde737f597cba45e565f9d2e",
+    "field-after": "de6f671cf40834dd342a678195db40d8cef18e0c3bae73535025faa55619531d"
+  },
+  "authored_cases": {
+    "positive": 21,
+    "negative_or_unresolved": 44,
+    "adversarial": 17
+  },
+  "limitations": [
+    "Static source replay, not application execution or independent precision/recall.",
+    "FastAPI template requires Python >=3.14 and uses PEP 758 in backend/app/api/deps.py:36. Python 3.12 omitted this file; replay retained INCOMPLETE and exit 2.",
+    "The 12 removed observations belong only to retired SP347/SP350 policies; other observations were not relabelled as safe.",
+    "Prefect projection covers src/prefect/**/*.py, not tests or the entire repository; earlier snapshots retain their declared scopes."
+  ]
+}

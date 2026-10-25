@@ -65,13 +65,13 @@ Node.js 20+ ทำหน้าที่ CLI ส่วน Python 3.10+ จำเ�
 
 ## ขอบเขตและสถานะโครงการ
 
-ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **666 deterministic rules** (`SP001`–`SP698`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
+ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **667 deterministic rules** (`SP001`–`SP701`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
 
 | หัวข้อ | Contract ปัจจุบัน |
 | :--- | :--- |
 | Release ล่าสุด | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่ง scanner-backed |
-| Executable rules | 666 (`SP001`–`SP698`, มีช่องว่างสงวนไว้ตั้งใจ) |
+| Executable rules | 667 (`SP001`–`SP701`, มีช่องว่างสงวนไว้ตั้งใจ) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates และ reserved promotion slots 1,000 รายการ; ไม่มีอะไรเป็น finding จนกว่าจะ promote |
 | Exit codes | `0` ผ่าน, `1` gate fail, `2` evidence ไม่ถูกต้อง/ไม่พร้อม |
@@ -139,7 +139,7 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 ## กฎการตรวจจับ
 
-**666 deterministic executable rules** (`SP001`–`SP698`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
+**667 deterministic executable rules** (`SP001`–`SP701`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
 
 ขอบเขต advisory จาก cohort Roblox/Luau, TypeScript และ broad quality:
 
@@ -154,6 +154,9 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 | `SP696` | XML entity expansion limit explicitly removed | ต้องส่ง inline settings เข้า `XmlReader.Create` โดยตรง เปิด DTD, limit entity เป็น 0 และไม่มี document cap; ไม่ได้พิสูจน์ external entity |
 | `SP697` | Unverified logging configuration listener explicitly started | ต้อง import `logging.config.listen` โดยตรง, port literal ที่ valid, `verify=None` และเรียก `start()` ทันที; listener ปกติรับเฉพาะ loopback |
 | `SP698` | Awaited synchronous compression still blocks the caller | ต้อง await synchronous zlib call ที่ import มาโดยตรง; ไม่ทราบขนาด input และงานจริง |
+| `SP699` | Rust unchecked NonZero construction receives zero | ต้องเป็น native constructor ที่ระบุ path และค่าศูนย์ชัดเจน ไม่อนุมาน custom module |
+| `SP700` | Node timer delay exceeds its supported range | ตรวจตำแหน่ง delay ของ imported callback/promise API รองรับค่าคงที่และผลคูณที่มีขอบเขต |
+| `SP701` | SQLAlchemy QueuePool capacity explicitly unlimited | ตรวจ zero size หรือ unlimited overflow ที่ตั้งชัดเจน ไม่เหมารวม default ของ engine |
 
 Finding เหล่านี้เป็น advisory จาก source ในเครื่อง ไม่ใช่หลักฐานว่า deployment ถูกเปิดใช้หรือ exploit ได้ ดู [บันทึก Luau/TypeScript cohort](research/luau-typescript-cohort-2026-10.md) และ [บันทึก broad-quality cohort](research/broad-quality-cohort-2026-10.md)
 
@@ -193,7 +196,7 @@ field cohort TypeScript/.NET/Dart ก่อนหน้านี้บันท�
 
 cohort broad quality เพิ่ม advisory `SP693`–`SP698`, ปรับขอบเขต `SP346`/`SP375` และ retire `SP348` ตรวจเฉพาะหลักฐานจาก source ไม่อ้างผลใน deployment มีเคสทดสอบ, native API probes, ผลเทียบซอร์สจริง และงบประสิทธิภาพใน [บันทึก cohort](research/broad-quality-cohort-2026-10.md)
 
-catalog ฉบับเต็ม, severity, category และวิธี detection ต่อกฎ พร้อม mapping ecosystem/framework ที่กำหนดว่า structural check แต่ละตัวรันที่ไหน: อยู่ที่ **[docs/rules.md](docs/rules.md)**
+[catalog ฉบับเต็ม](https://github.com/kingggg5/shipproof/blob/main/docs/rule-catalog.md) แสดง severity, category และวิธีตรวจของแต่ละกฎ ส่วน [คู่มือกฎ](docs/rules.md) ที่มากับแพ็กเกจอธิบายขอบเขตและ ecosystem ใช้ `shipproof explain SPxxx` อ่านรายละเอียดแต่ละกฎแบบออฟไลน์ได้
 
 ## ควบคุม False Positive
 
@@ -328,7 +331,7 @@ candidate จาก research จะกลายเป็น executable `SPxxx` r
 | [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 non-executable hypotheses จาก model-assisted mapped กับ source | ไม่มี |
 | [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 non-executable candidates ตามช่วงเวลา | ไม่มี |
 | [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 non-executable candidates แยก ecosystem/CWE | ไม่มี |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 666 detectors | Emit versioned findings |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 667 detectors | Emit versioned findings |
 
 รายการ expert/annual 2,800 รายการและ language catalog 5,000 รายการเป็น research candidates ไม่ใช่ executable rules และยัง emit findings ไม่ได้จนกว่าจะ promote แยกต่างหาก
 

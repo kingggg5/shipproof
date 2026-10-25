@@ -14,6 +14,7 @@
     "action.yml",
     "bin",
     "docs",
+    "!docs/rule-catalog.md",
     "!docs/assets/shipproof-logo.svg",
     "!docs/assets/shipproof-workflow.png",
     "!docs/precision-plan.md",

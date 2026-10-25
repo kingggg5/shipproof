@@ -188,7 +188,7 @@
       "expected_confidence": "high",
       "cwe": "CWE-295",
       "frameworks": [],
-      "false_positive_analysis": "Local development against self-signed certs. Should never appear in production code paths.",
+      "false_positive_analysis": "Self-signed development and explicit trust stores require context. Typed SslStream client options with an unconditional four-parameter validation callback are advisory; custom types, conditional callbacks and changed/escaped receivers stay unresolved. Other language variants retain their own scope.",
       "cases": {
         "positive": [
           {

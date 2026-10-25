@@ -65,6 +65,7 @@ def verify_projection(root: Path, spec: dict) -> frozenset[str]:
         ".dart",
         ".lua",
         ".luau",
+        ".py",
     }:
         raise ValueError("unsupported language projection")
     if (
@@ -168,6 +169,7 @@ def main() -> int:
             raise ValueError("invalid cohort manifest")
         scanner = load_scanner(args.scanner_dir.resolve())
         results = []
+        complete = True
         finding_count = 0
         seen = set()
         for project in manifest["projects"]:
@@ -200,10 +202,11 @@ def main() -> int:
             )
             results.append(report)
             if stats["files_scanned"] != len(selection) or not stats["completeness"]["is_complete"]:
-                raise ValueError("selected language coverage incomplete")
+                complete = False
         scanner_sources = sorted(args.scanner_dir.glob("*.py"))
         payload = {
             "schema_version": 1,
+            "verdict": "PASS_WITH_EVIDENCE" if complete else "INCOMPLETE",
             "manifest_sha256": digest(args.manifest.read_bytes()),
             "scanner_sources_sha256": digest(
                 "".join(
@@ -234,11 +237,11 @@ def main() -> int:
                             ).items()
                         )
                     ),
-                    "complete": True,
+                    "complete": complete,
                 }
             )
         )
-        return 0
+        return 0 if complete else 2
     except (OSError, ValueError, KeyError, TypeError, ImportError) as exc:
         print(f"field evaluation unavailable: {exc}", file=sys.stderr)
         return 2

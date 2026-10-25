@@ -4888,19 +4888,6 @@ RULES: tuple[Rule, ...] = (
         frozenset({".py"}),
     ),
     Rule(
-        "SP347",
-        "Python asyncio gather without return_exceptions handling",
-        "reliability",
-        "medium",
-        "high",
-        compile_pattern(r"""asyncio\.gather\s*\((?![^)]*return_exceptions\s*=)[^)]*\)"""),
-        "asyncio.gather without return_exceptions=True causes the entire batch to fail if a single task raises an exception.",
-        "Pass `return_exceptions=True` to asyncio.gather or wrap individual coroutines in try-except.",
-        "CWE-755",
-        "Reliability",
-        frozenset({".py"}),
-    ),
-    Rule(
         "SP349",
         "Python ProcessPoolExecutor created inside async request handler",
         "scale",
@@ -4911,19 +4898,6 @@ RULES: tuple[Rule, ...] = (
         ),
         "Instantiating ProcessPoolExecutor inside an async route creates high OS fork overhead on every request.",
         "Use a global singleton ProcessPoolExecutor instance managed by application lifespan events.",
-        "CWE-400",
-        "Capacity",
-        frozenset({".py"}),
-    ),
-    Rule(
-        "SP350",
-        "Python SQLAlchemy engine created without pool_size and max_overflow bounds",
-        "scale",
-        "high",
-        "high",
-        compile_pattern(r"""create_engine\s*\([^\)]+(?!pool_size\s*=)[^\)]*\)"""),
-        "SQLAlchemy create_engine without explicit pool_size and max_overflow may exhaust database connection limits.",
-        "Configure `pool_size=10`, `max_overflow=20`, and `pool_pre_ping=True` in create_engine.",
         "CWE-400",
         "Capacity",
         frozenset({".py"}),
@@ -9310,12 +9284,12 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP673",
-        "Rust zero-initializes a reference type",
+        "Rust constructs an invalid reference",
         "correctness",
         "medium",
         "high",
         compile_pattern(r"$^"),
-        "An explicit std/core mem::zeroed call creates an invalid null reference.",
+        "An explicit std/core zeroed or uninitialized call constructs an invalid reference.",
         "Create the reference from a live value, or keep storage as MaybeUninit until a valid value is written.",
         "CWE-665",
         "Rust reference validity",
@@ -9643,6 +9617,45 @@ RULES: tuple[Rule, ...] = (
         "Event-loop CPU budget",
         JS_CONFIG_SUFFIXES,
     ),
+    Rule(
+        "SP699",
+        "Rust unchecked NonZero construction receives zero",
+        "correctness",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "A qualified std/core NonZero integer constructor explicitly receives zero without validation.",
+        "Use NonZero::new and handle None, or establish a nonzero value before unsafe construction.",
+        "CWE-665",
+        "Rust value validity",
+        frozenset({".rs"}),
+    ),
+    Rule(
+        "SP700",
+        "Node timer delay exceeds its supported range",
+        "performance",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported timer receives a delay above 2147483647 ms, which Node clamps to 1 ms.",
+        "Use bounded delay chunks or a scheduler; validate timer inputs before registration.",
+        "CWE-681",
+        "Timer range and scheduling",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP701",
+        "SQLAlchemy QueuePool capacity explicitly unlimited",
+        "scale",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported native QueuePool is constructed with pool_size=0 or max_overflow=-1.",
+        "Set finite pool size and overflow bounds suitable for total application concurrency.",
+        "CWE-400",
+        "Database connection capacity",
+        frozenset({".py"}),
+    ),
 )
 
 # Secret rules are exactly the rules that redact credential material in evidence.
@@ -9657,7 +9670,7 @@ MINIMIZED_EVIDENCE_RULE_IDS = frozenset(
         "SP378",
         "SP591",
         "SP621",
-        *(f"SP{number}" for number in range(666, 699)),
+        *(f"SP{number}" for number in range(666, 702)),
     }
 )
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
@@ -10603,6 +10616,9 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP696",
         "SP697",
         "SP698",
+        "SP699",
+        "SP700",
+        "SP701",
         "SP346",
         "SP377",
         "SP378",
@@ -11084,6 +11100,7 @@ def find_regex_issues(
                 "CookieAuthenticationOptions",
                 "KestrelServerOptions",
                 "MaxCharactersFromEntities",
+                "SslClientAuthenticationOptions",
             )
         )
         and not any(marker in source_text for marker in ('@"', '$"', '"""'))
@@ -11098,6 +11115,7 @@ def find_regex_issues(
                 line_number = source_text.count("\n", 0, offset) + 1
                 previous = len(findings)
                 excerpt = {
+                    "SP104": "Typed SslStream client options explicitly accept all remote certificate validation results",
                     "SP056": "ASP.NET Core cookie configuration explicitly sets HttpOnly=false",
                     "SP084": "ASP.NET Core cookie configuration explicitly weakens Secure protection",
                     "SP689": "Kestrel options explicitly assign Limits.MaxRequestBodySize=null",
@@ -11233,6 +11251,7 @@ def find_regex_issues(
             "sort",
             "toSorted",
             "zlib",
+            "timers",
             "webPreferences",
             "puppeteer",
             "minVersion",
@@ -12921,7 +12940,7 @@ def find_python_ast_issues(
             ignore_ids=ignore_ids,
         )
         visitor.visit(tree)
-        if "create_task" in source_text or "logging" in source_text:
+        if "create_task" in source_text or "logging" in source_text or "QueuePool" in source_text:
             for rule_id, node in python_runtime_checks.observations(tree):
                 visitor.add_finding(find_rule(rule_id), node)
     except (RecursionError, MemoryError, python_runtime_checks.AnalysisLimitError) as exc:

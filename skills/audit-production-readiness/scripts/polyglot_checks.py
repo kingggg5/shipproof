@@ -744,13 +744,52 @@ def signature_spans(source: str, language: str) -> list[tuple[str, int, int]]:
 
     if language == "rust":
         hidden = {name for name in ("std", "core", "reqwest") if shadowed(values, name)}
+        hidden.update(
+            name
+            for name in ("std", "core", "reqwest")
+            if any(values[i : i + 3] == ["r", "#", name] for i in range(len(values)))
+        )
+        # stringify! consumes token data, not a call expression. Other macros are
+        # not expanded; this lexer is not a Rust compiler.
+        quoted = set()
+        if "stringify" in values:
+            pairs = delimiter_pairs(values)
+            quoted_through = -1
+            for index, value in enumerate(values):
+                if index <= quoted_through:
+                    continue
+                if (
+                    value == "stringify"
+                    and values[index + 1 : index + 2] == ["!"]
+                    and index + 2 in pairs
+                ):
+                    quoted_through = pairs[index + 2]
+                    quoted.update(range(index + 2, quoted_through + 1))
+        for index, value in enumerate(values):
+            if value != "use":
+                continue
+            end = index + 1
+            while end < min(len(values), index + 129) and values[end] != ";":
+                end += 1
+            if end == min(len(values), index + 129):
+                hidden.update({"std", "core", "reqwest"})
+            else:
+                # An imported custom path/group can bind a standard-looking module.
+                # Longer/grouped imports stay unresolved rather than implying std identity.
+                hidden.update(
+                    name for name in ("std", "core", "reqwest") if name in values[index + 2 : end]
+                )
         for i in range(len(values) - 6):
+            if i in quoted:
+                continue
             if i >= 2 and values[i - 1] == "::" and re.fullmatch(r"\w+", values[i - 2]):
                 continue
             if (
                 values[i] in {"std", "core"}
                 and values[i] not in hidden
-                and values[i + 1 : i + 6] == ["::", "mem", "::", "zeroed", "::"]
+                and values[i + 1 : i + 4] == ["::", "mem", "::"]
+                and values[i + 4] in {"zeroed", "uninitialized"}
+                and values[i + 5] == "::"
             ):
                 opening = i + 6
                 if values[opening : opening + 2] != ["<", "&"]:
@@ -760,6 +799,19 @@ def signature_spans(source: str, language: str) -> list[tuple[str, int, int]]:
                     closing += 1
                 if values[closing : closing + 3] == [">", "(", ")"]:
                     emit("SP673", i, closing + 2)
+            if (
+                values[i] in {"std", "core"}
+                and values[i] not in hidden
+                and values[i + 1 : i + 4] == ["::", "num", "::"]
+                and re.fullmatch(r"NonZero[UI](?:8|16|32|64|128|size)", values[i + 4])
+                and values[i + 5 : i + 9] == ["::", "new_unchecked", "(", "0"]
+            ):
+                end = i + 9
+                suffix = values[i + 4].removeprefix("NonZero").lower()
+                if values[end : end + 1] in ([suffix], ["_" + suffix]):
+                    end += 1
+                if values[end : end + 1] == [")"]:
+                    emit("SP699", i, end)
             if values[i] != "reqwest" or "reqwest" in hidden:
                 continue
             cursor = i + 1

@@ -590,7 +590,7 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
     "SP104": {
         "why": "Disabling TLS verification allows man-in-the-middle attacks on any connection.",
         "attack": "Attacker intercepts the connection, reads credentials and data, or modifies responses.",
-        "false_positive": "Local development against self-signed certs. Should never appear in production code paths.",
+        "false_positive": "Self-signed development and explicit trust stores require context. Typed SslStream client options with an unconditional four-parameter validation callback are advisory; custom types, conditional callbacks and changed/escaped receivers stay unresolved. Other language variants retain their own scope.",
         "test": "Restore verification. Configure the correct CA bundle. Test that connections reject invalid certificates.",
     },
     "SP105": {
@@ -1865,23 +1865,11 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Requires an import-bound standalone expression call. Await, return, assignment, task-group ownership, local shadows, escaped bindings and visible custom/eager factories stay silent. Cross-file task-factory ownership remains unknown.",
         "test": "Retain background tasks until completion, or await them. Verify direct await and returned tasks are not labelled dropped references.",
     },
-    "SP347": {
-        "why": "asyncio.gather without return_exceptions=True causes the entire batch to fail if a single task raises an exception.",
-        "attack": "An attacker or runtime failure exploits `Python asyncio gather without return_exceptions handling` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-        "test": "Add a test confirming that pass `return_exceptions=true` to asyncio.gather or wrap individual coroutines in try-except.",
-    },
     "SP349": {
         "why": "Instantiating ProcessPoolExecutor inside an async route creates high OS fork overhead on every request.",
         "attack": "An attacker or runtime failure exploits `Python ProcessPoolExecutor created inside async request handler` to bypass controls or degrade service availability.",
         "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
         "test": "Add a test confirming that use a global singleton processpoolexecutor instance managed by application lifespan events.",
-    },
-    "SP350": {
-        "why": "SQLAlchemy create_engine without explicit pool_size and max_overflow may exhaust database connection limits.",
-        "attack": "An attacker or runtime failure exploits `Python SQLAlchemy engine created without pool_size and max_overflow bounds` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-        "test": "Add a test confirming that configure `pool_size=10`, `max_overflow=20`, and `pool_pre_ping=true` in create_engine.",
     },
     "SP351": {
         "why": "SQLAlchemy Session is instantiated without a context manager or explicit close in a finally block, leaking connections.",
@@ -3750,9 +3738,9 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Replace code-bearing events with server-defined action IDs and validated argument schemas; verify clients cannot submit executable source.",
     },
     "SP673": {
-        "why": "Rust references must be non-null even inside unsafe code. An all-zero reference violates the type's initialization invariant immediately.",
-        "attack": "Reaching a fully qualified mem::zeroed reference initialization creates invalid memory state; optimizations or subsequent use may crash or behave unpredictably.",
-        "false_positive": "The advisory requires explicit std/core mem::zeroed with a reference type. Raw pointers, integers, Option references and uninitialized storage without assume_init stay silent; import aliases and complex generics are not resolved.",
+        "why": "Rust references must contain valid initialized addresses, including in unsafe code. Zeroed or uninitialized references violate that invariant.",
+        "attack": "Reaching qualified zeroed/uninitialized reference construction creates invalid state; subsequent behavior is not established by a static signature.",
+        "false_positive": "Advisory: explicit std/core memory constructors with reference types only. Raw pointers, integers, Option references and MaybeUninit storage stay silent. Imported/custom module paths, raw identifiers, stringify token data and complex types stay unresolved.",
         "test": "Initialize references from a live value or retain storage as MaybeUninit until a valid value is written. Use compiler diagnostics or Miri separately when available.",
     },
     "SP674": {
@@ -3994,5 +3982,23 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "Large buffers can delay unrelated event-loop work. Input size, worker placement and actual latency are not established by this local signature.",
         "false_positive": "Advisory: directly awaited imported synchronous compression/decompression only. Small intentional work may be acceptable. Asynchronous APIs, streams, custom functions, shadows and calls not directly awaited stay silent.",
         "test": "Use the asynchronous API or bounded workers for costly input and measure event-loop delay on representative data.",
+    },
+    "SP699": {
+        "why": "NonZero integer values must not be zero, even when created through unsafe code.",
+        "attack": "Reaching unchecked zero construction violates a Rust validity invariant. This local signature does not demonstrate reachability or exploitation.",
+        "false_positive": "Advisory: qualified std/core primitive NonZero constructors and literal zero only. Safe constructors, nonzero/computed values, imported/custom modules, raw identifiers and stringify token data stay unresolved or silent.",
+        "test": "Use the checked constructor and handle None. Do not execute undefined-behavior fixtures to validate this signature.",
+    },
+    "SP700": {
+        "why": "Node coerces timer delays above its signed-32-bit maximum to one millisecond instead of preserving a long wait.",
+        "attack": "A long-delay job can run early, or a repeating timer can run much more frequently than intended. Actual callbacks, reachability and workload cost are unknown.",
+        "false_positive": "Advisory: imported timers or timers/promises and the correct delay position. Only exact decimal integers or bounded products are evaluated. Global/browser timers, other computed delays, callback data, safe limits and ambiguous bindings stay silent.",
+        "test": "Check boundary values and callback/promise overload positions; immediately cancel any native probe timer rather than generating load.",
+    },
+    "SP701": {
+        "why": "Native QueuePool explicitly selects unlimited size or overflow rather than its bounded defaults.",
+        "attack": "Concurrent connection demand may exceed database capacity. Independent admission limits and actual load remain unknown.",
+        "false_positive": "Advisory: import-bound QueuePool constructor with explicit pool_size=0 or max_overflow=-1. Engine defaults, other pool classes, positional/keyword collisions, unknown values and changed/escaped bindings stay silent. QueuePool is not imported or executed by the scanner.",
+        "test": "Retain finite pool and overflow limits; distinguish direct pool configuration from dialect-dependent create_engine defaults.",
     },
 }

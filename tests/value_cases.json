@@ -1,0 +1,482 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule_id": "SP699",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: qualified std/core primitive NonZero constructors and literal zero only. Safe constructors, nonzero/computed values, imported/custom modules, raw identifiers and stringify token data stay unresolved or silent.",
+      "sources": [
+        {
+          "url": "https://doc.rust-lang.org/std/num/struct.NonZero.html#method.new_unchecked",
+          "claim": "The unsafe NonZero constructor requires a nonzero value; zero violates Rust's validity contract."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/665.html",
+          "claim": "Maps the local validity/trust/resource boundary, not proof of deployed exposure or exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { core::num::NonZeroI64::new_unchecked(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0u32) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroUsize::new_unchecked(0_usize) }; }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(1) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(value) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { custom::std::num::NonZeroU32::new_unchecked(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::CustomNumber::new_unchecked(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0.0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0u64) }; }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "value.rs",
+          "source": "/* fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n */",
+          "expected": false,
+          "rationale": "A comment cannot construct an unsafe integer value or establish reachability."
+        },
+        {
+          "path": "value.rs",
+          "source": "use custom::std;\nfn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n",
+          "expected": false,
+          "rationale": "An imported standard-looking module name has unresolved identity, so its constructors are not presumed native."
+        },
+        {
+          "path": "value.rs",
+          "source": "use custom::{core};\nfn build() { let value = unsafe { core::num::NonZeroU32::new_unchecked(0) }; }\n",
+          "expected": false,
+          "rationale": "A grouped import can bind core to a custom module rather than the Rust standard library."
+        },
+        {
+          "path": "value.rs",
+          "source": "mod r#std {}\nfn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n",
+          "expected": false,
+          "rationale": "A raw identifier declaration can shadow a standard module spelling and must not establish native identity."
+        },
+        {
+          "path": "value.rs",
+          "source": "const EXAMPLE: &str = stringify!(fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n);",
+          "expected": false,
+          "rationale": "stringify consumes token data; a constructor-looking token sequence is not an evaluated call."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP700",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: imported timers or timers/promises and the correct delay position. Only exact decimal integers or bounded products are evaluated. Global/browser timers, other computed delays, callback data, safe limits and ambiguous bindings stay silent.",
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/timers.html",
+          "claim": "Node coerces delays greater than 2147483647 milliseconds to one millisecond; callback and promise APIs use different delay positions."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/681.html",
+          "claim": "Maps the local validity/trust/resource boundary, not proof of deployed exposure or exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setTimeout} from 'node:timers';\nsetTimeout(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval as repeat} from 'node:timers';\nrepeat(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setTimeout as wait} from 'node:timers/promises';\nawait wait(3000000000, 'value');"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 30 * 24 * 60 * 60 * 1000);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "const timers = require('node:timers');\ntimers.setTimeout(tick, 3000000000);"
+        }
+      ],
+      "negative": [
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 2147483647);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 0);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, -1);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, delay);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 1000, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from './timers';\nsetInterval(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import type {setInterval} from 'node:timers';\nsetInterval(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setTimeout as wait} from 'node:timers/promises';\nawait wait(1000, 2147483648);"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 2147483648n);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 0 * 30 * 24 * 60 * 60 * 1000);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(null, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(0, 2147483648);\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "timer.ts",
+          "source": "/* import {setInterval} from 'node:timers';\nsetInterval(tick, 2147483648);\n */",
+          "expected": false,
+          "rationale": "Timer-looking comment text does not create a runtime schedule."
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nfunction run(setInterval: Custom) { setInterval(tick, 2147483648);\n}",
+          "expected": false,
+          "rationale": "A local parameter shadows the imported timer and invalidates its coercion semantics."
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999);\n",
+          "expected": false,
+          "rationale": "Oversized numeric tokens remain unresolved without unbounded integer conversion or evaluation."
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 9007199254740991 * 9007199254740991);\n",
+          "expected": false,
+          "rationale": "Products outside exact JavaScript integer range are not evaluated into affirmative evidence."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP701",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: import-bound QueuePool constructor with explicit pool_size=0 or max_overflow=-1. Engine defaults, other pool classes, positional/keyword collisions, unknown values and changed/escaped bindings stay silent. QueuePool is not imported or executed by the scanner.",
+      "sources": [
+        {
+          "url": "https://docs.sqlalchemy.org/en/20/core/pooling.html#sqlalchemy.pool.QueuePool",
+          "claim": "QueuePool defaults are finite; pool_size=0 or max_overflow=-1 explicitly removes a capacity bound."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Maps the local validity/trust/resource boundary, not proof of deployed exposure or exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, max_overflow=-1)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool as Pool\npool = Pool(connect, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "import sqlalchemy.pool as pools\npool = pools.QueuePool(connect, 5, -1)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(creator=connect, pool_size=0, max_overflow=10)\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=5, max_overflow=10)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=1, max_overflow=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=limit)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=5, max_overflow=-2)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=False)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=-1)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from custom.pool import QueuePool\npool = QueuePool(connect, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import NullPool\npool = NullPool(connect, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, **options)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, 5, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy import create_engine\nengine = create_engine(url)\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "pool.py",
+          "source": "# from sqlalchemy.pool import QueuePool\n# pool = QueuePool(connect, pool_size=0)\n# ",
+          "expected": false,
+          "rationale": "A pool configuration in comments cannot instantiate a connection pool."
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\nQueuePool = custom\npool = QueuePool(connect, pool_size=0)\n",
+          "expected": false,
+          "rationale": "A reassigned constructor is no longer the import-bound QueuePool."
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\ndef build(QueuePool):\n    return QueuePool(connect, pool_size=0)\n",
+          "expected": false,
+          "rationale": "A function parameter masks the imported class; its settings need separate review."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP673",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: explicit std/core memory constructors with reference types only. Raw pointers, integers, Option references and MaybeUninit storage stay silent. Imported/custom module paths, raw identifiers, stringify token data and complex types stay unresolved.",
+      "sources": [
+        {
+          "url": "https://doc.rust-lang.org/std/mem/fn.uninitialized.html",
+          "claim": "Constructing an uninitialized reference violates its initialized-address invariant even if the resulting reference is not used."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/665.html",
+          "claim": "Maps the local validity/trust/resource boundary, not proof of deployed exposure or exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "reference.rs",
+          "source": "unsafe fn invalid() { let value = std::mem::uninitialized::<&u32>(); }\n"
+        },
+        {
+          "path": "reference.rs",
+          "source": "unsafe fn invalid() { let value = core::mem::uninitialized::<&mut u8>(); }\n"
+        },
+        {
+          "path": "reference.rs",
+          "source": "unsafe fn invalid() { let value = std::mem::uninitialized::<&'static str>(); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "reference.rs",
+          "source": "unsafe fn invalid() { let value = std::mem::MaybeUninit::<&u32>::uninit(); }\n"
+        },
+        {
+          "path": "reference.rs",
+          "source": "unsafe fn invalid() { let value = custom::std::mem::uninitialized::<&u32>(); }\n"
+        },
+        {
+          "path": "reference.rs",
+          "source": "unsafe fn invalid() { let value = std::mem::uninitialized::<u32>(); }\n"
+        },
+        {
+          "path": "reference.rs",
+          "source": "use custom::std;\nunsafe fn invalid() { let value = std::mem::uninitialized::<&u32>(); }\n"
+        },
+        {
+          "path": "reference.rs",
+          "source": "use crate::{core};\nunsafe fn invalid() { let value = core::mem::uninitialized::<&u32>(); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "reference.rs",
+          "source": "let example = stringify!(unsafe fn invalid() { let value = std::mem::uninitialized::<&u32>(); }\n);",
+          "expected": false,
+          "rationale": "Token stringification is data, not reference construction; no macro expansion is executed by the scanner."
+        },
+        {
+          "path": "reference.rs",
+          "source": "let example = r#\"unsafe fn invalid() { let value = std::mem::uninitialized::<&u32>(); }\n\"#;",
+          "expected": false,
+          "rationale": "A raw Rust string must not be interpreted as a native memory operation."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP104",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Self-signed development and explicit trust stores require context. Typed SslStream client options with an unconditional four-parameter validation callback are advisory; custom types, conditional callbacks and changed/escaped receivers stay unresolved. Other language variants retain their own scope.",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.net.security.sslclientauthenticationoptions.remotecertificatevalidationcallback",
+          "claim": "The callback decides whether to accept the peer certificate; an unconditional true callback ignores reported validation errors."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/295.html",
+          "claim": "Maps the local validity/trust/resource boundary, not proof of deployed exposure or exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = static (_, _, _, _) => true }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => { return true; } }); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => false }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => errors == SslPolicyErrors.None }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = validatePeer }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using Custom.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsServerAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new CustomOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (same, same, same, same) => true }); }\n"
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true, RemoteCertificateValidationCallback = validatePeer }); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "tls.cs",
+          "source": "/* using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true }); }\n */",
+          "expected": false,
+          "rationale": "A commented authentication call must not establish effective TLS configuration."
+        },
+        {
+          "path": "tls.cs",
+          "source": "class SslStream {}\nusing System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true }); }\n",
+          "expected": false,
+          "rationale": "A local type makes the standard SslStream binding ambiguous and must stay unresolved."
+        },
+        {
+          "path": "tls.cs",
+          "source": "using System.Net.Security;\nasync System.Threading.Tasks.Task Connect(SslStream tls) { tls = custom; await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host, RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true }); }\n",
+          "expected": false,
+          "rationale": "Reassignment invalidates the single-use typed receiver evidence."
+        }
+      ]
+    }
+  ]
+}

@@ -63,6 +63,20 @@ class BenchmarkScannerTests(unittest.TestCase):
             self.assertEqual(findings, [])
             self.assertTrue(stats["completeness"]["is_complete"])
 
+    def test_value_profile_is_deterministic_across_three_languages(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            left = benchmark_scanner.write_fixture(Path(first), 12, "value-config", 512)
+            right = benchmark_scanner.write_fixture(Path(second), 12, "value-config", 512)
+            self.assertEqual(left, right)
+            self.assertEqual(left[1], 12 * 512)
+            for suffix in (".ts", ".rs", ".py"):
+                self.assertEqual(len(list(Path(first).rglob("*" + suffix))), 4)
+            findings, stats = benchmark_scanner.load_scanner().scan_repository(Path(first))
+            self.assertEqual(findings, [])
+            self.assertTrue(stats["completeness"]["is_complete"])
+
     def test_luau_profile_is_deterministic_guarded_source(self):
         import tempfile
 

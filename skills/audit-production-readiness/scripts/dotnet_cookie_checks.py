@@ -32,12 +32,18 @@ OPTION_NAMESPACES = {
         ".",
     ],
 }
+TYPE_NAMESPACES = {
+    **OPTION_NAMESPACES,
+    "SslStream": ["System", ".", "Net", ".", "Security", "."],
+    "SslClientAuthenticationOptions": ["System", ".", "Net", ".", "Security", "."],
+}
 RECEIVERS = {
     "IResponseCookies": [".", "Append", "("],
     "HttpResponse": [".", "Cookies", ".", "Append", "("],
     "HttpContext": [".", "Response", ".", "Cookies", ".", "Append", "("],
     "CookieAuthenticationOptions": [],
     "KestrelServerOptions": [],
+    "SslStream": [".", "AuthenticateAsClientAsync", "("],
 }
 SENSITIVE_NAMES = frozenset(
     {
@@ -219,7 +225,7 @@ def signature_offsets(
     tokens: list[tuple[str, int]], pairs: dict[int, int]
 ) -> list[tuple[str, int]]:
     values = [value for value, _ in tokens]
-    types = {*RECEIVERS, "CookieOptions", "CookieSecurePolicy"}
+    types = {*RECEIVERS, "CookieOptions", "CookieSecurePolicy", "SslClientAuthenticationOptions"}
     # Using aliases, local types, dynamic dispatch and policy hooks need semantic analysis.
     if any(value in {"dynamic", "UseCookiePolicy", "CookiePolicyOptions", "#"} for value in values):
         return []
@@ -227,7 +233,7 @@ def signature_offsets(
         if (
             value in {"class", "struct", "record", "interface"}
             and values[i + 1 : i + 2]
-            and values[i + 1] in types | {"Microsoft"}
+            and values[i + 1] in types | {"Microsoft", "System"}
         ):
             return []
         if value == "using" and values[i + 2 : i + 3] == ["="]:
@@ -238,11 +244,11 @@ def signature_offsets(
             for i in range(len(values))
         )
         for name in types
-        for namespace in [OPTION_NAMESPACES.get(name, NAMESPACE)]
+        for namespace in [TYPE_NAMESPACES.get(name, NAMESPACE)]
     }
 
     def type_end(start: int, expected: str) -> int:
-        namespace = OPTION_NAMESPACES.get(expected, NAMESPACE)
+        namespace = TYPE_NAMESPACES.get(expected, NAMESPACE)
         global_name = values[start : start + 3] == ["global", ":", ":"]
         if global_name:
             start += 3
@@ -342,6 +348,49 @@ def signature_offsets(
                 continue
             opening = use + len(members)
             args = segments(values, pairs, opening)
+            if receiver == "SslStream":
+                if len(args) not in {1, 2}:
+                    continue
+                first, stop = args[0]
+                if values[first] != "new":
+                    continue
+                option_start = type_end(first + 1, "SslClientAuthenticationOptions")
+                if option_start < 0:
+                    continue
+                if values[option_start : option_start + 2] == ["(", ")"]:
+                    option_start += 2
+                if (
+                    values[option_start : option_start + 1] != ["{"]
+                    or pairs.get(option_start) != stop - 1
+                ):
+                    continue
+                options = {}
+                for key, end_option in segments(values, pairs, option_start):
+                    if values[key + 1 : key + 2] != ["="] or values[key] in options:
+                        options = {}
+                        break
+                    options[values[key]] = (key + 2, end_option)
+                callback = options.get("RemoteCertificateValidationCallback")
+                if callback is None:
+                    continue
+                first, stop = callback
+                if values[first : first + 1] == ["static"]:
+                    first += 1
+                if values[first : first + 1] != ["("]:
+                    continue
+                parameters = segments(values, pairs, first)
+                if len(parameters) != 4 or not all(
+                    end == start + 1 and IDENTIFIER.fullmatch(values[start])
+                    for start, end in parameters
+                ):
+                    continue
+                names = [values[start] for start, _end in parameters if values[start] != "_"]
+                if len(names) != len(set(names)):
+                    continue
+                body = pairs.get(first, stop) + 1
+                if values[body:stop] in (["=>", "true"], ["=>", "{", "return", "true", ";", "}"]):
+                    hits.append(("SP104", tokens[use][1]))
+                continue
             if len(args) != 3 or args[0][1] != args[0][0] + 1:
                 continue
             if literal(values[args[0][0]]) not in SENSITIVE_NAMES:

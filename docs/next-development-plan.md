@@ -45,11 +45,20 @@ precision claim. See the [cohort evidence and limits](../research/field-cohort-t
 The failure catalog is maintainer-source-only and excluded from npm to preserve
 package ceilings; see the [catalog](knowledge/failure-catalog.md).
 
-## Current broad-quality cohort status — 2026-10-23
+## Current value/default/trust cohort
 
-- executable scanner rules: 666
+- executable scanner rules: 667
 
-The registry now contains 666 executable rules through SP698. The six additions,
+SP699–SP701 add bounded Rust validity, Node timer-range and explicit QueuePool
+capacity checks. SP673/SP104 gain scoped variants; SP347/SP350 are retired because
+their default assumptions do not establish a defect. See the
+[cohort record](../research/value-cohort-2026-10.md) for evidence and limitations.
+
+## Previous broad-quality cohort status — 2026-10-23
+
+- historical executable scanner rules: 666
+
+The registry then contained 666 executable rules through SP698. The six additions,
 SP693–SP698, are medium advisory checks with bounded source syntax. SP346 now
 matches only import-bound standalone `asyncio.create_task` expressions that are
 not awaited, returned, or assigned. SP375 no longer treats `SetMaxIdleConns(0)` as

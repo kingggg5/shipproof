@@ -1,4 +1,4 @@
-"""Import-bound standard-library observations, without executing target code."""
+"""Import-bound API observations, without importing libraries or executing target code."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import ast
 from collections import Counter
 
 MAX_NODES = 50_000
+MODULES = frozenset({"asyncio", "logging.config", "sqlalchemy.pool"})
 
 
 class AnalysisLimitError(ValueError):
@@ -16,15 +17,8 @@ def observations(tree: ast.Module) -> list[tuple[str, ast.AST]]:
     # These signatures require a direct top-level import. Skip unrelated ASTs
     # before allocating a parent map or charging the API-analysis node budget.
     relevant = any(
-        (
-            isinstance(node, ast.Import)
-            and any(alias.name in {"asyncio", "logging.config"} for alias in node.names)
-        )
-        or (
-            isinstance(node, ast.ImportFrom)
-            and node.level == 0
-            and node.module in {"asyncio", "logging.config"}
-        )
+        (isinstance(node, ast.Import) and any(alias.name in MODULES for alias in node.names))
+        or (isinstance(node, ast.ImportFrom) and node.level == 0 and node.module in MODULES)
         for node in tree.body
     )
     if not relevant:
@@ -46,7 +40,7 @@ def observations(tree: ast.Module) -> list[tuple[str, ast.AST]]:
     for statement in tree.body:
         if isinstance(statement, ast.Import):
             for alias in statement.names:
-                if alias.name not in {"asyncio", "logging.config"}:
+                if alias.name not in MODULES:
                     continue
                 name = alias.asname or alias.name.split(".")[0]
                 if name in bindings:
@@ -55,7 +49,7 @@ def observations(tree: ast.Module) -> list[tuple[str, ast.AST]]:
         elif (
             isinstance(statement, ast.ImportFrom)
             and statement.level == 0
-            and statement.module in {"asyncio", "logging.config"}
+            and statement.module in MODULES
         ):
             for alias in statement.names:
                 name = alias.asname or alias.name
@@ -118,9 +112,47 @@ def observations(tree: ast.Module) -> list[tuple[str, ast.AST]]:
         for node in nodes
     )
     hits = []
+
+    def integer(node):
+        if isinstance(node, ast.Constant) and type(node.value) is int:
+            return node.value
+        if (
+            isinstance(node, ast.UnaryOp)
+            and isinstance(node.op, ast.USub)
+            and isinstance(node.operand, ast.Constant)
+            and type(node.operand.value) is int
+        ):
+            return -node.operand.value
+        return None
+
     for node in nodes:
         if not isinstance(node, ast.Call):
             continue
+        if (
+            qualified(node.func) == "sqlalchemy.pool.QueuePool"
+            and len(node.args) <= 3
+            and all(not isinstance(arg, ast.Starred) for arg in node.args)
+        ):
+            options = {item.arg: item.value for item in node.keywords}
+            if (
+                None not in options
+                and len(options) == len(node.keywords)
+                and not set(options)
+                - {"creator", "pool_size", "max_overflow", "timeout", "use_lifo"}
+            ):
+                names = ("creator", "pool_size", "max_overflow")
+                if not any(name in options for name in names[: len(node.args)]):
+                    options.update(zip(names, node.args, strict=False))
+                    size = integer(options.get("pool_size", ast.Constant(5)))
+                    overflow = integer(options.get("max_overflow", ast.Constant(10)))
+                    creator = options.get("creator")
+                    if (
+                        isinstance(creator, (ast.Name, ast.Attribute, ast.Lambda, ast.Call))
+                        and size is not None
+                        and size >= 0
+                        and (size == 0 or overflow == -1)
+                    ):
+                        hits.append(("SP701", node))
         if (
             not custom_tasks
             and qualified(node.func) == "asyncio.create_task"
