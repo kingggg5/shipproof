@@ -4709,16 +4709,16 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP336",
-        "Node.js stream piped without error handler",
+        "Node inline file stream has no source error handler",
         "reliability",
         "high",
-        "medium",
-        compile_pattern(r"""\breadStream\.pipe\([^)]+\)(?!\.on\(['"]error['"]\))"""),
-        "Readable stream is piped without attaching an error listener to both source and destination streams.",
-        "Use stream.pipeline() from the stream/promises module instead of .pipe().",
+        "high",
+        compile_pattern(r"$^"),
+        "Inline imported fs read/write streams are piped without attaching a source error handler.",
+        "Use awaited stream/promises.pipeline or attach source error handling and cleanup before piping.",
         "CWE-754",
         "Reliability",
-        frozenset({".js", ".ts"}),
+        JS_CONFIG_SUFFIXES,
     ),
     Rule(
         "SP337",
@@ -5074,21 +5074,6 @@ RULES: tuple[Rule, ...] = (
         "Append `.lean()` to query chains for read-only responses.",
         "CWE-400",
         "Capacity",
-        frozenset({".js", ".ts"}),
-    ),
-    Rule(
-        "SP367",
-        "Node.js Stream pipe missing error handler",
-        "reliability",
-        "high",
-        "high",
-        compile_pattern(
-            r"""\.pipe\s*\(\s*[A-Za-z_$][\w$.]*\s*\)(?!\s*\.on\s*\(\s*['"]error['"])"""
-        ),
-        "Streaming data using stream.pipe() does not forward errors, leading to unhandled stream exceptions and memory leaks.",
-        "Use `stream.pipeline()` with a callback or `pipeline(src, dest)` from `stream/promises`.",
-        "CWE-703",
-        "Reliability",
         frozenset({".js", ".ts"}),
     ),
     Rule(
@@ -9602,15 +9587,15 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP703",
-        "Await uses the callback Node stream pipeline",
+        "Await uses a callback Node I/O API",
         "correctness",
         "medium",
         "high",
         compile_pattern(r"$^"),
-        "The imported callback pipeline overload is directly awaited as if it returned a completion Promise.",
-        "Await pipeline from node:stream/promises, or handle completion explicitly in the callback.",
+        "An imported callback pipeline/readFile/writeFile overload is awaited as if it returned a completion Promise.",
+        "Use the corresponding node:stream/promises or node:fs/promises API, or keep callback completion explicit.",
         "CWE-664",
-        "Stream completion ownership",
+        "I/O completion ownership",
         JS_CONFIG_SUFFIXES,
     ),
     Rule(
@@ -9628,13 +9613,13 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP705",
-        "PostgreSQL concurrent index creation is inside a transaction",
+        "PostgreSQL concurrent index operation is inside a transaction",
         "correctness",
         "medium",
         "high",
         compile_pattern(r"$^"),
-        "CREATE INDEX CONCURRENTLY occurs after an explicit BEGIN/START TRANSACTION and before its completion.",
-        "Run concurrent index creation outside a transaction; configure the migration runner accordingly.",
+        "A supported concurrent CREATE/DROP/REINDEX operation occurs inside an explicit transaction.",
+        "Run concurrent index operations outside a transaction; configure the migration runner accordingly.",
         "CWE-664",
         "PostgreSQL transactional DDL contract",
         frozenset({".sql"}),
@@ -9652,6 +9637,19 @@ RULES: tuple[Rule, ...] = (
         "Privileged SQL name resolution",
         frozenset({".sql"}),
     ),
+    Rule(
+        "SP707",
+        "Roblox remote writes client-selected DataStore keys and values",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "A native remote callback directly passes client-selected key/value arguments to native DataStore SetAsync.",
+        "Choose authorized keys on the server, validate values and bound requests before persisting client input.",
+        "CWE-862",
+        "Roblox persistent-data authorization",
+        frozenset({".lua", ".luau"}),
+    ),
 )
 
 # Secret rules are exactly the rules that redact credential material in evidence.
@@ -9661,12 +9659,13 @@ SECRET_RULE_IDS = frozenset(rule.rule_id for rule in RULES if rule.redact)
 MINIMIZED_EVIDENCE_RULE_IDS = frozenset(
     {
         "SP212",
+        "SP336",
         "SP346",
         "SP377",
         "SP378",
         "SP591",
         "SP621",
-        *(f"SP{number}" for number in range(666, 707)),
+        *(f"SP{number}" for number in range(666, 708)),
     }
 )
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
@@ -10620,6 +10619,8 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP704",
         "SP705",
         "SP706",
+        "SP707",
+        "SP336",
         "SP346",
         "SP377",
         "SP378",
@@ -11233,6 +11234,7 @@ def find_regex_issues(
                     "SP377": "net/http.Server literal has no effective header-read deadline",
                     "SP378": "context constructor explicitly discards its CancelFunc",
                     "SP621": "panic-prone unwrap/expect in a locally bound HTTP route handler",
+                    "SP707": "Native remote passes client-selected key and value directly to DataStore SetAsync",
                 }.get(rule_id),
             )
             # New Rust TLS variants are advisory until representative review.
@@ -11277,6 +11279,9 @@ def find_regex_issues(
             "react",
             "pipeline",
             "connectionString",
+            "createReadStream",
+            "readFile",
+            "writeFile",
         )
     ):
         excerpts: dict[tuple[str, int], str] = {}

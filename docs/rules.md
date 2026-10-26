@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 667 deterministic executable rules (`SP001`-`SP701`, with deliberate reserved gaps). This shipped guide describes boundaries and ecosystem mapping; the complete source catalog is linked below.
+ShipProof applies 667 deterministic executable rules (`SP001`-`SP707`, with deliberate reserved gaps). This shipped guide describes boundaries and ecosystem mapping; the complete source catalog is linked below.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -202,7 +202,7 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **Django & Flask** | `pyproject.toml`, `requirements.txt` | Hardcoded `SECRET_KEY` (`SP404`), Wildcard `ALLOWED_HOSTS` (`SP405`), Debug enabled (`SP201`, `SP411`), Flask hardcoded `secret_key` (`SP410`), String-interpolated SQL (`SP103`), SSTI via `render_template_string` (`SP137`) |
 | **Go (Gin, Echo, Fiber, Chi)** | `go.mod` | Missing server timeouts (`SP131`), Ignored errors (`SP136`), Response body leak (`SP315`), Goroutine context leaks (`SP309`), Unbuffered channel deadlocks (`SP332`), WaitGroup race conditions (`SP333`), Insecure secret fallbacks (`SP004`), Outbound request timeouts (`SP304`), Unbounded concurrency (`SP306`) |
 | **Rust (Actix-web, Axum, Rocket)** | `Cargo.toml`, `.rs` | Committed keys/credentials (`SP001`, `SP002`, `SP003`), direct reqwest TLS bypass (`SP104`, advisory), invalid zero-initialized references (`SP673`, advisory), SSRF to metadata (`SP109`), credential logging (`SP204`) |
-| **Roblox / Luau** | `.lua`, `.luau` local source files | HttpService response executed as source (`SP671`), direct client-source execution in simple RemoteEvent/RemoteFunction callbacks (`SP672`), client-selected module require (`SP690`), client-selected instance destruction (`SP691`), provider-secret checks. Initial support excludes general Lua data-flow and binary place files. |
+| **Roblox / Luau** | `.lua`, `.luau` local source files | HttpService response executed as source (`SP671`), direct client-source execution in simple RemoteEvent/RemoteFunction callbacks (`SP672`), client-selected module require (`SP690`), client-selected instance removal (`SP691`), client-selected DataStore key/value write (`SP707`), provider-secret checks. Initial support excludes general Lua data-flow and binary place files. |
 | **JS / TypeScript configuration** | Runtime ESM/const-require imports; `next.config.*` exports | Image private-IP opt-out (`SP674`), JWT time/key-type opt-outs on verify/sign (`SP675`, `SP676`), short GCM tags (`SP677`), direct uninitialized Buffer read (`SP678`), lenient HTTP parsing including insecure validation opt-out (`SP679`), Electron origin/privilege boundaries (`SP680`, `SP681`), Chromium sandbox opt-out (`SP682`), RSA signing key-size safeguard opt-out (`SP692`), disabled HTTP receive deadlines (`SP693`), empty Promise.race await (`SP694`), boolean array comparator (`SP695`), awaited sync zlib (`SP698`). All are advisory. |
 | **PHP (Laravel, Symfony)** | `composer.json` | Dynamic code evaluation (`SP101`), SQL injection interpolation (`SP103`, `SP128`), Path traversal (`SP110`), Loose equality credential comparison (`SP127`), Reflected XSS (`SP129`), Open redirect (`SP130`), Object injection (`SP113`) |
 | **Ruby (Rails, Sinatra)** | `Gemfile` | Secret key leakage (`SP003`), Unsafe deserialization with Marshal/YAML (`SP106`), Debug mode enabled (`SP201`), CSRF forgery disabled (`SP417`), Dynamic code execution (`SP101`), Missing payment idempotency (`SP504`) |
@@ -215,22 +215,16 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 
 ## Detection Rules Reference
 
-`SP702` checks imported React effects with inline async setup. `SP703` checks
-direct await of the callback Node pipeline API. `SP704` checks a literal pg URL
-SSL override that replaces an explicit custom-CA object. Runtime binding is
-required; ambiguous imports, shadows, overrides and computed values stay unresolved.
+`SP702` checks imported React effects with inline async setup. `SP703` checks directly awaited imported callback fs.readFile/writeFile calls; promises APIs, wrappers and shadows stay silent. `SP704` checks a literal pg URL SSL override that replaces an explicit custom-CA object. Runtime binding is required; ambiguous imports, shadows, overrides and computed values stay unresolved.
 
-`SP705` tracks supported explicit SQL transaction statements around PostgreSQL
-concurrent index creation. `SP706` checks an SQL-language definer SELECT with a
-temp-first explicit path and a bare relation. Dollar bodies, comments and quoted
-data stay opaque to transaction tracking; malformed/over-budget lexical evidence
-is recorded as incomplete. Unquoted procedural bodies need a grammar-aware route.
-Neither check establishes cross-file order, runner state or deployed privileges.
+`SP705` tracks DROP INDEX CONCURRENTLY and REINDEX INDEX/TABLE CONCURRENTLY inside an explicit same-file SQL transaction. `SP706` checks an SQL-language definer SELECT with a temp-first explicit path and a bare relation. Dollar bodies, comments and quoted data stay opaque to transaction tracking; malformed/over-budget lexical evidence is recorded as incomplete. Neither check establishes cross-file order, runner state or deployed privileges.
+
+`SP336` is a high L1 structural advisory limited to a direct imported `fs.createReadStream(path).pipe(createWriteStream(path))` shape with no options, escapes, prototype handlers or native handlers. Named streams and Zod `.pipe()` are not proof. `SP707` is a medium L1 advisory requiring a flat locally constructed native Roblox remote, three distinct simple parameters, and direct `DataStoreService:GetDataStore(shortFixedName):SetAsync(clientKey, clientValue)` flow. Guards, aliases, shared-store intent and runtime exposure remain unresolved.
 
 `SP691` includes direct client-selected `Kick()` as well as `Destroy()` under its
 existing single-statement native-remote boundary. Target types remain unknown.
 
-`SP325`, `SP334`, `SP359`, `SP363` and `SP423` are retired; their IDs are reserved.
+`SP325`, `SP334`, `SP359`, `SP363`, `SP367` and `SP423` are retired; their IDs are reserved. SP336 is repaired under its existing ID.
 Session timeout policy, process-level recovery, pool sizing, framework versions
 and actual effect cycles cannot be established from the former missing-setting
 patterns. Express 5 forwards rejected handler promises; pg has a bounded default.

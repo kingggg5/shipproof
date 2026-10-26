@@ -210,7 +210,7 @@ class PrecisionPlanTests(unittest.TestCase):
         findings = lint_source_snippet(source, "routing.py")
         self.assertFalse(any(item.rule_id == "SP636" for item in findings))
 
-    def test_request_inflate_pipe_with_destroy_is_not_sp367(self):
+    def test_request_inflate_pipe_ownership_is_not_inferred(self):
         source = (
             "function contentstream(req) {\n"
             "  const stream = createDecompressionStream(encoding);\n"
@@ -219,7 +219,7 @@ class PrecisionPlanTests(unittest.TestCase):
             "}\n"
         )
         findings = lint_source_snippet(source, "lib/read.js")
-        self.assertFalse(any(item.rule_id == "SP367" for item in findings))
+        self.assertFalse(any(item.rule_id in {"SP336", "SP367"} for item in findings))
 
     def test_precision_plan_negatives_stay_silent_on_the_full_scan_path(self):
         for case in NEGATIVES["rules"]:

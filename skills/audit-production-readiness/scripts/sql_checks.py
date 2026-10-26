@@ -227,13 +227,22 @@ def signature_spans(source: str) -> list[tuple[str, int, int, str]]:
         prefix = statement[1:] if statement[:1] == ["CREATE"] else []
         if prefix[:1] == ["UNIQUE"]:
             prefix = prefix[1:]
-        if active and prefix[:2] == ["INDEX", "CONCURRENTLY"]:
+        operation = "CREATE" if prefix[:2] == ["INDEX", "CONCURRENTLY"] else ""
+        if statement[:3] == ["DROP", "INDEX", "CONCURRENTLY"]:
+            operation = "DROP"
+        if (
+            statement[:1] == ["REINDEX"]
+            and statement[1:2] in (["INDEX"], ["TABLE"])
+            and statement[2:3] == ["CONCURRENTLY"]
+        ):
+            operation = "REINDEX"
+        if active and operation:
             hits.append(
                 (
                     "SP705",
                     stream[first][1],
                     stream[last - 1][2],
-                    "PostgreSQL CREATE INDEX CONCURRENTLY occurs inside an explicit transaction block",
+                    f"PostgreSQL {operation} concurrent index operation occurs inside an explicit transaction block",
                 )
             )
         if not lifecycle_unknown and temp_first_definer(statement):

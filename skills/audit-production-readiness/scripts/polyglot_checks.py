@@ -672,6 +672,7 @@ def lua_spans(stream: list[tuple[str, int, int]]) -> list[tuple[str, int, int]]:
             remotes.pop(name, None)
 
     module_loader = builtin("require", ["("])
+    native_game = "game" in positions and builtin("game", [":", "GetService", "("])
     for i in range(1, len(values) - 12):
         event = values[i : i + 6] == [".", "OnServerEvent", ":", "Connect", "(", "function"]
         invoke = values[i : i + 4] == [".", "OnServerInvoke", "=", "function"]
@@ -689,7 +690,11 @@ def lua_spans(stream: list[tuple[str, int, int]]) -> list[tuple[str, int, int]]:
             match = re.fullmatch(r"\s*([A-Za-z_]\w*)(?:\s*:\s*[A-Za-z_]\w*(?:\s*\?)?)?\s*", part)
             if match:
                 parameters.append(match[1])
-        if len(parts) != 2 or len(parameters) != 2 or parameters[0] == parameters[1]:
+        if (
+            len(parts) not in {2, 3}
+            or len(parameters) != len(parts)
+            or len(set(parameters)) != len(parameters)
+        ):
             continue
         body = end + 1
         if values[body : body + 1] == [":"]:
@@ -707,13 +712,46 @@ def lua_spans(stream: list[tuple[str, int, int]]) -> list[tuple[str, int, int]]:
         )
         native = native and binding[1] < i - 1 and boundary_at[binding[1]] == boundary_at[i]
         candidates = []
-        if evaluator:
+        if evaluator and len(parameters) == 2:
             candidates.append(("SP672", ["loadstring", "(", data, ")", "(", ")"]))
-        if native and module_loader:
+        if native and module_loader and len(parameters) == 2:
             candidates.append(("SP690", ["require", "(", data, ")"]))
-        if native:
+        if native and len(parameters) == 2:
             candidates.append(("SP691", [data, ":", "Destroy", "(", ")"]))
             candidates.append(("SP691", [data, ":", "Kick", "(", ")"]))
+        if native and native_game and len(parameters) == 3:
+            store = values[body + 9 : body + 10]
+            if (
+                store
+                and re.fullmatch(r"[\"'][A-Za-z0-9_ -]{1,32}[\"']", store[0])
+                and store[0][0] == store[0][-1]
+            ):
+                for quote in ("'", '"'):
+                    candidates.append(
+                        (
+                            "SP707",
+                            [
+                                "game",
+                                ":",
+                                "GetService",
+                                "(",
+                                quote + "DataStoreService" + quote,
+                                ")",
+                                ":",
+                                "GetDataStore",
+                                "(",
+                                store[0],
+                                ")",
+                                ":",
+                                "SetAsync",
+                                "(",
+                                parameters[1],
+                                ",",
+                                parameters[2],
+                                ")",
+                            ],
+                        )
+                    )
         for rule_id, signature in candidates:
             last = body + len(signature)
             terminator = last + int(values[last : last + 1] == [";"])

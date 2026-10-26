@@ -319,7 +319,7 @@ This is the canonical source catalog of executable rule rows.
 | **`SP332`** | HIGH | Reliability | Go unbuffered channel send without consumer | Regex |
 | **`SP333`** | HIGH | Reliability | Go sync.WaitGroup counter incremented in goroutine | Regex |
 | **`SP335`** | HIGH | Reliability | Python asyncio task created without reference | Regex |
-| **`SP336`** | HIGH | Reliability | Node.js stream piped without error handler | Regex |
+| **`SP336`** | HIGH | Reliability | Node inline file stream has no source error handler | Structural |
 | **`SP337`** | HIGH | Scale | In-memory session store in web cluster | Regex |
 | **`SP338`** | MEDIUM | Reliability | External network call missing circuit breaker | Regex |
 | **`SP339`** | HIGH | Scale | Synchronous heavy crypto in async request thread | Regex |
@@ -345,7 +345,7 @@ This is the canonical source catalog of executable rule rows.
 | **`SP364`** | HIGH | Reliability | Node.js Axios or Got HTTP client request without timeout | Regex |
 | **`SP365`** | HIGH | Correctness | Node.js Prisma database query inside Array.forEach | Regex |
 | **`SP366`** | MEDIUM | Scale | Node.js Mongoose read-only query missing lean optimization | Regex |
-| **`SP367`** | HIGH | Reliability | Node.js Stream pipe missing error handler | Regex |
+
 | **`SP368`** | CRITICAL | Reliability | Node.js process.exit called inside request handler | Regex |
 | **`SP369`** | MEDIUM | Correctness | Node.js setTimeout delay exceeding 32-bit integer maximum | Regex |
 | **`SP370`** | MEDIUM | Reliability | Node.js JSON.parse on raw payload without try/catch | Regex |
@@ -669,7 +669,8 @@ This is the canonical source catalog of executable rule rows.
 | **`SP700`** | MEDIUM | Performance | Node timer delay exceeds its supported range | Structural |
 | **`SP701`** | MEDIUM | Scale | SQLAlchemy QueuePool capacity explicitly unlimited | Structural |
 | **`SP702`** | MEDIUM | Correctness | React effect setup is an async function | Structural |
-| **`SP703`** | MEDIUM | Correctness | Await uses the callback Node stream pipeline | Structural |
+| **`SP703`** | MEDIUM | Correctness | Await uses a callback Node I/O API | Structural |
 | **`SP704`** | MEDIUM | Correctness | PostgreSQL URL overrides an explicit custom-CA TLS object | Structural |
-| **`SP705`** | MEDIUM | Correctness | PostgreSQL concurrent index creation is inside a transaction | Structural |
+| **`SP705`** | MEDIUM | Correctness | PostgreSQL concurrent index operation is inside a transaction | Structural |
 | **`SP706`** | MEDIUM | Security | PostgreSQL definer SELECT searches temporary relations first | Structural |
+| **`SP707`** | MEDIUM | Security | Roblox remote writes client-selected DataStore keys and values | Structural |

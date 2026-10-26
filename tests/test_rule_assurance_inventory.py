@@ -87,12 +87,13 @@ class RuleAssuranceInventoryTests(unittest.TestCase):
             "SP147",
             "SP307",
             "SP310",
-            "SP367",
+            "SP336",
             "SP505",
             "SP526",
             "SP636",
         ):
             self.assertEqual(by_id[rule_id]["negative_quality"], "realistic", rule_id)
+        self.assertNotIn("SP367", by_id)
 
     def test_report_is_deterministic_and_the_published_summary_is_derived(self) -> None:
         first = build_report()

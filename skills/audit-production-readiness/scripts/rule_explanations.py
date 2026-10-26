@@ -1788,10 +1788,10 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Store task in a global set and remove in task.add_done_callback.",
     },
     "SP336": {
-        "why": "Uncaught errors on piped streams do not propagate automatically, throwing unhandled exceptions.",
-        "attack": "A client disconnects mid-download, throwing an unhandled ECONNRESET error that crashes the Node.js server.",
-        "false_positive": "Streams handled with stream.pipeline().",
-        "test": "Use pipeline(readStream, writeStream, (err) => {}) or stream/promises pipeline.",
+        "why": "An inline native fs ReadStream is piped to an inline native fs WriteStream without retaining the source or attaching its error handler.",
+        "attack": "An ordinary source I/O error can be unhandled and terminate Node; pipe does not transfer source error ownership to the destination. Actual execution and I/O failure are unknown.",
+        "false_positive": "Advisory L1: imported native fs factories, one argument each and immediate pipe only. Pre-attached handlers, named/escaped streams, custom factories, options, prototype modification and pipeline stay unresolved or silent. A same-named pipe method is not stream evidence.",
+        "test": "Use awaited promises.pipeline or explicitly own source errors and cleanup. Validate with authored disposable files and a bounded child, never external endpoints.",
     },
     "SP337": {
         "why": "MemoryStore leaks memory in production and causes random logouts when requests hit different instances.",
@@ -1942,12 +1942,6 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "An attacker or runtime failure exploits `Node.js Mongoose read-only query missing lean optimization` to bypass controls or degrade service availability.",
         "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
         "test": "Add a test confirming that append `.lean()` to query chains for read-only responses.",
-    },
-    "SP367": {
-        "why": "Streaming data using stream.pipe() does not forward errors, leading to unhandled stream exceptions and memory leaks.",
-        "attack": "An attacker or runtime failure exploits `Node.js Stream pipe missing error handler` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-        "test": "Add a test confirming that use `stream.pipeline()` with a callback or `pipeline(src, dest)` from `stream/promises`.",
     },
     "SP368": {
         "why": "Calling process.exit() directly inside an HTTP route terminates the entire server instance.",
@@ -3978,10 +3972,10 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Start asynchronous work inside synchronous setup and return synchronous cleanup that cancels or ignores stale work; do not add an empty dependency array indiscriminately.",
     },
     "SP703": {
-        "why": "The callback overload of Node stream.pipeline returns the destination rather than the Promise for pipeline completion.",
+        "why": "Node callback I/O overloads do not return their completion Promise: pipeline returns the destination and fs.readFile/writeFile return undefined.",
         "attack": "Code after await can run before the stream finishes. The callback can still handle completion correctly; this signature does not establish data loss or an unhandled error.",
-        "false_positive": "Advisory: direct await of an imported callback pipeline with an inline function callback. Promises imports, callback-only calls, wrappers, type imports, shadows, spread arguments and chained results stay unresolved or silent.",
-        "test": "Use pipeline from node:stream/promises for awaited completion, or keep callback ownership explicit. Verify completion ordering with a bounded in-memory stream.",
+        "false_positive": "Advisory: direct await of imported callback pipeline/readFile/writeFile with an inline function callback and supported arity. Promises imports, callback-only calls, wrappers, type imports, shadows, spreads and chained results stay unresolved or silent. A deliberately thenable custom pipeline destination needs review.",
+        "test": "Use the corresponding stream/promises or fs/promises API, or keep callback completion explicit. Verify ordering with bounded authored streams/files.",
     },
     "SP704": {
         "why": "pg URL parsing replaces the SSL object when SSL connection-string parameters are present, discarding the supplied custom CA option.",
@@ -3990,9 +3984,9 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Use one TLS configuration source; inspect resolved options on the installed pg version without connecting to a database.",
     },
     "SP705": {
-        "why": "PostgreSQL forbids CREATE INDEX CONCURRENTLY within a transaction block, including an explicit transaction in a migration file.",
+        "why": "PostgreSQL forbids concurrent CREATE/DROP/REINDEX operations within a transaction block, including an explicit transaction in a migration file.",
         "attack": "The migration can fail before creating its index. Execution order across files, runner-managed transactions and actual deployment are not inferred.",
-        "false_positive": "Advisory: one SQL file with supported explicit BEGIN or START TRANSACTION and concurrent index creation before completion. Comments, strings, dollar bodies, committed transactions and non-concurrent indexes stay silent. Procedural unquoted bodies and psql metacommands need a grammar-aware route.",
+        "false_positive": "Advisory: one SQL file with supported explicit BEGIN or START TRANSACTION and concurrent CREATE/DROP INDEX or REINDEX INDEX/TABLE before completion. Other REINDEX forms/options remain unresolved. Comments, strings, dollar bodies, committed transactions and non-concurrent forms stay silent. Dialect, runner and cross-file state are not resolved.",
         "test": "Run concurrent index DDL in a migration configured outside transactions; test authored DDL in an isolated disposable database, never a production schema.",
     },
     "SP706": {
@@ -4000,5 +3994,11 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "A temporary relation can shadow the intended relation under function-owner privileges. The signature does not prove caller TEMP/EXECUTE privileges, sensitive data, reachability or privilege escalation.",
         "false_positive": "Advisory: single SQL-language SELECT body, explicit pg_temp-first path and bare FROM relation only. Invoker functions, qualified relations, temp-last or empty paths, procedural bodies, CTEs, dynamic settings, escaped bodies and multiple statements stay unresolved or silent. Files with ALTER/DROP FUNCTION need lifecycle analysis and stay silent for this rule. Deliberately reading temporary relations may be intended.",
         "test": "Schema-qualify protected relations and put trusted schemas before pg_temp. Verify resolution with harmless authored relations in an isolated single-user database.",
+    },
+    "SP707": {
+        "why": "A locally constructed native remote directly uses client arguments as both the key and value of a native DataStore write.",
+        "attack": "Without server-selected keys and authorization, a caller may influence persistent records beyond its intended scope. Runtime key/value types, exposure, independent controls and successful writes are unknown.",
+        "false_positive": "Advisory: flat direct native game:GetService/DataStoreService:GetDataStore/SetAsync chain, short fixed store name and three distinct simple callback parameters only. Guards, server-selected keys, aliases, wrappers, modified globals, complex types and other writes stay unresolved or silent. Intentionally shared writable stores need policy review; no corruption is proven.",
+        "test": "Derive authorized keys on the server and validate value types, size and request rate. Test only authored static fixtures; do not invoke a live game or DataStore.",
     },
 }

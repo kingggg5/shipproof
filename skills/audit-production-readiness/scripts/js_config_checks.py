@@ -20,6 +20,8 @@ MODULES = frozenset(
         "pg",
         "stream",
         "stream/promises",
+        "fs",
+        "fs/promises",
         "buffer",
         "zlib",
         "timers",
@@ -31,6 +33,7 @@ MODULES = frozenset(
 )
 IDENTIFIER = re.compile(r"[A-Za-z_$][\w$]*", re.ASCII)
 MAX_EXPRESSION_TOKENS = 512
+CALLBACK_ARITY = {"readFile": frozenset({2, 3}), "writeFile": frozenset({3, 4})}
 
 
 def js_context_tokens(source: str) -> list[tuple[str, int]]:
@@ -191,6 +194,8 @@ def module_name(value: str) -> str:
                 "timers/promises",
                 "stream",
                 "stream/promises",
+                "fs",
+                "fs/promises",
             }
             else ""
         )
@@ -269,6 +274,12 @@ def inline_callback(
             and values[close + 1 : close + 2] == ["{"]
             and pairs.get(close + 1) == last - 1
         )
+    if (
+        first < last
+        and IDENTIFIER.fullmatch(values[first])
+        and values[first + 1 : first + 2] == ["=>"]
+    ):
+        return first + 2 < last
     close = pairs.get(first)
     return (
         close is not None
@@ -304,6 +315,24 @@ def pg_tls_override(value: str) -> bool:
         )
         for name, option in query
     )
+
+
+def imported_call(values: list[str], pairs: dict[int, int], bindings: dict, span: tuple[int, int]):
+    """Resolve only a complete direct imported call, without evaluating arguments."""
+    first, last = span
+    binding = bindings.get(values[first])
+    if binding is None or first == binding[2]:
+        return None
+    module, member, _position = binding
+    opening = first + 1
+    if member == "*":
+        if values[opening : opening + 1] != ["."] or opening + 1 >= last:
+            return None
+        member = values[opening + 1]
+        opening += 2
+    if values[opening : opening + 1] != ["("] or pairs.get(opening) != last - 1:
+        return None
+    return module, member, segments(values, pairs, opening)
 
 
 def imports(values: list[str], pairs: dict[int, int], depths: list[int]) -> dict:
@@ -521,6 +550,21 @@ def signature_spans(
         return []
     bindings = imports(values, pairs, depths)
     hits: list[tuple[str, int, int]] = []
+    has_prototype_name = "prototype" in values
+    native_stream_prototypes = {
+        "prototype",
+        "getPrototypeOf",
+        "setPrototypeOf",
+        "__proto__",
+        "'prototype'",
+        '"prototype"',
+        "'getPrototypeOf'",
+        '"getPrototypeOf"',
+        "'setPrototypeOf'",
+        '"setPrototypeOf"',
+        "'__proto__'",
+        '"__proto__"',
+    }.isdisjoint(values)
 
     def emit(rule_id: str, start: int, end: int, excerpt: str) -> None:
         hits.append((rule_id, tokens[start][1], tokens[end - 1][1] + len(values[end - 1])))
@@ -576,7 +620,7 @@ def signature_spans(
                 array
                 and values[array - 1] not in {"=", "return", "(", "[", ",", ":", "=>", ";", "{"}
             )
-            or "prototype" in values
+            or has_prototype_name
         ):
             continue
         items = segments(values, pairs, array)
@@ -697,21 +741,72 @@ def signature_spans(
                 closing + 1,
                 f"react.{member}: async setup returns a Promise instead of cleanup or undefined",
             )
+        callback_io = (module == "stream" and member == "pipeline" and len(args) >= 3) or (
+            module == "fs" and len(args) in CALLBACK_ARITY.get(member, ())
+        )
         if (
-            module == "stream"
-            and member == "pipeline"
+            callback_io
             and index
             and values[index - 1] == "await"
-            and len(args) >= 3
-            and inline_callback(values, pairs, args[-1])
+            and inline_callback(
+                values, pairs, args[-1], asynchronous=values[args[-1][0]] == "async"
+            )
             and values[closing + 1 : closing + 2] not in (["."], ["?."], ["["])
         ):
             emit(
                 "SP703",
                 index - 1,
                 closing + 1,
-                "await stream.pipeline: the callback overload does not return its completion Promise",
+                f"await {module}.{member}: the callback overload does not return its completion Promise",
             )
+        if (
+            module == "fs"
+            and member == "createReadStream"
+            and len(args) == 1
+            and native_stream_prototypes
+        ):
+            pipe = closing + 1
+            if values[pipe : pipe + 3] == [".", "pipe", "("]:
+                destinations = segments(values, pairs, pipe + 2)
+                destination = (
+                    imported_call(values, pairs, bindings, destinations[0])
+                    if len(destinations) == 1
+                    else None
+                )
+                if (
+                    destination
+                    and destination[:2] == ("fs", "createWriteStream")
+                    and len(destination[2]) == 1
+                ):
+                    path_spans = [args[0], destination[2][0]]
+                    if all(
+                        values[start]
+                        not in {
+                            "null",
+                            "undefined",
+                            "true",
+                            "false",
+                            "[",
+                            "{",
+                            "+",
+                            "-",
+                            "!",
+                            "~",
+                            "typeof",
+                            "void",
+                            "delete",
+                            "function",
+                            "async",
+                        }
+                        and not re.match(r"[0-9]", values[start])
+                        for start, _end in path_spans
+                    ):
+                        emit(
+                            "SP336",
+                            index,
+                            pairs[pipe + 2] + 1,
+                            "Inline native fs read/write streams use pipe without a source error handler",
+                        )
         if (
             module == "pg"
             and member in {"Client", "Pool"}

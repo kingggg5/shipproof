@@ -341,7 +341,9 @@ def records():
             ),
         ],
     )
-    return rows
+    from build_io_ownership_contracts import augment_existing_contracts
+
+    return augment_existing_contracts(rows)
 
 
 def main():

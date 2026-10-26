@@ -54,15 +54,25 @@ capacity checks. SP673/SP104 gain scoped variants; SP347/SP350 are retired becau
 their default assumptions do not establish a defect. See the
 [cohort record](../research/value-cohort-2026-10.md) for evidence and limitations.
 
-## Current Node/React/Luau/PostgreSQL cohort — 2026-10-26
+## Previous Node/React/Luau/PostgreSQL cohort — historical
 
-- executable scanner rules: 667 through SP706, with deliberate ID gaps
-- adds SP702–SP706, expands SP691, and retires SP325/SP334/SP359/SP363/SP423
+- historical executable scanner rules: 667 through SP706
+- added SP702–SP706, expanded SP691, and retired SP325/SP334/SP359/SP363/SP423
 
-Earlier Luau/TypeScript, broad-quality, and value/default/trust cohort selections
-are already reflected in this current registry. See the
-[cohort record](../research/web-database-cohort-2026-10.md) for scope and evidence;
-do not treat this summary as a CI, performance, or precision result.
+Earlier Luau/TypeScript, broad-quality, and value/default/trust selections are
+reflected in that historical registry. See the
+[cohort record](../research/web-database-cohort-2026-10.md).
+
+## Current I/O ownership cohort — 2026-10-26
+
+- executable scanner rules: 667 through SP707, with deliberate ID gaps
+- repairs SP336, retires SP367, extends SP703/SP705, and adds advisory SP707
+- SP423 missing-array review records are linked in
+  [the site inventory](../research/io-ownership-review-2026-10.json); this does not
+  claim whole-component safety
+
+See the [I/O ownership cohort](../research/io-ownership-cohort-2026-10.md) for
+rule boundaries. No CI, performance, or precision result is stated here.
 
 ## Previous broad-quality cohort status — 2026-10-23
 

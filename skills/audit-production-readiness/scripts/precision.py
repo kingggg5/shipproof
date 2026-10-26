@@ -25,6 +25,7 @@ L0_BLOCK_ALLOWLIST = frozenset(
 ADVISORY_RULE_IDS = frozenset(
     {
         "SP061",  # bare except / except Exception
+        "SP336",  # Inline native stream ownership, not a deployed I/O failure.
         "SP591",  # Client bundling boundary, not evidence of leaked credentials.
         # These cohorts explicitly ship advisory pending representative labels.
         "SP666",
@@ -68,6 +69,7 @@ ADVISORY_RULE_IDS = frozenset(
         "SP704",  # TLS object replacement, not a negotiated database connection.
         "SP705",  # Explicit transaction boundary, not runner execution evidence.
         "SP706",  # Local name resolution; role privileges/exploitability unknown.
+        "SP707",  # Direct client-selected persistence; runtime exposure unknown.
     }
 )
 

@@ -12,7 +12,7 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 667 | Current executable registry through SP706 |
+| Executable scanner rules | 667 | Current executable registry through SP707 |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
@@ -45,8 +45,13 @@ metrics claimed. The 2,800 expert/annual and 5,000 language-catalog entries rema
 non-executable research candidates and cannot emit findings.
 
 The [2026-10 Node/React/Luau/PostgreSQL cohort](../research/web-database-cohort-2026-10.md)
-records the SP702–SP706 candidates, SP691 scope expansion, and proposed legacy-rule
-retirements. This entry records scope and provenance; it makes no passed-results claim.
+records the previous 667-rule registry through SP706, SP691 scope expansion, and its
+legacy-rule retirements.
+
+The current [I/O ownership cohort](../research/io-ownership-cohort-2026-10.md) records
+SP336 repair, SP367 retirement, SP703/SP705 extensions, and SP707. The related
+[SP423 review inventory](../research/io-ownership-review-2026-10.json) preserves
+per-site review records without claiming whole-component safety.
 
 ## Reading protocol
 

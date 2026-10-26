@@ -42,8 +42,8 @@
       "path": "structural-javascript.v2.json",
       "engine": "structural",
       "ecosystem": "javascript",
-      "rule_count": 2,
-      "sha256": "f9d79ac0b1f2e909e297f3b1ec624e7bf50d4b5bb439f7a23377741a12691115"
+      "rule_count": 3,
+      "sha256": "094458deb11b22349b119cb4fbf85fa32f908944500488112d5c9c3c66bdcab3"
     },
     {
       "path": "structural-kubernetes.v2.json",

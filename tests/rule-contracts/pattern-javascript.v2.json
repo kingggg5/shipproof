@@ -105,56 +105,6 @@
       }
     },
     {
-      "rule_id": "SP336",
-      "title": "Node.js stream piped without error handler",
-      "category": "reliability",
-      "expected_severity": "high",
-      "expected_confidence": "medium",
-      "cwe": "CWE-754",
-      "frameworks": [],
-      "false_positive_analysis": "Streams handled with stream.pipeline().",
-      "cases": {
-        "positive": [
-          {
-            "path": "contract-fixtures/javascript/sp336-positive-a.ts",
-            "source_hex": "7265616453747265616d2e70697065282029",
-            "expected_line": 1,
-            "expected_confidence": "medium",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "a94edaf39876988db839020e"
-          },
-          {
-            "path": "contract-fixtures/javascript/sp336-positive-b.ts",
-            "source_hex": "7265616453747265616d2e70697065282020293b0a",
-            "expected_line": 1,
-            "expected_confidence": "medium",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "7bd81ce67c6ca3600a6bb23e"
-          }
-        ],
-        "negative": [
-          {
-            "path": "contract-fixtures/javascript/sp336-negative-a.ts",
-            "source_hex": "2165616453747265616d2e70697065282029"
-          },
-          {
-            "path": "contract-fixtures/javascript/sp336-negative-b.ts",
-            "source_hex": "2065616453747265616d2e70697065282029"
-          }
-        ],
-        "adversarial": [
-          {
-            "path": "contract-fixtures/javascript/sp336-adversarial-a.ts",
-            "source_hex": "5865616453747265616d2e70697065282029",
-            "expected": false,
-            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
-          }
-        ]
-      }
-    },
-    {
       "rule_id": "SP360",
       "title": "Node.js EventEmitter listener added inside request handler without removal",
       "category": "reliability",
@@ -439,56 +389,6 @@
           {
             "path": "contract-fixtures/javascript/sp366-adversarial-a.ts",
             "source_hex": "586f64656c2e66696e6420282029092e65786563092829",
-            "expected": false,
-            "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
-          }
-        ]
-      }
-    },
-    {
-      "rule_id": "SP367",
-      "title": "Node.js Stream pipe missing error handler",
-      "category": "reliability",
-      "expected_severity": "high",
-      "expected_confidence": "high",
-      "cwe": "CWE-703",
-      "frameworks": [],
-      "false_positive_analysis": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-      "cases": {
-        "positive": [
-          {
-            "path": "contract-fixtures/javascript/sp367-positive-a.ts",
-            "source_hex": "2e7069706509280961712029",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "1f84de9afffdc134b02a13df"
-          },
-          {
-            "path": "contract-fixtures/javascript/sp367-positive-b.ts",
-            "source_hex": "2e7069706520092820095f41240920293b0a",
-            "expected_line": 1,
-            "expected_confidence": "high",
-            "expected_detection": "pattern",
-            "expected_proof_level": "L0",
-            "expected_fingerprint": "6760ad68d20bf357463de9ae"
-          }
-        ],
-        "negative": [
-          {
-            "path": "contract-fixtures/javascript/sp367-negative-a.ts",
-            "source_hex": "217069706509280961712029"
-          },
-          {
-            "path": "contract-fixtures/javascript/sp367-negative-b.ts",
-            "source_hex": "207069706509280961712029"
-          }
-        ],
-        "adversarial": [
-          {
-            "path": "contract-fixtures/javascript/sp367-adversarial-a.ts",
-            "source_hex": "587069706509280961712029",
             "expected": false,
             "rationale": "A one-boundary near miss preserves most of the suspicious syntax while changing the detector's required token or delimiter; it records the current evasion and false-positive boundary without claiming data-flow reconstruction."
           }

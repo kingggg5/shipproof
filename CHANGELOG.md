@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add advisory SP707 for a narrow client-selected Roblox DataStore write, repair
+  SP336 under its existing ID, and retire SP367 while reserving its ID. Extend
+  SP703 to import-bound callback fs.readFile/writeFile and SP705 to supported
+  concurrent PostgreSQL operations inside explicit same-file transactions. The
+  SP423 review inventory records per-site missing-array findings without a
+  whole-component safety claim. Version 0.12.0 remains unchanged; the default stays read-only, offline and
+  dependency-free. No test, CI or performance result is claimed here.
+
+
 - Add five advisory checks SP702–SP706 for async React effect setup, awaited
   callback stream pipelines, pg URL/TLS precedence, transactional concurrent
   index creation and temp-first SQL definer relation lookup. Extend SP691's

@@ -1,0 +1,493 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule_id": "SP336",
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory L1: imported native fs factories, one argument each and immediate pipe only. Pre-attached handlers, named/escaped streams, custom factories, options, prototype modification and pipeline stay unresolved or silent. A same-named pipe method is not stream evidence.",
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/stream.html#readablepipedestination-options",
+          "claim": "Pipe does not own source errors or close the destination when a readable fails; native stream identity and error ownership are separate from a pipe spelling."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/754.html",
+          "claim": "Taxonomy for the local ownership/authorization boundary, not proof of deployment or successful exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream as read,createWriteStream as write} from 'node:fs';\nread(input).pipe(write(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "const fs = require('node:fs');\nfs.createReadStream(input).pipe(fs.createWriteStream(output));"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output)).on('error',report);\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input)\n  .pipe(\ncreateWriteStream(output)\n  );\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).on('error',report).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).once('error',report).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {pipeline} from 'node:stream/promises';\nimport {createReadStream,createWriteStream} from 'node:fs';\nawait pipeline(createReadStream(input),createWriteStream(output));"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from './streams';\ncreateReadStream(input).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import type {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input,{fs:customFs}).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output,{fs:customFs}));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(customDestination);\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output).on('pipe',source=>source.on('error',report)));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\nconst source=createReadStream(input); source.on('error',report); source.pipe(createWriteStream(output));"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(null).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(-1).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(void 0).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream,ReadStream} from 'node:fs';\nReadStream['prototype'].pipe=customPipe;\ncreateReadStream(input).pipe(createWriteStream(output));\n"
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(0));\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "stream.ts",
+          "source": "/* import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output));\n */",
+          "expected": false,
+          "rationale": "A commented constructor/pipe example cannot create a native stream or establish actual source error ownership."
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output));\nObject.getPrototypeOf(instance).on=customOn;",
+          "expected": false,
+          "rationale": "Visible prototype modification leaves standard event ownership unresolved, so missing-handler evidence cannot be established."
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\nfunction copy(createReadStream) { createReadStream(input).pipe(createWriteStream(output));\n}",
+          "expected": false,
+          "rationale": "A parameter with the factory spelling shadows the imported native factory and cannot establish native stream identity."
+        },
+        {
+          "path": "stream.ts",
+          "source": "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output));\ncreateReadStream=customFactory;",
+          "expected": false,
+          "rationale": "A reassigned factory does not establish native filesystem stream behavior or the standard pipe error-ownership contract."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP703",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct await of imported callback pipeline/readFile/writeFile with an inline function callback and supported arity. Promises imports, callback-only calls, wrappers, type imports, shadows, spreads and chained results stay unresolved or silent. A deliberately thenable custom pipeline destination needs review.",
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/fs.html#fsreadfilepath-options-callback",
+          "claim": "Callback file APIs do not return the Promise for completion; the fs/promises API supplies the awaited result."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Taxonomy for the local ownership/authorization boundary, not proof of deployment or successful exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,error=>report(error)); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,async (error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,'utf8',(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,{encoding:'utf8'},(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile as read} from 'node:fs';\nasync function load(path) { return await read(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "const fs=require('fs');\nasync function load(path) { return await fs.readFile(path,(error,data)=>{report(error,data);}); }"
+        }
+      ],
+      "negative": [
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs/promises';\nasync function load(path) { return await readFile(path); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs/promises';\nasync function save(path,data) { await writeFile(path,data); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { writeFile(path,data,(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from './filesystem';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import type {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,callback); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(...inputs,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await new Promise((resolve,reject)=>readFile(path,(error,data)=>error?reject(error):resolve(data))); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import fs from 'node:fs'; async function load(path) { return await fs.promises.readFile(path); }"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "callback.ts",
+          "source": "/* import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); } */",
+          "expected": false,
+          "rationale": "An API signature inside a comment cannot start asynchronous file I/O."
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path,readFile) { return await readFile(path,(error,data)=>{report(error,data);}); }",
+          "expected": false,
+          "rationale": "A shadowing function parameter invalidates imported callback API identity."
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,(error)=>{report(error);}); }writeFile=customWriter;",
+          "expected": false,
+          "rationale": "A changed imported binding cannot establish the callback completion contract."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP705",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: one SQL file with supported explicit BEGIN or START TRANSACTION and concurrent CREATE/DROP INDEX or REINDEX INDEX/TABLE before completion. Other REINDEX forms/options remain unresolved. Comments, strings, dollar bodies, committed transactions and non-concurrent forms stay silent. Dialect, runner and cross-file state are not resolved.",
+      "sources": [
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-dropindex.html",
+          "claim": "PostgreSQL concurrent DROP INDEX cannot execute in a transaction block; ordinary DROP INDEX can."
+        },
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-reindex.html",
+          "claim": "PostgreSQL concurrent REINDEX cannot execute in a transaction block; other REINDEX restrictions depend on the object type."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Taxonomy for the local ownership/authorization boundary, not proof of deployment or successful exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX TABLE CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "START TRANSACTION;\nDROP INDEX CONCURRENTLY IF EXISTS account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; COMMIT AND CHAIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "CREATE TEMP TABLE sample(id integer);\nBEGIN; CREATE INDEX CONCURRENTLY sample_idx ON sample(id); COMMIT;"
+        }
+      ],
+      "negative": [
+        {
+          "path": "index.sql",
+          "source": "\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; COMMIT;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; ROLLBACK;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX (CONCURRENTLY false) INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "DO $$ BEGIN PERFORM 1; END $$;\nDROP INDEX CONCURRENTLY account_lookup;"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "index.sql",
+          "source": "SELECT $example$BEGIN;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;$example$;",
+          "expected": false,
+          "rationale": "Transaction and DDL text inside a dollar literal are data, not commands."
+        },
+        {
+          "path": "index.sql",
+          "source": "/* outer /* nested BEGIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT; */ comment */",
+          "expected": false,
+          "rationale": "Nested comments cannot start a transaction or rebuild a persistent index."
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP /* gap */ INDEX CONCURRENTLY account_lookup;\nCOMMIT;",
+          "expected": true,
+          "rationale": "A comment between keywords does not remove the concurrent transaction restriction."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP707",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: flat direct native game:GetService/DataStoreService:GetDataStore/SetAsync chain, short fixed store name and three distinct simple callback parameters only. Guards, server-selected keys, aliases, wrappers, modified globals, complex types and other writes stay unresolved or silent. Intentionally shared writable stores need policy review; no corruption is proven.",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
+          "claim": "Remote arguments that affect persistent player data require server-side validation and authorization; successful data corruption is not implied by a source match."
+        },
+        {
+          "url": "https://create.roblox.com/docs/cloud-services/data-stores",
+          "claim": "Server code obtains a native DataStore and SetAsync takes the key and value; the API can fail and is not invoked by this scanner."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/862.html",
+          "claim": "Taxonomy for the local ownership/authorization boundary, not proof of deployment or successful exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteFunction')\nremote.OnServerInvoke=function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(actor: Player, key: string, value: any)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(actor,recordKey,recordValue)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(recordKey,recordValue)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService(\"DataStoreService\"):GetDataStore(\"Profiles\"):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\n-- direct write\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value);\nend)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(tostring(player.UserId),value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,serverValue)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\nif not authorized(player,key) then return end\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\nlocal key=serverKey\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=customRemote\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('BindableEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnClientEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('CustomStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore(storeName):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value,options)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,key)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\npcall(function() game:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value) end)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)\nremote.OnServerEvent:Connect(function(player,key,value) audit(value) end)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "store.server.luau",
+          "source": "--[=[local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)]=]",
+          "expected": false,
+          "rationale": "A long Luau comment cannot register a remote or issue a persistent write."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local sample=[==[local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)]==]",
+          "expected": false,
+          "rationale": "A long literal contains data, not a native server callback or DataStore call."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local game=customGame\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
+          "expected": false,
+          "rationale": "A shadowed game name cannot prove native DataStoreService identity."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local Instance=customFactory\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
+          "expected": false,
+          "rationale": "An Instance-like custom factory does not establish a native Roblox remote."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "setfenv(1,customEnvironment)\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
+          "expected": false,
+          "rationale": "A modified environment leaves the game and Instance globals unresolved."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote=customRemote\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
+          "expected": false,
+          "rationale": "Reassignment invalidates the locally constructed remote receiver."
+        }
+      ]
+    }
+  ]
+}

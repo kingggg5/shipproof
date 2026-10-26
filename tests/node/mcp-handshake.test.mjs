@@ -235,12 +235,18 @@ test(
         ["database.ts", "import {Client} from 'pg'; const db = new Client({connectionString:'postgresql://db.example/app?sslmode=require',ssl:{ca:trustedCA}});", ["SP704"]],
         ["migration.sql", "BEGIN; CREATE INDEX CONCURRENTLY idx ON accounts(id); COMMIT;", ["SP705"]],
         ["definer.sql", "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path=pg_temp,private AS $$ SELECT value FROM settings $$;", ["SP706"]],
+        ["stream.ts", "import {createReadStream,createWriteStream} from 'node:fs'; createReadStream(input).pipe(createWriteStream(output));", ["SP336"]],
+        ["read.ts", "import {readFile} from 'node:fs'; async function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }", ["SP703"]],
+        ["write.ts", "import {writeFile} from 'node:fs'; async function save(path,data) { await writeFile(path,data,error=>report(error)); }", ["SP703"]],
+        ["drop.sql", "BEGIN; DROP INDEX CONCURRENTLY idx; COMMIT;", ["SP705"]],
+        ["reindex.sql", "BEGIN; REINDEX INDEX CONCURRENTLY idx; COMMIT;", ["SP705"]],
+        ["store.server.luau", "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value) game:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value) end)", ["SP707"]],
         ["reference.rs", "unsafe fn build() { let value = std::mem::uninitialized::<&u32>(); }", ["SP673"]],
         ["tls.cs", "using System.Net.Security; async System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost=host, RemoteCertificateValidationCallback=(_,_,_,_)=>true }); }", ["SP104"]],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);
-        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP104", "SP170", "SP672", "SP673", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692", "SP693", "SP694", "SP695", "SP696", "SP697", "SP698", "SP699", "SP700", "SP701", "SP702", "SP703", "SP704", "SP705", "SP706"].includes(finding.rule_id));
+        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP104", "SP170", "SP336", "SP672", "SP673", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692", "SP693", "SP694", "SP695", "SP696", "SP697", "SP698", "SP699", "SP700", "SP701", "SP702", "SP703", "SP704", "SP705", "SP706", "SP707"].includes(finding.rule_id));
         assert.deepEqual(findings.map((finding) => finding.rule_id).sort(), expectedRules);
         assert.ok(findings.every((finding) => finding.tier === "advisory" && finding.proof_level === "L1"));
       }

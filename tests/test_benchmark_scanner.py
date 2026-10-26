@@ -93,6 +93,22 @@ class BenchmarkScannerTests(unittest.TestCase):
             self.assertEqual(stats["files_scanned"], 12)
             self.assertTrue(stats["completeness"]["is_complete"])
 
+    def test_io_ownership_profile_is_deterministic_and_finding_free(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            left = benchmark_scanner.write_fixture(Path(first), 12, "io-ownership", 512)
+            right = benchmark_scanner.write_fixture(Path(second), 12, "io-ownership", 512)
+            self.assertEqual(left, right)
+            self.assertEqual(left[1], 12 * 512)
+            self.assertEqual(len(list(Path(first).rglob("*.ts"))), 6)
+            self.assertEqual(len(list(Path(first).rglob("*.sql"))), 3)
+            self.assertEqual(len(list(Path(first).rglob("*.luau"))), 3)
+            findings, stats = benchmark_scanner.load_scanner().scan_repository(Path(first))
+            self.assertEqual(findings, [])
+            self.assertEqual(stats["files_scanned"], 12)
+            self.assertTrue(stats["completeness"]["is_complete"])
+
     def test_luau_profile_is_deterministic_guarded_source(self):
         import tempfile
 

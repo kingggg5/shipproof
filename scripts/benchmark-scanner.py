@@ -106,6 +106,17 @@ def fixture_source(index: int, profile: str, bytes_per_file: int) -> str:
             "end)\n"
         )
         padding = "-- bounded benchmark padding\n"
+    elif profile == "io-ownership":
+        sources = (
+            "import {readFile} from 'node:fs/promises';\nexport async function load(path) { return await readFile(path); }\n",
+            "import {pipeline} from 'node:stream/promises';\nimport {createReadStream,createWriteStream} from 'node:fs';\nexport async function copy(input,output) { await pipeline(createReadStream(input),createWriteStream(output)); }\n",
+            "BEGIN; CREATE INDEX account_lookup ON accounts(id); COMMIT;\nREINDEX INDEX CONCURRENTLY account_lookup;\nDROP INDEX CONCURRENTLY account_lookup;\n",
+            "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\nif not authorized(player,key) then return end\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)\n",
+        )
+        prefix = sources[index % len(sources)]
+        padding = (
+            "// bounded benchmark padding\n" if index % 4 < 2 else "-- bounded benchmark padding\n"
+        )
     elif profile == "web-database":
         sources = (
             "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { void refresh(); return cancel; }, []); }\n",
@@ -154,7 +165,9 @@ def write_fixture(
         bucket = root / f"module-{index // 250:04d}"
         bucket.mkdir(exist_ok=True)
         suffix = (
-            (".tsx", ".ts", ".ts", ".sql", ".sql", ".luau")[index % 6]
+            (".ts", ".ts", ".sql", ".luau")[index % 4]
+            if profile == "io-ownership"
+            else (".tsx", ".ts", ".ts", ".sql", ".sql", ".luau")[index % 6]
             if profile == "web-database"
             else (".ts", ".rs", ".py")[index % 3]
             if profile == "value-config"
@@ -199,6 +212,7 @@ def parse_arguments() -> argparse.Namespace:
             "luau-remotes",
             "value-config",
             "web-database",
+            "io-ownership",
         ),
         default="clean",
         help="Generated finding-free workload shape",

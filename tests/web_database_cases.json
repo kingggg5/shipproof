@@ -109,7 +109,7 @@
       "expected_severity": "medium",
       "expected_confidence": "high",
       "blocking_eligible": false,
-      "false_positive_analysis": "Advisory: direct await of an imported callback pipeline with an inline function callback. Promises imports, callback-only calls, wrappers, type imports, shadows, spread arguments and chained results stay unresolved or silent.",
+      "false_positive_analysis": "Advisory: direct await of imported callback pipeline/readFile/writeFile with an inline function callback and supported arity. Promises imports, callback-only calls, wrappers, type imports, shadows, spreads and chained results stay unresolved or silent. A deliberately thenable custom pipeline destination needs review.",
       "sources": [
         {
           "url": "https://nodejs.org/api/stream.html#streampipelinesource-transforms-destination-callback",
@@ -118,6 +118,10 @@
         {
           "url": "https://cwe.mitre.org/data/definitions/664.html",
           "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        },
+        {
+          "url": "https://nodejs.org/api/fs.html#fsreadfilepath-options-callback",
+          "claim": "Callback file APIs do not return the Promise for completion; the fs/promises API supplies the awaited result."
         }
       ],
       "positive": [
@@ -140,6 +144,38 @@
         {
           "path": "pipeline.ts",
           "source": "const streams = require('node:stream');\nasync function transfer(source, destination) { await streams.pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,error=>report(error)); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,async (error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,'utf8',(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,{encoding:'utf8'},(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile as read} from 'node:fs';\nasync function load(path) { return await read(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "const fs=require('fs');\nasync function load(path) { return await fs.readFile(path,(error,data)=>{report(error,data);}); }"
         }
       ],
       "negative": [
@@ -174,6 +210,46 @@
         {
           "path": "pipeline.ts",
           "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await wrappedPipeline(source, destination); }\n"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs/promises';\nasync function load(path) { return await readFile(path); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs/promises';\nasync function save(path,data) { await writeFile(path,data); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { writeFile(path,data,(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from './filesystem';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import type {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,callback); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(...inputs,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await new Promise((resolve,reject)=>readFile(path,(error,data)=>error?reject(error):resolve(data))); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import fs from 'node:fs'; async function load(path) { return await fs.promises.readFile(path); }"
         }
       ],
       "adversarial": [
@@ -200,6 +276,24 @@
           "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await /* completion? */ pipeline(source, destination, (error) => { report(error); }); }\n",
           "expected": true,
           "rationale": "Comments do not change the awaited callback overload."
+        },
+        {
+          "path": "callback.ts",
+          "source": "/* import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); } */",
+          "expected": false,
+          "rationale": "An API signature inside a comment cannot start asynchronous file I/O."
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path,readFile) { return await readFile(path,(error,data)=>{report(error,data);}); }",
+          "expected": false,
+          "rationale": "A shadowing function parameter invalidates imported callback API identity."
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,(error)=>{report(error);}); }writeFile=customWriter;",
+          "expected": false,
+          "rationale": "A changed imported binding cannot establish the callback completion contract."
         }
       ]
     },
@@ -331,7 +425,7 @@
       "expected_severity": "medium",
       "expected_confidence": "high",
       "blocking_eligible": false,
-      "false_positive_analysis": "Advisory: one SQL file with supported explicit BEGIN or START TRANSACTION and concurrent index creation before completion. Comments, strings, dollar bodies, committed transactions and non-concurrent indexes stay silent. Procedural unquoted bodies and psql metacommands need a grammar-aware route.",
+      "false_positive_analysis": "Advisory: one SQL file with supported explicit BEGIN or START TRANSACTION and concurrent CREATE/DROP INDEX or REINDEX INDEX/TABLE before completion. Other REINDEX forms/options remain unresolved. Comments, strings, dollar bodies, committed transactions and non-concurrent forms stay silent. Dialect, runner and cross-file state are not resolved.",
       "sources": [
         {
           "url": "https://www.postgresql.org/docs/18/sql-createindex.html",
@@ -340,6 +434,14 @@
         {
           "url": "https://cwe.mitre.org/data/definitions/664.html",
           "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        },
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-dropindex.html",
+          "claim": "PostgreSQL concurrent DROP INDEX cannot execute in a transaction block; ordinary DROP INDEX can."
+        },
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-reindex.html",
+          "claim": "PostgreSQL concurrent REINDEX cannot execute in a transaction block; other REINDEX restrictions depend on the object type."
         }
       ],
       "positive": [
@@ -366,6 +468,30 @@
         {
           "path": "migration.sql",
           "source": "BEGIN; SAVEPOINT migration; ROLLBACK TO SAVEPOINT migration;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX TABLE CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "START TRANSACTION;\nDROP INDEX CONCURRENTLY IF EXISTS account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; COMMIT AND CHAIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "CREATE TEMP TABLE sample(id integer);\nBEGIN; CREATE INDEX CONCURRENTLY sample_idx ON sample(id); COMMIT;"
         }
       ],
       "negative": [
@@ -404,6 +530,38 @@
         {
           "path": "migration.sql",
           "source": "CREATE FUNCTION sample() RETURNS void LANGUAGE SQL BEGIN ATOMIC SELECT 1; END;\nBEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "index.sql",
+          "source": "\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; COMMIT;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; ROLLBACK;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX (CONCURRENTLY false) INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "DO $$ BEGIN PERFORM 1; END $$;\nDROP INDEX CONCURRENTLY account_lookup;"
         }
       ],
       "adversarial": [
@@ -430,6 +588,24 @@
           "source": "BEGIN;\nCREATE /* gap */ INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n",
           "expected": true,
           "rationale": "Whitespace and comments preserve concurrent DDL."
+        },
+        {
+          "path": "index.sql",
+          "source": "SELECT $example$BEGIN;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;$example$;",
+          "expected": false,
+          "rationale": "Transaction and DDL text inside a dollar literal are data, not commands."
+        },
+        {
+          "path": "index.sql",
+          "source": "/* outer /* nested BEGIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT; */ comment */",
+          "expected": false,
+          "rationale": "Nested comments cannot start a transaction or rebuild a persistent index."
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP /* gap */ INDEX CONCURRENTLY account_lookup;\nCOMMIT;",
+          "expected": true,
+          "rationale": "A comment between keywords does not remove the concurrent transaction restriction."
         }
       ]
     },

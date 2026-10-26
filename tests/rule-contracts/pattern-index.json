@@ -63,8 +63,8 @@
       "path": "pattern-javascript.v2.json",
       "engine": "pattern",
       "ecosystem": "javascript",
-      "rule_count": 13,
-      "sha256": "9bda00a9602b190f34aee46dca20b62f930c195301bc3b6fa2680d588ff25849"
+      "rule_count": 11,
+      "sha256": "3b204d59385cb9cfa55ecaa231dba618b4b1bce2591d0a9efea09c5ab7927ac4"
     },
     {
       "path": "pattern-nextjs.v2.json",
