@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "cohort": "web-database-20261026",
+  "baseline_revision": "7ca0477498e2bc8144f004201feb7b184e8df1a7",
+  "evaluation_note": "Pinned static SQL projection from an application; this is not an independent clean corpus or deployment safety claim.",
+  "source_tree_digest_canonicalization": "SHA-256 of UTF-8 ordinal case-sensitive relative path, NUL, lowercase file SHA-256, LF.",
+  "projects": [
+    {
+      "name": "Umami PostgreSQL migrations",
+      "slug": "umami-postgresql",
+      "repository": "umami-software/umami",
+      "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+      "language": "SQL",
+      "kind": "application-migrations",
+      "license_spdx": "MIT",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/umami-software/umami/blob/559e3c607c23d2c72d9bd4f6481bda428255323c/LICENSE",
+      "license_sha256": "d59f69c3a56253a150adfc42b41acd49e9024410ad087c58a23d506623258dfe",
+      "expected_source_files": 28,
+      "source_bytes": 34741,
+      "source_tree_sha256": "9950ec6980a4e29db651abf82c9b9415d8b9039883ebd39d01d3c277bd76fc2d",
+      "source_extensions": [".sql"],
+      "source_projection": "All regular .sql blobs under db/postgresql/ and prisma/migrations/. ClickHouse is outside the declared PostgreSQL selection. The TypeScript projection from this same repository remains a separate existing receipt, not a second independent project.",
+      "context_files": {
+        "LICENSE": "d59f69c3a56253a150adfc42b41acd49e9024410ad087c58a23d506623258dfe",
+        "package.json": "e4b78bd468bad98edb69ba29ce6231df4a1cf2ed687973f6ca65905df46f6db6",
+        "prisma/migrations/migration_lock.toml": "99836963713b4f5b269ad49af0ed3d7b0b2e336115c2f92dc9ac683d139d0900",
+        "prisma/schema.prisma": "9b27b84576c2f9fea31fd68d5c0ad23a6ea9384e946f18934a78761c9eaeedd6"
+      }
+    }
+  ]
+}

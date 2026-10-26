@@ -65,13 +65,13 @@ Node.js 20+ ทำหน้าที่ CLI ส่วน Python 3.10+ จำเ�
 
 ## ขอบเขตและสถานะโครงการ
 
-ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **667 deterministic rules** (`SP001`–`SP701`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
+ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **667 deterministic rules** (`SP001`–`SP706`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
 
 | หัวข้อ | Contract ปัจจุบัน |
 | :--- | :--- |
 | Release ล่าสุด | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่ง scanner-backed |
-| Executable rules | 667 (`SP001`–`SP701`, มีช่องว่างสงวนไว้ตั้งใจ) |
+| Executable rules | 667 (`SP001`–`SP706`, มีช่องว่างสงวนไว้ตั้งใจ) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates และ reserved promotion slots 1,000 รายการ; ไม่มีอะไรเป็น finding จนกว่าจะ promote |
 | Exit codes | `0` ผ่าน, `1` gate fail, `2` evidence ไม่ถูกต้อง/ไม่พร้อม |
@@ -139,14 +139,14 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 ## กฎการตรวจจับ
 
-**667 deterministic executable rules** (`SP001`–`SP701`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
+**667 deterministic executable rules** (`SP001`–`SP706`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
 
 ขอบเขต advisory จาก cohort Roblox/Luau, TypeScript และ broad quality:
 
 | Rule | Catalog title | ขอบเขต advisory |
 | :--- | :--- | :--- |
 | `SP690` | Roblox remote directly requires a client-selected module | ต้องมี remote จาก `Instance.new`, handler ที่ไม่ถูก escape, สองพารามิเตอร์แบบง่ายที่ระบุ type ได้ และ sink ตรง statement เดียว; alias, guard, parameter ซับซ้อน และ deployment ยังไม่ทราบ |
-| `SP691` | Roblox remote directly destroys a client-selected instance | ต้องมี remote จาก `Instance.new`, handler ที่ไม่ถูก escape, สองพารามิเตอร์แบบง่ายที่ระบุ type ได้ และ sink ตรง statement เดียว; alias, guard, parameter ซับซ้อน และ deployment ยังไม่ทราบ |
+| `SP691` | Roblox remote directly removes a client-selected object | ตรวจ Destroy หรือ Kick บน argument ที่ client เลือก ต้องมี native remote และ sink ตรง statement เดียว; ยังไม่ทราบสิทธิ์และ type ของเป้าหมายจริง |
 | `SP692` | JWT RSA signing key-size safeguard explicitly disabled | ต้องมี imported `jsonwebtoken.sign`, algorithm RS/PS ที่ระบุชัด และไม่มี header override; ไม่ทราบความแข็งแรงของ key จริง |
 | `SP693` | Node HTTP receive deadlines explicitly disabled | ต้องมี imported server options ที่กำหนด request/header timeout เป็น 0 ทั้งคู่; ยังไม่ทราบ bounds ภายนอก |
 | `SP694` | Direct await of an empty asynchronous race | ต้อง await `[]` โดยตรงใน native `Promise.race` หรือ Dart `Future.any` ที่ import `dart:async`; ไม่รวม wrapper และ binding ซับซ้อน |
@@ -157,8 +157,17 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 | `SP699` | Rust unchecked NonZero construction receives zero | ต้องเป็น native constructor ที่ระบุ path และค่าศูนย์ชัดเจน ไม่อนุมาน custom module |
 | `SP700` | Node timer delay exceeds its supported range | ตรวจตำแหน่ง delay ของ imported callback/promise API รองรับค่าคงที่และผลคูณที่มีขอบเขต |
 | `SP701` | SQLAlchemy QueuePool capacity explicitly unlimited | ตรวจ zero size หรือ unlimited overflow ที่ตั้งชัดเจน ไม่เหมารวม default ของ engine |
+| `SP702` | React effect setup is an async function | ต้อง import effect และส่ง inline async setup; async งานด้านใน synchronous setup ไม่ถูกแจ้ง |
+| `SP703` | Await uses the callback Node stream pipeline | ตรวจ await callback API โดยตรง แยกจาก promises API และการจัดการ callback ตามปกติ |
+| `SP704` | PostgreSQL URL overrides an explicit custom-CA TLS object | ตรวจ imported pg constructor ที่ URL มี SSL parameter และมี CA object แยกกัน ไม่เชื่อมต่อฐานข้อมูล |
+| `SP705` | PostgreSQL concurrent index creation is inside a transaction | ตรวจ explicit transaction ภายในไฟล์ SQL เดียว ไม่อนุมาน transaction ของ migration runner |
+| `SP706` | PostgreSQL definer SELECT searches temporary relations first | ต้องเป็น SQL definer function ที่กำหนด temp-first path และอ่าน relation ไม่ระบุ schema; ไม่อ้างสิทธิ์ deployment |
 
-Finding เหล่านี้เป็น advisory จาก source ในเครื่อง ไม่ใช่หลักฐานว่า deployment ถูกเปิดใช้หรือ exploit ได้ ดู [บันทึก Luau/TypeScript cohort](research/luau-typescript-cohort-2026-10.md) และ [บันทึก broad-quality cohort](research/broad-quality-cohort-2026-10.md)
+Finding เหล่านี้เป็น advisory จาก source ในเครื่อง ไม่ใช่หลักฐานว่า deployment ถูกเปิดใช้หรือ exploit ได้ ดู [บันทึก Luau/TypeScript cohort](research/luau-typescript-cohort-2026-10.md), [บันทึก broad-quality cohort](research/broad-quality-cohort-2026-10.md) และ [บันทึก Node/React/Luau/PostgreSQL cohort](research/web-database-cohort-2026-10.md)
+
+[รอบ Node/React/Luau/PostgreSQL](research/web-database-cohort-2026-10.md) เพิ่ม
+SP702–SP706 และขยาย SP691 พร้อม retire SP325/SP334/SP359/SP363/SP423 ที่อนุมาน
+ความเสี่ยงจาก setting ที่ไม่เห็นหรือไม่แยก Express 5 เก็บ ID เดิมไว้และคงเกณฑ์ gate
 
 โค้ดปัจจุบันเพิ่ม advisory checks สำหรับ Roblox/Luau ในไฟล์ `.lua`/`.luau`
 (`SP671`–`SP672`) และ Rust invalid reference initialization (`SP673`) พร้อม

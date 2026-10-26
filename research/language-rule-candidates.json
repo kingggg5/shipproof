@@ -169,9 +169,9 @@
     "taxonomy_only": 9
   },
   "dedup_disposition_counts": {
-    "coverage_gap": 4344,
-    "distinct_ecosystem_variant": 287,
-    "extend_or_replace_existing": 369
+    "coverage_gap": 4319,
+    "distinct_ecosystem_variant": 307,
+    "extend_or_replace_existing": 374
   },
   "root_overlap": {
     "unique_cwe_roots": 635,
@@ -12399,9 +12399,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -22835,7 +22837,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -22859,7 +22860,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -22947,7 +22947,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -23248,9 +23247,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP704"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -23655,7 +23656,6 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
@@ -23899,7 +23899,10 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
       "existing_ecosystem_rule_ids": [
         "SP625"
@@ -24055,7 +24058,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -35021,9 +35023,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -49517,7 +49521,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -49541,7 +49544,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -49634,7 +49636,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -49649,7 +49650,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP399",
@@ -49982,9 +49982,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP704"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP704"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -50395,13 +50399,11 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
       ],
       "existing_ecosystem_rule_ids": [
-        "SP334",
         "SP336",
         "SP694"
       ],
@@ -50643,7 +50645,10 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
       "existing_ecosystem_rule_ids": [
         "SP595",
@@ -50651,7 +50656,9 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703"
       ],
       "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-664",
@@ -50812,7 +50819,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -50842,7 +50848,6 @@
         "SP587"
       ],
       "existing_ecosystem_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -62776,9 +62781,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -70859,7 +70866,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -70883,7 +70889,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -70971,7 +70976,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -71269,9 +71273,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP704"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -71674,7 +71680,6 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
@@ -71918,7 +71923,10 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -72072,7 +72080,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -79652,9 +79659,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -89133,7 +89142,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -89157,7 +89165,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -89250,7 +89257,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -89265,7 +89271,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP399",
@@ -89598,9 +89603,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP704"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP704"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -100255,9 +100264,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -109721,7 +109732,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -109745,7 +109755,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -109835,7 +109844,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -110141,9 +110149,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP704"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -110548,7 +110558,6 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
@@ -110796,7 +110805,10 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
       "existing_ecosystem_rule_ids": [
         "SP619",
@@ -110953,7 +110965,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -126511,9 +126522,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -137425,7 +137438,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -137449,7 +137461,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -137537,7 +137548,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -137833,9 +137843,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP704"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -138309,7 +138321,6 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
@@ -138553,7 +138564,10 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -138707,7 +138721,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -144820,9 +144833,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -153027,7 +153042,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -153051,7 +153065,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -153144,7 +153157,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -153159,7 +153171,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP399",
@@ -164326,9 +164337,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -178822,7 +178835,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -178846,7 +178858,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -178939,7 +178950,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -178954,7 +178964,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP399",
@@ -179286,9 +179295,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP704"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP704"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -179699,13 +179712,11 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
       ],
       "existing_ecosystem_rule_ids": [
-        "SP334",
         "SP336",
         "SP694"
       ],
@@ -179947,7 +179958,10 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
       "existing_ecosystem_rule_ids": [
         "SP595",
@@ -179955,7 +179969,9 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703"
       ],
       "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-664",
@@ -180115,7 +180131,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -180145,7 +180160,6 @@
         "SP587"
       ],
       "existing_ecosystem_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -187743,9 +187757,13 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "existing_rule_ids": [
+        "SP706"
+      ],
+      "existing_ecosystem_rule_ids": [
+        "SP706"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -202226,7 +202244,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -202250,7 +202267,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -202339,7 +202355,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -202636,9 +202651,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP704"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -203112,7 +203129,6 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
@@ -203356,10 +203372,15 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
-      "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "distinct_ecosystem_variant",
+      "existing_ecosystem_rule_ids": [
+        "SP705"
+      ],
+      "dedup_disposition": "extend_or_replace_existing",
       "root_overlap_group": "CWE-664",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -203510,7 +203531,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -208503,7 +208523,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -208527,7 +208546,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -208623,7 +208641,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -215480,9 +215497,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -226878,9 +226897,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP704"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -227291,7 +227312,6 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
@@ -227535,7 +227555,10 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
       "existing_ecosystem_rule_ids": [
         "SP619",
@@ -227701,7 +227724,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -241825,9 +241847,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -248213,7 +248237,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -248237,7 +248260,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -248325,7 +248347,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -248626,9 +248647,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP704"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -258915,9 +258938,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -268306,7 +268331,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -268330,7 +268354,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -268418,7 +268441,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -268717,9 +268739,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP704"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-436",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -269125,7 +269149,6 @@
       ],
       "existing_rule_ids": [
         "SP136",
-        "SP334",
         "SP336",
         "SP621",
         "SP694"
@@ -269371,7 +269394,10 @@
         "SP631",
         "SP634",
         "SP636",
-        "SP648"
+        "SP648",
+        "SP702",
+        "SP703",
+        "SP705"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -269525,7 +269551,6 @@
         }
       ],
       "existing_rule_ids": [
-        "SP359",
         "SP367",
         "SP368",
         "SP370",
@@ -275000,9 +275025,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -283643,7 +283670,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -283667,7 +283693,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -283755,7 +283780,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -289400,9 +289424,11 @@
           ]
         }
       ],
-      "existing_rule_ids": [],
+      "existing_rule_ids": [
+        "SP706"
+      ],
       "existing_ecosystem_rule_ids": [],
-      "dedup_disposition": "coverage_gap",
+      "dedup_disposition": "distinct_ecosystem_variant",
       "root_overlap_group": "CWE-426",
       "recommended_route": "ecosystem_semantic_review",
       "promotion_status": "research_only",
@@ -298040,7 +298066,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",
@@ -298064,7 +298089,6 @@
         "SP360",
         "SP361",
         "SP362",
-        "SP363",
         "SP364",
         "SP366",
         "SP372",
@@ -298152,7 +298176,6 @@
         "SP322",
         "SP323",
         "SP324",
-        "SP325",
         "SP326",
         "SP327",
         "SP328",

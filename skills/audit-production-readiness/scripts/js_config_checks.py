@@ -6,6 +6,7 @@ import re
 from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
+from urllib.parse import parse_qsl, urlsplit
 
 MODULES = frozenset(
     {
@@ -16,6 +17,9 @@ MODULES = frozenset(
         "tls",
         "ws",
         "react",
+        "pg",
+        "stream",
+        "stream/promises",
         "buffer",
         "zlib",
         "timers",
@@ -176,7 +180,18 @@ def module_name(value: str) -> str:
         return (
             builtin
             if builtin
-            in {"buffer", "crypto", "http", "https", "tls", "zlib", "timers", "timers/promises"}
+            in {
+                "buffer",
+                "crypto",
+                "http",
+                "https",
+                "tls",
+                "zlib",
+                "timers",
+                "timers/promises",
+                "stream",
+                "stream/promises",
+            }
             else ""
         )
     return module
@@ -232,6 +247,63 @@ def properties(
             return {}
         result[key] = (start + 2, stop)
     return result
+
+
+def inline_callback(
+    values: list[str], pairs: dict[int, int], span: tuple[int, int], *, asynchronous: bool = False
+) -> bool:
+    """Recognize a bounded function literal, not a callable type or identifier."""
+    first, last = span
+    if asynchronous:
+        if values[first] != "async":
+            return False
+        first += 1
+    if values[first : first + 1] == ["function"]:
+        first += 1
+        if first < last and IDENTIFIER.fullmatch(values[first]):
+            first += 1
+        close = pairs.get(first)
+        return (
+            close is not None
+            and values[first] == "("
+            and values[close + 1 : close + 2] == ["{"]
+            and pairs.get(close + 1) == last - 1
+        )
+    close = pairs.get(first)
+    return (
+        close is not None
+        and values[first] == "("
+        and values[close + 1 : close + 2] == ["=>"]
+        and close + 2 < last
+    )
+
+
+def pg_tls_override(value: str) -> bool:
+    """Only a literal PostgreSQL URL with a recognized SSL override is evidence."""
+    try:
+        parsed = urlsplit(value)
+        if (
+            parsed.scheme not in {"postgres", "postgresql"}
+            or not parsed.hostname
+            or parsed.fragment
+        ):
+            return False
+        if parsed.port is not None and not 0 < parsed.port <= 65535:
+            return False
+        query = parse_qsl(parsed.query, max_num_fields=64)
+    except ValueError:
+        return False
+    names = [name for name, _ in query]
+    if len(names) != len(set(names)):
+        return False
+    return any(
+        (name in {"sslcert", "sslkey", "sslrootcert"} and bool(option))
+        or (
+            name == "sslmode"
+            and option in {"disable", "no-verify", "prefer", "require", "verify-ca", "verify-full"}
+        )
+        for name, option in query
+    )
 
 
 def imports(values: list[str], pairs: dict[int, int], depths: list[int]) -> dict:
@@ -613,6 +685,56 @@ def signature_spans(
         if not args or any(values[start] == "..." for start, _ in args):
             continue
         closing = pairs[cursor]
+        if (
+            module == "react"
+            and member in {"useEffect", "useLayoutEffect", "useInsertionEffect"}
+            and len(args) in {1, 2}
+            and inline_callback(values, pairs, args[0], asynchronous=True)
+        ):
+            emit(
+                "SP702",
+                index,
+                closing + 1,
+                f"react.{member}: async setup returns a Promise instead of cleanup or undefined",
+            )
+        if (
+            module == "stream"
+            and member == "pipeline"
+            and index
+            and values[index - 1] == "await"
+            and len(args) >= 3
+            and inline_callback(values, pairs, args[-1])
+            and values[closing + 1 : closing + 2] not in (["."], ["?."], ["["])
+        ):
+            emit(
+                "SP703",
+                index - 1,
+                closing + 1,
+                "await stream.pipeline: the callback overload does not return its completion Promise",
+            )
+        if (
+            module == "pg"
+            and member in {"Client", "Pool"}
+            and index
+            and values[index - 1] == "new"
+            and len(args) == 1
+        ):
+            options = properties(values, pairs, args[0])
+            ssl = properties(values, pairs, options["ssl"]) if "ssl" in options else {}
+            connection = options.get("connectionString")
+            if (
+                not {"stream", "Client", "connection"}.intersection(options)
+                and connection
+                and connection[1] == connection[0] + 1
+                and "ca" in ssl
+                and pg_tls_override(literal(values[connection[0]]) or "")
+            ):
+                emit(
+                    "SP704",
+                    index,
+                    closing + 1,
+                    "pg connectionString SSL parameters replace the supplied TLS object containing a custom CA",
+                )
         if module in {"timers", "timers/promises"} and member in {"setTimeout", "setInterval"}:
             if module == "timers" and args:
                 callback = values[args[0][0]]

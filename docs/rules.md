@@ -215,6 +215,27 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 
 ## Detection Rules Reference
 
+`SP702` checks imported React effects with inline async setup. `SP703` checks
+direct await of the callback Node pipeline API. `SP704` checks a literal pg URL
+SSL override that replaces an explicit custom-CA object. Runtime binding is
+required; ambiguous imports, shadows, overrides and computed values stay unresolved.
+
+`SP705` tracks supported explicit SQL transaction statements around PostgreSQL
+concurrent index creation. `SP706` checks an SQL-language definer SELECT with a
+temp-first explicit path and a bare relation. Dollar bodies, comments and quoted
+data stay opaque to transaction tracking; malformed/over-budget lexical evidence
+is recorded as incomplete. Unquoted procedural bodies need a grammar-aware route.
+Neither check establishes cross-file order, runner state or deployed privileges.
+
+`SP691` includes direct client-selected `Kick()` as well as `Destroy()` under its
+existing single-statement native-remote boundary. Target types remain unknown.
+
+`SP325`, `SP334`, `SP359`, `SP363` and `SP423` are retired; their IDs are reserved.
+Session timeout policy, process-level recovery, pool sizing, framework versions
+and actual effect cycles cannot be established from the former missing-setting
+patterns. Express 5 forwards rejected handler promises; pg has a bounded default.
+Severity/proof thresholds and the paired benchmark labels remain unchanged.
+
 `SP347` and `SP350` are retired, with their IDs reserved. Propagating an exception
 from `asyncio.gather` is normal behavior; missing pool keywords in `create_engine`
 do not prove unlimited capacity across dialects/pool classes.

@@ -43,6 +43,7 @@ import php_advisories
 import polyglot_checks
 import precision as precision_policy
 import python_runtime_checks
+import sql_checks
 from rule_explanations import RULE_EXPLANATIONS
 
 VERSION = "0.12.0"
@@ -4584,18 +4585,6 @@ RULES: tuple[Rule, ...] = (
         "Capacity",
     ),
     Rule(
-        "SP325",
-        "Database transaction without statement timeout",
-        "scale",
-        "high",
-        "high",
-        compile_pattern(r"""BEGIN\s*;[^\n]*(?!SET\s+LOCAL\s+statement_timeout)"""),
-        "Database transaction opened without an explicit statement timeout, risking runaway lock contention.",
-        "Set a statement timeout (SET LOCAL statement_timeout = 5000;) within transaction blocks.",
-        "CWE-400",
-        "Capacity",
-    ),
-    Rule(
         "SP326",
         "Transaction committed per row in bulk loop",
         "scale",
@@ -4704,21 +4693,6 @@ RULES: tuple[Rule, ...] = (
         "CWE-662",
         "Reliability",
         frozenset({".go"}),
-    ),
-    Rule(
-        "SP334",
-        "Node process missing unhandledRejection listener",
-        "reliability",
-        "high",
-        "medium",
-        compile_pattern(
-            r"""server\.listen\([^)]+\);\s*(?!\s*process\.on\(['"]unhandledRejection)"""
-        ),
-        "Node.js server process lacks top-level process.on('unhandledRejection') and 'uncaughtException' handlers.",
-        "Add global error handlers to log unhandled promise rejections and gracefully shut down.",
-        "CWE-754",
-        "Reliability",
-        frozenset({".js", ".ts"}),
     ),
     Rule(
         "SP335",
@@ -5013,21 +4987,6 @@ RULES: tuple[Rule, ...] = (
         frozenset({".py"}),
     ),
     Rule(
-        "SP359",
-        "Node.js Express unhandled Promise rejection in async route",
-        "reliability",
-        "high",
-        "high",
-        compile_pattern(
-            r"""app\.(?:get|post|put|delete|patch)\s*\([^\)]*async\s*\((?:req,\s*res|request,\s*response)\)\s*=>\s*\{(?![^}]*try\s*\{)"""
-        ),
-        "An async Express route handler does not wrap its body in a try/catch block, risking unhandled promise rejection crashes.",
-        "Wrap async logic in try/catch and pass errors to `next(err)` or use `express-async-errors`.",
-        "CWE-703",
-        "Reliability",
-        frozenset({".js", ".ts", ".mjs"}),
-    ),
-    Rule(
         "SP360",
         "Node.js EventEmitter listener added inside request handler without removal",
         "reliability",
@@ -5068,21 +5027,6 @@ RULES: tuple[Rule, ...] = (
         ),
         "crypto.pbkdf2Sync blocks the Node.js V8 event loop during CPU-intensive key derivation.",
         "Use asynchronous `util.promisify(crypto.pbkdf2)()` to run computation in libuv thread pool.",
-        "CWE-400",
-        "Capacity",
-        frozenset({".js", ".ts"}),
-    ),
-    Rule(
-        "SP363",
-        "Node.js PostgreSQL or MySQL pool instantiated without max connections cap",
-        "scale",
-        "high",
-        "high",
-        compile_pattern(
-            r"""new\s+(?:Pool|pg\.Pool|mysql\.createPool)\s*\(\s*\{[^\}]*(?!max\s*:)[^\}]*\}"""
-        ),
-        "Database connection pool in Node.js omits the `max` connections setting, defaulting to unbounded growth.",
-        "Set `max: 20` and `idleTimeoutMillis: 30000` in pool options.",
         "CWE-400",
         "Capacity",
         frozenset({".js", ".ts"}),
@@ -5902,19 +5846,6 @@ RULES: tuple[Rule, ...] = (
         "Paginate or slice static params generation: `return items.slice(0, 1000).map(...)`.",
         "CWE-400",
         "Capacity",
-        frozenset({".js", ".ts", ".jsx", ".tsx"}),
-    ),
-    Rule(
-        "SP423",
-        "React useEffect missing dependency array causing infinite render loop",
-        "reliability",
-        "high",
-        "high",
-        compile_pattern(r"""useEffect\s*\(\s*\(\s*\)\s*=>\s*\{[\s\S]*?\}\s*\)(?!\s*,\s*\[)"""),
-        "useEffect without a dependency array executes on every render, triggering state updates that cause infinite render loops.",
-        "Pass an explicit dependency array `useEffect(() => { ... }, [deps])` or empty array `[]` for mount-only effects.",
-        "CWE-674",
-        "Reliability",
         frozenset({".js", ".ts", ".jsx", ".tsx"}),
     ),
     Rule(
@@ -9515,13 +9446,13 @@ RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "SP691",
-        "Roblox remote directly destroys a client-selected instance",
+        "Roblox remote directly removes a client-selected object",
         "security",
         "medium",
         "high",
         compile_pattern(r"$^"),
-        "A locally constructed remote destroys its client data argument without a local guard.",
-        "Validate instance ownership, allowed ancestors and permission before deletion.",
+        "A locally constructed remote calls Destroy or Kick on its client-selected target without a local guard.",
+        "Select targets on the server and validate ownership and permission before removing an instance or Player.",
         "CWE-862",
         "Roblox instance authorization",
         frozenset({".lua", ".luau"}),
@@ -9656,6 +9587,71 @@ RULES: tuple[Rule, ...] = (
         "Database connection capacity",
         frozenset({".py"}),
     ),
+    Rule(
+        "SP702",
+        "React effect setup is an async function",
+        "correctness",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported React effect receives an async setup function, which returns a Promise rather than cleanup or undefined.",
+        "Keep setup synchronous; start async work inside it and return synchronous cleanup with cancellation as needed.",
+        "CWE-664",
+        "React effect lifecycle",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP703",
+        "Await uses the callback Node stream pipeline",
+        "correctness",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "The imported callback pipeline overload is directly awaited as if it returned a completion Promise.",
+        "Await pipeline from node:stream/promises, or handle completion explicitly in the callback.",
+        "CWE-664",
+        "Stream completion ownership",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP704",
+        "PostgreSQL URL overrides an explicit custom-CA TLS object",
+        "correctness",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An imported pg Client/Pool receives a literal SSL URL parameter and an SSL object with a custom CA; URL parsing replaces that object.",
+        "Choose one TLS configuration source; keep custom CA settings in the SSL object and remove SSL parameters from the connection URL.",
+        "CWE-436",
+        "Database TLS configuration precedence",
+        JS_CONFIG_SUFFIXES,
+    ),
+    Rule(
+        "SP705",
+        "PostgreSQL concurrent index creation is inside a transaction",
+        "correctness",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "CREATE INDEX CONCURRENTLY occurs after an explicit BEGIN/START TRANSACTION and before its completion.",
+        "Run concurrent index creation outside a transaction; configure the migration runner accordingly.",
+        "CWE-664",
+        "PostgreSQL transactional DDL contract",
+        frozenset({".sql"}),
+    ),
+    Rule(
+        "SP706",
+        "PostgreSQL definer SELECT searches temporary relations first",
+        "security",
+        "medium",
+        "high",
+        compile_pattern(r"$^"),
+        "An SQL SECURITY DEFINER function explicitly puts pg_temp first in search_path and selects from an unqualified relation.",
+        "Schema-qualify protected relations and place only trusted schemas before pg_temp, which should be last.",
+        "CWE-426",
+        "Privileged SQL name resolution",
+        frozenset({".sql"}),
+    ),
 )
 
 # Secret rules are exactly the rules that redact credential material in evidence.
@@ -9670,7 +9666,7 @@ MINIMIZED_EVIDENCE_RULE_IDS = frozenset(
         "SP378",
         "SP591",
         "SP621",
-        *(f"SP{number}" for number in range(666, 702)),
+        *(f"SP{number}" for number in range(666, 707)),
     }
 )
 RULE_INDEX = {rule.rule_id: rule for rule in RULES}
@@ -10619,6 +10615,11 @@ FILE_LEVEL_RULE_IDS = frozenset(
         "SP699",
         "SP700",
         "SP701",
+        "SP702",
+        "SP703",
+        "SP704",
+        "SP705",
+        "SP706",
         "SP346",
         "SP377",
         "SP378",
@@ -11091,6 +11092,22 @@ def find_regex_issues(
     if any(len(line) > MAX_SCAN_LINE_CHARS for line in source_lines):
         raise ScanCoverageError("line_limit")
     lines = source_lines if lines is None else lines
+    if suffix == ".sql" and any(
+        marker in source_text.upper() for marker in ("CONCURRENTLY", "DEFINER")
+    ):
+        try:
+            sql_spans = sql_checks.signature_spans(source_text)
+        except sql_checks.LexicalLimitError as exc:
+            raise ScanCoverageError("parser_limit") from exc
+        for rule_id, offset, _end, excerpt in sql_spans:
+            append_file_level_finding(
+                findings,
+                rule_id,
+                relative_path,
+                lines,
+                source_text.count("\n", 0, offset) + 1,
+                minimal_evidence=excerpt,
+            )
     if (
         suffix == ".cs"
         and any(
@@ -11258,6 +11275,8 @@ def find_regex_issues(
             "secureProtocol",
             "maxPayload",
             "react",
+            "pipeline",
+            "connectionString",
         )
     ):
         excerpts: dict[tuple[str, int], str] = {}

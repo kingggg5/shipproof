@@ -47,7 +47,7 @@ class FieldReplayTests(unittest.TestCase):
         }
 
     def test_lua_projections_keep_identity_checks(self):
-        for suffix in (".lua", ".luau", ".py"):
+        for suffix in (".lua", ".luau", ".py", ".sql"):
             with self.subTest(suffix=suffix), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 spec = self.projection(root, suffix)

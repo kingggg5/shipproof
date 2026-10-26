@@ -713,6 +713,7 @@ def lua_spans(stream: list[tuple[str, int, int]]) -> list[tuple[str, int, int]]:
             candidates.append(("SP690", ["require", "(", data, ")"]))
         if native:
             candidates.append(("SP691", [data, ":", "Destroy", "(", ")"]))
+            candidates.append(("SP691", [data, ":", "Kick", "(", ")"]))
         for rule_id, signature in candidates:
             last = body + len(signature)
             terminator = last + int(values[last : last + 1] == [";"])

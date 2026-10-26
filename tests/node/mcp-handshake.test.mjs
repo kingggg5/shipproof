@@ -229,12 +229,18 @@ test(
         ["value.rs", "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }", ["SP699"]],
         ["timer.ts", "import {setTimeout} from 'node:timers'; setTimeout(tick,30*24*60*60*1000);", ["SP700"]],
         ["pool.py", "from sqlalchemy.pool import QueuePool\npool=QueuePool(connect,max_overflow=-1)", ["SP701"]],
+        ["kick.luau", 'local remote = Instance.new("RemoteEvent")\nremote.OnServerEvent:Connect(function(player, target) target:Kick() end)', ["SP691"]],
+        ["effect.tsx", "import {useEffect} from 'react'; function useRefresh() { useEffect(async () => { await refresh(); }, []); }", ["SP702"]],
+        ["pipeline.ts", "import {pipeline} from 'node:stream'; async function transfer(source,destination) { await pipeline(source,destination,(error)=>{report(error);}); }", ["SP703"]],
+        ["database.ts", "import {Client} from 'pg'; const db = new Client({connectionString:'postgresql://db.example/app?sslmode=require',ssl:{ca:trustedCA}});", ["SP704"]],
+        ["migration.sql", "BEGIN; CREATE INDEX CONCURRENTLY idx ON accounts(id); COMMIT;", ["SP705"]],
+        ["definer.sql", "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path=pg_temp,private AS $$ SELECT value FROM settings $$;", ["SP706"]],
         ["reference.rs", "unsafe fn build() { let value = std::mem::uninitialized::<&u32>(); }", ["SP673"]],
         ["tls.cs", "using System.Net.Security; async System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost=host, RemoteCertificateValidationCallback=(_,_,_,_)=>true }); }", ["SP104"]],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);
-        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP104", "SP170", "SP672", "SP673", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692", "SP693", "SP694", "SP695", "SP696", "SP697", "SP698", "SP699", "SP700", "SP701"].includes(finding.rule_id));
+        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP104", "SP170", "SP672", "SP673", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692", "SP693", "SP694", "SP695", "SP696", "SP697", "SP698", "SP699", "SP700", "SP701", "SP702", "SP703", "SP704", "SP705", "SP706"].includes(finding.rule_id));
         assert.deepEqual(findings.map((finding) => finding.rule_id).sort(), expectedRules);
         assert.ok(findings.every((finding) => finding.tier === "advisory" && finding.proof_level === "L1"));
       }

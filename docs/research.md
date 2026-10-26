@@ -1,6 +1,6 @@
 # ShipProof research notebook
 
-Last cohort review: 2026-10-23; older notebook entries retain their original context.
+Last cohort review: 2026-10-26; older notebook entries retain their original context.
 
 This notebook records the external pages consulted while ShipProof was designed. It is intentionally separate from the [production playbook](production-playbook.md): the playbook contains ShipProof's operating model; this file preserves provenance, challenges assumptions, and makes later re-verification possible.
 
@@ -12,7 +12,7 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 667 | Current executable registry through SP701 |
+| Executable scanner rules | 667 | Current executable registry through SP706 |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
@@ -43,6 +43,10 @@ documents SP693–SP698, the SP346/SP375 scope repairs, and retirement of SP348.
 The six new rules are advisory. Evaluation is pending, with no test or performance
 metrics claimed. The 2,800 expert/annual and 5,000 language-catalog entries remain
 non-executable research candidates and cannot emit findings.
+
+The [2026-10 Node/React/Luau/PostgreSQL cohort](../research/web-database-cohort-2026-10.md)
+records the SP702–SP706 candidates, SP691 scope expansion, and proposed legacy-rule
+retirements. This entry records scope and provenance; it makes no passed-results claim.
 
 ## Reading protocol
 

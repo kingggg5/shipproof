@@ -1733,12 +1733,6 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Subqueries with explicit WHERE ... IS NOT NULL guards.",
         "test": "Replace NOT IN with NOT EXISTS.",
     },
-    "SP325": {
-        "why": "A hung or slow query inside a transaction holds table/row locks indefinitely, cascading pool exhaustion.",
-        "attack": "A slow analytical query blocks writes to the users table for minutes, bringing down the web app.",
-        "false_positive": "Database systems with global server-level statement timeouts configured.",
-        "test": "Set an explicit statement_timeout in the database session configuration.",
-    },
     "SP326": {
         "why": "Committing once per row forces a disk write and WAL flush on every single iteration, destroying throughput.",
         "attack": "Importing 10,000 items takes minutes instead of seconds, starving the database of disk I/O.",
@@ -1786,12 +1780,6 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "Background worker tasks are aborted midway because the main process terminates before workers start.",
         "false_positive": "None; wg.Add() must always be called before starting the goroutine.",
         "test": "Move wg.Add(1) before the go keyword.",
-    },
-    "SP334": {
-        "why": "Unhandled promise rejections in modern Node.js terminate the process with non-zero exit code.",
-        "attack": "A rejected promise in a non-critical background task crashes the entire web server.",
-        "false_positive": "Applications running under process managers that handle restarts automatically.",
-        "test": "Add process.on('unhandledRejection', (err) => { logger.error(err); }).",
     },
     "SP335": {
         "why": "Python garbage collector can collect and cancel background asyncio tasks before they finish running.",
@@ -1919,12 +1907,6 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
         "test": "Add a test confirming that use `math.isclose(a, b)` or the `decimal.decimal` class for financial arithmetic.",
     },
-    "SP359": {
-        "why": "An async Express route handler does not wrap its body in a try/catch block, risking unhandled promise rejection crashes.",
-        "attack": "An attacker or runtime failure exploits `Node.js Express unhandled Promise rejection in async route` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-        "test": "Add a test confirming that wrap async logic in try/catch and pass errors to `next(err)` or use `express-async-errors`.",
-    },
     "SP360": {
         "why": "Registering EventEmitter listeners inside a request handler causes unbounded memory leaks on every request.",
         "attack": "An attacker or runtime failure exploits `Node.js EventEmitter listener added inside request handler without removal` to bypass controls or degrade service availability.",
@@ -1942,12 +1924,6 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "An attacker or runtime failure exploits `Node.js synchronous crypto PBKDF2 inside route handler` to bypass controls or degrade service availability.",
         "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
         "test": "Add a test confirming that use asynchronous `util.promisify(crypto.pbkdf2)()` to run computation in libuv thread pool.",
-    },
-    "SP363": {
-        "why": "Database connection pool in Node.js omits the `max` connections setting, defaulting to unbounded growth.",
-        "attack": "An attacker or runtime failure exploits `Node.js PostgreSQL or MySQL pool instantiated without max connections cap` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-        "test": "Add a test confirming that set `max: 20` and `idletimeoutmillis: 30000` in pool options.",
     },
     "SP364": {
         "why": "Axios HTTP request or client instance does not specify a timeout, risking socket pool starvation on upstream hangs.",
@@ -2302,12 +2278,6 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "An attacker or runtime failure exploits `Next.js generateStaticParams fetching unbounded external API without limit` to bypass controls or degrade service availability.",
         "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
         "test": "Add a test confirming that paginate or slice static params generation: `return items.slice(0, 1000).map(...)`.",
-    },
-    "SP423": {
-        "why": "useEffect without a dependency array executes on every render, triggering state updates that cause infinite render loops.",
-        "attack": "An attacker or runtime failure exploits `React useEffect missing dependency array causing infinite render loop` to bypass controls or degrade service availability.",
-        "false_positive": "Test fixtures or local mock environments may trigger this rule; verify whether the code path runs in production.",
-        "test": "Add a test confirming that pass an explicit dependency array `useeffect(() => { ... }, [deps])` or empty array `[]` for mount-only effects.",
     },
     "SP424": {
         "why": "Mutating React state directly prevents component re-rendering and corrupts component lifecycle.",
@@ -3846,10 +3816,10 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Map validated action IDs to server-owned modules; reject client-selected module IDs.",
     },
     "SP691": {
-        "why": "A locally created remote directly destroys its client-supplied instance argument.",
-        "attack": "A caller may delete a replicated instance without an ownership check in this handler.",
+        "why": "A locally created remote directly calls Destroy or Kick on its client-supplied target argument.",
+        "attack": "A caller may delete a replicated instance or disconnect a selected Player without an authorization check in this handler. Target type and deployed exposure remain unknown.",
         "false_positive": "Advisory: requires a single direct callback statement and local native remote. Guards, server-selected objects and ambiguous bindings stay silent. Runtime exposure and independent controls need review.",
-        "test": "Check ownership, allowed ancestors and authorization before deleting an instance.",
+        "test": "Select targets on the server and check ownership, allowed ancestors and authorization before removing an instance or Player.",
     },
     "SP692": {
         "why": "An imported JWT sign call explicitly disables the RSA key-size safeguard.",
@@ -4000,5 +3970,35 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "attack": "Concurrent connection demand may exceed database capacity. Independent admission limits and actual load remain unknown.",
         "false_positive": "Advisory: import-bound QueuePool constructor with explicit pool_size=0 or max_overflow=-1. Engine defaults, other pool classes, positional/keyword collisions, unknown values and changed/escaped bindings stay silent. QueuePool is not imported or executed by the scanner.",
         "test": "Retain finite pool and overflow limits; distinguish direct pool configuration from dialect-dependent create_engine defaults.",
+    },
+    "SP702": {
+        "why": "An async effect setup returns a Promise; React expects synchronous cleanup or no return value.",
+        "attack": "Cleanup returned through a Promise is not a lifecycle cleanup function. Actual mounting, rejection handling and deployed impact are unknown.",
+        "false_positive": "Advisory: direct runtime React import and inline async function only. Inner async work, synchronous setup, custom hooks, type-only imports, binding escapes and shadows stay silent. TypeScript or lint may already reject this code.",
+        "test": "Start asynchronous work inside synchronous setup and return synchronous cleanup that cancels or ignores stale work; do not add an empty dependency array indiscriminately.",
+    },
+    "SP703": {
+        "why": "The callback overload of Node stream.pipeline returns the destination rather than the Promise for pipeline completion.",
+        "attack": "Code after await can run before the stream finishes. The callback can still handle completion correctly; this signature does not establish data loss or an unhandled error.",
+        "false_positive": "Advisory: direct await of an imported callback pipeline with an inline function callback. Promises imports, callback-only calls, wrappers, type imports, shadows, spread arguments and chained results stay unresolved or silent.",
+        "test": "Use pipeline from node:stream/promises for awaited completion, or keep callback ownership explicit. Verify completion ordering with a bounded in-memory stream.",
+    },
+    "SP704": {
+        "why": "pg URL parsing replaces the SSL object when SSL connection-string parameters are present, discarding the supplied custom CA option.",
+        "attack": "The intended CA configuration can be lost, changing validation or causing connection failure depending on installed pg and connection-string versions. A bypass or successful connection is not demonstrated.",
+        "false_positive": "Advisory: imported pg Client/Pool, direct new, flat literal options, literal PostgreSQL URL with a recognized SSL override and a separate SSL object containing ca. Dynamic URLs, duplicate URL keys, custom Client/connection/stream options, spreads and unresolved bindings stay silent. Intentional precedence may be acceptable.",
+        "test": "Use one TLS configuration source; inspect resolved options on the installed pg version without connecting to a database.",
+    },
+    "SP705": {
+        "why": "PostgreSQL forbids CREATE INDEX CONCURRENTLY within a transaction block, including an explicit transaction in a migration file.",
+        "attack": "The migration can fail before creating its index. Execution order across files, runner-managed transactions and actual deployment are not inferred.",
+        "false_positive": "Advisory: one SQL file with supported explicit BEGIN or START TRANSACTION and concurrent index creation before completion. Comments, strings, dollar bodies, committed transactions and non-concurrent indexes stay silent. Procedural unquoted bodies and psql metacommands need a grammar-aware route.",
+        "test": "Run concurrent index DDL in a migration configured outside transactions; test authored DDL in an isolated disposable database, never a production schema.",
+    },
+    "SP706": {
+        "why": "An SQL SECURITY DEFINER SELECT reads an unqualified relation while an explicit search_path searches pg_temp before other schemas.",
+        "attack": "A temporary relation can shadow the intended relation under function-owner privileges. The signature does not prove caller TEMP/EXECUTE privileges, sensitive data, reachability or privilege escalation.",
+        "false_positive": "Advisory: single SQL-language SELECT body, explicit pg_temp-first path and bare FROM relation only. Invoker functions, qualified relations, temp-last or empty paths, procedural bodies, CTEs, dynamic settings, escaped bodies and multiple statements stay unresolved or silent. Files with ALTER/DROP FUNCTION need lifecycle analysis and stay silent for this rule. Deliberately reading temporary relations may be intended.",
+        "test": "Schema-qualify protected relations and put trusted schemas before pg_temp. Verify resolution with harmless authored relations in an isolated single-user database.",
     },
 }

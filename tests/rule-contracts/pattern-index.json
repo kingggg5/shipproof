@@ -7,8 +7,8 @@
       "path": "pattern-common.v2.json",
       "engine": "pattern",
       "ecosystem": "common",
-      "rule_count": 263,
-      "sha256": "330424c5893e2a5448ca02f4e6b3794bfbc7ab991c356ecd51d92d6d3a1b69d3"
+      "rule_count": 261,
+      "sha256": "6ffeb90cdf5f7a132e20563df4ea9932e95ee5e36ce1700eaee0eaef8fed0c1a"
     },
     {
       "path": "pattern-container.v2.json",
@@ -63,8 +63,8 @@
       "path": "pattern-javascript.v2.json",
       "engine": "pattern",
       "ecosystem": "javascript",
-      "rule_count": 16,
-      "sha256": "498876938d126ded8a678ee84e98e4c159d4344f586f0206ed27f42aece918c6"
+      "rule_count": 13,
+      "sha256": "9bda00a9602b190f34aee46dca20b62f930c195301bc3b6fa2680d588ff25849"
     },
     {
       "path": "pattern-nextjs.v2.json",

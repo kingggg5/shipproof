@@ -77,6 +77,22 @@ class BenchmarkScannerTests(unittest.TestCase):
             self.assertEqual(findings, [])
             self.assertTrue(stats["completeness"]["is_complete"])
 
+    def test_web_database_profile_checks_three_languages_and_safe_counterparts(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            left = benchmark_scanner.write_fixture(Path(first), 12, "web-database", 512)
+            right = benchmark_scanner.write_fixture(Path(second), 12, "web-database", 512)
+            self.assertEqual(left, right)
+            self.assertEqual(left[1], 12 * 512)
+            self.assertEqual(len(list(Path(first).rglob("*.sql"))), 4)
+            self.assertEqual(len(list(Path(first).rglob("*.luau"))), 2)
+            self.assertEqual(len(list(Path(first).rglob("*.tsx"))), 2)
+            findings, stats = benchmark_scanner.load_scanner().scan_repository(Path(first))
+            self.assertEqual(findings, [])
+            self.assertEqual(stats["files_scanned"], 12)
+            self.assertTrue(stats["completeness"]["is_complete"])
+
     def test_luau_profile_is_deterministic_guarded_source(self):
         import tempfile
 

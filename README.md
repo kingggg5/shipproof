@@ -67,13 +67,13 @@ Node.js 20+ runs the front-door CLI. Python 3.10+ is needed for `scan`, `check`,
 
 ## Scope and project status
 
-ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **667 deterministic rules** (`SP001`–`SP701`, with deliberate gaps) for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
+ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **667 deterministic rules** (`SP001`–`SP706`, with deliberate gaps) for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
 
 | Property | Current contract |
 | :--- | :--- |
 | Current release | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
-| Executable rules | 667 (`SP001`–`SP701`, with deliberate reserved gaps) |
+| Executable rules | 667 (`SP001`–`SP706`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates plus 1,000 reserved promotion slots; none are findings until promoted |
 | Exit codes | `0` pass, `1` policy gate failure, `2` invalid or unavailable evidence |
@@ -189,14 +189,14 @@ Full prompt samples, invariant analysis, token cost budgeting, worktree isolatio
 
 ## Detection rules
 
-**667 deterministic executable rules** (`SP001`–`SP701`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
+**667 deterministic executable rules** (`SP001`–`SP706`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
 
 Selected source-level advisories include these additional boundaries:
 
 | Rule | Catalog title | Advisory boundary |
 | :--- | :--- | :--- |
 | `SP690` | Roblox remote directly requires a client-selected module | Requires a local `Instance.new` remote, unescaped handler, two simple optionally typed parameters, and one direct sink statement; aliases, guards, complex parameters, and deployment remain unknown |
-| `SP691` | Roblox remote directly destroys a client-selected instance | Requires a local `Instance.new` remote, unescaped handler, two simple optionally typed parameters, and one direct sink statement; aliases, guards, complex parameters, and deployment remain unknown |
+| `SP691` | Roblox remote directly removes a client-selected object | Direct Destroy or Kick on the client-selected argument; requires a local native remote and one sink statement; authorization and target type remain unknown |
 | `SP692` | JWT RSA signing key-size safeguard explicitly disabled | Requires imported `jsonwebtoken.sign`, explicit RS/PS algorithm and no header override; actual key strength is unknown |
 | `SP693` | Node HTTP receive deadlines explicitly disabled | Requires directly imported server options with both literal request/header timeouts zero; external bounds remain unknown |
 | `SP694` | Direct await of an empty asynchronous race | Requires directly awaited literal `[]` in native Promise.race or Dart Future.any with explicit dart:async import; wrappers and complex bindings are excluded |
@@ -207,12 +207,22 @@ Selected source-level advisories include these additional boundaries:
 | `SP699` | Rust unchecked NonZero construction receives zero | Qualified native constructor and literal zero; custom/imported module identities remain unresolved |
 | `SP700` | Node timer delay exceeds its supported range | Imported callback/promise API and bounded decimal value/product; no global timer inference |
 | `SP701` | SQLAlchemy QueuePool capacity explicitly unlimited | Explicit zero size or unlimited overflow on an import-bound QueuePool; engine defaults are not inferred |
+| `SP702` | React effect setup is an async function | Imported effect and inline async setup; inner async work in synchronous setup stays silent |
+| `SP703` | Await uses the callback Node stream pipeline | Direct await of the callback API; promises imports and explicit callback ownership stay silent |
+| `SP704` | PostgreSQL URL overrides an explicit custom-CA TLS object | Imported pg constructor with literal URL SSL parameters and a separate CA object; no connection is made |
+| `SP705` | PostgreSQL concurrent index creation is inside a transaction | Explicit transaction in one SQL file; runner-managed transactions remain unknown |
+| `SP706` | PostgreSQL definer SELECT searches temporary relations first | SQL definer function, temp-first explicit path and unqualified relation; deployed privileges remain unknown |
 
 These findings are advisory evidence about local source, not proof of deployed exposure or exploitability. See the [Luau/TypeScript cohort](research/luau-typescript-cohort-2026-10.md) and the [broad-quality cohort](research/broad-quality-cohort-2026-10.md).
 
 The [value/default/trust cohort](research/value-cohort-2026-10.md) adds SP699–SP701,
 extends SP673/SP104 and retires SP347/SP350. Default gather exception propagation
 and omitted engine pool settings are not, by themselves, defects.
+
+The [Node/React/Luau/PostgreSQL cohort](research/web-database-cohort-2026-10.md)
+adds SP702–SP706 and extends SP691. SP325/SP334/SP359/SP363/SP423 are retired:
+missing local settings do not establish a defect, and Express 5 forwards rejected
+handler promises. Retired IDs remain reserved; thresholds are unchanged.
 
 The [complete source catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-catalog.md) lists every rule's severity, category and detection method. The shipped [rule guide](docs/rules.md) explains boundaries and ecosystem mapping; `shipproof explain SPxxx` provides individual rule details offline.
 

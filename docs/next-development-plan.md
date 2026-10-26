@@ -1,6 +1,6 @@
 # ShipProof next development plan
 
-Last reviewed: 2026-10-23 (current field-cohort scope added; dated baseline below remains historical).
+Last reviewed: 2026-10-26 (current cohort scope added; dated baselines below remain historical).
 
 สถานะ: แผนหลักสำหรับเปลี่ยน research backlog ให้เป็น production evidence ที่เชื่อถือได้ โดยไม่เปิดกฎจำนวนมากแบบ big-bang และไม่ลดมาตรฐาน false-positive
 
@@ -45,14 +45,24 @@ precision claim. See the [cohort evidence and limits](../research/field-cohort-t
 The failure catalog is maintainer-source-only and excluded from npm to preserve
 package ceilings; see the [catalog](knowledge/failure-catalog.md).
 
-## Current value/default/trust cohort
+## Previous value/default/trust cohort — historical
 
-- executable scanner rules: 667
+- previous historical executable scanner rules: 667 through SP701
 
 SP699–SP701 add bounded Rust validity, Node timer-range and explicit QueuePool
 capacity checks. SP673/SP104 gain scoped variants; SP347/SP350 are retired because
 their default assumptions do not establish a defect. See the
 [cohort record](../research/value-cohort-2026-10.md) for evidence and limitations.
+
+## Current Node/React/Luau/PostgreSQL cohort — 2026-10-26
+
+- executable scanner rules: 667 through SP706, with deliberate ID gaps
+- adds SP702–SP706, expands SP691, and retires SP325/SP334/SP359/SP363/SP423
+
+Earlier Luau/TypeScript, broad-quality, and value/default/trust cohort selections
+are already reflected in this current registry. See the
+[cohort record](../research/web-database-cohort-2026-10.md) for scope and evidence;
+do not treat this summary as a CI, performance, or precision result.
 
 ## Previous broad-quality cohort status — 2026-10-23
 

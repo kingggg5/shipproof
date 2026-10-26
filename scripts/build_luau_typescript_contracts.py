@@ -49,6 +49,11 @@ def records() -> list[dict]:
                 'remote.Name = "Actions"\nremote.Parent = game.ReplicatedStorage\nremote.OnServer',
             ),
         ]
+        if rule_id == "SP691":
+            kick = "data:Kick()"
+            positives.extend(
+                [remote(kick), remote(kick, typed=True), remote("return " + kick, invoke=True)]
+            )
         negatives = [
             remote("return " + sink, invoke=True).rstrip() + " and safeHandler\n",
             direct.replace('Instance.new("RemoteEvent")', 'Instance.new("RemoteEvent") == other'),
@@ -95,6 +100,28 @@ def records() -> list[dict]:
                 "A modified global environment leaves builtin identity unresolved.",
             ),
         ]
+        if rule_id == "SP691":
+            negatives.extend(
+                [
+                    remote("player:Kick()"),
+                    remote("if authorized(player, data) then data:Kick() end"),
+                    remote("local data = serverSelectedPlayer\ndata:Kick()"),
+                    remote("data:Kick()\nauditAction()"),
+                    remote("data:Kick()").replace('Instance.new("RemoteEvent")', "customRemote"),
+                ]
+            )
+            adversarial.extend(
+                [
+                    (
+                        "--[=[" + remote("data:Kick()") + "]=]",
+                        "A commented Kick cannot remove a Player.",
+                    ),
+                    (
+                        "local Instance = customFactory\n" + remote("data:Kick()"),
+                        "A custom factory does not establish a native remote.",
+                    ),
+                ]
+            )
         if rule_id == "SP690":
             adversarial.extend(
                 [
@@ -114,7 +141,7 @@ def records() -> list[dict]:
                 "sources": [
                     {
                         "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
-                        "claim": "Roblox warns against client-selected module execution and arbitrary instance deletion through remotes; server validation is required.",
+                        "claim": "Roblox requires server validation of remote input before privileged actions such as loading modules or removing selected instances/Players. Player.Kick disconnects the selected Player, but source matching does not establish its runtime type.",
                     },
                     {
                         "url": f"https://cwe.mitre.org/data/definitions/{cwe}.html",

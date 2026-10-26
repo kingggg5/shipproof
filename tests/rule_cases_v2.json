@@ -3523,7 +3523,7 @@
       "sources": [
         {
           "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
-          "claim": "Roblox warns against client-selected module execution and arbitrary instance deletion through remotes; server validation is required."
+          "claim": "Roblox requires server validation of remote input before privileged actions such as loading modules or removing selected instances/Players. Player.Kick disconnects the selected Player, but source matching does not establish its runtime type."
         },
         {
           "url": "https://cwe.mitre.org/data/definitions/829.html",
@@ -3694,7 +3694,7 @@
       "sources": [
         {
           "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
-          "claim": "Roblox warns against client-selected module execution and arbitrary instance deletion through remotes; server validation is required."
+          "claim": "Roblox requires server validation of remote input before privileged actions such as loading modules or removing selected instances/Players. Player.Kick disconnects the selected Player, but source matching does not establish its runtime type."
         },
         {
           "url": "https://cwe.mitre.org/data/definitions/862.html",
@@ -3725,6 +3725,18 @@
         {
           "path": "Server.server.luau",
           "source": "local remote: RemoteEvent = Instance.new(\"RemoteEvent\")\nremote.Name = \"Actions\"\nremote.Parent = game.ReplicatedStorage\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: any)\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player, data)\nreturn data:Kick()\nend\n"
         }
       ],
       "negative": [
@@ -3803,6 +3815,26 @@
         {
           "path": "Server.server.luau",
           "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\nremote.OnServerEvent:Connect(function(player, data) print(data) end)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nplayer:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nif authorized(player, data) then data:Kick() end\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nlocal data = serverSelectedPlayer\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nauditAction()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n"
         }
       ],
       "adversarial": [
@@ -3841,6 +3873,18 @@
           "source": "setfenv(1, customEnvironment)\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n",
           "expected": false,
           "rationale": "A modified global environment leaves builtin identity unresolved."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "--[=[local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n]=]",
+          "expected": false,
+          "rationale": "A commented Kick cannot remove a Player."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local Instance = customFactory\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n",
+          "expected": false,
+          "rationale": "A custom factory does not establish a native remote."
         }
       ],
       "expected_severity": "medium",
@@ -4859,6 +4903,577 @@
           "source": "from sqlalchemy.pool import QueuePool\ndef build(QueuePool):\n    return QueuePool(connect, pool_size=0)\n",
           "expected": false,
           "rationale": "A function parameter masks the imported class; its settings need separate review."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP702",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct runtime React import and inline async function only. Inner async work, synchronous setup, custom hooks, type-only imports, binding escapes and shadows stay silent. TypeScript or lint may already reject this code.",
+      "sources": [
+        {
+          "url": "https://react.dev/reference/react/useEffect",
+          "claim": "Effect setup may return cleanup or nothing; an async function returns a Promise. Missing dependencies alone do not establish an infinite loop."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        }
+      ],
+      "positive": [
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useLayoutEffect} from 'react';\nexport function useRefresh() { useLayoutEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useInsertionEffect} from 'react';\nexport function useRefresh() { useInsertionEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect as setup} from 'react';\nexport function useRefresh() { setup(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async function setup() { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import * as React from 'react';\nexport function useRefresh() { React.useEffect(async () => { await refresh(); }, []); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { void refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { async function run() { await refresh(); } void run(); return cancel; }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { auditCommit(); } ); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from './custom-hooks';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import type {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {type useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(synchronousSetup, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async function* setup() { yield 1; }, []); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "effect.tsx",
+          "source": "/* import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n */",
+          "expected": false,
+          "rationale": "A comment cannot invoke React or register asynchronous effect setup."
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh(useEffect: any) { useEffect(async () => { await refresh(); }, []); }\n",
+          "expected": false,
+          "rationale": "A typed parameter shadows the imported hook."
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\nuseEffect = customHook;",
+          "expected": false,
+          "rationale": "A changed hook binding does not establish React identity."
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { /* returning cleanup asynchronously is still wrong */ return cancel; }, []); }\n",
+          "expected": true,
+          "rationale": "Returning cleanup through a Promise is still not synchronous effect cleanup."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP703",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct await of an imported callback pipeline with an inline function callback. Promises imports, callback-only calls, wrappers, type imports, shadows, spread arguments and chained results stay unresolved or silent.",
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/stream.html#streampipelinesource-transforms-destination-callback",
+          "claim": "Callback pipeline returns the destination; the stream/promises API supplies completion promises."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        }
+      ],
+      "positive": [
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline as pipe} from 'node:stream';\nasync function transfer(source, destination) { await pipe(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, function done(error) { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "const streams = require('node:stream');\nasync function transfer(source, destination) { await streams.pipeline(source, destination, (error) => { report(error); }); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream/promises';\nasync function transfer(source, destination) { await pipeline(source, destination); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from './custom-stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import type {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await new Promise((resolve, reject) => pipeline(source, destination, (error) => error ? reject(error) : resolve())); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(...streams, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, completionHandler); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await wrappedPipeline(source, destination); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "pipeline.ts",
+          "source": "/* import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n */",
+          "expected": false,
+          "rationale": "A commented pipeline example cannot register streams or a completion callback."
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination, pipeline) { await pipeline(source, destination, (error) => { report(error); }); }\n",
+          "expected": false,
+          "rationale": "An argument shadows the pipeline import."
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await object.pipeline(source, destination, (error) => { report(error); }); }\n",
+          "expected": false,
+          "rationale": "A property spelling does not establish native pipeline identity."
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await /* completion? */ pipeline(source, destination, (error) => { report(error); }); }\n",
+          "expected": true,
+          "rationale": "Comments do not change the awaited callback overload."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP704",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: imported pg Client/Pool, direct new, flat literal options, literal PostgreSQL URL with a recognized SSL override and a separate SSL object containing ca. Dynamic URLs, duplicate URL keys, custom Client/connection/stream options, spreads and unresolved bindings stay silent. Intentional precedence may be acceptable.",
+      "sources": [
+        {
+          "url": "https://node-postgres.com/features/ssl",
+          "claim": "SSL parameters in a connectionString replace the separately supplied SSL object and its extra options."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/436.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        }
+      ],
+      "positive": [
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Pool} from 'pg';\nconst db = new Pool({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client as Database} from 'pg';\nconst db = new Database({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "const pg = require('pg');\nconst db = new pg.Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslrootcert=%2Fetc%2Ftrusted-ca.pem', ssl:{ca: trustedCA}});\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:true});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{cert:clientCertificate}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from './database';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import type {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:environmentUrl, ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=unknown', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?application_name=sslmode-require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require&sslmode=disable', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{...tlsDefaults, ca:trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}, stream:customStream});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Pool} from 'pg';\nconst db = new Pool({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}, Client:CustomClient});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}, connection:customConnection});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'https://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "database.ts",
+          "source": "/* import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n */",
+          "expected": false,
+          "rationale": "A literal example cannot configure a pool."
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst Client = CustomClient;\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n",
+          "expected": false,
+          "rationale": "A local constructor invalidates import provenance."
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({...base, connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n",
+          "expected": false,
+          "rationale": "A spread leaves effective options unresolved."
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?%73slmode=require', ssl:{ca: trustedCA}});\n",
+          "expected": true,
+          "rationale": "Standard URL parameter decoding preserves the SSL override."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP705",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: one SQL file with supported explicit BEGIN or START TRANSACTION and concurrent index creation before completion. Comments, strings, dollar bodies, committed transactions and non-concurrent indexes stay silent. Procedural unquoted bodies and psql metacommands need a grammar-aware route.",
+      "sources": [
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-createindex.html",
+          "claim": "PostgreSQL CREATE INDEX CONCURRENTLY cannot run inside a transaction block."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        }
+      ],
+      "positive": [
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "START TRANSACTION;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN WORK;\nCREATE UNIQUE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nCREATE INDEX CONCURRENTLY IF NOT EXISTS account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; COMMIT AND CHAIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; SAVEPOINT migration; ROLLBACK TO SAVEPOINT migration;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "migration.sql",
+          "source": "\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nCREATE INDEX account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; COMMIT;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; ROLLBACK;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; END;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; COMMIT AND NO CHAIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nSELECT 'CREATE INDEX CONCURRENTLY account_lookup ON accounts(id)';\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "DO $body$ BEGIN CREATE INDEX account_lookup ON accounts(id); END; $body$;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts(id);"
+        },
+        {
+          "path": "migration.sql",
+          "source": "CREATE FUNCTION sample() RETURNS void LANGUAGE SQL BEGIN ATOMIC SELECT 1; END;\nBEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "migration.sql",
+          "source": "-- BEGIN;\n-- CREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\n-- COMMIT;\n-- ",
+          "expected": false,
+          "rationale": "Commented transaction text has no DDL effect."
+        },
+        {
+          "path": "migration.sql",
+          "source": "SELECT $note$BEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n$note$;",
+          "expected": false,
+          "rationale": "A dollar-quoted body does not begin a top-level transaction."
+        },
+        {
+          "path": "migration.sql",
+          "source": "/* outer /* nested BEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n */ end */",
+          "expected": false,
+          "rationale": "Nested PostgreSQL comments keep transaction-looking text outside executable SQL."
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nCREATE /* gap */ INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n",
+          "expected": true,
+          "rationale": "Whitespace and comments preserve concurrent DDL."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP706",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: single SQL-language SELECT body, explicit pg_temp-first path and bare FROM relation only. Invoker functions, qualified relations, temp-last or empty paths, procedural bodies, CTEs, dynamic settings, escaped bodies and multiple statements stay unresolved or silent. Files with ALTER/DROP FUNCTION need lifecycle analysis and stay silent for this rule. Deliberately reading temporary relations may be intended.",
+      "sources": [
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-createfunction.html#SQL-CREATEFUNCTION-SECURITY",
+          "claim": "SECURITY DEFINER functions need safe name resolution: pg_temp should follow trusted schemas, and protected relations should be qualified."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/426.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        }
+      ],
+      "positive": [
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE OR REPLACE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = 'pg_temp, private' AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path TO pg_temp, private AS $body$ SELECT value FROM settings $body$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = \"pg_temp\", \"private\" AS $$ SELECT value FROM settings $$;\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY INVOKER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = private, pg_temp AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = '' AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM private.settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM ONLY private.settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM LATERAL private.get_settings() $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT EXTRACT(YEAR FROM current_date) $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings() $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT 'FROM settings' $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ WITH settings AS (SELECT 'fixed' AS value) SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path FROM CURRENT AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SET search_path = private; SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = \"PG_TEMP\", private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM (SELECT 'fixed' AS value) AS settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SECURITY INVOKER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\nALTER FUNCTION lookup_setting() SET search_path = private, pg_temp;"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\nDROP FUNCTION lookup_setting();"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "definer.sql",
+          "source": "/* CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n */",
+          "expected": false,
+          "rationale": "Commented function definitions do not create privileged functions."
+        },
+        {
+          "path": "definer.sql",
+          "source": "SELECT $example$CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n$example$;",
+          "expected": false,
+          "rationale": "A nested dollar-quoted example is data and cannot create a privileged SQL function."
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, get_schema() AS $$ SELECT value FROM settings $$;\n",
+          "expected": false,
+          "rationale": "Computed or malformed path settings are unresolved."
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM /* relation */ settings $$;\n",
+          "expected": true,
+          "rationale": "A comment does not qualify the relation."
         }
       ]
     }

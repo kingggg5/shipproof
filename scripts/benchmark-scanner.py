@@ -106,6 +106,19 @@ def fixture_source(index: int, profile: str, bytes_per_file: int) -> str:
             "end)\n"
         )
         padding = "-- bounded benchmark padding\n"
+    elif profile == "web-database":
+        sources = (
+            "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { void refresh(); return cancel; }, []); }\n",
+            "import {pipeline} from 'node:stream/promises';\nexport async function transfer(source, destination) { await pipeline(source, destination); }\n",
+            "import {Client} from 'pg';\nexport const database = new Client({connectionString:'postgresql://db.example/app',ssl:{ca: trustedCA}});\n",
+            "CREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\n",
+            "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = private, pg_temp AS $$ SELECT value FROM settings $$;\n",
+            'local remote = Instance.new("RemoteEvent")\nremote.OnServerEvent:Connect(function(player, target)\nif not authorized(player, target) then return end\ntarget:Kick()\nend)\n',
+        )
+        prefix = sources[index % len(sources)]
+        padding = (
+            "-- bounded benchmark padding\n" if index % 6 >= 3 else "// bounded benchmark padding\n"
+        )
     elif profile == "typescript-config":
         sources = (
             "import {verify} from 'jsonwebtoken';\nexport function authenticate(token: string, key: string) { return verify(token, key, {ignoreExpiration: false, ignoreNotBefore: false, algorithms: ['RS256']}); }\n",
@@ -141,7 +154,9 @@ def write_fixture(
         bucket = root / f"module-{index // 250:04d}"
         bucket.mkdir(exist_ok=True)
         suffix = (
-            (".ts", ".rs", ".py")[index % 3]
+            (".tsx", ".ts", ".ts", ".sql", ".sql", ".luau")[index % 6]
+            if profile == "web-database"
+            else (".ts", ".rs", ".py")[index % 3]
             if profile == "value-config"
             else ".luau"
             if profile == "luau-remotes"
@@ -177,7 +192,14 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--samples", type=int, default=3, help="Measured scan samples")
     parser.add_argument(
         "--profile",
-        choices=("clean", "adversarial-regex", "typescript-config", "luau-remotes", "value-config"),
+        choices=(
+            "clean",
+            "adversarial-regex",
+            "typescript-config",
+            "luau-remotes",
+            "value-config",
+            "web-database",
+        ),
         default="clean",
         help="Generated finding-free workload shape",
     )

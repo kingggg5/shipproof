@@ -6,7 +6,7 @@
       "sources": [
         {
           "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
-          "claim": "Roblox warns against client-selected module execution and arbitrary instance deletion through remotes; server validation is required."
+          "claim": "Roblox requires server validation of remote input before privileged actions such as loading modules or removing selected instances/Players. Player.Kick disconnects the selected Player, but source matching does not establish its runtime type."
         },
         {
           "url": "https://cwe.mitre.org/data/definitions/829.html",
@@ -177,7 +177,7 @@
       "sources": [
         {
           "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
-          "claim": "Roblox warns against client-selected module execution and arbitrary instance deletion through remotes; server validation is required."
+          "claim": "Roblox requires server validation of remote input before privileged actions such as loading modules or removing selected instances/Players. Player.Kick disconnects the selected Player, but source matching does not establish its runtime type."
         },
         {
           "url": "https://cwe.mitre.org/data/definitions/862.html",
@@ -208,6 +208,18 @@
         {
           "path": "Server.server.luau",
           "source": "local remote: RemoteEvent = Instance.new(\"RemoteEvent\")\nremote.Name = \"Actions\"\nremote.Parent = game.ReplicatedStorage\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: any)\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player, data)\nreturn data:Kick()\nend\n"
         }
       ],
       "negative": [
@@ -286,6 +298,26 @@
         {
           "path": "Server.server.luau",
           "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\nremote.OnServerEvent:Connect(function(player, data) print(data) end)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nplayer:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nif authorized(player, data) then data:Kick() end\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nlocal data = serverSelectedPlayer\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nauditAction()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n"
         }
       ],
       "adversarial": [
@@ -324,6 +356,18 @@
           "source": "setfenv(1, customEnvironment)\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n",
           "expected": false,
           "rationale": "A modified global environment leaves builtin identity unresolved."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "--[=[local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n]=]",
+          "expected": false,
+          "rationale": "A commented Kick cannot remove a Player."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local Instance = customFactory\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n",
+          "expected": false,
+          "rationale": "A custom factory does not establish a native remote."
         }
       ],
       "expected_severity": "medium",

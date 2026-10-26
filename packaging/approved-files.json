@@ -101,6 +101,7 @@
     "skills/audit-production-readiness/scripts/scan_repo.py",
     "skills/audit-production-readiness/scripts/review_packets.py",
     "skills/audit-production-readiness/scripts/snapshot_identity.py",
+    "skills/audit-production-readiness/scripts/sql_checks.py",
     "skills/audit-production-readiness/scripts/worktree_manager.py",
     "skills/engineer-production-systems/SKILL.md",
     "skills/engineer-production-systems/agents/openai.yaml",

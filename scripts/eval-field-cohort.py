@@ -66,6 +66,7 @@ def verify_projection(root: Path, spec: dict) -> frozenset[str]:
         ".lua",
         ".luau",
         ".py",
+        ".sql",
     }:
         raise ValueError("unsupported language projection")
     if (

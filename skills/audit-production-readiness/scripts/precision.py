@@ -63,6 +63,11 @@ ADVISORY_RULE_IDS = frozenset(
         "SP699",  # Literal validity violation; execution/reachability unknown.
         "SP700",  # Delay coercion, not proof of a deployed timer storm.
         "SP701",  # Local pool capacity, not measured database exhaustion.
+        "SP702",  # Async setup return contract; mounting and effects unknown.
+        "SP703",  # Await does not own callback completion; caller intent unknown.
+        "SP704",  # TLS object replacement, not a negotiated database connection.
+        "SP705",  # Explicit transaction boundary, not runner execution evidence.
+        "SP706",  # Local name resolution; role privileges/exploitability unknown.
     }
 )
 

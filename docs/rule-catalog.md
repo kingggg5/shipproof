@@ -310,7 +310,6 @@ This is the canonical source catalog of executable rule rows.
 | **`SP322`** | MEDIUM | Scale | SQL query with leading wildcard | Regex |
 | **`SP323`** | MEDIUM | Scale | SQL query with random sorting | Regex |
 | **`SP324`** | MEDIUM | Correctness | SQL NOT IN subquery on nullable column | Regex |
-| **`SP325`** | HIGH | Scale | Database transaction without statement timeout | Regex |
 | **`SP326`** | MEDIUM | Scale | Transaction committed per row in bulk loop | Regex |
 | **`SP327`** | HIGH | Scale | Monolithic single transaction on large table | Regex |
 | **`SP328`** | HIGH | Scale | Missing connection pool max limit or acquire timeout | Regex |
@@ -319,7 +318,6 @@ This is the canonical source catalog of executable rule rows.
 | **`SP331`** | MEDIUM | Reliability | Go HTTP client missing idle connection limits | Regex |
 | **`SP332`** | HIGH | Reliability | Go unbuffered channel send without consumer | Regex |
 | **`SP333`** | HIGH | Reliability | Go sync.WaitGroup counter incremented in goroutine | Regex |
-| **`SP334`** | HIGH | Reliability | Node process missing unhandledRejection listener | Regex |
 | **`SP335`** | HIGH | Reliability | Python asyncio task created without reference | Regex |
 | **`SP336`** | HIGH | Reliability | Node.js stream piped without error handler | Regex |
 | **`SP337`** | HIGH | Scale | In-memory session store in web cluster | Regex |
@@ -341,11 +339,9 @@ This is the canonical source catalog of executable rule rows.
 | **`SP356`** | MEDIUM | Scale | Python Pydantic model string field without max_length constraint | Regex |
 | **`SP357`** | MEDIUM | Correctness | Python naive datetime comparison with datetime.now without timezone | Regex |
 | **`SP358`** | MEDIUM | Correctness | Python floating point direct equality comparison | Regex |
-| **`SP359`** | HIGH | Reliability | Node.js Express unhandled Promise rejection in async route | Regex |
 | **`SP360`** | HIGH | Reliability | Node.js EventEmitter listener added inside request handler without removal | Regex |
 | **`SP361`** | HIGH | Scale | Node.js synchronous file read inside route handler blocking event loop | Regex |
 | **`SP362`** | HIGH | Scale | Node.js synchronous crypto PBKDF2 inside route handler | Regex |
-| **`SP363`** | HIGH | Scale | Node.js PostgreSQL or MySQL pool instantiated without max connections cap | Regex |
 | **`SP364`** | HIGH | Reliability | Node.js Axios or Got HTTP client request without timeout | Regex |
 | **`SP365`** | HIGH | Correctness | Node.js Prisma database query inside Array.forEach | Regex |
 | **`SP366`** | MEDIUM | Scale | Node.js Mongoose read-only query missing lean optimization | Regex |
@@ -405,7 +401,6 @@ This is the canonical source catalog of executable rule rows.
 | **`SP420`** | HIGH | Security | Next.js Server Action without authorization | Regex |
 | **`SP421`** | HIGH | Security | Next.js Server Action missing authorization check | Regex |
 | **`SP422`** | MEDIUM | Scale | Next.js generateStaticParams fetching unbounded external API without limit | Regex |
-| **`SP423`** | HIGH | Reliability | React useEffect missing dependency array causing infinite render loop | Regex |
 | **`SP424`** | HIGH | Correctness | React state mutated directly bypassing setState | Regex |
 | **`SP425`** | HIGH | Security | Vue v-html directive rendering untrusted content | Regex |
 | **`SP426`** | HIGH | Security | Svelte @html tag rendering unescaped content | Regex |
@@ -662,7 +657,7 @@ This is the canonical source catalog of executable rule rows.
 | **`SP688`** | MEDIUM | Security | Next.js SVG image delivery explicitly removes browser safeguards | Structural |
 | **`SP689`** | MEDIUM | Security | Kestrel request-body size limit explicitly disabled | Structural |
 | **`SP690`** | MEDIUM | Security | Roblox remote directly requires a client-selected module | Structural |
-| **`SP691`** | MEDIUM | Security | Roblox remote directly destroys a client-selected instance | Structural |
+| **`SP691`** | MEDIUM | Security | Roblox remote directly removes a client-selected object | Structural |
 | **`SP692`** | MEDIUM | Security | JWT RSA signing key-size safeguard explicitly disabled | Structural |
 | **`SP693`** | MEDIUM | Scale | Node HTTP receive deadlines explicitly disabled | Structural |
 | **`SP694`** | MEDIUM | Correctness | Direct await of an empty asynchronous race | Structural |
@@ -673,3 +668,8 @@ This is the canonical source catalog of executable rule rows.
 | **`SP699`** | MEDIUM | Correctness | Rust unchecked NonZero construction receives zero | Structural |
 | **`SP700`** | MEDIUM | Performance | Node timer delay exceeds its supported range | Structural |
 | **`SP701`** | MEDIUM | Scale | SQLAlchemy QueuePool capacity explicitly unlimited | Structural |
+| **`SP702`** | MEDIUM | Correctness | React effect setup is an async function | Structural |
+| **`SP703`** | MEDIUM | Correctness | Await uses the callback Node stream pipeline | Structural |
+| **`SP704`** | MEDIUM | Correctness | PostgreSQL URL overrides an explicit custom-CA TLS object | Structural |
+| **`SP705`** | MEDIUM | Correctness | PostgreSQL concurrent index creation is inside a transaction | Structural |
+| **`SP706`** | MEDIUM | Security | PostgreSQL definer SELECT searches temporary relations first | Structural |

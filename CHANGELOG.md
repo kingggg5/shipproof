@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Add five advisory checks SP702–SP706 for async React effect setup, awaited
+  callback stream pipelines, pg URL/TLS precedence, transactional concurrent
+  index creation and temp-first SQL definer relation lookup. Extend SP691's
+  client-selected removal boundary to Kick. The default remains offline and
+  dependency-free; no database or scanned application is executed by the scanner.
+- Retire unsupported absence claims SP325/SP334/SP359/SP363/SP423, preserving
+  their IDs. Missing local timeout/listener/pool/dependency settings do not prove
+  failure; Express 5 handles rejected handler promises. Existing gate thresholds
+  and original/remediated corpus labels remain unchanged. See the
+  [cohort evidence and limitations](research/web-database-cohort-2026-10.md).
+
 - Add advisory SP699–SP701 for unchecked Rust NonZero zero construction, Node timer
   delay overflow, and explicitly unlimited SQLAlchemy QueuePool capacity. Extend
   SP673 reference validity and typed .NET SP104 certificate-validation evidence.
