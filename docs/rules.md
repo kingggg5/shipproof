@@ -1,6 +1,6 @@
 # Detection rules reference
 
-ShipProof applies 667 deterministic executable rules (`SP001`-`SP707`, with deliberate reserved gaps). This shipped guide describes boundaries and ecosystem mapping; the complete source catalog is linked below.
+ShipProof applies 673 deterministic executable rules (`SP001`-`SP713`, with deliberate reserved gaps). This shipped guide describes boundaries and ecosystem mapping; the complete source catalog is linked below.
 
 Every finding carries an evidence `proof_level`: `L0` means a pattern match, `L1` means structural evidence (Python AST, whole-file structural analysis, or an inspected artifact such as a SQLite header), and `L2` marks taint-engine flows (the shipped interprocedural engine covers Python and, since 0.8, JavaScript/TypeScript route-to-sink chains via `--cross-file`). ShipProof does not claim runtime exploitability. Only the entries in these tables are executable rules; research catalogs are planning inputs and cannot emit findings.
 
@@ -134,8 +134,7 @@ describes internal entity-expansion limits, not proof of external entity access.
 this does not prove remote code execution. `SP698` requires a directly awaited,
 imported Node synchronous zlib call; input size and actual work remain unknown.
 All six are medium advisory findings and do not establish deployment behavior.
-The cohort evaluation is pending; no test or performance metrics are claimed. See
-the [cohort record](../research/broad-quality-cohort-2026-10.md).
+See the measured results and limits in the [cohort record](../research/broad-quality-cohort-2026-10.md).
 
 ## Node.js version declarations
 
@@ -214,6 +213,15 @@ ShipProof uses file suffixes, manifests, and bounded structural context to selec
 | **Containers, Kubernetes & CI/CD** | `Dockerfile`, Compose, Kubernetes YAML, `.github/workflows` | Root/container privilege (`SP205`, `SP637`–`SP640`), mutable dependencies (`SP202`, `SP203`), workflow trust boundaries (`SP209`, `SP210`, `SP658`–`SP660`), Kubernetes RBAC/admission posture (`SP656`, `SP657`, `SP661`) |
 
 ## Detection Rules Reference
+
+`SP708`–`SP713` are medium L1 Luau advisories: reversed literal integer bounds,
+direct consumption of nil-returning table mutators, top-level writes to a fresh
+frozen literal, known noncallable scheduler results, a direct wait in a native
+UpdateAsync transform, and a timeout argument to a supported native signal Wait.
+Bindings must be locally resolved; dynamic/escaped/shadowed flows stay unknown.
+Nested mutable children and custom signals are distinct. `SP707` also covers
+direct client-selected RemoveAsync/IncrementAsync. No live game is executed.
+See [sources and limits](https://github.com/kingggg5/shipproof/blob/main/research/luau-community-cohort-2026-10.md).
 
 `SP702` checks imported React effects with inline async setup. `SP703` checks directly awaited imported callback fs.readFile/writeFile calls; promises APIs, wrappers and shadows stay silent. `SP704` checks a literal pg URL SSL override that replaces an explicit custom-CA object. Runtime binding is required; ambiguous imports, shadows, overrides and computed values stay unresolved.
 

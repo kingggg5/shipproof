@@ -3996,9 +3996,45 @@ RULE_EXPLANATIONS: dict[str, dict[str, str]] = {
         "test": "Schema-qualify protected relations and put trusted schemas before pg_temp. Verify resolution with harmless authored relations in an isolated single-user database.",
     },
     "SP707": {
-        "why": "A locally constructed native remote directly uses client arguments as both the key and value of a native DataStore write.",
+        "why": "A native remote directly uses client arguments to set, increment or remove a selected DataStore record.",
         "attack": "Without server-selected keys and authorization, a caller may influence persistent records beyond its intended scope. Runtime key/value types, exposure, independent controls and successful writes are unknown.",
-        "false_positive": "Advisory: flat direct native game:GetService/DataStoreService:GetDataStore/SetAsync chain, short fixed store name and three distinct simple callback parameters only. Guards, server-selected keys, aliases, wrappers, modified globals, complex types and other writes stay unresolved or silent. Intentionally shared writable stores need policy review; no corruption is proven.",
+        "false_positive": "Advisory: flat native DataStore chain, short fixed name and distinct simple client parameters. Set/increment use key and value; removal uses the key. Guards, aliases and wrappers remain unresolved. Shared writable stores may be intentional; exposure and successful writes are unknown.",
         "test": "Derive authorized keys on the server and validate value types, size and request rate. Test only authored static fixtures; do not invoke a live game or DataStore.",
+    },
+    "SP708": {
+        "why": "The literal minimum exceeds the maximum in native Luau math.clamp/random.",
+        "attack": "Reaching the call violates its bounds contract; reachability is not established.",
+        "false_positive": "Advisory: visible unshadowed globals and decimal signed-32-bit integer limits only. Equal/ordered limits, computed values, floats, aliases and changed environments stay silent. Not a general numeric analyzer.",
+        "test": "Order and validate bounds; retain equal-bound and negative-range regression cases.",
+    },
+    "SP709": {
+        "why": "In-place table sort/insert/clear return no table; direct consumption receives nil.",
+        "attack": "Direct indexing, length or iteration can fail rather than use the mutated table.",
+        "false_positive": "Advisory: native globals and direct table-result consumption only. Ordinary mutation, clone/freeze results, custom iterators, shadows and aliases stay unresolved or silent. It does not infer assignment intent.",
+        "test": "Mutate first, then index/iterate the original table; test valid returned-table APIs.",
+    },
+    "SP710": {
+        "why": "Freezing makes top-level writes invalid; the literal is not copied or thawed.",
+        "attack": "The directly resolved field assignment can fail when executed.",
+        "false_positive": "Advisory: direct freeze of a table literal or a unique same-region local binding, then top-level assignment. Nested mutable children, clones, escapes, reassignments and ambiguous scopes stay unresolved. No deep-freeze claim.",
+        "test": "Finish writes before freeze, or clone into a mutable copy; keep nested-child negatives.",
+    },
+    "SP711": {
+        "why": "The scheduler needs a function/thread; print/warn results or elapsed time are not callable.",
+        "attack": "Work can run immediately and leave an invalid scheduler callback instead.",
+        "false_positive": "Advisory: native task spawn/defer/delay and a direct known noncallable call result only. Function values, closures, coroutine values, unknown factory results, shadows and modified environments stay silent.",
+        "test": "Pass a function/thread or wrap work in a closure; do not guess unknown return types.",
+    },
+    "SP712": {
+        "why": "Native UpdateAsync transforms must not yield; a direct wait violates that contract.",
+        "attack": "The transform can fail instead of committing its intended update.",
+        "false_positive": "Advisory: direct/native uniquely bound DataStore and a flat inline transform beginning with task.wait/wait. Nested tasks, wrappers, custom stores, aliases and ambiguous scopes stay unresolved; catching errors does not make yielding valid.",
+        "test": "Perform yielding work before the transform; never probe a live DataStore for this rule.",
+    },
+    "SP713": {
+        "why": "Native RBXScriptSignal.Wait has no timeout parameter.",
+        "attack": "The supplied duration does not establish a deadline; actual delay or leakage is unknown.",
+        "false_positive": "Advisory: supported native service/Instance signal, positive literal integer argument and unique local bindings only. Custom signals with real timeout support, argument-free waits, aliases and computed durations stay unresolved or silent.",
+        "test": "Use explicit deadline/cancellation logic; retain custom-signal timeout negatives.",
     },
 }

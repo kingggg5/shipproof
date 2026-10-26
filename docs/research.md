@@ -12,7 +12,7 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 667 | Current executable registry through SP707 |
+| Executable scanner rules | 673 | Current executable registry through SP713 |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
@@ -48,10 +48,13 @@ The [2026-10 Node/React/Luau/PostgreSQL cohort](../research/web-database-cohort-
 records the previous 667-rule registry through SP706, SP691 scope expansion, and its
 legacy-rule retirements.
 
-The current [I/O ownership cohort](../research/io-ownership-cohort-2026-10.md) records
-SP336 repair, SP367 retirement, SP703/SP705 extensions, and SP707. The related
-[SP423 review inventory](../research/io-ownership-review-2026-10.json) preserves
-per-site review records without claiming whole-component safety.
+The previous [I/O ownership cohort](../research/io-ownership-cohort-2026-10.md) records
+SP336 repair, SP367 retirement, SP703/SP705 extensions, and SP707 at the historical
+667-rule registry.
+
+The current [Luau community cohort](../research/luau-community-cohort-2026-10.md)
+records SP708–SP713 and the SP707 boundary extension. Its pinned source inventory
+is [benchmarks/luau-community-cohort-repositories.json](../benchmarks/luau-community-cohort-repositories.json). Community sources guide question discovery; owning docs anchor semantics.
 
 ## Reading protocol
 

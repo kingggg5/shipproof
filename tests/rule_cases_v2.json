@@ -5658,7 +5658,7 @@
       "expected_severity": "medium",
       "expected_confidence": "high",
       "blocking_eligible": false,
-      "false_positive_analysis": "Advisory: flat direct native game:GetService/DataStoreService:GetDataStore/SetAsync chain, short fixed store name and three distinct simple callback parameters only. Guards, server-selected keys, aliases, wrappers, modified globals, complex types and other writes stay unresolved or silent. Intentionally shared writable stores need policy review; no corruption is proven.",
+      "false_positive_analysis": "Advisory: flat native DataStore chain, short fixed name and distinct simple client parameters. Set/increment use key and value; removal uses the key. Guards, aliases and wrappers remain unresolved. Shared writable stores may be intentional; exposure and successful writes are unknown.",
       "sources": [
         {
           "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
@@ -5671,6 +5671,10 @@
         {
           "url": "https://cwe.mitre.org/data/definitions/862.html",
           "claim": "Taxonomy for the local ownership/authorization boundary, not proof of deployment or successful exploitation."
+        },
+        {
+          "url": "https://create.roblox.com/docs/reference/engine/classes/GlobalDataStore",
+          "claim": "Remove and increment mutate the record selected by a key; source matching does not prove authorization or a successful write."
         }
       ],
       "positive": [
@@ -5697,6 +5701,30 @@
         {
           "path": "store.server.luau",
           "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\n-- direct write\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value);\nend)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(actor: Player, key: string) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount: number) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player,key) game:GetService(\"DataStoreService\"):GetDataStore(\"Profiles\"):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService(\"DataStoreService\"):GetDataStore(\"Profiles\"):IncrementAsync(key,amount) end)"
         }
       ],
       "negative": [
@@ -5759,6 +5787,30 @@
         {
           "path": "store.server.luau",
           "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)\nremote.OnServerEvent:Connect(function(player,key,value) audit(value) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(tostring(player.UserId)) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(tostring(player.UserId),amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) if not authorized(player,key) then return end game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,serverAmount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=customRemote\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnClientEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
         }
       ],
       "adversarial": [
@@ -5797,6 +5849,710 @@
           "source": "local remote=Instance.new('RemoteEvent')\nremote=customRemote\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
           "expected": false,
           "rationale": "Reassignment invalidates the locally constructed remote receiver."
+        },
+        {
+          "path": "module.luau",
+          "source": "--[=[local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)]=]",
+          "expected": false,
+          "rationale": "A long comment cannot register a destructive persistent-record operation."
+        },
+        {
+          "path": "module.luau",
+          "source": "local game=customGame\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)",
+          "expected": false,
+          "rationale": "A game-like custom object does not establish native persistent-data semantics."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP708",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: visible unshadowed globals and decimal signed-32-bit integer limits only. Equal/ordered limits, computed values, floats, aliases and changed environments stay silent. Not a general numeric analyzer.",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/luau-lang/luau/master/VM/src/lmathlib.cpp",
+          "claim": "The native math implementations require ordered limits; equality is valid and reversed random limits produce an empty interval."
+        },
+        {
+          "url": "https://www.reddit.com/r/robloxgamedev/comments/zc7up9/",
+          "claim": "2022 discovery lead: reversed negative random limits cause an interval error. Owning source, not comments, establishes the rule."
+        },
+        {
+          "url": "https://devforum.roblox.com/t/playermodulecameramoduletransparencycontroller-invalid-argument-3-to-clamp/1131588",
+          "claim": "2021 discovery lead: reversed clamp limits break a camera path; runtime source confirms the API boundary."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/682.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,10,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(10,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(-3,-8)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.clamp(value,-1,-8)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.clamp(0,5,4)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(2,1)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,2,10)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,2,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(1,1)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(-8,-3)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,low,high)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,10.5,2.5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=custom.clamp(input,10,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local math=customMath\nlocal value=math.clamp(input,10,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(9007199254740991,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local random=math.random\nreturn random(10,2)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "-- local value=math.clamp(input,10,2)",
+          "expected": false,
+          "rationale": "A commented invalid-range example cannot invoke a native numeric API."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=[=[local value=math.clamp(input,10,2)]=]",
+          "expected": false,
+          "rationale": "A long literal is data and cannot establish an invalid numeric invocation."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function f(math) local value=math.clamp(input,10,2) end",
+          "expected": false,
+          "rationale": "A function parameter shadows the native math table and invalidates API identity."
+        },
+        {
+          "path": "module.luau",
+          "source": "math.clamp=customClamp\nlocal value=math.clamp(input,10,2)",
+          "expected": false,
+          "rationale": "A changed library member must not be presumed to use the native bounds contract."
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,10,-- bound\n2)",
+          "expected": true,
+          "rationale": "An intervening comment does not change the order of literal integer bounds."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP709",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: native globals and direct table-result consumption only. Ordinary mutation, clone/freeze results, custom iterators, shadows and aliases stay unresolved or silent. It does not infer assignment intent.",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/luau-lang/luau/master/VM/src/ltablib.cpp",
+          "claim": "Native sort, insert and clear mutate in place and return no table; clone/freeze return table values."
+        },
+        {
+          "url": "https://stackoverflow.com/questions/57064238/calling-table-sort-returns-nil",
+          "claim": "Historical discovery lead about in-place sorting. Current Luau implementation confirms which return values are supported."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "for _,value in ipairs(table.sort(items)) do consume(value) end"
+        },
+        {
+          "path": "module.luau",
+          "source": "return pairs(table.clear(items))"
+        },
+        {
+          "path": "module.luau",
+          "source": "return ipairs(table.insert(items,value))"
+        },
+        {
+          "path": "module.luau",
+          "source": "return table.sort(items)[1]"
+        },
+        {
+          "path": "module.luau",
+          "source": "return #table.clear(items)"
+        },
+        {
+          "path": "module.luau",
+          "source": "for _,value in table.sort(items) do consume(value) end"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "table.sort(items)\nfor _,value in ipairs(items) do consume(value) end"
+        },
+        {
+          "path": "module.luau",
+          "source": "return ipairs(table.clone(items))"
+        },
+        {
+          "path": "module.luau",
+          "source": "return pairs(table.freeze(items))"
+        },
+        {
+          "path": "module.luau",
+          "source": "return table.remove(items)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return table.sort(items)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local table=customTable\nfor _,value in ipairs(table.sort(items)) do consume(value) end"
+        },
+        {
+          "path": "module.luau",
+          "source": "local ipairs=customIterator\nfor _,value in ipairs(table.sort(items)) do consume(value) end"
+        },
+        {
+          "path": "module.luau",
+          "source": "return custom.sort(items)[1]"
+        },
+        {
+          "path": "module.luau",
+          "source": "local sorted=sortCopy(items)\nreturn ipairs(sorted)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "--[=[for _,value in ipairs(table.sort(items)) do consume(value) end]=]",
+          "expected": false,
+          "rationale": "A long comment cannot consume a table-mutator return value at runtime."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=`for _,value in ipairs(table.sort(items)) do consume(value) end`",
+          "expected": false,
+          "rationale": "An interpolated-string literal remains opaque to executable API signatures."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function run(table) for _,value in ipairs(table.sort(items)) do consume(value) end end",
+          "expected": false,
+          "rationale": "A shadowing library parameter does not establish a nil-returning native mutator."
+        },
+        {
+          "path": "module.luau",
+          "source": "setfenv(1,environment)\nfor _,value in ipairs(table.sort(items)) do consume(value) end",
+          "expected": false,
+          "rationale": "A modified environment makes native table and iterator identity unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP710",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct freeze of a table literal or a unique same-region local binding, then top-level assignment. Nested mutable children, clones, escapes, reassignments and ambiguous scopes stay unresolved. No deep-freeze claim.",
+      "sources": [
+        {
+          "url": "https://luau.org/library/#table-library",
+          "claim": "Freezing prevents top-level changes, does not recursively freeze nested children, and cloning returns a mutable shallow copy."
+        },
+        {
+          "url": "https://rfcs.luau.org/function-table-clone.html",
+          "claim": "The clone RFC distinguishes a mutable copy from the original frozen table; shared nested values are not deep copies."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({enabled=true})\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "table.freeze({enabled=true}).enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "table.freeze({})['value']=1"
+        },
+        {
+          "path": "module.luau",
+          "source": "local state=table.freeze({value=1});state['value']=2"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({});config.value=2"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({enabled=true})\nreturn config.enabled"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.clone(table.freeze({enabled=true}))\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({nested={}})\nconfig.nested.value=2"
+        },
+        {
+          "path": "module.luau",
+          "source": "table.freeze({nested={}}).nested.value=2"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config={enabled=true}\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=custom.freeze({enabled=true})\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({enabled=true})\nshare(config)\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({enabled=true})\nconfig=mutable\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({}) and mutable\nconfig.value=1"
+        },
+        {
+          "path": "module.luau",
+          "source": "local function factory() local config=table.freeze({}) end\nconfig.value=1"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "local text=[==[local config=table.freeze({enabled=true})\nconfig.enabled=false]==]",
+          "expected": false,
+          "rationale": "Quoted frozen-table examples cannot freeze or modify an actual local value."
+        },
+        {
+          "path": "module.luau",
+          "source": "local table=customTable\nlocal config=table.freeze({enabled=true})\nconfig.enabled=false",
+          "expected": false,
+          "rationale": "A custom table library need not return an immutable value from its freeze method."
+        },
+        {
+          "path": "module.luau",
+          "source": "do local config=table.freeze({}) end\nconfig.value=2",
+          "expected": false,
+          "rationale": "A closed lexical region cannot establish the later receiver's frozen binding."
+        },
+        {
+          "path": "module.luau",
+          "source": "table.freeze=copyTable\nlocal config=table.freeze({enabled=true})\nconfig.enabled=false",
+          "expected": false,
+          "rationale": "Reassigning the freeze member makes the native immutability contract unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP711",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: native task spawn/defer/delay and a direct known noncallable call result only. Function values, closures, coroutine values, unknown factory results, shadows and modified environments stay silent.",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/reference/engine/libraries/task",
+          "claim": "Spawn/defer/delay take a function or thread; task.wait returns elapsed time rather than a callback."
+        },
+        {
+          "url": "https://luau.org/library/#global-functions",
+          "claim": "The standard print function does not return a callable value to be used as a scheduler callback."
+        },
+        {
+          "url": "https://www.reddit.com/r/robloxgamedev/comments/1vcool6/this_is_probably_really_inefficient_in_some_way/",
+          "claim": "2026 scheduling discussion is a discovery lead; its generic resume-function comment is not adopted as API truth."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/628.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "task.spawn(print('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.defer(warn('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.delay(1,print('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(task.wait(1))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.delay(2,task.wait())"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.defer(print('ready'),argument)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "task.spawn(print)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(function() print('ready') end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.delay(1,function() warn('ready') end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(callback)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(coroutine.create(callback))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(factory())"
+        },
+        {
+          "path": "module.luau",
+          "source": "local task=customScheduler\ntask.spawn(print('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "local print=callableFactory\ntask.spawn(print('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.wait(1)"
+        },
+        {
+          "path": "module.luau",
+          "source": "print('ready')"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "-- task.spawn(print('ready'))",
+          "expected": false,
+          "rationale": "An example in a line comment does not call or schedule any function."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=[=[task.spawn(print('ready'))]=]",
+          "expected": false,
+          "rationale": "A long string literal must not be interpreted as a scheduler invocation."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function f(task) task.spawn(print('ready')) end",
+          "expected": false,
+          "rationale": "A local scheduler parameter may accept values outside the native API contract."
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn=customSpawn\ntask.spawn(print('ready'))",
+          "expected": false,
+          "rationale": "A reassigned scheduler method must not establish native callback requirements."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP712",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct/native uniquely bound DataStore and a flat inline transform beginning with task.wait/wait. Nested tasks, wrappers, custom stores, aliases and ambiguous scopes stay unresolved; catching errors does not make yielding valid.",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/reference/engine/classes/GlobalDataStore.yaml",
+          "claim": "The owning GlobalDataStore reference explicitly forbids yielding in UpdateAsync transforms, including task.wait calls."
+        },
+        {
+          "url": "https://devforum.roblox.com/t/how-to-properly-utilize-updateasync/1133216",
+          "claim": "2021 discussion points to transform-yield failures; owning API documentation confirms the restriction."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/754.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local store=game:GetService('DataStoreService'):GetDataStore('Profiles')\nstore:UpdateAsync(key,function(old) task.wait();return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local service=game:GetService('DataStoreService')\nlocal store=service:GetDataStore('Profiles')\nstore:UpdateAsync(key,function(old) task.wait(1);return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old: any) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1) return old end)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.wait(1);game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.spawn(function() task.wait(1) end); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "customStore:UpdateAsync(key,function(old) task.wait(1);return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local game=customGame\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local task=customTask\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore(storeName):UpdateAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local store=game:GetService('DataStoreService'):GetDataStore('Profiles')\nshare(store)\nstore:UpdateAsync(key,function(old) task.wait(1);return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local function make() local store=game:GetService('DataStoreService'):GetDataStore('Profiles') end\nstore:UpdateAsync(key,function(old) task.wait(1);return old end)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "--[=[game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)]=]",
+          "expected": false,
+          "rationale": "A commented transform cannot invoke UpdateAsync or perform a yielding wait."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=[=[game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)]=]",
+          "expected": false,
+          "rationale": "A transform signature inside a literal is data, not an executable callback."
+        },
+        {
+          "path": "module.luau",
+          "source": "getfenv(0)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)",
+          "expected": false,
+          "rationale": "An environment-dependent script does not establish native wait or store identity."
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) if allowed then task.wait(1) end; return old end)",
+          "expected": false,
+          "rationale": "Conditional or nested callback control flow remains outside the flat direct-yield signature."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP713",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: supported native service/Instance signal, positive literal integer argument and unique local bindings only. Custom signals with real timeout support, argument-free waits, aliases and computed durations stay unresolved or silent.",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/reference/engine/datatypes/RBXScriptSignal",
+          "claim": "The native signal Wait API takes no timeout parameter; custom signal libraries may define a different contract."
+        },
+        {
+          "url": "https://devforum.roblox.com/t/what-is-better-repeat-until-or-eventwait/1990098",
+          "claim": "2022 discussion warns against assuming a timeout on native signal waits; owning reference confirms its signature."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/754.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('RunService').Heartbeat:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "Instance.new('BindableEvent').Event:Wait(3)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local players=game:GetService('Players')\nplayers.PlayerAdded:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local event=Instance.new('RemoteEvent')\nevent.OnServerEvent:Wait(5)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait()"
+        },
+        {
+          "path": "module.luau",
+          "source": "customSignal:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local event=Signal.new();event:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait(timeout)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait(0)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait(5.5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local game=customGame\ngame:GetService('Players').PlayerAdded:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "Instance.new('Folder').CustomSignal:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('BindableEvent').Event:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local players=game:GetService('Players') and proxy\nplayers.PlayerAdded:Wait(5)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "-- game:GetService('Players').PlayerAdded:Wait(5)",
+          "expected": false,
+          "rationale": "A commented wait call cannot create a thread or an unsupported deadline."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=[==[game:GetService('Players').PlayerAdded:Wait(5)]==]",
+          "expected": false,
+          "rationale": "A signal-wait example in a long literal has no native scheduling effect."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function f(Instance) Instance.new('BindableEvent').Event:Wait(5) end",
+          "expected": false,
+          "rationale": "A shadowed Instance factory cannot establish a native RBXScriptSignal receiver."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function make() local players=game:GetService('Players') end\nplayers.PlayerAdded:Wait(5)",
+          "expected": false,
+          "rationale": "A receiver declared in a closed region cannot prove the later signal's native identity."
         }
       ]
     }

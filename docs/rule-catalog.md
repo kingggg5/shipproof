@@ -673,4 +673,10 @@ This is the canonical source catalog of executable rule rows.
 | **`SP704`** | MEDIUM | Correctness | PostgreSQL URL overrides an explicit custom-CA TLS object | Structural |
 | **`SP705`** | MEDIUM | Correctness | PostgreSQL concurrent index operation is inside a transaction | Structural |
 | **`SP706`** | MEDIUM | Security | PostgreSQL definer SELECT searches temporary relations first | Structural |
-| **`SP707`** | MEDIUM | Security | Roblox remote writes client-selected DataStore keys and values | Structural |
+| **`SP707`** | MEDIUM | Security | Roblox remote mutates client-selected DataStore records | Structural |
+| **`SP708`** | MEDIUM | Correctness | Luau numeric range has reversed literal bounds | Structural |
+| **`SP709`** | MEDIUM | Correctness | Luau in-place table result is consumed as a table | Structural |
+| **`SP710`** | MEDIUM | Correctness | Luau writes to a just-frozen table | Structural |
+| **`SP711`** | MEDIUM | Correctness | Luau scheduler receives a noncallable result | Structural |
+| **`SP712`** | MEDIUM | Reliability | Roblox DataStore transform directly yields | Structural |
+| **`SP713`** | MEDIUM | Reliability | Roblox signal wait supplies an unsupported timeout | Structural |

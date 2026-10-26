@@ -65,13 +65,13 @@ Node.js 20+ ทำหน้าที่ CLI ส่วน Python 3.10+ จำเ�
 
 ## ขอบเขตและสถานะโครงการ
 
-ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **667 deterministic rules** (`SP001`–`SP707`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
+ShipProof บังคับ review contract เดียวกันไม่ว่าใครเขียนโค้ด executable scanner ปัจจุบันมี **673 deterministic rules** (`SP001`–`SP713`, มีช่องว่างสงวนไว้ตั้งใจ) สำหรับ security, correctness, scale, performance, configuration และ supply-chain risk ที่สังเกตได้ locally path เริ่มต้นเป็น read-only, offline และไม่มี dependency เกิน Node.js กับ Python standard library
 
 | หัวข้อ | Contract ปัจจุบัน |
 | :--- | :--- |
 | Release ล่าสุด | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ สำหรับคำสั่ง scanner-backed |
-| Executable rules | 667 (`SP001`–`SP707`, มีช่องว่างสงวนไว้ตั้งใจ) |
+| Executable rules | 673 (`SP001`–`SP713`, มีช่องว่างสงวนไว้ตั้งใจ) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates และ reserved promotion slots 1,000 รายการ; ไม่มีอะไรเป็น finding จนกว่าจะ promote |
 | Exit codes | `0` ผ่าน, `1` gate fail, `2` evidence ไม่ถูกต้อง/ไม่พร้อม |
@@ -139,7 +139,7 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 ## กฎการตรวจจับ
 
-**667 deterministic executable rules** (`SP001`–`SP707`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
+**673 deterministic executable rules** (`SP001`–`SP713`, มีช่องสงวนไว้ตั้งใจ) ครอบคลุม security, correctness, scale, performance, configuration และ supply-chain risks ทุก finding มี evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact และ `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains ตั้งแต่ v0.8)
 
 ขอบเขต advisory จาก cohort Roblox/Luau, TypeScript และ broad quality:
 
@@ -163,13 +163,21 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 | `SP704` | PostgreSQL URL overrides an explicit custom-CA TLS object | ตรวจ imported pg constructor ที่ URL มี SSL parameter และมี CA object แยกกัน ไม่เชื่อมต่อฐานข้อมูล |
 | `SP705` | PostgreSQL concurrent index operation is inside a transaction | ตรวจ concurrent CREATE/DROP INDEX หรือ REINDEX INDEX/TABLE ใน transaction ชัดเจนไฟล์เดียว; option อื่นและสถานะ runner ยังไม่ทราบ |
 | `SP706` | PostgreSQL definer SELECT searches temporary relations first | ต้องเป็น SQL definer function ที่กำหนด temp-first path และอ่าน relation ไม่ระบุ schema; ไม่อ้างสิทธิ์ deployment |
-| `SP707` | Roblox remote writes client-selected DataStore keys and values | ต้องเป็น native remote ในขอบเขต local, 3 parameters แบบง่ายที่ต่างกัน และ SetAsync รับ key/value จาก client โดยตรง; guard, alias, intent และ runtime exposure ยังไม่ทราบ |
+| `SP707` | Roblox remote mutates client-selected DataStore records | ตรวจ key จาก client กับ SetAsync, RemoveAsync หรือ IncrementAsync ผ่าน native remote ในขอบเขต local |
+| `SP708` | Luau numeric range has reversed literal bounds | ตรวจ native integer limits ที่เป็น literal และเรียงกลับด้าน; ค่าเท่ากันไม่แจ้ง |
+| `SP709` | Luau in-place table result is consumed as a table | ตรวจการใช้ผล nil ของ table operation แบบตรง |
+| `SP710` | Luau writes to a just-frozen table | ตรวจการเขียน field ตรงหลัง freeze literal |
+| `SP711` | Luau scheduler receives a noncallable result | ตรวจ native task API ที่รับผลเรียกแบบไม่ใช่ function |
+| `SP712` | Roblox DataStore transform directly yields | ตรวจ direct yielding wait ใน native UpdateAsync transform |
+| `SP713` | Roblox signal wait supplies an unsupported timeout | ตรวจ timeout argument ที่ API signal Wait ไม่รองรับ |
 
 Finding เหล่านี้เป็น advisory จาก source ในเครื่อง ไม่ใช่หลักฐานว่า deployment ถูกเปิดใช้หรือ exploit ได้ ดู [บันทึก Luau/TypeScript cohort](research/luau-typescript-cohort-2026-10.md), [บันทึก broad-quality cohort](research/broad-quality-cohort-2026-10.md) และ [บันทึก Node/React/Luau/PostgreSQL cohort](research/web-database-cohort-2026-10.md)
 
 [รอบ Node/React/Luau/PostgreSQL](research/web-database-cohort-2026-10.md) เป็น cohort ก่อนหน้า (667 rules ถึง SP706) และเก็บประวัติ SP702–SP706/SP691 ไว้
 
-[รอบ I/O ownership](research/io-ownership-cohort-2026-10.md) ซ่อม SP336, retire SP367 โดยสงวน ID, ขยาย SP703/SP705 และเพิ่ม SP707 โดยคง version 0.12.0 และแนวทาง read-only/offline/dependency-free ดู [review inventory ของ SP423](research/io-ownership-review-2026-10.json) สำหรับข้อสรุปราย site ซึ่งไม่ได้อ้างความปลอดภัยของทั้ง component
+[รอบ I/O ownership](research/io-ownership-cohort-2026-10.md) เป็นข้อมูลประวัติของ registry 667 rules ถึง SP707. [รอบ Luau community ปัจจุบัน](research/luau-community-cohort-2026-10.md) เพิ่ม SP708–SP713 และขยาย SP707; [manifest source ที่ pin แล้ว](benchmarks/luau-community-cohort-repositories.json)
+
+Reddit, DevForum, Stack Overflow และ GitHub ใช้ช่วยตั้งคำถาม; ยืนยัน semantics จากเอกสารของเจ้าของ API
 
 โค้ดปัจจุบันเพิ่ม advisory checks สำหรับ Roblox/Luau ในไฟล์ `.lua`/`.luau`
 (`SP671`–`SP672`) และ Rust invalid reference initialization (`SP673`) พร้อม
@@ -342,7 +350,7 @@ candidate จาก research จะกลายเป็น executable `SPxxx` r
 | [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 non-executable hypotheses จาก model-assisted mapped กับ source | ไม่มี |
 | [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 non-executable candidates ตามช่วงเวลา | ไม่มี |
 | [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 non-executable candidates แยก ecosystem/CWE | ไม่มี |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 667 detectors | Emit versioned findings |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 673 detectors | Emit versioned findings |
 
 รายการ expert/annual 2,800 รายการและ language catalog 5,000 รายการเป็น research candidates ไม่ใช่ executable rules และยัง emit findings ไม่ได้จนกว่าจะ promote แยกต่างหาก
 

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add six medium L1 structural Luau/Roblox advisories SP708–SP713 and extend
+  SP707 to direct RemoveAsync/IncrementAsync mutations. The research cohort uses
+  Reddit, DevForum, Stack Overflow and GitHub to identify questions, then checks
+  semantics against owning docs; its pinned source set contains ProfileStore and
+  RbxUtil. Defaults remain read-only, offline and dependency-free. No test, CI,
+  performance or false-positive result is claimed here.
+
+
 - Add advisory SP707 for a narrow client-selected Roblox DataStore write, repair
   SP336 under its existing ID, and retire SP367 while reserving its ID. Extend
   SP703 to import-bound callback fs.readFile/writeFile and SP705 to supported

@@ -90,6 +90,7 @@
     "skills/audit-production-readiness/scripts/impact_graph.py",
     "skills/audit-production-readiness/scripts/invariants.py",
     "skills/audit-production-readiness/scripts/js_config_checks.py",
+    "skills/audit-production-readiness/scripts/luau_quality_checks.py",
     "skills/audit-production-readiness/scripts/dotnet_cookie_checks.py",
     "skills/audit-production-readiness/scripts/dart_transport_checks.py",
     "skills/audit-production-readiness/scripts/php_advisories.py",

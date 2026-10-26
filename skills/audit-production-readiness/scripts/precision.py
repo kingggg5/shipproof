@@ -70,6 +70,12 @@ ADVISORY_RULE_IDS = frozenset(
         "SP705",  # Explicit transaction boundary, not runner execution evidence.
         "SP706",  # Local name resolution; role privileges/exploitability unknown.
         "SP707",  # Direct client-selected persistence; runtime exposure unknown.
+        "SP708",
+        "SP709",
+        "SP710",
+        "SP711",
+        "SP712",
+        "SP713",  # Luau source contracts, not deployed impact.
     }
 )
 

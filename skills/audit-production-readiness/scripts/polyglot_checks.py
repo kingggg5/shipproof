@@ -10,6 +10,8 @@ from __future__ import annotations
 import re
 from collections import Counter
 
+import luau_quality_checks
+
 MAX_TOKENS = 50_000
 WORD = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|[0-9]+|::|[.][.][.]")
 LUA_LONG = re.compile(r"\[(=*)\[")
@@ -719,7 +721,7 @@ def lua_spans(stream: list[tuple[str, int, int]]) -> list[tuple[str, int, int]]:
         if native and len(parameters) == 2:
             candidates.append(("SP691", [data, ":", "Destroy", "(", ")"]))
             candidates.append(("SP691", [data, ":", "Kick", "(", ")"]))
-        if native and native_game and len(parameters) == 3:
+        if native and native_game:
             store = values[body + 9 : body + 10]
             if (
                 store
@@ -727,31 +729,32 @@ def lua_spans(stream: list[tuple[str, int, int]]) -> list[tuple[str, int, int]]:
                 and store[0][0] == store[0][-1]
             ):
                 for quote in ("'", '"'):
-                    candidates.append(
-                        (
-                            "SP707",
-                            [
-                                "game",
-                                ":",
-                                "GetService",
-                                "(",
-                                quote + "DataStoreService" + quote,
-                                ")",
-                                ":",
-                                "GetDataStore",
-                                "(",
-                                store[0],
-                                ")",
-                                ":",
-                                "SetAsync",
-                                "(",
-                                parameters[1],
-                                ",",
-                                parameters[2],
-                                ")",
-                            ],
+                    prefix = [
+                        "game",
+                        ":",
+                        "GetService",
+                        "(",
+                        quote + "DataStoreService" + quote,
+                        ")",
+                        ":",
+                        "GetDataStore",
+                        "(",
+                        store[0],
+                        ")",
+                        ":",
+                    ]
+                    if len(parameters) == 3:
+                        for method in ("SetAsync", "IncrementAsync"):
+                            candidates.append(
+                                (
+                                    "SP707",
+                                    [*prefix, method, "(", parameters[1], ",", parameters[2], ")"],
+                                )
+                            )
+                    else:
+                        candidates.append(
+                            ("SP707", [*prefix, "RemoveAsync", "(", parameters[1], ")"])
                         )
-                    )
         for rule_id, signature in candidates:
             last = body + len(signature)
             terminator = last + int(values[last : last + 1] == [";"])
@@ -774,7 +777,11 @@ def signature_spans(source: str, language: str) -> list[tuple[str, int, int]]:
     if language == "go":
         return go_spans(stream)
     if language == "lua":
-        return lua_spans(stream)
+        return list(
+            dict.fromkeys(
+                lua_spans(stream) + luau_quality_checks.signatures(stream, delimiter_pairs)
+            )
+        )
     values = [item[0] for item in stream]
     hits: list[tuple[str, int, int]] = []
 

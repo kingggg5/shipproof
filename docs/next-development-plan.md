@@ -63,16 +63,22 @@ Earlier Luau/TypeScript, broad-quality, and value/default/trust selections are
 reflected in that historical registry. See the
 [cohort record](../research/web-database-cohort-2026-10.md).
 
-## Current I/O ownership cohort — 2026-10-26
+## Previous I/O ownership cohort — historical
 
-- executable scanner rules: 667 through SP707, with deliberate ID gaps
-- repairs SP336, retires SP367, extends SP703/SP705, and adds advisory SP707
-- SP423 missing-array review records are linked in
-  [the site inventory](../research/io-ownership-review-2026-10.json); this does not
-  claim whole-component safety
+- historical executable scanner rules: 667 through SP707
+- repaired SP336, retired SP367, extended SP703/SP705, and added advisory SP707
 
-See the [I/O ownership cohort](../research/io-ownership-cohort-2026-10.md) for
-rule boundaries. No CI, performance, or precision result is stated here.
+See the [cohort record](../research/io-ownership-cohort-2026-10.md).
+
+## Current Luau community cohort — 2026-10-26
+
+- executable scanner rules: 673 through SP713, with deliberate ID gaps
+- adds SP708–SP713 and extends SP707 for direct RemoveAsync/IncrementAsync
+
+The [source cohort](../research/luau-community-cohort-2026-10.md) records scope
+and source provenance; the [pinned library manifest](../benchmarks/luau-community-cohort-repositories.json)
+identifies the two source-only libraries. No test, CI, performance, or precision
+result is stated here.
 
 ## Previous broad-quality cohort status — 2026-10-23
 

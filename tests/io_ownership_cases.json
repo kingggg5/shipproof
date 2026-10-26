@@ -347,7 +347,7 @@
       "expected_severity": "medium",
       "expected_confidence": "high",
       "blocking_eligible": false,
-      "false_positive_analysis": "Advisory: flat direct native game:GetService/DataStoreService:GetDataStore/SetAsync chain, short fixed store name and three distinct simple callback parameters only. Guards, server-selected keys, aliases, wrappers, modified globals, complex types and other writes stay unresolved or silent. Intentionally shared writable stores need policy review; no corruption is proven.",
+      "false_positive_analysis": "Advisory: flat native DataStore chain, short fixed name and distinct simple client parameters. Set/increment use key and value; removal uses the key. Guards, aliases and wrappers remain unresolved. Shared writable stores may be intentional; exposure and successful writes are unknown.",
       "sources": [
         {
           "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
@@ -360,6 +360,10 @@
         {
           "url": "https://cwe.mitre.org/data/definitions/862.html",
           "claim": "Taxonomy for the local ownership/authorization boundary, not proof of deployment or successful exploitation."
+        },
+        {
+          "url": "https://create.roblox.com/docs/reference/engine/classes/GlobalDataStore",
+          "claim": "Remove and increment mutate the record selected by a key; source matching does not prove authorization or a successful write."
         }
       ],
       "positive": [
@@ -386,6 +390,30 @@
         {
           "path": "store.server.luau",
           "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\n-- direct write\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value);\nend)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(actor: Player, key: string) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount: number) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player,key) game:GetService(\"DataStoreService\"):GetDataStore(\"Profiles\"):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService(\"DataStoreService\"):GetDataStore(\"Profiles\"):IncrementAsync(key,amount) end)"
         }
       ],
       "negative": [
@@ -448,6 +476,30 @@
         {
           "path": "store.server.luau",
           "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)\nremote.OnServerEvent:Connect(function(player,key,value) audit(value) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(tostring(player.UserId)) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(tostring(player.UserId),amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) if not authorized(player,key) then return end game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,serverAmount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=customRemote\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnClientEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
         }
       ],
       "adversarial": [
@@ -486,6 +538,18 @@
           "source": "local remote=Instance.new('RemoteEvent')\nremote=customRemote\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
           "expected": false,
           "rationale": "Reassignment invalidates the locally constructed remote receiver."
+        },
+        {
+          "path": "module.luau",
+          "source": "--[=[local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)]=]",
+          "expected": false,
+          "rationale": "A long comment cannot register a destructive persistent-record operation."
+        },
+        {
+          "path": "module.luau",
+          "source": "local game=customGame\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)",
+          "expected": false,
+          "rationale": "A game-like custom object does not establish native persistent-data semantics."
         }
       ]
     }

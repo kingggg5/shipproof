@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "cohort": "luau-community-20261026",
+  "baseline_revision": "b7477f854286d5c89a5aa0af989917472b2650da",
+  "evaluation_note": "Opt-in source corpus for Luau community research; inclusion does not assert that a repository is safe.",
+  "source_tree_digest_canonicalization": "SHA-256 of UTF-8 concatenation of files sorted by ordinal, case-sensitive relative path: path, NUL, lowercase SHA-256 of file bytes, LF.",
+  "projects": [
+    {
+      "name": "ProfileStore",
+      "slug": "profilestore",
+      "repository": "MadStudioRoblox/ProfileStore",
+      "revision": "45c9847cbcf1fc260369c50eb335aba7c35aecdd",
+      "language": "Luau",
+      "kind": "library",
+      "license_spdx": "Apache-2.0",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/MadStudioRoblox/ProfileStore/blob/45c9847cbcf1fc260369c50eb335aba7c35aecdd/LICENSE",
+      "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "expected_source_files": 2,
+      "source_tree_sha256": "99be5e8c639af68336b3c2195d324b1ee60c9da600c633e38d311a07cb99cf60",
+      "source_extensions": [
+        ".lua",
+        ".luau"
+      ],
+      "context_files": {
+        "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "default.project.json": "ea98f08f8102808896869a487193f1b7c39958d71e8c89c4d53f49ba08664e35",
+        "mkdocs.yml": "874ac3a313bfa66ba5083ded75569bff8b354d3e421d57baec9d6d9ceb8c7856",
+        "wally.toml": "d0b1ede0c637fc7494dd0b7c9948d82678fd1666cb919a20e473a0dde6c31a55"
+      }
+    },
+    {
+      "name": "RbxUtil",
+      "slug": "rbxutil",
+      "repository": "Sleitnick/RbxUtil",
+      "revision": "31f9120fca021e3dec275b42bc7047d626962082",
+      "language": "Luau",
+      "kind": "library",
+      "license_spdx": "MIT",
+      "license_path": "LICENSE.md",
+      "license_url": "https://github.com/Sleitnick/RbxUtil/blob/31f9120fca021e3dec275b42bc7047d626962082/LICENSE.md",
+      "license_sha256": "eac5cea9d90ff61a5c59ca57c8b9fe6320573e01edf231aafe2eab0da4756879",
+      "expected_source_files": 69,
+      "source_tree_sha256": "5b982d78a0c0a777d7305bf1f8959a93a677177d067ad78391174e2c6d858e21",
+      "source_extensions": [
+        ".lua",
+        ".luau"
+      ],
+      "context_files": {
+        "LICENSE.md": "eac5cea9d90ff61a5c59ca57c8b9fe6320573e01edf231aafe2eab0da4756879",
+        "default.project.json": "633d3e3f54565f87ffa3839ec263e575f104a948e0b5c892a4bd0e20408f64f1",
+        "dev.project.json": "85f4aec10f6f0e7800fc74b09a4fa08de7622126a483a5cdcee353420affeb30",
+        "moonwave.toml": "6ddb8cc8e40a2b5d38c96e45b9271142c3edae037497bc879f87496848c78851",
+        "package-lock.json": "85d29a4b5b629c497777a7f36df1a9450fd9d4ccc8595295fec11a503d90ddb6",
+        "package.json": "61b1f9f6dab72c2af52431e325dfb75676b38ccaa0cad8e421f42b5e5b506dcc",
+        "rokit.toml": "7bc00e1f2fcd7cda7a9ecaab1b0496826ce5ad0f94d5c6a3ad0e25d960da44f1",
+        "selene.toml": "6c2077e5f51817ac9df8cdfaabb3f7b59204e1b09b72259596cd213686945ae8",
+        "stylua.toml": "c34c452d16bcbc2ff9f04d022e83dedd52cc923ac18a6e2b8e384c1d677d6a5d",
+        "test.project.json": "3bfd6590b0c75523fa4eba9fccc981d8830341570c6eec76a35b0c36497f986f"
+      }
+    }
+  ]
+}

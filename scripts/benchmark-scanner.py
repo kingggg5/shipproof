@@ -104,6 +104,11 @@ def fixture_source(index: int, profile: str, bytes_per_file: int) -> str:
             "    if not owns(player, item) then return end\n"
             "    item:Destroy()\n"
             "end)\n"
+            "math.clamp(value,0,1);table.sort(items)\n"
+            "local copy=table.clone(table.freeze({}));copy.x=1\n"
+            "task.defer(callback)\n"
+            "game:GetService('Players').PlayerAdded:Wait()\n"
+            "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old)return old end)\n"
         )
         padding = "-- bounded benchmark padding\n"
     elif profile == "io-ownership":

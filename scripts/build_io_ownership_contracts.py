@@ -319,7 +319,9 @@ def records():
             ),
         ],
     )
-    return rows
+    from build_luau_community_contracts import augment_persistence
+
+    return augment_persistence(rows)
 
 
 def augment_existing_contracts(rows):

@@ -7,7 +7,7 @@
   "source_cwe_catalog_version": "4.20",
   "source_cwe_archive_sha256": "3976f599e5e5200219a3108bb896d06e2a88fbb293369e1883cb423a5e9d7d50",
   "existing_scanner_version": "0.12.0",
-  "existing_rule_count": 667,
+  "existing_rule_count": 673,
   "candidate_count": 5000,
   "allocations": {
     "csharp": {
@@ -23659,7 +23659,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -23903,7 +23905,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [
         "SP625"
@@ -23999,7 +24003,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -50402,7 +50407,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [
         "SP336",
@@ -50649,7 +50656,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [
         "SP595",
@@ -50752,7 +50761,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [
         "SP369",
@@ -71682,7 +71692,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -71926,7 +71938,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -72020,7 +72034,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -110560,7 +110575,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [
         "SP136"
@@ -110808,7 +110825,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [
         "SP619",
@@ -110905,7 +110924,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -138322,7 +138342,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -138566,7 +138588,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -138660,7 +138684,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -179713,7 +179738,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [
         "SP336",
@@ -179960,7 +179987,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [
         "SP595",
@@ -180063,7 +180092,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [
         "SP369",
@@ -203129,7 +203159,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -203373,7 +203405,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [
         "SP705"
@@ -203469,7 +203503,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -227312,7 +227347,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -227556,7 +227593,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [
         "SP619",
@@ -227654,7 +227693,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [
         "SP357",
@@ -269150,7 +269190,9 @@
         "SP136",
         "SP336",
         "SP621",
-        "SP694"
+        "SP694",
+        "SP712",
+        "SP713"
       ],
       "existing_ecosystem_rule_ids": [
         "SP621"
@@ -269396,7 +269438,9 @@
         "SP648",
         "SP702",
         "SP703",
-        "SP705"
+        "SP705",
+        "SP709",
+        "SP710"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
@@ -269490,7 +269534,8 @@
         "SP567",
         "SP571",
         "SP589",
-        "SP695"
+        "SP695",
+        "SP708"
       ],
       "existing_ecosystem_rule_ids": [],
       "dedup_disposition": "distinct_ecosystem_variant",
