@@ -145,3 +145,13 @@ mechanical documentation edits, not independent QA. Public applications and thei
 test suites were not executed. Remaining semantic/sanitizer questions above are
 not settled by these coverage fixes, and no absence-of-vulnerabilities claim is
 made. Version remains 0.12.0 with Unreleased changes; no merge, tag or release.
+
+## Hosted CI follow-up
+
+The first hosted attempt was cancelled at the existing ten-minute coverage-job
+boundary after Python coverage passed, while Node coverage was running. The
+coverage commands were sequential in one job. Split the independent coverage
+commands into parallel jobs with their existing ten-minute limits and unchanged
+floors. Retain `coverage` as an `always()` aggregate which succeeds only when both
+children succeed; failure, cancellation and skipping remain non-success. This
+preserves the required check identity without dropping either language's gate.
