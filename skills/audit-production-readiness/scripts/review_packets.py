@@ -642,6 +642,7 @@ def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[s
     report["review_complete"] = (
         report_version == PACKET_VERSION
         and not validation["rejected"]
+        and not validation["accepted_errors"]
         and bool(ledger)
         and all(entry.get("status") == "completed" for entry in ledger.values())
         and all(packet.get("status") == "complete" for packet in packets.values())

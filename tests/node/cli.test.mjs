@@ -272,6 +272,28 @@ test("packet response paths are values and valid replies preserve the native rep
   }
 });
 
+test("cross-file and impact commands expose incomplete graph evidence", () => {
+  const root = mkdtempSync(join(tmpdir(), "shipproof-graph-coverage-"));
+  const cli = join(internals.PACKAGE_ROOT, "bin", "shipproof.mjs");
+  const run = (args) => spawnSync(process.execPath, [cli, ...args], { encoding: "utf8", windowsHide: true });
+  try {
+    const source = "function queryUser(value) { return db." + "query(value); }\napp.get('/user', (req, res) => { return queryUser(req.query.id); });\n";
+    writeFileSync(join(root, "entry.js"), "// bounded padding\n".repeat(24000) + source);
+    const plain = run(["scan", root, "--format", "json"]);
+    assert.equal(plain.status, 0, plain.stderr);
+    const cross = run(["scan", root, "--format", "json", "--cross-file"]);
+    assert.equal(cross.status, 1, cross.stderr);
+    assert.equal(JSON.parse(cross.stdout).summary.completeness.is_complete, false);
+    const impact = run(["labs", "impact", "entry.js", "--root", root, "--format", "json"]);
+    assert.equal(impact.status, 2, impact.stderr);
+    assert.equal(JSON.parse(impact.stdout).completeness.is_complete, false);
+    assert.equal(JSON.parse(impact.stdout).blast_radius_score, "UNKNOWN");
+    assert.equal(run(["labs", "impact", "missing.js", "--root", root]).status, 2);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("1.0 migration gate rejects every hidden legacy alias with a replacement", () => {
   assert.equal(internals.legacyAliasesEnabled("0.10.0"), true);
   assert.equal(internals.legacyAliasesEnabled("1.0.0"), false);

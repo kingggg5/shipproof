@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Report cross-file graph read/parse and bounded-analysis omissions as incomplete coverage, retain partial findings, and preserve strict `scan --cross-file` exit semantics. Add completeness-aware `labs impact` metadata and UNKNOWN reachability/blast-risk reporting; invalid targets and incomplete graph evidence return exit 2. Packet response timeouts/errors always keep review incomplete and exit 2.
+
 - Add opt-in `--packet-discover` to the existing scan command. With `--packet-out`,
   it schedules bounded source-file discovery targets even without native findings.
   Discovery is source preparation, not AI execution, and remains context rather than

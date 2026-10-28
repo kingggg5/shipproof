@@ -16,8 +16,11 @@ import re
 import sys
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
+from review_context import read_source
+from snapshot_identity import SourceSizeError, _is_link_or_reparse
 
 VERSION = "0.12.0"
 
@@ -214,6 +217,7 @@ class ImpactReport:
     blast_radius_score: str
     reachability_status: str
     cross_file_taint_flows: list[CrossFileTaintFlow]
+    completeness: dict = field(default_factory=dict)
 
 
 class PythonASTVisitor(ast.NodeVisitor):
@@ -655,9 +659,14 @@ class JsTsAnalyzer:
         {"true", "false", "null", "undefined", "this", "new", "typeof", "await"}
     )
 
+    def __init__(self):
+        self.omissions: set[str] = set()
+
     def analyze(self, rel_path: str, content: str) -> list[FunctionSummary]:
         """Return function summaries with entrypoint/taint evidence for one file."""
+        self.omissions.clear()
         if len(content) > self.MAX_FILE_CHARS:
+            self.omissions.add("file_chars")
             content = content[: self.MAX_FILE_CHARS]
         masked_content = self._mask_noncode(content)
         spans = self._collect_named_spans(masked_content)
@@ -665,6 +674,7 @@ class JsTsAnalyzer:
         spans.extend(inline_spans)
         spans.sort(key=lambda item: (item.decl_start, item.name))
         if len(spans) > self.MAX_FUNCTIONS_PER_FILE:
+            self.omissions.add("functions")
             spans = spans[: self.MAX_FUNCTIONS_PER_FILE]
 
         summaries: list[FunctionSummary] = []
@@ -802,6 +812,8 @@ class JsTsAnalyzer:
                 bound=min(limit, open_paren + self.MAX_ARG_CHARS * 8),
             )
             if close_paren is None:
+                if open_paren + self.MAX_ARG_CHARS * 8 < limit:
+                    self.omissions.add("registration_args")
                 continue
             tokens = [
                 (text, open_paren + 1 + offset)
@@ -873,6 +885,8 @@ class JsTsAnalyzer:
         is_entrypoint: bool,
         all_spans: Sequence[_JsFunctionSpan],
     ) -> FunctionSummary:
+        if span.body_end - span.body_start > self.MAX_BODY_CHARS:
+            self.omissions.add("body_chars")
         raw_body = masked_content[
             span.body_start : min(span.body_end, span.body_start + self.MAX_BODY_CHARS)
         ]
@@ -907,6 +921,8 @@ class JsTsAnalyzer:
             candidates = initial_tainted - self.RESPONSE_SIDE_NAMES
             if not candidates:
                 candidates = {name for name in params if name not in self.RESPONSE_SIDE_NAMES}
+            if len(candidates) > self.MAX_PARAMS:
+                self.omissions.add("parameters")
             entrypoint_taint_params = sorted(candidates)[: self.MAX_PARAMS]
 
         return FunctionSummary(
@@ -1053,6 +1069,8 @@ class JsTsAnalyzer:
                 bound=min(limit, open_paren + 2 + self.MAX_ARG_CHARS),
             )
             if close_paren is None:
+                if open_paren + 2 + self.MAX_ARG_CHARS < limit:
+                    self.omissions.add("sink_args")
                 continue
             original_args = content[base_offset + open_paren + 1 : base_offset + close_paren]
             cleaned_args = self.SANITIZER_WRAP.sub(" ", body[open_paren + 1 : close_paren])
@@ -1083,6 +1101,9 @@ class JsTsAnalyzer:
                     root = alias_map[root]
                 else:
                     break
+            if len(occurrences) >= self.MAX_SINKS_PER_FUNCTION:
+                self.omissions.add("sinks")
+                break
             occurrences.append(
                 TaintSinkOccurrence(
                     sink_type=sink_info[0],
@@ -1094,8 +1115,6 @@ class JsTsAnalyzer:
                     ][:160],
                 )
             )
-            if len(occurrences) >= self.MAX_SINKS_PER_FUNCTION:
-                break
         occurrences.sort(key=lambda item: (item.line, item.param_name))
         return occurrences
 
@@ -1129,7 +1148,10 @@ class JsTsAnalyzer:
 
                 line_end = body.find("\n", match.end())
                 if line_end == -1:
-                    line_end = min(limit, match.end() + self.MAX_ARG_CHARS)
+                    line_end = limit
+                if line_end > match.end() + self.MAX_ARG_CHARS:
+                    self.omissions.add("dom_args")
+                    line_end = match.end() + self.MAX_ARG_CHARS
                 rhs_text = body[match.end() : min(limit, line_end)]
                 cleaned_rhs = self.SANITIZER_WRAP.sub(" ", rhs_text)
                 hit = next(
@@ -1144,6 +1166,10 @@ class JsTsAnalyzer:
                         root = alias_map[root]
                     else:
                         break
+                if len(occurrences) >= self.MAX_SINKS_PER_FUNCTION:
+                    self.omissions.add("dom_sinks")
+                    occurrences.sort(key=lambda item: (item.line, item.param_name))
+                    return occurrences
                 occurrences.append(
                     TaintSinkOccurrence(
                         sink_type=sink_type,
@@ -1153,9 +1179,6 @@ class JsTsAnalyzer:
                         call_snippet=body[match.start() : line_end][:160],
                     )
                 )
-                if len(occurrences) >= self.MAX_SINKS_PER_FUNCTION:
-                    occurrences.sort(key=lambda item: (item.line, item.param_name))
-                    return occurrences
         occurrences.sort(key=lambda item: (item.line, item.param_name))
         return occurrences
 
@@ -1189,8 +1212,13 @@ class JsTsAnalyzer:
                 bound=min(limit, open_paren + 2 + self.MAX_ARG_CHARS),
             )
             if close_paren is None:
+                if open_paren + 2 + self.MAX_ARG_CHARS < limit:
+                    self.omissions.add("callee_args")
                 continue
-            arguments = self._split_top_level(body[open_paren + 1 : close_paren])[:8]
+            all_arguments = self._split_top_level(body[open_paren + 1 : close_paren])
+            if len(all_arguments) > 8:
+                self.omissions.add("callee_positions")
+            arguments = all_arguments[:8]
             for position, (argument, _offset) in enumerate(arguments):
                 cleaned_argument = self.SANITIZER_WRAP.sub(" ", argument)
                 hit = next(
@@ -1205,6 +1233,10 @@ class JsTsAnalyzer:
                         root = alias_map[root]
                     else:
                         break
+                if len(call_sites) >= self.MAX_CALLEES_PER_FUNCTION:
+                    self.omissions.add("callees")
+                    call_sites.sort(key=lambda item: (item.line, item.callee_name, item.arg_index))
+                    return call_sites
                 call_sites.append(
                     CalleeCallSite(
                         callee_name=callee,
@@ -1213,8 +1245,6 @@ class JsTsAnalyzer:
                         line=content.count("\n", 0, base_offset + match.start()) + 1,
                     )
                 )
-                break
-            if len(call_sites) >= self.MAX_CALLEES_PER_FUNCTION:
                 break
         call_sites.sort(key=lambda item: (item.line, item.callee_name, item.arg_index))
         return call_sites
@@ -1309,6 +1339,8 @@ class JsTsAnalyzer:
         if not params_text or not params_text.strip():
             return []
         names: list[str] = []
+        if len(params_text) > 400:
+            self.omissions.add("parameter_chars")
         for text_part, _offset in self._split_top_level(params_text[:400]):
             part = text_part.rstrip(",")
             if not part:
@@ -1323,15 +1355,20 @@ class JsTsAnalyzer:
                     name = match.group(1)
                     if name.lower() not in self.RESERVED_WORDS and name not in names:
                         names.append(name)
-            if len(names) >= self.MAX_PARAMS:
+            if len(names) > self.MAX_PARAMS:
+                self.omissions.add("parameters")
                 break
         return names[: self.MAX_PARAMS]
 
     def _binding_names(self, target_text: str) -> list[str]:
         names: list[str] = []
+        if len(target_text) > 200:
+            self.omissions.add("binding_chars")
         for name in self.IDENTIFIER_TOKEN.findall(target_text[:200]):
             if name.lower() not in self.RESERVED_WORDS and name not in names:
                 names.append(name)
+        if len(names) > 8:
+            self.omissions.add("binding_targets")
         return names[:8]
 
     @staticmethod
@@ -1368,76 +1405,127 @@ class ImpactGraph:
         self.files_scanned_count = 0
         self.taint_flows: list[CrossFileTaintFlow] = []
         self.reachable_symbols: set[str] = set()
+        self._omissions: dict[str, set[str]] = {}
+        self.analyzed_paths: set[str] = set()
+
+    def _omit(self, relative: str, reason: str) -> None:
+        if relative not in self._omissions and len(self._omissions) >= 5000:
+            raise ValueError("impact omission accounting exceeds 5000 affected inputs")
+        self._omissions.setdefault(relative, set()).add(reason)
+
+    @property
+    def completeness(self) -> dict:
+        read_reasons = {"read_error", "encoding", "walk_error", "linked_input"}
+        return {
+            "is_complete": not self._omissions,
+            "reasons": sorted({r for reasons in self._omissions.values() for r in reasons}),
+            "affected_inputs": len(self._omissions),
+            "unreadable": sum(bool(reasons & read_reasons) for reasons in self._omissions.values()),
+            "oversized": sum("byte_limit" in reasons for reasons in self._omissions.values()),
+            "parser_limit": sum(
+                bool(reasons - read_reasons - {"byte_limit"})
+                for reasons in self._omissions.values()
+            ),
+        }
+
+    def _sources(self):
+        suffixes = PYTHON_SUFFIXES | JS_TS_SUFFIXES
+        if self.allowed_paths is not None:
+            for relative in sorted(self.allowed_paths):
+                if Path(relative).suffix.lower() in suffixes:
+                    yield self.root / relative, relative
+            return
+        for directory, subdirs, filenames in os.walk(
+            self.root,
+            topdown=True,
+            followlinks=False,
+            onerror=lambda _error: self._omit("<walk>", "walk_error"),
+        ):
+            kept = []
+            for name in sorted(subdirs):
+                if name in SKIP_DIRS:
+                    continue
+                child = Path(directory, name)
+                try:
+                    if _is_link_or_reparse(child.lstat()):
+                        self._omit(child.relative_to(self.root).as_posix(), "linked_input")
+                        continue
+                except OSError:
+                    self._omit(child.relative_to(self.root).as_posix(), "walk_error")
+                    continue
+                kept.append(name)
+            subdirs[:] = kept
+            for filename in sorted(filenames):
+                path = Path(directory, filename)
+                if path.suffix.lower() in suffixes:
+                    yield path, path.relative_to(self.root).as_posix()
 
     def build(self) -> None:
         """Scan repository and build AST-based symbol, caller, and data-flow graphs."""
-        for directory, subdirs, filenames in os.walk(
-            self.root, topdown=True, onerror=lambda _: None
-        ):
-            subdirs[:] = [d for d in subdirs if d not in SKIP_DIRS]
-            for filename in filenames:
-                path = Path(directory, filename)
-                if path.is_symlink():
-                    continue
+        for path, rel_path in self._sources():
+            suffix = path.suffix.lower()
+            try:
+                content = read_source(self.root, rel_path, self.max_file_bytes).decode("utf-8")
+                content = content.replace("\r\n", "\n").replace("\r", "\n")
+            except SourceSizeError:
+                self._omit(rel_path, "byte_limit")
+                continue
+            except UnicodeDecodeError:
+                self._omit(rel_path, "encoding")
+                continue
+            except (OSError, ValueError):
+                self._omit(rel_path, "read_error")
+                continue
 
-                suffix = path.suffix.lower()
-                if suffix not in PYTHON_SUFFIXES and suffix not in JS_TS_SUFFIXES:
-                    continue
+            self.files_scanned_count += 1
+            self.analyzed_paths.add(rel_path)
+            is_test = (
+                "/test" in rel_path.lower()
+                or rel_path.lower().startswith("test")
+                or "_test." in rel_path.lower()
+                or ".test." in rel_path.lower()
+                or ".spec." in rel_path.lower()
+            )
 
+            if is_test:
+                self.test_files.append((rel_path, content))
+
+            if suffix in PYTHON_SUFFIXES:
                 try:
-                    rel_path = path.relative_to(self.root).as_posix()
-                    if self.allowed_paths is not None and rel_path not in self.allowed_paths:
-                        continue
-                    if path.stat().st_size > self.max_file_bytes:
-                        continue
-                    content = path.read_text(encoding="utf-8", errors="replace")
-                except OSError:
-                    continue
-
-                self.files_scanned_count += 1
-                is_test = (
-                    "/test" in rel_path.lower()
-                    or rel_path.lower().startswith("test")
-                    or "_test." in rel_path.lower()
-                    or ".test." in rel_path.lower()
-                    or ".spec." in rel_path.lower()
-                )
-
-                if is_test:
-                    self.test_files.append((rel_path, content))
-
-                if suffix in PYTHON_SUFFIXES:
-                    try:
-                        tree = ast.parse(content, filename=rel_path)
-                        visitor = PythonASTVisitor(rel_path)
-                        visitor.visit(tree)
-                        for sym in visitor.symbols.values():
-                            self.symbols[sym.name].append(sym)
-                            self.file_to_symbols[rel_path].append(sym)
-                        for summary in visitor.summaries.values():
-                            self.summaries[summary.name].append(summary)
-                            self.file_to_summaries[rel_path].append(summary)
-                    except SyntaxError:
-                        pass
-                elif suffix in JS_TS_SUFFIXES:
-                    js_symbols = extract_js_ts_symbols(rel_path, content)
-                    try:
-                        js_summaries = JsTsAnalyzer().analyze(rel_path, content)
-                    except (ValueError, IndexError, RecursionError):
-                        # Lexical analysis must never break a scan; fall back to
-                        # symbol extraction only for this file.
-                        js_summaries = []
-                    entrypoint_names = {
-                        summary.name for summary in js_summaries if summary.is_entrypoint
-                    }
-                    for sym in js_symbols.values():
-                        if sym.name in entrypoint_names:
-                            sym.is_entrypoint = True
+                    tree = ast.parse(content, filename=rel_path)
+                    visitor = PythonASTVisitor(rel_path)
+                    visitor.visit(tree)
+                    for sym in visitor.symbols.values():
                         self.symbols[sym.name].append(sym)
                         self.file_to_symbols[rel_path].append(sym)
-                    for summary in js_summaries:
+                    for summary in visitor.summaries.values():
                         self.summaries[summary.name].append(summary)
                         self.file_to_summaries[rel_path].append(summary)
+                except (SyntaxError, RecursionError):
+                    self._omit(rel_path, "python_parser")
+            elif suffix in JS_TS_SUFFIXES:
+                js_symbols = extract_js_ts_symbols(rel_path, content)
+                analyzer = JsTsAnalyzer()
+                try:
+                    js_summaries = analyzer.analyze(rel_path, content)
+                except (ValueError, IndexError, RecursionError):
+                    # Lexical analysis must never break a scan; fall back to
+                    # symbol extraction only for this file.
+                    js_summaries = []
+                    self._omit(rel_path, "js_parser")
+                for reason in analyzer.omissions:
+                    self._omit(rel_path, reason)
+                entrypoint_names = {
+                    summary.name for summary in js_summaries if summary.is_entrypoint
+                }
+                for sym in js_symbols.values():
+                    if sym.name in entrypoint_names:
+                        sym.is_entrypoint = True
+                    self.symbols[sym.name].append(sym)
+                    self.file_to_symbols[rel_path].append(sym)
+                for summary in js_summaries:
+                    self.summaries[summary.name].append(summary)
+                    self.file_to_summaries[rel_path].append(summary)
 
         # Build caller graph
         for sym_list in self.symbols.values():
@@ -1580,6 +1668,8 @@ class ImpactGraph:
                                     next_path = [*path, f"{c_sum.file}:{c_sum.name}"]
                                     if len(next_path) <= 6:
                                         queue.append((c_sum, c_param, next_path, is_sanitized))
+                                    else:
+                                        self._omit(c_sum.file, "call_depth")
 
         return flows
 
@@ -1592,6 +1682,15 @@ class ImpactGraph:
             norm_file = candidate.relative_to(self.root).as_posix()
         except ValueError as exc:
             raise ValueError(f"target file escapes repository root: {target_file}") from exc
+        if (
+            not candidate.is_file()
+            or candidate.suffix.lower() not in PYTHON_SUFFIXES | JS_TS_SUFFIXES
+        ):
+            raise ValueError("impact target must be an existing Python or JS/TS source file")
+        if target_line is not None and target_line < 1:
+            raise ValueError("impact target line must be positive")
+        if norm_file not in self.analyzed_paths and norm_file not in self._omissions:
+            raise ValueError("impact target is outside the analyzed source scope")
         if not candidate.is_file():
             raise ValueError(f"target file does not exist: {candidate}")
         if candidate.suffix.lower() not in PYTHON_SUFFIXES | JS_TS_SUFFIXES:
@@ -1676,6 +1775,10 @@ class ImpactGraph:
         else:
             blast_score = "LOW"
 
+        if not self.completeness["is_complete"]:
+            blast_score = "UNKNOWN"
+            reachability_status = "UNKNOWN / INCOMPLETE ANALYSIS"
+
         return ImpactReport(
             target_file=norm_file,
             target_line=target_line,
@@ -1688,6 +1791,7 @@ class ImpactGraph:
             blast_radius_score=blast_score,
             reachability_status=reachability_status,
             cross_file_taint_flows=file_taint_flows,
+            completeness=self.completeness,
         )
 
 
@@ -1747,6 +1851,14 @@ def render_impact_markdown(report: ImpactReport) -> str:
         lines.append("- _No existing tests directly reference these symbols._")
         lines.append("")
 
+    if not report.completeness.get("is_complete", True):
+        lines.extend(
+            [
+                "",
+                "Analysis coverage is incomplete: "
+                + ", ".join(report.completeness.get("reasons", [])),
+            ]
+        )
     return "\n".join(lines)
 
 
@@ -1772,7 +1884,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         graph = ImpactGraph(args.root)
         graph.build()
         report = graph.analyze_impact(target_str, target_line)
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, RecursionError, MemoryError) as exc:
         print(f"shipproof: {exc}", file=sys.stderr)
         return 2
 
@@ -1792,7 +1904,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         print(render_impact_markdown(report))
 
-    return 0
+    return 0 if report.completeness["is_complete"] else 2
 
 
 if __name__ == "__main__":

@@ -13651,6 +13651,7 @@ def collect_cross_file_taint(
     *,
     allowed_paths: frozenset[str] | None = None,
     max_file_bytes: int = 1_000_000,
+    coverage: dict[str, int] | None = None,
 ) -> tuple[list[Finding], int, int]:
     """Promote unsanitized interprocedural taint flows into L2 findings.
 
@@ -13668,6 +13669,14 @@ def collect_cross_file_taint(
     )
     graph.build()
     flows = graph.propagate_interprocedural_taint()
+    graph_coverage = graph.completeness
+    if not graph_coverage["is_complete"]:
+        if coverage is None:
+            raise ValueError(
+                "cross-file analysis is incomplete: " + ", ".join(graph_coverage["reasons"])
+            )
+        for category in ("unreadable", "oversized", "parser_limit"):
+            coverage[category] += graph_coverage[category]
     findings: list[Finding] = BoundedFindings()
     unsanitized = 0
     for flow in sorted(
@@ -14148,6 +14157,7 @@ def scan_repository(
                 repository_root,
                 allowed_paths=frozenset(scanned_paths),
                 max_file_bytes=max_file_bytes,
+                coverage=coverage,
             )
         except (OSError, ValueError, RecursionError, MemoryError) as exc:
             raise ValueError(f"cross-file analysis failed: {exc}") from exc
@@ -16421,7 +16431,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     f"{validation['rejected']} rejected; review_complete={packet_report['review_complete']}",
                     file=sys.stderr,
                 )
-                if validation["rejected"] or counts["failed"]:
+                if validation["rejected"] or validation["accepted_errors"] or counts["failed"]:
                     raise ValueError(
                         "packet responses contain invalid or unavailable evidence; see ledger.json"
                     )

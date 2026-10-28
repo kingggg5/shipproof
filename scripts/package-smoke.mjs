@@ -128,6 +128,16 @@ function main(peerVersion) {
     const appliedLedger = JSON.parse(readFileSync(join(packetOutput, "ledger.json"), "utf8"));
     assert.equal(appliedLedger.review_complete, true);
     assert.deepEqual(appliedLedger.packets, packetLedger.packets);
+    const completeResponses = JSON.parse(readFileSync(packetResponses, "utf8"));
+    const lateFailurePath = join(workDirectory, "late-failure.json");
+    writeFileSync(lateFailurePath, JSON.stringify([...completeResponses, {
+      packet_id: packetLedger.packets[0].packet_id,
+      packet_digest: packetLedger.packets[0].packet_digest,
+      timed_out: true,
+    }]));
+    const lateFailure = runProcess(process.execPath, [installedCli, "scan", packetSource, "--format", "json", "--packet-discover", "--packet-out", packetOutput, "--packet-responses", lateFailurePath]);
+    assert.equal(lateFailure.status, 2, lateFailure.stderr);
+    assert.equal(JSON.parse(readFileSync(join(packetOutput, "ledger.json"), "utf8")).review_complete, false);
 
     const skillProject = join(workDirectory, "skill-project");
     mkdirSync(skillProject);
@@ -151,6 +161,17 @@ function main(peerVersion) {
     writeFileSync(join(packetSource, "entry.ts"), "export const value = 2;\n");
     const staleResponse = runProcess(process.execPath, [installedCli, "scan", packetSource, "--packet-discover", "--packet-out", packetOutput, "--packet-responses", packetResponses]);
     assert.equal(staleResponse.status, 2);
+
+    const impactSource = join(workDirectory, "impact-source");
+    mkdirSync(impactSource);
+    const querySource = "function queryUser(value) { return db." + "query(value); }\napp.get('/user', (req, res) => { return queryUser(req.query.id); });\n";
+    writeFileSync(join(impactSource, "entry.js"), "// bounded padding\n".repeat(24000) + querySource);
+    const crossCoverage = runProcess(process.execPath, [installedCli, "scan", impactSource, "--cross-file", "--format", "json"]);
+    assert.equal(crossCoverage.status, 1, crossCoverage.stderr);
+    assert.equal(JSON.parse(crossCoverage.stdout).summary.completeness.is_complete, false);
+    const partialImpact = runProcess(process.execPath, [installedCli, "labs", "impact", "entry.js", "--root", impactSource, "--format", "json"]);
+    assert.equal(partialImpact.status, 2, partialImpact.stderr);
+    assert.equal(JSON.parse(partialImpact.stdout).completeness.is_complete, false);
 
     const explained = runProcess(process.execPath, [installedCli, "explain", "SP402"]);
     assert.equal(explained.status, 0, explained.stderr);
