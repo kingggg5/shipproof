@@ -50,6 +50,34 @@ def snapshot(root: Path, **kwargs):
 
 
 class SnapshotIdentityTests(unittest.TestCase):
+    def test_runtime_identity_binds_each_detector_and_packet_module(self):
+        manifest = json.loads((ROOT / "packaging/approved-files.json").read_text(encoding="utf-8"))
+        unrelated_tools = {
+            "capacity_model.py",
+            "cost_model.py",
+            "invariants.py",
+            "worktree_manager.py",
+        }
+        filenames = [
+            Path(name).name
+            for name in manifest["files"]
+            if name.startswith("skills/audit-production-readiness/scripts/")
+            and name.endswith(".py")
+            and Path(name).name not in unrelated_tools
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in filenames:
+                (root / name).write_bytes(b"pass\n")
+            with mock.patch.object(identity, "__file__", str(root / "snapshot_identity.py")):
+                before = identity.scanner_code_identity()
+                for name in filenames:
+                    with self.subTest(module=name):
+                        (root / name).write_bytes(b"fail\n")
+                        self.assertNotEqual(identity.scanner_code_identity(), before)
+                        (root / name).write_bytes(b"pass\n")
+                self.assertEqual(identity.scanner_code_identity(), before)
+
     def test_git_identity_uses_bounded_trusted_runner(self):
         with make_repo({"app.py": "value = 1\n", ".git/HEAD": "ref: refs/heads/main\n"}) as tmp:
             with (

@@ -180,6 +180,10 @@ ShipProof routes high-risk code to a stricter evidence ladder:
 
 The bundled scanner stays conservative. Deep memory-safety and protocol findings need compiler instrumentation, sanitizers, fuzzers, and target-specific reasoning rather than misleading regex matches.
 
+### Context-specific taint contracts
+
+Protections follow exact builtin/import bindings and the derived value/use; shadowing and mixed raw values cannot inherit safety. Parameterized SQL stays quiet. HTML encoding is not SQL protection, and numeric conversion is not SSRF authorization. Unknown calls and conditional JS transformations stay advisory. Path protection needs normalization plus a rejecting separator check. DOMPurify protection covers whole HTML values with default configuration; options, hooks and embedding remain unresolved. This bounded analysis does not prove arbitrary control flow, symlink containment or framework behavior.
+
 ## Codex and Claude Compatibility
 
 Both hosts use the open `SKILL.md` structure, so ShipProof keeps one source of truth.

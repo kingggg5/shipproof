@@ -111,8 +111,8 @@ def execute(query):
         sql_flows = [f for f in flows if f["sink_rule_id"] == "SP103"]
         self.assertEqual(len(sql_flows), 1)
         self.assertEqual(sql_flows[0]["source_file"], "routes.py")
-        # Sink fires where execute() lives (svc.py), not at the entrypoint
-        self.assertEqual(sql_flows[0]["sink_file"], "svc.py")
+        # An imported wrapper is a call edge; the cursor operation is terminal.
+        self.assertEqual(sql_flows[0]["sink_file"], "db.py")
         self.assertFalse(sql_flows[0]["is_sanitized"])
 
     def test_sanitized_chain_produces_no_unsanitized_flow(self) -> None:

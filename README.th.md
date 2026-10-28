@@ -21,7 +21,7 @@ ShipProof คือ production gate ที่พัฒนาขึ้นต้�
 
 ShipProof ไม่ใช่ certification, penetration test, formal proof หรือสิ่งทดแทน threat modeling เฉพาะผลิตภัณฑ์และ runtime test มันทำให้ assumption มองเห็นได้ รายงานความแข็งแรงของหลักฐานที่มี และคงอำนาจการตัดสินใจไว้ที่มนุษย์สำหรับ action ที่มีผลตามมา
 
-**แหล่งข้อมูลโครงการ:** [เว็บไซต์](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](https://github.com/kingggg5/shipproof/blob/main/docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) · [Citation](CITATION.cff)
+**แหล่งข้อมูลโครงการ:** [เว็บไซต์](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](https://github.com/kingggg5/shipproof/blob/main/CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](https://github.com/kingggg5/shipproof/blob/main/GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](https://github.com/kingggg5/shipproof/blob/main/docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) · [Citation](CITATION.cff)
 
 <p align="center">
   <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
@@ -361,7 +361,7 @@ candidate จาก research จะกลายเป็น executable `SPxxx` r
 
 ## การกำกับดูแลโครงการ
 
-ShipProof ใช้ decision model แบบ maintainer-led เน้น evidence เรื่อง backward compatibility, rule promotion, releases, security response และการเปลี่ยน trust boundary default เป็นไปตาม [GOVERNANCE.md](GOVERNANCE.md) การ contribute ต้อง follow [CONTRIBUTING.md](CONTRIBUTING.md) และ [Code of Conduct](CODE_OF_CONDUCT.md) vulnerability ที่ exploit ได้รายงานผ่านช่องทาง private ตาม [SECURITY.md](SECURITY.md)
+ShipProof ใช้ decision model แบบ maintainer-led เน้น evidence เรื่อง backward compatibility, rule promotion, releases, security response และการเปลี่ยน trust boundary default เป็นไปตาม [GOVERNANCE.md](https://github.com/kingggg5/shipproof/blob/main/GOVERNANCE.md) การ contribute ต้อง follow [CONTRIBUTING.md](https://github.com/kingggg5/shipproof/blob/main/CONTRIBUTING.md) และ [Code of Conduct](CODE_OF_CONDUCT.md) vulnerability ที่ exploit ได้รายงานผ่านช่องทาง private ตาม [SECURITY.md](SECURITY.md)
 
 ## Development
 

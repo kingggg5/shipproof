@@ -1,0 +1,1987 @@
+{
+  "schema_version": 1,
+  "assessed_on": "2026-10-28",
+  "baseline_revision": "c5fef9f8568fa726bd667f7a00b200fcdb862977",
+  "scope": "Context-specific protection contracts, provenance and runtime identity; no target or model execution",
+  "runtime_identity": {
+    "value": "17ee239f240546bb10e2101d9f8741994cd5d806ad4b227c5c1241cfcae751b1",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "engine_files": {
+    "sha256": "d1ff0d162e243fc57d6f6f75fcf90b4b7488be3f6758a9958021a28c7097fc9b",
+    "files": [
+      {
+        "path": "skills/audit-production-readiness/scripts/impact_graph.py",
+        "sha256": "574b9526a820025a04a0f9d872e761d1193d0390e08ae545bfa5a617a52f8e86",
+        "bytes": 90168
+      },
+      {
+        "path": "skills/audit-production-readiness/scripts/scan_repo.py",
+        "sha256": "1a77b19f89f00a70079e083dcf87be1d3648bf1d8d4c87a04d3d725a33a68b01",
+        "bytes": 653591
+      },
+      {
+        "path": "skills/audit-production-readiness/scripts/snapshot_identity.py",
+        "sha256": "e629146291730fe1cfef496377ac1e9966c48900b0236704e3997ae190523571",
+        "bytes": 11277
+      },
+      {
+        "path": "skills/audit-production-readiness/scripts/taint_contracts.py",
+        "sha256": "eb86a6180addede8f42640bbd1fb655f646eca0bef90a8a6747a15139c6d6a7d",
+        "bytes": 13284
+      }
+    ]
+  },
+  "verification": {
+    "npm_run_check_exit": 0,
+    "python_tests": [
+      1086,
+      2
+    ],
+    "local_python_skips": 3,
+    "skip_reason": "Windows symlink creation privilege; hosted Linux matrix covers these tests",
+    "new_regression_tests": 45,
+    "fresh_python_coverage_percent": 88,
+    "branch_measurement_enabled": true,
+    "coverage_floor_percent": 80,
+    "taint_contracts_coverage_percent": 96,
+    "artifact": {
+      "files": 110,
+      "packed_bytes": 473247,
+      "unpacked_bytes": 1868677
+    },
+    "artifact_caps": {
+      "packed_bytes": 500000,
+      "unpacked_bytes": 1870000
+    },
+    "self_scan": {
+      "findings": 33,
+      "app_findings": 0,
+      "test_findings": 33,
+      "files_scanned": 545,
+      "suppressed": 0,
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 10,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 5,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "scan_profile": "application",
+      "frameworks": [
+        "github-actions"
+      ],
+      "by_severity": {
+        "critical": 1,
+        "high": 21,
+        "medium": 11
+      }
+    },
+    "parity": [
+      "Python",
+      "Node",
+      "JSON",
+      "SARIF",
+      "packed CLI",
+      "installed Codex skill",
+      "installed Claude skill"
+    ],
+    "hosted_checks": "Exact-head CI, Security and manual Benchmarks links are maintained in PR #49; this pre-push receipt does not claim hosted completion"
+  },
+  "assurance": {
+    "summary": {
+      "executable_rules": 673,
+      "complete": 673,
+      "partial": 0,
+      "uncontracted": 0,
+      "metadata_debt": 0,
+      "realistic_negatives": 128,
+      "near_miss_only_negatives": 545,
+      "high_critical_without_realistic_negatives": 409,
+      "by_severity": {
+        "critical": {
+          "complete": 143,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "high": {
+          "complete": 325,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "low": {
+          "complete": 7,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "medium": {
+          "complete": 198,
+          "partial": 0,
+          "uncontracted": 0
+        }
+      }
+    },
+    "gate": {
+      "passed": true,
+      "baseline_present": true,
+      "new_uncontracted_rule_ids": [],
+      "stale_baseline_rule_ids": [],
+      "misclassified_partial_rule_ids": [],
+      "misclassified_uncontracted_rule_ids": [],
+      "new_unrealistic_high_critical_ids": [],
+      "stale_unrealistic_high_critical_ids": [],
+      "manifest_rule_ids_not_executable": [],
+      "duplicate_manifest_rule_ids": [],
+      "malformed_manifest_entries": [],
+      "metadata_debt_rule_ids": []
+    }
+  },
+  "paired_corpus": {
+    "manifest_canonical_sha256": "5573f2272a84d359669b91aa302edd34fd4ffc041ae059227074f75d8b9f162b",
+    "plan_canonical_sha256": "ff54cffe6c1656e89d2ebda620ae3241c72840cf87447668070387e64455576a",
+    "original": {
+      "packages": 30,
+      "files": 867,
+      "app_findings": 130,
+      "blocked_packages": [
+        "chi"
+      ],
+      "blocked_count": 1
+    },
+    "quiet": {
+      "packages": 30,
+      "files": 867,
+      "app_findings": 72,
+      "blocked_packages": [],
+      "blocked_count": 0
+    },
+    "original_positive_signatures_observed": 54,
+    "quiet_label_report": {
+      "records": 10,
+      "by_rule": {
+        "SP356": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "needs_context": 0,
+          "duplicate": 0,
+          "reviewed": 1,
+          "precision": 0.0
+        },
+        "SP121": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "needs_context": 0,
+          "duplicate": 0,
+          "reviewed": 1,
+          "precision": 0.0
+        },
+        "SP310": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "needs_context": 0,
+          "duplicate": 0,
+          "reviewed": 1,
+          "precision": 0.0
+        },
+        "SP106": {
+          "true_positive": 0,
+          "false_positive": 2,
+          "needs_context": 0,
+          "duplicate": 0,
+          "reviewed": 2,
+          "precision": 0.0
+        },
+        "SP308": {
+          "true_positive": 0,
+          "false_positive": 5,
+          "needs_context": 0,
+          "duplicate": 0,
+          "reviewed": 5,
+          "precision": 0.0
+        }
+      },
+      "fp_budget_violations": [],
+      "unreviewed": 62,
+      "unreviewed_high_critical": 0
+    },
+    "threshold_check": "clean-corpus blocked=0 high_critical=0 gate_high_medium=16 high_confidence_ratio=0.028 fp_budget=[] unreviewed_high_critical=0",
+    "source_pins_labels_recipes_and_thresholds_changed": false
+  },
+  "static_replay": {
+    "cases": [
+      {
+        "name": "umami-default",
+        "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+        "projection": ".cache/field-cohort-20261023/source-verified/umami",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 129,
+              "app_findings": 61,
+              "test_findings": 68,
+              "files_scanned": 1405,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "frameworks": [
+                "nextjs",
+                "prisma"
+              ],
+              "by_severity": {
+                "high": 107,
+                "medium": 22
+              }
+            },
+            "duration_seconds": 18.213,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 129,
+              "app_findings": 61,
+              "test_findings": 68,
+              "files_scanned": 1405,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "frameworks": [
+                "nextjs",
+                "prisma"
+              ],
+              "by_severity": {
+                "high": 107,
+                "medium": 22
+              }
+            },
+            "duration_seconds": 20.646,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "shlink-default",
+        "revision": "2883bc9d75974fbde43570804594940b5c2b5aca",
+        "projection": ".cache/field-cohort-20261023/source-verified/shlink-web-client",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 11,
+              "app_findings": 0,
+              "test_findings": 11,
+              "files_scanned": 115,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "frameworks": [
+                "react"
+              ],
+              "by_severity": {
+                "high": 9,
+                "medium": 2
+              }
+            },
+            "duration_seconds": 2.362,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 11,
+              "app_findings": 0,
+              "test_findings": 11,
+              "files_scanned": 115,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "frameworks": [
+                "react"
+              ],
+              "by_severity": {
+                "high": 9,
+                "medium": 2
+              }
+            },
+            "duration_seconds": 2.441,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "cleanarchitecture-default",
+        "revision": "e7c79be54ba0b001a5b332c1efe935f520b9db4b",
+        "projection": ".cache/field-cohort-20261023/source-verified/cleanarchitecture",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 10,
+              "app_findings": 4,
+              "test_findings": 6,
+              "files_scanned": 368,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 33,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "frameworks": [
+                "dotnet"
+              ],
+              "by_severity": {
+                "medium": 10
+              }
+            },
+            "duration_seconds": 4.339,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 33,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 10,
+              "app_findings": 4,
+              "test_findings": 6,
+              "files_scanned": 368,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 33,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "frameworks": [
+                "dotnet"
+              ],
+              "by_severity": {
+                "medium": 10
+              }
+            },
+            "duration_seconds": 1.598,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 33,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "todoapp-default",
+        "revision": "307a1eadbbd77a3004c318f2377e4818bc400af6",
+        "projection": ".cache/field-cohort-20261023/source-verified/todoapp",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 1,
+              "app_findings": 1,
+              "test_findings": 0,
+              "files_scanned": 44,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 11,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "frameworks": [
+                "dotnet"
+              ],
+              "by_severity": {
+                "medium": 1
+              }
+            },
+            "duration_seconds": 1.028,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 11,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 1,
+              "app_findings": 1,
+              "test_findings": 0,
+              "files_scanned": 44,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 11,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "frameworks": [
+                "dotnet"
+              ],
+              "by_severity": {
+                "medium": 1
+              }
+            },
+            "duration_seconds": 0.712,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 11,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "localsend-default",
+        "revision": "6e37efd5fe750299758b6778d2b150b31af3b95d",
+        "projection": ".cache/field-cohort-20261023/source-verified/localsend",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 1,
+              "app_findings": 1,
+              "test_findings": 0,
+              "files_scanned": 406,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 3,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "by_severity": {
+                "high": 1
+              }
+            },
+            "duration_seconds": 14.485,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 3,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 1,
+              "app_findings": 1,
+              "test_findings": 0,
+              "files_scanned": 406,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 3,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "by_severity": {
+                "high": 1
+              }
+            },
+            "duration_seconds": 11.018,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 3,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "knit",
+        "revision": "bb1ecf3dea69ca89147b9abe802a8c14399cb5e5",
+        "projection": ".cache/luau-ts-20261023/source/knit",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 0,
+              "app_findings": 0,
+              "test_findings": 0,
+              "files_scanned": 7,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "by_severity": {}
+            },
+            "duration_seconds": 0.506,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 0,
+              "app_findings": 0,
+              "test_findings": 0,
+              "files_scanned": 7,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "by_severity": {}
+            },
+            "duration_seconds": 0.461,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "roblox-lua-promise",
+        "revision": "031d429c82ee458a849e79fa523523bd349d7695",
+        "projection": ".cache/luau-ts-20261023/source/roblox-lua-promise",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 0,
+              "app_findings": 0,
+              "test_findings": 0,
+              "files_scanned": 4,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "by_severity": {}
+            },
+            "duration_seconds": 0.56,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 0,
+              "app_findings": 0,
+              "test_findings": 0,
+              "files_scanned": 4,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "by_severity": {}
+            },
+            "duration_seconds": 0.604,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "profilestore",
+        "revision": "45c9847cbcf1fc260369c50eb335aba7c35aecdd",
+        "projection": ".cache/luau-research-20261026/source/profilestore",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 0,
+            "summary": {
+              "findings": 0,
+              "app_findings": 0,
+              "test_findings": 0,
+              "files_scanned": 6,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": true,
+                "reasons": [],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 0,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "by_severity": {}
+            },
+            "duration_seconds": 0.576,
+            "completeness": {
+              "is_complete": true,
+              "reasons": [],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 0,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 0,
+            "summary": {
+              "findings": 0,
+              "app_findings": 0,
+              "test_findings": 0,
+              "files_scanned": 6,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": true,
+                "reasons": [],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 0,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "by_severity": {}
+            },
+            "duration_seconds": 0.544,
+            "completeness": {
+              "is_complete": true,
+              "reasons": [],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 0,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "rbxutil",
+        "revision": "31f9120fca021e3dec275b42bc7047d626962082",
+        "projection": ".cache/luau-research-20261026/source/rbxutil",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 0,
+            "summary": {
+              "findings": 0,
+              "app_findings": 0,
+              "test_findings": 0,
+              "files_scanned": 79,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": true,
+                "reasons": [],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 0,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "by_severity": {}
+            },
+            "duration_seconds": 1.746,
+            "completeness": {
+              "is_complete": true,
+              "reasons": [],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 0,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 0,
+            "summary": {
+              "findings": 0,
+              "app_findings": 0,
+              "test_findings": 0,
+              "files_scanned": 79,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": true,
+                "reasons": [],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 0,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "by_severity": {}
+            },
+            "duration_seconds": 1.072,
+            "completeness": {
+              "is_complete": true,
+              "reasons": [],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 0,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "sql-projection",
+        "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+        "projection": ".cache/web-database-20261026/sql-inventory/source/umami-postgresql",
+        "cross_file": false,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 0,
+            "summary": {
+              "findings": 4,
+              "app_findings": 4,
+              "test_findings": 0,
+              "files_scanned": 32,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": true,
+                "reasons": [],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 0,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "frameworks": [
+                "nextjs",
+                "prisma"
+              ],
+              "by_severity": {
+                "medium": 4
+              }
+            },
+            "duration_seconds": 0.773,
+            "completeness": {
+              "is_complete": true,
+              "reasons": [],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 0,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 0,
+            "summary": {
+              "findings": 4,
+              "app_findings": 4,
+              "test_findings": 0,
+              "files_scanned": 32,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": true,
+                "reasons": [],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 0,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "frameworks": [
+                "nextjs",
+                "prisma"
+              ],
+              "by_severity": {
+                "medium": 4
+              }
+            },
+            "duration_seconds": 0.605,
+            "completeness": {
+              "is_complete": true,
+              "reasons": [],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 0,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "umami-cross",
+        "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+        "projection": ".cache/field-cohort-20261023/source-verified/umami",
+        "cross_file": true,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 129,
+              "app_findings": 61,
+              "test_findings": 68,
+              "files_scanned": 1405,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "parser_limit",
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 10,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "cross_file_flows": 0,
+              "cross_file_flows_unsanitized": 0,
+              "frameworks": [
+                "nextjs",
+                "prisma"
+              ],
+              "by_severity": {
+                "high": 107,
+                "medium": 22
+              }
+            },
+            "duration_seconds": 23.834,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "parser_limit",
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 10,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 129,
+              "app_findings": 61,
+              "test_findings": 68,
+              "files_scanned": 1405,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "parser_limit",
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 10,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "cross_file_flows": 0,
+              "cross_file_flows_unsanitized": 0,
+              "frameworks": [
+                "nextjs",
+                "prisma"
+              ],
+              "by_severity": {
+                "high": 107,
+                "medium": 22
+              }
+            },
+            "duration_seconds": 25.388,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "parser_limit",
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 10,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "shlink-cross",
+        "revision": "2883bc9d75974fbde43570804594940b5c2b5aca",
+        "projection": ".cache/field-cohort-20261023/source-verified/shlink-web-client",
+        "cross_file": true,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 11,
+              "app_findings": 0,
+              "test_findings": 11,
+              "files_scanned": 115,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "cross_file_flows": 0,
+              "cross_file_flows_unsanitized": 0,
+              "frameworks": [
+                "react"
+              ],
+              "by_severity": {
+                "high": 9,
+                "medium": 2
+              }
+            },
+            "duration_seconds": 2.378,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 11,
+              "app_findings": 0,
+              "test_findings": 11,
+              "files_scanned": 115,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "library",
+              "cross_file_flows": 0,
+              "cross_file_flows_unsanitized": 0,
+              "frameworks": [
+                "react"
+              ],
+              "by_severity": {
+                "high": 9,
+                "medium": 2
+              }
+            },
+            "duration_seconds": 2.444,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 0,
+        "changed_record_count": 0
+      },
+      {
+        "name": "fastapi-api-cross",
+        "revision": "b1125d8839482cb7bbae603ddc6d0081bf87532e",
+        "projection": ".cache/value-cohort-20261023/inventory/source/fastapi-full-stack-template",
+        "cross_file": true,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 21,
+              "app_findings": 17,
+              "test_findings": 4,
+              "files_scanned": 45,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "parser_limit",
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 1,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "cross_file_flows": 2,
+              "cross_file_flows_unsanitized": 2,
+              "by_severity": {
+                "high": 6,
+                "medium": 15
+              }
+            },
+            "duration_seconds": 0.933,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "parser_limit",
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 1,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 19,
+              "app_findings": 15,
+              "test_findings": 4,
+              "files_scanned": 45,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": false,
+                "reasons": [
+                  "parser_limit",
+                  "binary"
+                ],
+                "unreadable": 0,
+                "parser_limit": 1,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 1,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "cross_file_flows": 0,
+              "cross_file_flows_unsanitized": 0,
+              "by_severity": {
+                "high": 4,
+                "medium": 15
+              }
+            },
+            "duration_seconds": 0.953,
+            "completeness": {
+              "is_complete": false,
+              "reasons": [
+                "parser_limit",
+                "binary"
+              ],
+              "unreadable": 0,
+              "parser_limit": 1,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 1,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 0,
+        "removed_site_count": 2,
+        "changed_record_count": 0
+      },
+      {
+        "name": "prefect-api-cross",
+        "revision": "e516d51cc39ee055b5539146ce94e432575abeb3",
+        "projection": ".cache/value-cohort-20261023/inventory/source/prefect/src/prefect/server/api",
+        "cross_file": true,
+        "engines": [
+          {
+            "engine": "before",
+            "exit_code": 1,
+            "summary": {
+              "findings": 52,
+              "app_findings": 52,
+              "test_findings": 0,
+              "files_scanned": 40,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": true,
+                "reasons": [],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 0,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "cross_file_flows": 5,
+              "cross_file_flows_unsanitized": 5,
+              "by_severity": {
+                "high": 7,
+                "medium": 36,
+                "low": 9
+              }
+            },
+            "duration_seconds": 2.283,
+            "completeness": {
+              "is_complete": true,
+              "reasons": [],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 0,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          },
+          {
+            "engine": "after",
+            "exit_code": 1,
+            "summary": {
+              "findings": 56,
+              "app_findings": 56,
+              "test_findings": 0,
+              "files_scanned": 40,
+              "suppressed": 0,
+              "completeness": {
+                "is_complete": true,
+                "reasons": [],
+                "unreadable": 0,
+                "parser_limit": 0,
+                "line_limit": 0,
+                "oversized": 0,
+                "containers": 0,
+                "assets": 0,
+                "binary": 0,
+                "symlinks": 0,
+                "excluded": 0,
+                "databases": 0,
+                "baseline_excluded": 0
+              },
+              "scan_profile": "application",
+              "cross_file_flows": 9,
+              "cross_file_flows_unsanitized": 9,
+              "by_severity": {
+                "high": 11,
+                "medium": 36,
+                "low": 9
+              }
+            },
+            "duration_seconds": 2.539,
+            "completeness": {
+              "is_complete": true,
+              "reasons": [],
+              "unreadable": 0,
+              "parser_limit": 0,
+              "line_limit": 0,
+              "oversized": 0,
+              "containers": 0,
+              "assets": 0,
+              "binary": 0,
+              "symlinks": 0,
+              "excluded": 0,
+              "databases": 0,
+              "baseline_excluded": 0
+            }
+          }
+        ],
+        "added_site_count": 4,
+        "removed_site_count": 0,
+        "changed_record_count": 5
+      }
+    ],
+    "failures": [],
+    "interpretation": "Pinned static-source comparison only; concurrent replay durations are not a speed benchmark. Public source and vulnerability labels are not redistributed here."
+  },
+  "synthetic_graph_benchmark": {
+    "clean": {
+      "before": {
+        "profile": "clean",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "runtime_digest": "16d43a901df1b77bcd1b3f75d8f3bd79a5614323b2b85513418b51a23660234e",
+        "fixture": {
+          "files": 500,
+          "bytes": 256000,
+          "sha256": "95f632c1401be25c71e41f48e2f626f0bb6f4c1296e463e8b4157f0d5310c8cf"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.5554020999697968,
+          0.4993154000258073,
+          0.4860152999754064
+        ],
+        "median_seconds": 0.4993154000258073,
+        "p95_seconds": 0.5554020999697968,
+        "peak_rss_mib": 24.953125,
+        "files_read": 500,
+        "flows": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "affected_inputs": 0,
+          "unreadable": 0,
+          "oversized": 0,
+          "parser_limit": 0
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        },
+        "scope": "Graph construction on synthetic files only; no target execution or production throughput claim"
+      },
+      "after": {
+        "profile": "clean",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "runtime_digest": "17ee239f240546bb10e2101d9f8741994cd5d806ad4b227c5c1241cfcae751b1",
+        "fixture": {
+          "files": 500,
+          "bytes": 256000,
+          "sha256": "95f632c1401be25c71e41f48e2f626f0bb6f4c1296e463e8b4157f0d5310c8cf"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.5211801999830641,
+          0.5081021999940276,
+          0.5106808000127785
+        ],
+        "median_seconds": 0.5106808000127785,
+        "p95_seconds": 0.5211801999830641,
+        "peak_rss_mib": 25.01171875,
+        "files_read": 500,
+        "flows": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "affected_inputs": 0,
+          "unreadable": 0,
+          "oversized": 0,
+          "parser_limit": 0
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        },
+        "scope": "Graph construction on synthetic files only; no target execution or production throughput claim"
+      }
+    },
+    "limits": {
+      "before": {
+        "profile": "limits",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "runtime_digest": "16d43a901df1b77bcd1b3f75d8f3bd79a5614323b2b85513418b51a23660234e",
+        "fixture": {
+          "files": 16,
+          "bytes": 7344816,
+          "sha256": "d1f4cf3c0e68b024f1f5f1c8f60224a9823e681184600fb702ce8f199b5797c9"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          1.4012432000017725,
+          1.4357671000179835,
+          1.4426304000080563
+        ],
+        "median_seconds": 1.4357671000179835,
+        "p95_seconds": 1.4426304000080563,
+        "peak_rss_mib": 28.3125,
+        "files_read": 16,
+        "flows": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "file_chars"
+          ],
+          "affected_inputs": 16,
+          "unreadable": 0,
+          "oversized": 0,
+          "parser_limit": 16
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        },
+        "scope": "Graph construction on synthetic files only; no target execution or production throughput claim"
+      },
+      "after": {
+        "profile": "limits",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "runtime_digest": "17ee239f240546bb10e2101d9f8741994cd5d806ad4b227c5c1241cfcae751b1",
+        "fixture": {
+          "files": 16,
+          "bytes": 7344816,
+          "sha256": "d1f4cf3c0e68b024f1f5f1c8f60224a9823e681184600fb702ce8f199b5797c9"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          1.515588200010825,
+          1.451160600001458,
+          1.5393276999820955
+        ],
+        "median_seconds": 1.515588200010825,
+        "p95_seconds": 1.5393276999820955,
+        "peak_rss_mib": 28.5859375,
+        "files_read": 16,
+        "flows": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "file_chars"
+          ],
+          "affected_inputs": 16,
+          "unreadable": 0,
+          "oversized": 0,
+          "parser_limit": 16
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        },
+        "scope": "Graph construction on synthetic files only; no target execution or production throughput claim"
+      }
+    }
+  },
+  "limitations": [
+    "Primary-agent review and automated gates, not independent security QA.",
+    "Unknown processing is advisory; L2 identifies taint-engine evidence, not runtime exploitability.",
+    "Framework/type semantics, dynamic dispatch, general control flow and symlink containment are not proven.",
+    "128 realistic-negative rules and 409 high/critical rules without realistic-negative coverage remain visible.",
+    "Performance is three samples after one warmup on bounded synthetic files, with maximum sample used as conservative p95 proxy; not production throughput.",
+    "No zero-false-positive, model precision/recall/token-savings or absence-of-vulnerabilities claim."
+  ]
+}

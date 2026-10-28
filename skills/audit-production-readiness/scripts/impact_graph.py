@@ -19,6 +19,7 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+import taint_contracts
 from review_context import read_source
 from snapshot_identity import SourceSizeError, _is_link_or_reparse
 
@@ -52,32 +53,6 @@ SKIP_DIRS = {
 
 PYTHON_SUFFIXES = {".py", ".pyi"}
 JS_TS_SUFFIXES = {".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}
-
-KNOWN_SANITIZERS = frozenset(
-    {
-        "int",
-        "float",
-        "bool",
-        "abs",
-        "len",
-        "round",
-        "escape",
-        "html.escape",
-        "markupsafe.escape",
-        "bleach.clean",
-        "shlex.quote",
-        "quote",
-        "quote_plus",
-        "re.escape",
-        "uuid.uuid4",
-        "uuid.uuid",
-        "uuid.UUID",
-        "is_uuid",
-        "sanitize",
-        "dompurify.sanitize",
-        "validator.escape",
-    }
-)
 
 # Simple-call sink table shared by the JS/TS lexical analyzer. Keys are the
 # lowercased final call segment; values map onto the same rule IDs the Python
@@ -152,6 +127,7 @@ class TaintSinkOccurrence:
     line: int
     param_name: str
     call_snippet: str
+    transforms: tuple[str, ...] = ()
 
 
 @dataclass
@@ -160,6 +136,7 @@ class CalleeCallSite:
     param_name: str
     arg_index: int
     line: int
+    transforms: tuple[str, ...] = ()
 
 
 @dataclass
@@ -187,6 +164,7 @@ class CrossFileTaintFlow:
     call_chain: list[str]
     is_sanitized: bool
     sanitizer: str | None = None
+    uncertain: bool = False
 
 
 @dataclass
@@ -221,7 +199,7 @@ class ImpactReport:
 
 
 class PythonASTVisitor(ast.NodeVisitor):
-    def __init__(self, rel_path: str):
+    def __init__(self, rel_path: str, contracts=None):
         self.rel_path = rel_path
         self.symbols: dict[str, SymbolDef] = {}
         self.summaries: dict[str, FunctionSummary] = {}
@@ -231,11 +209,14 @@ class PythonASTVisitor(ast.NodeVisitor):
         self.tables_in_func: set[str] = set()
         self.func_params: list[str] = []
         self.func_sanitized: set[str] = set()
-        self.func_aliases: dict[str, str] = {}
         self.func_sinks: list[TaintSinkOccurrence] = []
         self.func_callee_calls: list[CalleeCallSite] = []
         self.is_entrypoint_func: bool = False
         self.entrypoint_taint_params: list[str] = []
+        self.contracts = contracts or taint_contracts.PythonContracts(
+            ast.Module(body=[], type_ignores=[])
+        )
+        self.func_values: dict[str, taint_contracts.Trace] = {}
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         prev_class = self.current_class
@@ -256,18 +237,19 @@ class PythonASTVisitor(ast.NodeVisitor):
         prev_tables = self.tables_in_func
         prev_params = self.func_params
         prev_sanitized = self.func_sanitized
-        prev_aliases = self.func_aliases
         prev_sinks = self.func_sinks
         prev_callee_calls = self.func_callee_calls
         prev_is_entry = self.is_entrypoint_func
         prev_taint_params = self.entrypoint_taint_params
+        prev_values, prev_contracts = self.func_values, self.contracts
+        self.func_values = {}
+        self.contracts = taint_contracts.PythonContracts(node, prev_contracts)
 
         self.current_func = full_name
         self.calls_in_func = set()
         self.tables_in_func = set()
         self.func_params = [a.arg for a in node.args.args if a.arg not in ("self", "cls")]
         self.func_sanitized = set()
-        self.func_aliases = {}
         self.func_sinks = []
         self.func_callee_calls = []
 
@@ -318,97 +300,95 @@ class PythonASTVisitor(ast.NodeVisitor):
         self.tables_in_func = prev_tables
         self.func_params = prev_params
         self.func_sanitized = prev_sanitized
-        self.func_aliases = prev_aliases
         self.func_sinks = prev_sinks
         self.func_callee_calls = prev_callee_calls
         self.is_entrypoint_func = prev_is_entry
         self.entrypoint_taint_params = prev_taint_params
+        self.func_values, self.contracts = prev_values, prev_contracts
+
+    def visit_If(self, node: ast.If) -> None:
+        if not self.current_func:
+            self.generic_visit(node)
+            return
+        self.visit(node.test)
+        fields = ("func_values", "func_sanitized")
+        base = {name: getattr(self, name).copy() for name in fields}
+        states = []
+        for statements in (node.body, node.orelse):
+            for name, value in base.items():
+                setattr(self, name, value.copy())
+            for statement in statements:
+                self.visit(statement)
+            if not statements or not isinstance(statements[-1], (ast.Return, ast.Raise)):
+                states.append(dict(self.func_values))
+        self.func_values = taint_contracts.join_values(
+            states or [base["func_values"]],
+            lambda name: base["func_values"].get(
+                name, taint_contracts.Trace(name if name in self.func_params else None, ("opaque",))
+            ),
+        )
+        self.func_sanitized = {
+            name for name, value in self.func_values.items() if value.root is None
+        }
 
     def visit_Assign(self, node: ast.Assign) -> None:
         target_names = [target.id for target in node.targets if isinstance(target, ast.Name)]
         if self.current_func:
+            trace = self._value_trace(node.value)
             for target_name in target_names:
-                self.func_aliases.pop(target_name, None)
                 self.func_sanitized.discard(target_name)
-        if self.current_func and isinstance(node.value, ast.Call):
-            func_name = self._extract_call_name(node.value.func)
-            if func_name and any(san in func_name.lower() for san in KNOWN_SANITIZERS):
-                self.func_sanitized.update(target_names)
-        # Alias tracking: a single target assigned from exactly one live
-        # parameter (possibly through other aliases) carries that parameter's
-        # taint into later statements (q = "SELECT" + uid; execute(q)).
-        if self.current_func and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-            names = {c.id for c in ast.walk(node.value) if isinstance(c, ast.Name)}
-            roots = {self._resolve_alias(name) for name in names}
-            roots = {
-                root
-                for root in roots
-                if root in self.func_params and root not in self.func_sanitized
-            }
-            target_name = node.targets[0].id
-            if len(roots) == 1 and target_name not in self.func_sanitized:
-                root = next(iter(roots))
-                if target_name != root:
-                    self.func_aliases[target_name] = root
+                self.func_values[target_name] = trace
+                if trace.root is None:
+                    self.func_sanitized.add(target_name)
         self.generic_visit(node)
 
-    def _resolve_alias(self, name: str) -> str:
-        current = name
-        seen: set[str] = set()
-        while current in self.func_aliases and current not in seen and len(seen) < 6:
-            seen.add(current)
-            current = self.func_aliases[current]
-        return current
-
-    def _resolve_carrier(self, name: str) -> str | None:
-        """Map a local name to the live parameter whose taint it carries, or
-        None when the name is not a parameter, not an alias, or sanitized."""
-        if name in self.func_params:
-            return None if name in self.func_sanitized else name
-        root = self._resolve_alias(name)
-        if root in self.func_params and root not in self.func_sanitized:
-            return root
-        return None
+    def _value_trace(self, node):
+        return taint_contracts.python_trace(
+            node,
+            lambda name: self.func_values.get(
+                name,
+                taint_contracts.Trace(
+                    name if name in self.func_params and name not in self.func_sanitized else None,
+                    () if name in self.func_params else ("opaque",),
+                ),
+            ),
+            lambda _node: False,
+            self.contracts,
+        )
 
     def visit_Call(self, node: ast.Call) -> None:
         if self.current_func:
             call_name = self._extract_call_name(node.func)
             if call_name:
                 self.calls_in_func.add(call_name)
-                simple_call = call_name.split(".")[-1].lower()
+                resolved_call = self.contracts.resolve(call_name)
+                simple_call = resolved_call.split(".")[-1].lower()
 
                 # 1. Track Callee Call Sites for inter-procedural propagation
                 for idx, arg in enumerate(node.args):
-                    param_name = self._extract_var_name(arg)
-                    if param_name:
-                        resolved = self._resolve_carrier(param_name)
-                        if resolved is None:
-                            continue
-                        # Check if arg is wrapped in a sanitizer at call site
-                        if self._is_node_sanitized(arg):
-                            self.func_sanitized.add(param_name)
-                            if param_name in self.func_aliases:
-                                del self.func_aliases[param_name]
-                        else:
-                            self.func_callee_calls.append(
-                                CalleeCallSite(
-                                    callee_name=call_name,
-                                    param_name=resolved,
-                                    arg_index=idx,
-                                    line=node.lineno,
-                                )
+                    trace = self._value_trace(arg)
+                    if trace.root:
+                        self.func_callee_calls.append(
+                            CalleeCallSite(
+                                callee_name=resolved_call,
+                                param_name=trace.root,
+                                arg_index=idx,
+                                line=node.lineno,
+                                transforms=trace.transforms,
                             )
+                        )
 
                 # 2. Track Dangerous Sinks
-                if simple_call in {"execute", "executemany", "raw"}:
+                if simple_call in {"execute", "executemany", "raw"} and isinstance(
+                    node.func, ast.Attribute
+                ):
                     # Only the first argument carries the SQL statement; the
                     # remaining arguments are bound parameters (cursor.execute
                     # (sql, (a, b))) and are safe by construction.
                     for arg in node.args[:1]:
-                        p_name = self._extract_tainted_param_in_expr(arg)
-                        if p_name is None and isinstance(arg, ast.Name):
-                            p_name = self._resolve_carrier(arg.id)
-                        if p_name and p_name not in self.func_sanitized:
+                        trace = self._value_trace(arg)
+                        p_name = trace.root
+                        if p_name:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
                                     sink_type="sql_injection",
@@ -418,14 +398,20 @@ class PythonASTVisitor(ast.NodeVisitor):
                                     call_snippet=ast.unparse(node)
                                     if hasattr(ast, "unparse")
                                     else call_name,
+                                    transforms=trace.transforms,
                                 )
                             )
                 elif simple_call in {"system", "popen", "check_output", "check_call"}:
-                    for arg in node.args:
-                        p_name = self._extract_tainted_param_in_expr(arg)
-                        if p_name is None and isinstance(arg, ast.Name):
-                            p_name = self._resolve_carrier(arg.id)
-                        if p_name and p_name not in self.func_sanitized:
+                    for arg in node.args[:1]:
+                        if isinstance(arg, (ast.List, ast.Tuple)) and not any(
+                            k.arg == "shell"
+                            and not (isinstance(k.value, ast.Constant) and not k.value.value)
+                            for k in node.keywords
+                        ):
+                            continue
+                        trace = self._value_trace(arg)
+                        p_name = trace.root
+                        if p_name:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
                                     sink_type="command_injection",
@@ -435,14 +421,14 @@ class PythonASTVisitor(ast.NodeVisitor):
                                     call_snippet=ast.unparse(node)
                                     if hasattr(ast, "unparse")
                                     else call_name,
+                                    transforms=trace.transforms,
                                 )
                             )
-                elif simple_call in {"eval", "exec", "compile"}:
-                    for arg in node.args:
-                        p_name = self._extract_tainted_param_in_expr(arg)
-                        if p_name is None and isinstance(arg, ast.Name):
-                            p_name = self._resolve_carrier(arg.id)
-                        if p_name and p_name not in self.func_sanitized:
+                elif self.contracts.code_sink(call_name):
+                    for arg in node.args[:1]:
+                        trace = self._value_trace(arg)
+                        p_name = trace.root
+                        if p_name:
                             self.func_sinks.append(
                                 TaintSinkOccurrence(
                                     sink_type="code_execution",
@@ -452,6 +438,7 @@ class PythonASTVisitor(ast.NodeVisitor):
                                     call_snippet=ast.unparse(node)
                                     if hasattr(ast, "unparse")
                                     else call_name,
+                                    transforms=trace.transforms,
                                 )
                             )
 
@@ -461,28 +448,6 @@ class PythonASTVisitor(ast.NodeVisitor):
         if self.current_func and isinstance(node.value, str):
             self._extract_tables_from_str(node.value)
         self.generic_visit(node)
-
-    def _extract_var_name(self, node: ast.AST) -> str | None:
-        if isinstance(node, ast.Name):
-            return node.id
-        return None
-
-    def _is_node_sanitized(self, node: ast.AST) -> bool:
-        if isinstance(node, ast.Call):
-            func_name = self._extract_call_name(node.func)
-            if func_name and any(san in func_name.lower() for san in KNOWN_SANITIZERS):
-                return True
-        return False
-
-    def _extract_tainted_param_in_expr(self, node: ast.AST) -> str | None:
-        for child in ast.walk(node):
-            if (
-                isinstance(child, ast.Name)
-                and child.id in self.func_params
-                and child.id not in self.func_sanitized
-            ):
-                return child.id
-        return None
 
     def _extract_call_name(self, node: ast.AST) -> str | None:
         if isinstance(node, ast.Name):
@@ -645,12 +610,6 @@ class JsTsAnalyzer:
         r"\.\s*(?:innerHTML|outerHTML)\s*=(?!=)|insertAdjacentHTML\s*\("
     )
     DOCUMENT_WRITE_CALL = re.compile(r"\bdocument\s*\.\s*write(?:ln)?\s*\(")
-    SANITIZER_WRAP = re.compile(
-        r"(?:\bnumber\b|\bparseint\b|\bparsefloat\b|\bpath\s*\.\s*basename\b"
-        r"|[A-Za-z_$][\w$]*sanitiz[\w$]*|[A-Za-z_$][\w$]*escape[\w$]*"
-        r"|\bdompurify\b[\w$]*)\s*\([^()]*\)",
-        re.IGNORECASE,
-    )
     IDENTIFIER_TOKEN = re.compile(r"[A-Za-z_$][\w$]*")
     CONTAINMENT_GUARD = re.compile(r"\b(?P<name>[A-Za-z_$][\w$]*)\s*\.\s*startsWith\s*\(")
     ENTRYPOINT_FALLBACK_NAMES = frozenset({"main"})
@@ -661,6 +620,103 @@ class JsTsAnalyzer:
 
     def __init__(self):
         self.omissions: set[str] = set()
+        self.imports: dict[str, str] = {}
+        self.shadowed: set[str] = set()
+
+    def _bindings(self, content, spans):
+        from js_config_checks import js_context_tokens
+
+        values = [t[0] for t in js_context_tokens(content)]
+        self.imports, self.shadowed = {}, set()
+        trusted_assignments = set()
+        require_shadowed = any(
+            value == "require"
+            and (
+                values[i + 1 : i + 2] != ["("]
+                or (i and values[i - 1] in {"function", "const", "let", "var"})
+            )
+            for i, value in enumerate(values)
+        )
+        for index, value in enumerate(values):
+            if (
+                value in {"const", "let", "var"}
+                and values[index + 2 : index + 5] == ["=", "require", "("]
+                and index + 6 < len(values)
+                and values[index + 6] == ")"
+            ):
+                module = values[index + 5].strip("\"'")
+                if not require_shadowed and module in {"path", "node:path", "dompurify"}:
+                    if values[index + 1] in self.imports:
+                        self.shadowed.add(values[index + 1])
+                    self.imports[values[index + 1]] = module
+                    trusted_assignments.add(index + 1)
+            if value == "import" and index + 1 < len(values):
+                for cursor in range(index + 2, min(len(values) - 1, index + 32)):
+                    if values[cursor] == "from":
+                        module = values[cursor + 1].strip("\"'")
+                        if module in {"path", "node:path", "dompurify"}:
+                            alias = values[index + 1]
+                            if values[index + 1 : index + 3] == ["*", "as"]:
+                                alias = values[index + 3]
+                            if re.fullmatch(r"[A-Za-z_$][\w$]*", alias):
+                                if alias in self.imports:
+                                    self.shadowed.add(alias)
+                                self.imports[alias] = module
+                                trusted_assignments.add(
+                                    index + 3
+                                    if values[index + 1 : index + 3] == ["*", "as"]
+                                    else index + 1
+                                )
+                        break
+                    if values[cursor] == ";":
+                        break
+        heads = set(self.imports) | {"Number", "parseInt", "parseFloat", "String"}
+        for index, value in enumerate(values):
+            if value in heads and index not in trusted_assignments:
+                previous = values[index - 1] if index else ""
+                following = values[index + 1] if index + 1 < len(values) else ""
+                if value in self.imports and following != ".":
+                    self.shadowed.add(value)
+                if self.imports.get(value) == "dompurify" and values[index + 1 : index + 4] != [
+                    ".",
+                    "sanitize",
+                    "(",
+                ]:
+                    self.shadowed.add(value)
+                declaration = next(
+                    (
+                        j
+                        for j in range(index - 1, max(-1, index - 32), -1)
+                        if values[j] in {"const", "let", "var"}
+                    ),
+                    None,
+                )
+                if (
+                    declaration is not None
+                    and "=" not in values[declaration:index]
+                    and following != ":"
+                ):
+                    self.shadowed.add(value)
+                if previous in {"const", "let", "var", "function", "class", "import"} or (
+                    following == "=" and previous not in {".", "?."}
+                ):
+                    self.shadowed.add(value)
+                if (
+                    previous == "."
+                    and index >= 2
+                    and values[index - 2] in {"globalThis", "global", "window", "self"}
+                    and following == "="
+                ):
+                    self.shadowed.add(value)
+                cursor = index + 1
+                while cursor + 1 < len(values) and values[cursor] in {".", "?."}:
+                    cursor += 2
+                if cursor > index + 1 and cursor < len(values) and values[cursor] == "=":
+                    self.shadowed.add(value)
+        for span in spans:
+            for head in heads:
+                if re.search(r"(?<![\w$])" + re.escape(head) + r"(?![\w$])", span.params_text):
+                    self.shadowed.add(head)
 
     def analyze(self, rel_path: str, content: str) -> list[FunctionSummary]:
         """Return function summaries with entrypoint/taint evidence for one file."""
@@ -676,6 +732,7 @@ class JsTsAnalyzer:
         if len(spans) > self.MAX_FUNCTIONS_PER_FILE:
             self.omissions.add("functions")
             spans = spans[: self.MAX_FUNCTIONS_PER_FILE]
+        self._bindings(content, spans)
 
         summaries: list[FunctionSummary] = []
         for span in spans:
@@ -959,16 +1016,25 @@ class JsTsAnalyzer:
         return "".join(chars)
 
     def _track_assignments(
-        self, body: str, tainted: set[str], sanitized: set[str]
+        self, body: str, tainted: set[str], sanitized: set[str], transforms=None
     ) -> dict[str, str]:
-        """Propagate request-derived taint through local aliases and record
-        sanitizer-wrapped assignments (mirrors the Python visitor's behavior
-        of clearing both source and target names).
+        """Propagate aliases and value-specific transforms in source order.
 
         Returns a target->source alias map so a sink that consumes a derived
         variable can be attributed back to the parameter carrying the taint."""
         aliases: dict[str, str] = {}
-        for line in body.splitlines():
+        transforms = {} if transforms is None else transforms
+        normalized = set()
+        last_writes = {}
+        offset = 0
+        depth = 0
+        for line in body.splitlines(keepends=True):
+            line_start = offset
+            offset += len(line)
+            nested = depth > 0 or bool(
+                re.search(r"\b(?:if|else|for|while|try|catch|switch)\b", line)
+            )
+            depth += line.count("{") - line.count("}")
             if "=>" in line:
                 # Arrow expressions are function boundaries, not value aliases.
                 continue
@@ -988,40 +1054,86 @@ class JsTsAnalyzer:
             if not targets:
                 continue
             live_before = sorted(tainted - sanitized)
-            cleaned_rhs = self.SANITIZER_WRAP.sub(" ", rhs)
-            had_wrap = bool(self.SANITIZER_WRAP.search(rhs))
+            cleaned_rhs = rhs
             req_derived = bool(self.REQUEST_SOURCE_ACCESS.search(rhs))
             flowing = any(self._contains_word(cleaned_rhs, name) for name in live_before)
-            wrapped_sources = [name for name in live_before if self._contains_word(rhs, name)]
+            sources = [name for name in live_before if self._contains_word(rhs, name)]
+            source_name = sources[0] if sources else "request"
+            chain = taint_contracts.js_value_chain(
+                rhs, live_before, transforms, self.imports, self.shadowed
+            )
+            root_name = aliases.get(source_name, source_name)
+            path_normalized = (
+                source_name in normalized and rhs.strip().rstrip(";").strip() == source_name
+            ) or any(
+                self.imports.get(alias) in {"path", "node:path"}
+                and alias not in self.shadowed
+                and taint_contracts._whole_js_call(rhs.strip().rstrip(";").strip())
+                and re.match(r"\s*" + re.escape(alias) + r"\.(?:resolve|join)\s*\(", rhs)
+                for alias in self.imports
+            )
+            previous = {
+                target: (aliases.get(target, target), transforms.get(target, ()))
+                for target in targets
+                if target in tainted
+            }
             for target in targets:
+                last_writes[target] = line_start
                 tainted.discard(target)
                 sanitized.discard(target)
                 aliases.pop(target, None)
+                transforms.pop(target, None)
+                normalized.discard(target)
             if req_derived:
-                if had_wrap and not flowing and not self.REQUEST_SOURCE_ACCESS.search(cleaned_rhs):
-                    sanitized.update(targets)
-                else:
-                    tainted.update(targets)
-                    source_root = next(
+                tainted.update(targets)
+                if len(targets) == 1:
+                    aliases[targets[0]] = next(
                         (name for name in ("req", "request") if self._contains_word(rhs, name)),
                         "request",
                     )
-                    if len(targets) == 1:
-                        aliases[targets[0]] = source_root
             elif flowing:
-                sources = [name for name in live_before if self._contains_word(cleaned_rhs, name)]
                 tainted.update(targets)
                 # Single-source aliasing lets sinks reached through the copy
                 # report under the parameter that carries the taint.
-                if len(sources) == 1 and len(targets) == 1:
-                    aliases[targets[0]] = sources[0]
-            elif had_wrap and wrapped_sources:
-                sanitized.update(targets)
-        # Containment guards: a value explicitly checked against a prefix
-        # (reportPath.startsWith(BASE_DIR)) was reviewed for traversal, so its
-        # flow is treated as sanitized downstream.
+                if len(targets) == 1:
+                    aliases[targets[0]] = root_name
+            if req_derived or flowing:
+                for target in targets:
+                    transforms[target] = (*chain, "unknown") if nested else chain
+                    if path_normalized and not nested:
+                        normalized.add(target)
+            if nested:
+                for target, (root, old_chain) in previous.items():
+                    if target not in tainted:
+                        tainted.add(target)
+                        aliases[target] = root
+                        transforms[target] = (*old_chain, "unknown")
+        # Prefix checks without a separator, normalization or rejection are
+        # unresolved. A guard cannot protect a later assignment to its value.
         for guard_match in self.CONTAINMENT_GUARD.finditer(body):
-            sanitized.add(guard_match.group("name"))
+            name = guard_match.group("name")
+            if name not in tainted:
+                continue
+            prefix = body[: guard_match.start()]
+            guard = re.search(r"if\s*\(\s*!\s*$", prefix)
+            tail = body[guard_match.end() :]
+            checked = re.match(
+                r"\s*([A-Za-z_$][\w$]*)\s*\+\s*([A-Za-z_$][\w$]*)\.sep\s*\)\s*\)\s*(?:\{\s*)?(?:throw|return)\b",
+                tail,
+            )
+            flat = bool(guard) and prefix[: guard.start()].count("{") == prefix[
+                : guard.start()
+            ].count("}")
+            valid = (
+                flat
+                and checked
+                and name in normalized
+                and last_writes.get(name, -1) < guard_match.start()
+                and checked[1] not in tainted
+                and self.imports.get(checked[2]) in {"path", "node:path"}
+                and checked[2] not in self.shadowed
+            )
+            transforms[name] = (*transforms.get(name, ()), "contained" if valid else "unknown")
         return aliases
 
     def _collect_sinks(
@@ -1038,7 +1150,10 @@ class JsTsAnalyzer:
         for match in self.SINK_CALL.finditer(body):
             tainted = set(initial_tainted)
             sanitized: set[str] = set()
-            alias_map = self._track_assignments(body[: match.start()], tainted, sanitized)
+            transforms = {}
+            alias_map = self._track_assignments(
+                body[: match.start()], tainted, sanitized, transforms
+            )
             carrier_list = sorted(tainted - sanitized - self.RESPONSE_SIDE_NAMES)
             if not carrier_list:
                 continue
@@ -1073,11 +1188,8 @@ class JsTsAnalyzer:
                     self.omissions.add("sink_args")
                 continue
             original_args = content[base_offset + open_paren + 1 : base_offset + close_paren]
-            cleaned_args = self.SANITIZER_WRAP.sub(" ", body[open_paren + 1 : close_paren])
-            # Parameterized style passes values inside a placeholder array
-            # (db.query(sql, [x])); the driver binds them safely, so drop
-            # flat bracketed segments before searching for raw carriers.
-            cleaned_args = re.sub(r"\[[^[\]]*\]", " ", cleaned_args)
+            arguments = self._split_top_level(body[open_paren + 1 : close_paren])
+            cleaned_args = arguments[0][0] if arguments else ""
             hit = next(
                 (name for name in carrier_list if self._contains_word(cleaned_args, name)),
                 None,
@@ -1110,6 +1222,9 @@ class JsTsAnalyzer:
                     rule_id=sink_info[1],
                     line=content.count("\n", 0, base_offset + match.start()) + 1,
                     param_name=root,
+                    transforms=taint_contracts.js_value_chain(
+                        cleaned_args, carrier_list, transforms, self.imports, self.shadowed
+                    ),
                     call_snippet=content[
                         base_offset + match.start() : base_offset + close_paren + 1
                     ][:160],
@@ -1141,7 +1256,10 @@ class JsTsAnalyzer:
             for match in pattern.finditer(body):
                 tainted = set(initial_tainted)
                 sanitized: set[str] = set()
-                alias_map = self._track_assignments(body[: match.start()], tainted, sanitized)
+                transforms = {}
+                alias_map = self._track_assignments(
+                    body[: match.start()], tainted, sanitized, transforms
+                )
                 carrier_list = sorted(tainted - sanitized - self.RESPONSE_SIDE_NAMES)
                 if not carrier_list:
                     continue
@@ -1153,7 +1271,23 @@ class JsTsAnalyzer:
                     self.omissions.add("dom_args")
                     line_end = match.end() + self.MAX_ARG_CHARS
                 rhs_text = body[match.end() : min(limit, line_end)]
-                cleaned_rhs = self.SANITIZER_WRAP.sub(" ", rhs_text)
+                if body[match.end() - 1] == "(":
+                    close = self._match_delim(
+                        body,
+                        match.end() - 1,
+                        "(",
+                        ")",
+                        bound=min(limit, match.end() + self.MAX_ARG_CHARS),
+                    )
+                    if close is None:
+                        self.omissions.add("dom_args")
+                        continue
+                    arguments = self._split_top_level(body[match.end() : close])
+                    arg_index = 1 if "insertAdjacentHTML" in match.group(0) else 0
+                    if len(arguments) <= arg_index:
+                        continue
+                    rhs_text = arguments[arg_index][0]
+                cleaned_rhs = rhs_text
                 hit = next(
                     (name for name in carrier_list if self._contains_word(cleaned_rhs, name)),
                     None,
@@ -1176,6 +1310,9 @@ class JsTsAnalyzer:
                         rule_id=rule_id,
                         line=content.count("\n", 0, base_offset + match.start()) + 1,
                         param_name=root,
+                        transforms=taint_contracts.js_value_chain(
+                            cleaned_rhs, carrier_list, transforms, self.imports, self.shadowed
+                        ),
                         call_snippet=body[match.start() : line_end][:160],
                     )
                 )
@@ -1196,7 +1333,10 @@ class JsTsAnalyzer:
         for match in self.CALLEE_CALL.finditer(body):
             tainted = set(initial_tainted)
             sanitized: set[str] = set()
-            alias_map = self._track_assignments(body[: match.start()], tainted, sanitized)
+            transforms = {}
+            alias_map = self._track_assignments(
+                body[: match.start()], tainted, sanitized, transforms
+            )
             carrier_list = sorted(tainted - sanitized - self.RESPONSE_SIDE_NAMES)
             if not carrier_list:
                 continue
@@ -1220,7 +1360,7 @@ class JsTsAnalyzer:
                 self.omissions.add("callee_positions")
             arguments = all_arguments[:8]
             for position, (argument, _offset) in enumerate(arguments):
-                cleaned_argument = self.SANITIZER_WRAP.sub(" ", argument)
+                cleaned_argument = argument
                 hit = next(
                     (name for name in carrier_list if self._contains_word(cleaned_argument, name)),
                     None,
@@ -1243,6 +1383,9 @@ class JsTsAnalyzer:
                         param_name=root,
                         arg_index=position,
                         line=content.count("\n", 0, base_offset + match.start()) + 1,
+                        transforms=taint_contracts.js_value_chain(
+                            argument, carrier_list, transforms, self.imports, self.shadowed
+                        ),
                     )
                 )
                 break
@@ -1493,7 +1636,7 @@ class ImpactGraph:
             if suffix in PYTHON_SUFFIXES:
                 try:
                     tree = ast.parse(content, filename=rel_path)
-                    visitor = PythonASTVisitor(rel_path)
+                    visitor = PythonASTVisitor(rel_path, taint_contracts.PythonContracts(tree))
                     visitor.visit(tree)
                     for sym in visitor.symbols.values():
                         self.symbols[sym.name].append(sym)
@@ -1617,19 +1760,27 @@ class ImpactGraph:
 
         for ep in entrypoints:
             for source_param in ep.entrypoint_taint_params:
-                queue: list[tuple[FunctionSummary, str, list[str], bool]] = [
+                queue = [
                     (
                         ep,
                         source_param,
                         [f"{ep.file}:{ep.name}"],
                         source_param in ep.sanitized_params,
+                        frozenset(),
+                        False,
                     )
                 ]
-                visited_states: set[tuple[str, str]] = set()
+                visited_states = set()
 
                 while queue:
-                    curr_sum, curr_param, path, is_sanitized = queue.pop(0)
-                    state_key = (f"{curr_sum.file}:{curr_sum.name}", curr_param)
+                    curr_sum, curr_param, path, is_sanitized, proofs, uncertain = queue.pop(0)
+                    state_key = (
+                        f"{curr_sum.file}:{curr_sum.name}",
+                        curr_param,
+                        is_sanitized,
+                        proofs,
+                        uncertain,
+                    )
                     if state_key in visited_states:
                         continue
                     visited_states.add(state_key)
@@ -1640,6 +1791,12 @@ class ImpactGraph:
                     # Check if curr_param reaches any dangerous sink in curr_sum
                     for sink in curr_sum.param_to_sinks:
                         if sink.param_name == curr_param:
+                            sink_proofs, sink_uncertain = taint_contracts.transfer(
+                                proofs, sink.transforms
+                            )
+                            cleared = is_sanitized or taint_contracts.protected(
+                                sink_proofs, sink.rule_id
+                            )
                             flows.append(
                                 CrossFileTaintFlow(
                                     source_file=ep.file,
@@ -1651,8 +1808,9 @@ class ImpactGraph:
                                     sink_type=sink.sink_type,
                                     sink_line=sink.line,
                                     call_chain=path,
-                                    is_sanitized=is_sanitized,
-                                    sanitizer="cleared_by_sanitizer" if is_sanitized else None,
+                                    is_sanitized=cleared,
+                                    sanitizer=",".join(sorted(sink_proofs)) if cleared else None,
+                                    uncertain=uncertain or sink_uncertain,
                                 )
                             )
 
@@ -1667,7 +1825,19 @@ class ImpactGraph:
                                     c_param = c_sum.params[call_site.arg_index]
                                     next_path = [*path, f"{c_sum.file}:{c_sum.name}"]
                                     if len(next_path) <= 6:
-                                        queue.append((c_sum, c_param, next_path, is_sanitized))
+                                        next_proofs, next_uncertain = taint_contracts.transfer(
+                                            proofs, call_site.transforms
+                                        )
+                                        queue.append(
+                                            (
+                                                c_sum,
+                                                c_param,
+                                                next_path,
+                                                is_sanitized,
+                                                next_proofs,
+                                                uncertain or next_uncertain,
+                                            )
+                                        )
                                     else:
                                         self._omit(c_sum.file, "call_depth")
 
@@ -1935,6 +2105,7 @@ def _summary_to_ir_function(summary, effects=None, guards=None, line_start=0, li
                 variable=s.param_name,
                 call_expr=s.call_snippet[:120],
                 line=s.line,
+                transforms=s.transforms,
             )
             for s in summary.param_to_sinks
         ],
@@ -1944,6 +2115,7 @@ def _summary_to_ir_function(summary, effects=None, guards=None, line_start=0, li
                 arg_index=c.arg_index,
                 param_name=c.param_name,
                 line=c.line,
+                transforms=c.transforms,
             )
             for c in summary.callee_calls
         ],

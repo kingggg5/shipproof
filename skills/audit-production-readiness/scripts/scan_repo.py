@@ -44,6 +44,7 @@ import polyglot_checks
 import precision as precision_policy
 import python_runtime_checks
 import sql_checks
+import taint_contracts
 from rule_explanations import RULE_EXPLANATIONS
 
 VERSION = "0.12.0"
@@ -12432,31 +12433,6 @@ TAINT_SOURCES = frozenset(
         "os.getenv",
     }
 )
-TAINT_SANITIZERS = frozenset(
-    {
-        "int",
-        "float",
-        "bool",
-        "abs",
-        "len",
-        "round",
-        "escape",
-        "html.escape",
-        "markupsafe.escape",
-        "bleach.clean",
-        "shlex.quote",
-        "quote",
-        "quote_plus",
-        "re.escape",
-        "validator",
-        "validate",
-        "sanitize",
-        "is_uuid",
-        "uuid.uuid4",
-        "uuid.UUID",
-        "secure_filename",
-    }
-)
 TAINT_SINKS = {
     "execute": "SP103",
     "executemany": "SP103",
@@ -12478,6 +12454,7 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         source_lines: Sequence[str],
         authorized_routers: set[str] | None = None,
         ignore_ids: Sequence[tuple[str, ...]] | None = None,
+        contracts: taint_contracts.PythonContracts | None = None,
     ) -> None:
         self.relative_path = relative_path
         self.source_lines = source_lines
@@ -12490,6 +12467,10 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.local_assignments: dict[str, ast.AST] = {}
         self.import_aliases: dict[str, str] = {}
         self.tainted_vars: set[str] = set()
+        self.taint_values: dict[str, taint_contracts.Trace] = {}
+        self.contracts = contracts or taint_contracts.PythonContracts(
+            ast.Module(body=[], type_ignores=[])
+        )
 
     def line_is_ignored(self, rule_id: str, line_number: int) -> bool:
         if not self.ignore_ids:
@@ -12508,6 +12489,7 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         node: ast.AST,
         detection: str = "ast",
         confidence: str | None = None,
+        uncertain: bool = False,
     ) -> None:
         line_number = getattr(node, "lineno", 1)
         if self.line_is_ignored(rule.rule_id, line_number):
@@ -12535,6 +12517,8 @@ class PythonSecurityVisitor(ast.NodeVisitor):
                 ),
             )
         )
+        if uncertain:
+            self.findings[-1] = replace(self.findings[-1], tier="advisory")
 
     def inspect_route(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         route_calls = route_decorator_calls(node)
@@ -12600,42 +12584,29 @@ class PythonSecurityVisitor(ast.NodeVisitor):
             return full in TAINT_SOURCES
         return False
 
-    def _is_sanitized(self, node: ast.AST) -> bool:
-        """Check if an expression is wrapped in a known sanitizer call."""
-        if isinstance(node, ast.Call):
-            name = self._resolve_name(resolve_dotted_name(node.func)).rsplit(".", 1)[-1].lower()
-            return name in TAINT_SANITIZERS or any(
-                s in name for s in ("sanitize", "validate", "escape", "clean")
-            )
-        return False
+    def _value_trace(self, node: ast.AST) -> taint_contracts.Trace:
+        return taint_contracts.python_trace(
+            node,
+            lambda name: self.taint_values.get(
+                name,
+                taint_contracts.Trace(
+                    name if name in self.tainted_vars else None,
+                    () if name in self.tainted_vars else ("opaque",),
+                ),
+            ),
+            self._is_taint_source,
+            self.contracts,
+        )
 
     def _propagate_taint(self, target: ast.AST, value: ast.AST) -> None:
         """Track taint through simple assignments."""
         if not isinstance(target, ast.Name):
             return
-        if self._is_sanitized(value):
-            self.tainted_vars.discard(target.id)
-            return
-        if self._is_taint_source(value):
+        trace = self._value_trace(value)
+        self.tainted_vars.discard(target.id)
+        self.taint_values[target.id] = trace
+        if trace.root is not None:
             self.tainted_vars.add(target.id)
-            return
-        if isinstance(value, ast.Name) and value.id in self.tainted_vars:
-            self.tainted_vars.add(target.id)
-            return
-        if isinstance(value, (ast.BinOp, ast.JoinedStr)):
-            for child in ast.walk(value):
-                if isinstance(child, ast.Name) and child.id in self.tainted_vars:
-                    self.tainted_vars.add(target.id)
-                    return
-        if isinstance(value, ast.Call):
-            for arg in [*value.args, *(kw.value for kw in value.keywords)]:
-                if (
-                    isinstance(arg, ast.Name)
-                    and arg.id in self.tainted_vars
-                    and not self._is_sanitized(value)
-                ):
-                    self.tainted_vars.add(target.id)
-                    return
 
     def _inspect_hardcoded_credential(self, target: ast.Name, value: ast.AST) -> None:
         """Flag credential variables assembled from string literals or base64 data.
@@ -12679,6 +12650,33 @@ class PythonSecurityVisitor(ast.NodeVisitor):
                 self._propagate_taint(target, node.value)
                 self._inspect_hardcoded_credential(target, node.value)
         self.generic_visit(node)
+
+    def visit_If(self, node: ast.If) -> None:
+        self.visit(node.test)
+        fields = ("taint_values", "tainted_vars", "local_assignments", "import_aliases")
+        base = {name: getattr(self, name).copy() for name in fields}
+        states = []
+        assignments = dict(self.local_assignments)
+        for statements in (node.body, node.orelse):
+            for name, value in base.items():
+                setattr(self, name, value.copy())
+            for statement in statements:
+                self.visit(statement)
+            assignments.update(self.local_assignments)
+            if not statements or not isinstance(statements[-1], (ast.Return, ast.Raise)):
+                states.append(dict(self.taint_values))
+        self.taint_values = taint_contracts.join_values(
+            states or [base["taint_values"]],
+            lambda name: base["taint_values"].get(
+                name,
+                taint_contracts.Trace(name if name in base["tainted_vars"] else None, ("opaque",)),
+            ),
+        )
+        self.tainted_vars = {
+            name for name, value in self.taint_values.items() if value.root is not None
+        }
+        self.local_assignments = assignments
+        self.import_aliases = base["import_aliases"]
 
     def visit_For(self, node: ast.For) -> None:
         self.loop_depth += 1
@@ -12744,6 +12742,13 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.inspect_route(node)
         prev_assignments = self.local_assignments.copy()
         prev_tainted = self.tainted_vars.copy()
+        prev_values, prev_contracts, prev_imports = (
+            self.taint_values,
+            self.contracts,
+            self.import_aliases.copy(),
+        )
+        self.taint_values = {}
+        self.contracts = taint_contracts.PythonContracts(node, prev_contracts)
         self.local_assignments.clear()
         self.tainted_vars.clear()
         self._taint_function_params(node)
@@ -12752,11 +12757,23 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.async_function_depth -= 1
         self.local_assignments = prev_assignments
         self.tainted_vars = prev_tainted
+        self.taint_values, self.contracts, self.import_aliases = (
+            prev_values,
+            prev_contracts,
+            prev_imports,
+        )
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self.inspect_route(node)
         prev_assignments = self.local_assignments.copy()
         prev_tainted = self.tainted_vars.copy()
+        prev_values, prev_contracts, prev_imports = (
+            self.taint_values,
+            self.contracts,
+            self.import_aliases.copy(),
+        )
+        self.taint_values = {}
+        self.contracts = taint_contracts.PythonContracts(node, prev_contracts)
         self.local_assignments.clear()
         self.tainted_vars.clear()
         self._taint_function_params(node)
@@ -12766,6 +12783,11 @@ class PythonSecurityVisitor(ast.NodeVisitor):
         self.async_function_depth = previous_depth
         self.local_assignments = prev_assignments
         self.tainted_vars = prev_tainted
+        self.taint_values, self.contracts, self.import_aliases = (
+            prev_values,
+            prev_contracts,
+            prev_imports,
+        )
 
     def visit_Call(self, node: ast.Call) -> None:
         raw_name = resolve_dotted_name(node.func)
@@ -12774,36 +12796,67 @@ class PythonSecurityVisitor(ast.NodeVisitor):
 
         # --- Taint sink analysis ---
         sink_rule_id = TAINT_SINKS.get(method)
+        code_sink = self.contracts.code_sink(raw_name) or (
+            raw_name in self.import_aliases and self.contracts.code_sink(name)
+        )
+        if sink_rule_id == "SP101" and not code_sink:
+            sink_rule_id = None
         if sink_rule_id and node.args:
             first_arg = node.args[0]
+            trace = self._value_trace(first_arg)
+            proofs, uncertain = taint_contracts.transfer((), trace.transforms)
+            argv_only = (
+                sink_rule_id == "SP102"
+                and method in {"check_call", "check_output", "run", "Popen"}
+                and isinstance(first_arg, (ast.List, ast.Tuple))
+                and not any(
+                    k.arg == "shell"
+                    and not (isinstance(k.value, ast.Constant) and not k.value.value)
+                    for k in node.keywords
+                )
+            )
             if (
-                isinstance(first_arg, ast.Name)
-                and first_arg.id in self.tainted_vars
-                and not self._is_sanitized(node)
+                trace.root is not None
+                and not argv_only
+                and not taint_contracts.protected(proofs, sink_rule_id)
             ):
-                self.add_finding(find_rule(sink_rule_id), first_arg, detection="taint")
+                self.add_finding(
+                    find_rule(sink_rule_id), first_arg, detection="taint", uncertain=uncertain
+                )
         if method in {"execute", "query", "raw"} and node.args:
             first_arg = node.args[0]
-            if is_interpolated_sql_value(first_arg):
-                self.add_finding(find_rule("SP103"), first_arg)
+            trace = self._value_trace(first_arg)
+            proofs, uncertain = taint_contracts.transfer((), trace.transforms)
+            if is_interpolated_sql_value(first_arg) and not taint_contracts.protected(
+                proofs, "SP103"
+            ):
+                self.add_finding(find_rule("SP103"), first_arg, uncertain=uncertain)
             elif isinstance(first_arg, ast.Name) and first_arg.id in self.local_assignments:
                 assigned_val = self.local_assignments[first_arg.id]
-                if is_interpolated_sql_value(assigned_val):
-                    self.add_finding(find_rule("SP103"), first_arg, detection="taint")
-        if name in {"eval", "exec"} and node.args:
+                if is_interpolated_sql_value(assigned_val) and not taint_contracts.protected(
+                    proofs, "SP103"
+                ):
+                    self.add_finding(
+                        find_rule("SP103"), first_arg, detection="taint", uncertain=uncertain
+                    )
+        if code_sink and name.rsplit(".", 1)[-1] in {"eval", "exec"} and node.args:
             first_arg = node.args[0]
-            if isinstance(first_arg, ast.Name) and first_arg.id in self.local_assignments:
+            trace = self._value_trace(first_arg)
+            proofs, uncertain = taint_contracts.transfer((), trace.transforms)
+            if taint_contracts.protected(proofs, "SP101"):
+                pass
+            elif isinstance(first_arg, ast.Name) and first_arg.id in self.local_assignments:
                 assigned_val = self.local_assignments[first_arg.id]
                 if not (
                     isinstance(assigned_val, ast.Constant)
                     and isinstance(assigned_val.value, (int, float, bool))
                 ):
-                    self.add_finding(find_rule("SP101"), node, detection="ast")
+                    self.add_finding(find_rule("SP101"), node, detection="ast", uncertain=uncertain)
             elif not (
                 isinstance(first_arg, ast.Constant)
                 and isinstance(first_arg.value, (int, float, bool))
             ):
-                self.add_finding(find_rule("SP101"), node, detection="ast")
+                self.add_finding(find_rule("SP101"), node, detection="ast", uncertain=uncertain)
         if self.loop_depth > 0:
             receiver = name.split(".", 1)[0].lower() if "." in name else ""
             db_methods = {"query", "execute", "filter_by", "find_one", "fetch_one"}
@@ -13052,6 +13105,7 @@ def find_python_ast_issues(
             source_lines=lines if lines is not None else source_text.splitlines(),
             authorized_routers=authorized_routers,
             ignore_ids=ignore_ids,
+            contracts=taint_contracts.PythonContracts(tree),
         )
         visitor.visit(tree)
         if "create_task" in source_text or "logging" in source_text or "QueuePool" in source_text:
@@ -13692,7 +13746,10 @@ def collect_cross_file_taint(
             f"Tainted '{flow.source_param}' from {flow.source_file} reaches a "
             f"{flow.sink_type.replace('_', ' ')} sink via {chain}"
         )
-        findings.append(make_finding(rule, flow.sink_file, flow.sink_line, evidence, "taint"))
+        finding = make_finding(rule, flow.sink_file, flow.sink_line, evidence, "taint")
+        if flow.uncertain:
+            finding = replace(finding, tier="advisory")
+        findings.append(finding)
     return findings, len(flows), unsanitized
 
 

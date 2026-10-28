@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Keep contribution and governance methodology source-only in the npm artifact; the repository copies remain available through canonical README links.
+
+- Keep maintainer rule-assurance inventory and methodology source-only in the npm package, with the repository copy available online.
+
+- Fix context-specific taint contracts across Python and JS/TS: preserve receiver/mixed-value provenance, join Python branches, require exact unshadowed bindings, and stop treating HTML encoding or numeric URL conversion as unrelated protections. Unknown calls, custom HTML configuration and unsupported guards remain advisory. Distinguish SQLModel session.exec from Python execution, retain bound SQL parameters and verify CLI, SARIF, packed and installed-skill parity.
+
 - Run Python and Node coverage gates in parallel within their existing timeouts; retain the required aggregate check and reject failed, cancelled or skipped child results.
 
 - Report cross-file graph read/parse and bounded-analysis omissions as incomplete coverage, retain partial findings, and preserve strict `scan --cross-file` exit semantics. Add completeness-aware `labs impact` metadata and UNKNOWN reachability/blast-risk reporting; invalid targets and incomplete graph evidence return exit 2. Packet response timeouts/errors always keep review incomplete and exit 2.

@@ -39,7 +39,26 @@ def scanner_code_identity() -> str:
     """Bind rule and analysis implementations, not just their count/version."""
     scripts = Path(__file__).resolve().parent
     digest = hashlib.sha256()
-    for name in ("scan_repo.py", "impact_graph.py", "snapshot_identity.py"):
+    for name in (
+        "scan_repo.py",
+        "impact_graph.py",
+        "snapshot_identity.py",
+        "taint_contracts.py",
+        "archive_inspect.py",
+        "dart_transport_checks.py",
+        "dotnet_cookie_checks.py",
+        "js_config_checks.py",
+        "luau_quality_checks.py",
+        "node_advisories.py",
+        "php_advisories.py",
+        "polyglot_checks.py",
+        "precision.py",
+        "python_runtime_checks.py",
+        "sql_checks.py",
+        "rule_explanations.py",
+        "review_context.py",
+        "review_packets.py",
+    ):
         content = read_bytes_guarded(scripts / name, 2_000_000)
         digest.update(name.encode("utf-8") + b"\x00" + hashlib.sha256(content).digest())
     return digest.hexdigest()

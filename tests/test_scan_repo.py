@@ -1620,13 +1620,13 @@ def safe(page_size: int = Query(50, ge=1, le=100)): ...
         self.assertTrue(len(taint_findings) > 0)
 
     def test_taint_tracking_shlex_quoted_command_clears_taint(self):
-        source = "def run_tool(request):\n    cmd = shlex.quote(request.form['command'])\n    os.system(cmd)\n"
+        source = "import os, shlex\ndef run_tool(request):\n    if os.name != 'posix':\n        raise RuntimeError('POSIX only')\n    cmd = shlex.quote(request.form['command'])\n    os.system(cmd)\n"
         findings = self.findings("service.py", source)
         taint_findings = [f for f in findings if f.rule_id == "SP102" and f.detection == "taint"]
         self.assertEqual(len(taint_findings), 0)
 
     def test_taint_tracking_uuid_sanitized_input_clears_taint(self):
-        source = "def query_item(request):\n    item_id = uuid.UUID(request.args['id'])\n    cursor.execute(item_id)\n"
+        source = "import uuid\ndef query_item(request):\n    item_id = uuid.UUID(request.args['id'])\n    cursor.execute(item_id)\n"
         findings = self.findings("db.py", source)
         taint_findings = [f for f in findings if f.rule_id == "SP103" and f.detection == "taint"]
         self.assertEqual(len(taint_findings), 0)

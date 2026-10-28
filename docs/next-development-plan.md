@@ -1,6 +1,6 @@
 # ShipProof next development plan
 
-Last reviewed: 2026-10-26 (current cohort scope added; dated baselines below remain historical).
+Last reviewed: 2026-10-28 (context-specific taint closeout; dated baselines below remain historical).
 
 สถานะ: แผนหลักสำหรับเปลี่ยน research backlog ให้เป็น production evidence ที่เชื่อถือได้ โดยไม่เปิดกฎจำนวนมากแบบ big-bang และไม่ลดมาตรฐาน false-positive
 
@@ -70,7 +70,19 @@ reflected in that historical registry. See the
 
 See the [cohort record](../research/io-ownership-cohort-2026-10.md).
 
-## Current Luau community cohort — 2026-10-26
+## Current taint-contract closeout — 2026-10-28
+
+แก้การเชื่อชื่อ sanitizer และการใช้ protection ข้ามบริบทแล้ว: แยก provenance
+จากค่าที่แปลง ป้องกัน raw sibling/mixed-value หลุด ตรวจ binding/shadowing และ
+แยก SQLModel session.exec จาก Python exec. Unknown calls และ query builder
+ยังเป็น advisory โดยไม่ลดเกณฑ์ gate หรือแก้ป้ายกำกับ benchmark.
+
+รายละเอียด ข้อจำกัด และผลทดสอบของรอบนี้อยู่ใน
+[taint-contract closeout](../research/sanitizer-contracts-2026-10.md).
+จำนวน executable ยังเป็น 673 กฎ งานเพิ่มกฎหรือรองรับ semantics ที่ซับซ้อนขึ้น
+ต้องผ่านหลักฐานเฉพาะ ecosystem ต่อไป ไม่ถือว่า research candidates ใช้งานแล้ว.
+
+## Previous Luau community cohort — 2026-10-26
 
 - executable scanner rules: 673 through SP713, with deliberate ID gaps
 - adds SP708–SP713 and extends SP707 for direct RemoveAsync/IncrementAsync

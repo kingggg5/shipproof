@@ -145,10 +145,30 @@ function main(peerVersion) {
     assert.equal(initialized.status, 0, initialized.stderr);
     const python = detectPythonRuntime({ rootPath: packetSource });
     assert.ok(python, "installed skills need the supported Python used by the CLI");
+    const contractSource = join(workDirectory, "contract-source");
+    mkdirSync(contractSource);
+    writeFileSync(join(contractSource, "app.py"), [
+      "import html", "from flask import request", "def handle():",
+      "    raw = request.args.get('q')", "    cursor.execute(html.escape(raw))",
+      "    cursor.execute(int(raw))", "    cursor.execute(sanitize(raw))", "",
+    ].join("\n"));
+    const contractArgs = [contractSource, "--format", "json", "--fail-on", "high"];
+    const contractScan = runProcess(process.execPath, [installedCli, "scan", ...contractArgs]);
+    assert.equal(contractScan.status, 1, contractScan.stderr);
+    const contractReport = JSON.parse(contractScan.stdout);
+    const contractFindings = contractReport.findings.filter((item) => item.rule_id === "SP103");
+    assert.deepEqual(contractFindings.map((item) => [item.line, item.tier]), [[5, "gate"], [7, "advisory"]]);
+    const packedScanner = join(installedPackageRoot, "skills", "audit-production-readiness", "scripts", "scan_repo.py");
+    const packedContract = runProcess(python.command, [...python.argumentPrefix, packedScanner, ...contractArgs]);
+    assert.equal(packedContract.status, 1, packedContract.stderr);
+    assert.deepEqual(JSON.parse(packedContract.stdout), contractReport);
     for (const host of [".agents", ".claude"]) {
       const skillOutput = join(workDirectory, `packet-output-${host}`);
       mkdirSync(skillOutput);
       const skillScanner = join(skillProject, host, "skills", "audit-production-readiness", "scripts", "scan_repo.py");
+      const skillContract = runProcess(python.command, [...python.argumentPrefix, skillScanner, ...contractArgs]);
+      assert.equal(skillContract.status, 1, skillContract.stderr);
+      assert.deepEqual(JSON.parse(skillContract.stdout), contractReport);
       const skillScan = runProcess(python.command, [...python.argumentPrefix, skillScanner, packetSource, "--format", "json", "--packet-discover", "--packet-out", skillOutput]);
       assert.equal(skillScan.status, 0, skillScan.stderr);
       assert.deepEqual(JSON.parse(skillScan.stdout), JSON.parse(packetScan.stdout));
