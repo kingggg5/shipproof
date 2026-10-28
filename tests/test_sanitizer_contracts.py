@@ -405,6 +405,61 @@ class SanitizerContractTests(unittest.TestCase):
             self.assertTrue(flows)
             self.assertTrue(all(not f.is_sanitized and f.uncertain for f in flows))
 
+    def test_template_literals_cannot_hide_conversion_rebinding(self):
+        for imports in (
+            "const Number = identity;\nconst text = `example ${1}`;",
+            "const text = `${Number = identity}`;",
+        ):
+            with self.subTest(imports=imports):
+                flows = self.js_flows("  db.query(Number(req.query.q));", imports)
+                self.assertTrue(flows)
+                self.assertTrue(all(f.uncertain and not f.is_sanitized for f in flows))
+
+    def test_inert_template_text_does_not_shadow_real_builtin(self):
+        flows = self.js_flows(
+            "  db.query(Number(req.query.q));", "const text = `Number = identity ${1}`;"
+        )
+        self.assertTrue(flows)
+        self.assertTrue(all(f.is_sanitized for f in flows))
+
+    def test_template_expressions_do_not_erase_bound_module_identity(self):
+        flows = self.js_flows(
+            "  document.write(d.sanitize(req.query.q));",
+            'import d from "dompurify";\nconst text = `example ${1}`;',
+            "SP146",
+        )
+        self.assertTrue(flows)
+        self.assertTrue(all(f.is_sanitized for f in flows))
+
+    def test_binding_token_budget_cannot_claim_builtin_safety(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = (
+                "const Number = identity;\n"
+                + ";" * 60000
+                + '\nrouter.get("/q", (req, res) => { db.query(Number(req.query.q)); });\n'
+            )
+            (root / "app.js").write_text(source, encoding="utf-8")
+            graph = ImpactGraph(root)
+            graph.build()
+            self.assertFalse(graph.completeness["is_complete"])
+            self.assertGreater(graph.completeness["parser_limit"], 0)
+            self.assertTrue(graph.taint_flows)
+            self.assertTrue(all(not flow.is_sanitized for flow in graph.taint_flows))
+
+    def test_ambiguous_protection_view_defers_without_dropping_source_flow(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = 'const view = <Box value={item}/>;\nrouter.get("/q", (req, res) => { db.query(Number(req.query.q)); });\n'
+            (root / "app.jsx").write_text(source, encoding="utf-8")
+            graph = ImpactGraph(root)
+            graph.build()
+            self.assertTrue(graph.completeness["is_complete"])
+            self.assertTrue(graph.taint_flows)
+            self.assertTrue(
+                all(flow.uncertain and not flow.is_sanitized for flow in graph.taint_flows)
+            )
+
     def test_js_rebound_module_member_is_not_trusted(self):
         flows = self.js_flows(
             "  document.write(d.sanitize(req.query.q));",

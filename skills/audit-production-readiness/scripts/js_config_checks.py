@@ -36,7 +36,7 @@ MAX_EXPRESSION_TOKENS = 512
 CALLBACK_ARITY = {"readFile": frozenset({2, 3}), "writeFile": frozenset({3, 4})}
 
 
-def js_context_tokens(source: str) -> list[tuple[str, int]]:
+def js_context_tokens(source: str, *, budget_hits: set[str] | None = None) -> list[tuple[str, int]]:
     """Small bounded lexical view for precision checks, not a JS parser.
 
     Comments, strings, and regex literals remain opaque. Template interpolation
@@ -149,6 +149,8 @@ def js_context_tokens(source: str) -> list[tuple[str, int]]:
             tokens.append((value, start))
             index = match.end()
         if len(tokens) > 50_000:
+            if budget_hits is not None:
+                budget_hits.add("tokens")
             return []
     return tokens
 

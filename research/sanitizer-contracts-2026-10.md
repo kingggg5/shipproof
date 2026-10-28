@@ -166,9 +166,9 @@ coverage. No zero-false-positive, model-quality or production-scale claim is mad
 
 ## Frozen verification results
 
-`npm run check` passes with 1,086 Python tests (three local Windows symlink
+`npm run check` passes with 1,091 Python tests (three local Windows symlink
 privilege skips), two demo tests, Node/MCP source suites, exact package manifest
-and isolated packed smoke. The 45 new regression tests include 44 contract cases
+and isolated packed smoke. The 50 new regression tests include 49 contract cases
 and a runtime identity invalidation test. Fresh coverage with branch measurement
 enabled is 88%, above the unchanged 80% floor; the new contract module is 96%.
 
@@ -179,23 +179,24 @@ high/medium findings. Existing reviewed lower-severity false positives remain;
 their budgets do not worsen. These results are source-signature evidence, not an
 aggregate precision claim. All 673 rule contracts pass without changing debt.
 
-The artifact is 110 files, 473,247 packed / 1,868,677 unpacked bytes under the
+The artifact is 110 files, 473,389 packed / 1,869,227 unpacked bytes under the
 original limits. Native high self-scan reports zero application findings and
 complete supported coverage; deliberately unsafe test findings stay test-scoped.
 Final scanner runtime identity is
-`17ee239f240546bb10e2101d9f8741994cd5d806ad4b227c5c1241cfcae751b1`.
+`db00499d9236a02823c56b33fcf469f11f08854f0b1fdca8007f9d4fb96f192b`.
 
 Comparable graph builds use the same driver/input digests for both c5 and current
 source, one warmup and three samples, after other local test jobs finish:
 
 | Synthetic workload | c5 median / max seconds | Current median / max seconds | c5 / current peak MiB |
 | --- | --- | --- | --- |
-| 500 files, 512 bytes each | 0.4993 / 0.5554 | 0.5107 / 0.5212 | 24.95 / 25.01 |
-| 16 files, 459,152 bytes each | 1.4358 / 1.4426 | 1.5156 / 1.5393 | 28.31 / 28.59 |
+| 500 files, 512 bytes each | 0.4777 / 0.5132 | 0.5241 / 0.5432 | 24.93 / 25.28 |
+| 16 files, 459,152 bytes each | 1.3872 / 1.4121 | 1.7355 / 1.7541 | 28.35 / 28.36 |
 
 Every arm meets the existing eight-second / 256-MiB ceilings. The maximum of three
-samples is a conservative p95 proxy, not a measured production tail. The small
-median overhead buys binding/value checks; no speedup or scale claim is made.
+samples is a conservative p95 proxy, not a measured production tail. Median
+overhead is about 9.7% / 25.1% (0.046 / 0.348 seconds) for the two profiles;
+binding/value checks add work, and no speedup or scale claim is made.
 The oversized graph case still declares its 16 omissions instead of silently
 reporting complete coverage.
 
@@ -204,3 +205,27 @@ receipts are in [the observations](sanitizer-contracts-observations-2026-10.json
 Exact-head hosted CI/MCP/coverage and manual benchmark links are maintained in
 [PR #49](https://github.com/kingggg5/shipproof/pull/49) after pushing this cohort.
 Version remains 0.12.0 with Unreleased changes.
+
+## Final-review lexer repair
+
+The 120-minute checkpoint retained a concrete correctness repair within this
+cohort. Hosted checks for the initial 13bf4dc implementation passed, but added
+adversarial tests showed that a template literal could leave the binding
+lexer without tokens and erase Number reassignment. This produced a false
+safe result; it also erased legitimate DOMPurify import identity and added noise.
+
+Binding extraction now reuses the existing masked code: executable template
+expressions remain visible, inert template/comment/string text stays opaque, and
+only literal module-string tokens recover their original contents by offsets.
+Unavailable binding tokens disable trusted builtin protection. Actual token-budget
+exhaustion enters incomplete coverage accounting. Ambiguous JSX/protection views
+keep their raw advisory flows without misclassifying an ingested source as omitted.
+The budget test retains a partial finding instead of
+claiming complete safe evidence. Five regressions cover rebinding, inert text,
+module identity, ambiguity and token exhaustion. Rebinding and module-identity
+cases fail before the repair; all controls pass after it. The same source mask
+is reused to avoid another file pass.
+
+The initial pass receipts remain in the ignored cache and Git history. Frozen
+verification and observations are refreshed for the repair before its follow-up
+commit; no source pins, labels, baselines, thresholds or rule IDs change.

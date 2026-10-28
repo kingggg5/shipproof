@@ -623,11 +623,20 @@ class JsTsAnalyzer:
         self.imports: dict[str, str] = {}
         self.shadowed: set[str] = set()
 
-    def _bindings(self, content, spans):
+    def _bindings(self, content, spans, masked_content):
         from js_config_checks import js_context_tokens
 
-        values = [t[0] for t in js_context_tokens(content)]
+        code = masked_content.replace("`", " ")
+        budget_hits = set()
+        values = [
+            content[offset : offset + len(value)] if value[:1] in {"'", '"'} else value
+            for value, offset in js_context_tokens(code, budget_hits=budget_hits)
+        ]
         self.imports, self.shadowed = {}, set()
+        if not values and spans:
+            self.shadowed.update({"Number", "parseInt", "parseFloat", "String"})
+        if budget_hits:
+            self.omissions.add("bindings")
         trusted_assignments = set()
         require_shadowed = any(
             value == "require"
@@ -732,7 +741,7 @@ class JsTsAnalyzer:
         if len(spans) > self.MAX_FUNCTIONS_PER_FILE:
             self.omissions.add("functions")
             spans = spans[: self.MAX_FUNCTIONS_PER_FILE]
-        self._bindings(content, spans)
+        self._bindings(content, spans, masked_content)
 
         summaries: list[FunctionSummary] = []
         for span in spans:

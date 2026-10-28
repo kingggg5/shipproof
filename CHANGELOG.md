@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve JavaScript binding evidence through template expressions while keeping inert text opaque. Ambiguous protection views stay advisory; actual binding-token exhaustion retains partial findings and fails source completeness.
+
 - Keep contribution and governance methodology source-only in the npm artifact; the repository copies remain available through canonical README links.
 
 - Keep maintainer rule-assurance inventory and methodology source-only in the npm package, with the repository copy available online.
