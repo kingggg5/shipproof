@@ -28,3 +28,15 @@ Status: implemented. No new public command (opt-in `--packet-out` flag only).
 - End-to-end via Python and Node CLIs; Node `cli.test.mjs` 19 pass; `ruff` clean;
   self-scan exit 0, 0 app findings. No provider adapters exist, so there is nothing
   that could send source out; any future one needs explicit opt-in per this contract.
+
+## Follow-up (2026-10-28)
+
+This dated addendum records the packet 1.1 orchestration contract; the 2026-09-15 implementation notes and their evidence above are retained as historical context.
+
+- `--packet-discover` prepares source-file discovery targets, including eligible files without native findings. It does not execute an AI review or call a provider. Discovery remains context, never an SP finding or gate proof.
+- Existing bounds remain 10 files, 128 KiB source per packet, and 20 packets. Additional orchestration limits are 256 review items per packet, 5,000 eligible/discovery files, and 4 MiB total bytes read for import-context parsing. Selected targets precede bounded literal-import and test context.
+- `review_focus` deduplicates language-specific questions for human review. `rule_guidance` contains summaries only for rules on native findings, deduplicated by rule ID, with a 16 KiB metadata cap.
+- Each review occurrence has an `item_id`, distinct from the unchanged native tracking `fingerprint`. Packet 1.1 replies echo `packet_digest` and identify decisions by `item_id`; fingerprint-only replies are accepted only when unambiguous. Legacy 1.0 unique-fingerprint replies remain supported; ambiguous repeated fingerprints stay unresolved and are never silently collapsed. Responses are bounded and validated data; model assessments do not alter native findings, native fingerprints, or gate output. `review_complete` stays false until valid replies arrive and also stays false with deferred/failed items or partial context. Completion does not establish correctness or gate proof.
+- Literal import hints currently cover Python, JavaScript/TypeScript, Dart, and Lua/Luau. C#/.NET namespace/type binding and package aliases remain unresolved. This is bounded context extraction, not a complete call graph.
+
+No precision, token-saving, or end-to-end outcome percentage is asserted by this addendum.

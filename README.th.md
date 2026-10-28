@@ -12,7 +12,7 @@
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Release](https://img.shields.io/badge/release-v0.12.0-2563eb)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.12.0-2563eb)](https://github.com/kingggg5/shipproof/blob/main/CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -136,6 +136,8 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 ```
 
 ตัวอย่าง prompt เต็ม, invariant analysis, token cost budgeting, worktree isolation, status badges และ output `--trace` อยู่ใน [docs/features.md](docs/features.md)
+
+สำหรับการส่งต่อให้ agent แบบ opt-in ในเครื่อง ใช้ `shipproof scan . --changed-since HEAD --packet-discover --packet-out ./review-packets` เพื่อเพิ่มไฟล์ซอร์สที่ค้นพบเข้า packet แม้ไม่มี native finding การค้นพบเป็นเพียงการเตรียมซอร์สในเครื่อง ไม่ใช่การรัน AI; ไฟล์เหล่านี้เป็น context ไม่ใช่ finding หรือ gate proof packet ยังมีคำถาม review สำหรับมนุษย์และสรุปกฎของ native finding แบบ deduplicate ดู limits, import links ที่ยัง unresolved และ identity ของ response ใน [คู่มือคำสั่ง scan](docs/commands.md)
 
 ## กฎการตรวจจับ
 

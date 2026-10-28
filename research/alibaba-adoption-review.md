@@ -2,6 +2,8 @@
 
 Reviewed: 2026-09-15. Scope: source-based adoption review, not a release certification.
 
+Current implementation follow-up (2026-10-28): [bounded host-agent review packets](packet-orchestration-2026-10.md). The identity and anchor work proposed in this historical snapshot has implementation records in the linked quality plan; use the dated follow-up for the current packet behavior and verification limits.
+
 ## Decision
 
 **Prioritize Open Code Review's evidence orchestration patterns. Defer Zvec to an optional retrieval experiment.**

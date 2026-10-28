@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { VERSION } from "../lib/package-info.mjs";
+import { detectPythonRuntime } from "../lib/runtime.mjs";
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -102,6 +103,34 @@ function main(peerVersion) {
     const scanned = runProcess(process.execPath, [installedCli, "scan", demoFixture, "--format", "json", "--fail-on", "high"]);
     assert.equal(scanned.status, 1, scanned.stderr);
     assert.equal(JSON.parse(scanned.stdout).summary.findings, 6, "demo before-fixture must report six findings");
+
+    const packetSource = join(workDirectory, "packet-source");
+    const packetOutput = join(workDirectory, "packet-output");
+    mkdirSync(packetSource);
+    mkdirSync(packetOutput);
+    writeFileSync(join(packetSource, "entry.ts"), "export const value = 1;\n");
+    const packetScan = runProcess(process.execPath, [installedCli, "scan", packetSource, "--format", "json", "--packet-discover", "--packet-out", packetOutput]);
+    assert.equal(packetScan.status, 0, packetScan.stderr);
+    const packetLedger = JSON.parse(readFileSync(join(packetOutput, "ledger.json"), "utf8"));
+    assert.equal(packetLedger.packet_version, "review-packet/1.1");
+    assert.equal(packetLedger.counts.scheduled, 1);
+    assert.deepEqual(packetLedger.packets[0].findings, []);
+
+    const skillProject = join(workDirectory, "skill-project");
+    mkdirSync(skillProject);
+    const initialized = runProcess(process.execPath, [installedCli, "init", skillProject, "--target", "both"]);
+    assert.equal(initialized.status, 0, initialized.stderr);
+    const python = detectPythonRuntime({ rootPath: packetSource });
+    assert.ok(python, "installed skills need the supported Python used by the CLI");
+    for (const host of [".agents", ".claude"]) {
+      const skillOutput = join(workDirectory, `packet-output-${host}`);
+      mkdirSync(skillOutput);
+      const skillScanner = join(skillProject, host, "skills", "audit-production-readiness", "scripts", "scan_repo.py");
+      const skillScan = runProcess(python.command, [...python.argumentPrefix, skillScanner, packetSource, "--format", "json", "--packet-discover", "--packet-out", skillOutput]);
+      assert.equal(skillScan.status, 0, skillScan.stderr);
+      assert.deepEqual(JSON.parse(skillScan.stdout), JSON.parse(packetScan.stdout));
+      assert.deepEqual(JSON.parse(readFileSync(join(skillOutput, "ledger.json"), "utf8")), packetLedger);
+    }
 
     const explained = runProcess(process.execPath, [installedCli, "explain", "SP402"]);
     assert.equal(explained.status, 0, explained.stderr);

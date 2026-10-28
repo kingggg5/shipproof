@@ -13948,6 +13948,7 @@ def scan_repository(
     excluded_paths: frozenset[str] | None = None,
     scan_profile: str | None = None,
     inspect_archives: bool = False,
+    packet_scope: dict[str, set[str]] | None = None,
 ) -> tuple[list[Finding], dict[str, object]]:
     repository_root = root.resolve()
     if not repository_root.is_dir():
@@ -14032,6 +14033,19 @@ def scan_repository(
         elif skip_reason == "unreadable":
             coverage["unreadable"] += 1
 
+    if packet_scope is not None:
+        packet_scope["selected"] = {task[1] for task in task_candidates}
+        packet_scope["context"] = set(packet_scope["selected"])
+        if len(packet_scope["context"]) > 5000:
+            raise ValueError("review context exceeds 5000 files; narrow the scan scope")
+        if include_paths is not None:
+            for _path, relative, omission in iter_scannable_files(
+                repository_root, max_file_bytes, normalized_excludes, None, tracked_paths
+            ):
+                if omission is None and relative not in baseline_exclusions:
+                    packet_scope["context"].add(relative)
+                    if len(packet_scope["context"]) > 5000:
+                        raise ValueError("review context exceeds 5000 files; narrow the scan scope")
     tasks = [(*task, is_within_skill_root(task[1], skill_roots)) for task in task_candidates]
     scanned_paths: set[str] = set()
     discovered_coverage = coverage.copy()
@@ -15878,6 +15892,11 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--packet-discover",
+        action="store_true",
+        help="Include selected source files without findings in opt-in review packets",
+    )
+    parser.add_argument(
         "--trace",
         action="store_true",
         default=False,
@@ -15951,6 +15970,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     arguments = parse_arguments(argv)
+
+    if arguments.packet_discover and (
+        arguments.packet_out is None
+        or arguments.explain
+        or arguments.fix_prompt
+        or arguments.fix
+        or arguments.fix_dry_run
+        or arguments.snippet is not None
+        or arguments.snippet_stdin
+    ):
+        print(
+            "shipproof: --packet-discover requires --packet-out and a repository scan",
+            file=sys.stderr,
+        )
+        return 2
 
     if arguments.context_level != "full" and not (arguments.explain or arguments.fix_prompt):
         print("shipproof: --context-level requires --explain or --fix-prompt", file=sys.stderr)
@@ -16070,6 +16104,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             if relative is not None
         )
+        packet_scope: dict[str, set[str]] | None = {} if arguments.packet_out else None
         findings, stats = scan_repository(
             arguments.root,
             max_file_bytes=arguments.max_file_bytes,
@@ -16084,6 +16119,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             excluded_paths=baseline_exclusions,
             scan_profile=None if arguments.scan_profile == "auto" else arguments.scan_profile,
             inspect_archives=arguments.inspect_archives,
+            packet_scope=packet_scope,
         )
         suppressed_records = list(stats.pop("_suppressed", []))
         if arguments.changed_since:
@@ -16294,6 +16330,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 import review_packets
             except ImportError as exc:
                 raise ValueError(f"review packets unavailable: {exc}") from exc
+            finding_rule_ids = {item.rule_id for item in findings}
             packet_report = review_packets.build_packets(
                 arguments.root,
                 findings,
@@ -16301,9 +16338,39 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "fail_on": arguments.fail_on,
                     "block_min_proof": arguments.block_min_proof,
                     "include_tests": bool(arguments.include_tests),
+                    "exclude": list(arguments.exclude),
+                    "changed_since": arguments.changed_since,
+                    "max_file_bytes": arguments.max_file_bytes,
+                    "packet_discover": bool(arguments.packet_discover),
+                    "min_confidence": arguments.min_confidence,
+                    "cross_file": bool(arguments.cross_file),
+                    "scan_profile": arguments.scan_profile,
+                    "history": bool(arguments.history),
+                    "inspect_archives": bool(arguments.inspect_archives),
+                    "baseline_fingerprints": sorted(baseline_data.fingerprints),
                 },
                 scanner_version=f"shipproof-scan/{VERSION}",
                 rules_identity=f"executable-rules/{len(RULES)}",
+                review_paths=(
+                    sorted(
+                        path
+                        for path in (packet_scope or {}).get("selected", ())
+                        if arguments.include_tests or determine_scope(path) != "test"
+                    )
+                    if arguments.packet_discover
+                    else ()
+                ),
+                context_paths=(packet_scope or {}).get("context", set()),
+                rule_guidance={
+                    rule.rule_id: {
+                        "title": rule.title,
+                        "cwe": rule.cwe,
+                        "message": rule.message,
+                        "remediation": rule.remediation,
+                    }
+                    for rule in RULES
+                    if rule.rule_id in finding_rule_ids
+                },
             )
             out_dir = Path(arguments.packet_out)
             if not out_dir.is_dir() or out_dir.is_symlink():
@@ -16322,10 +16389,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             counts = packet_report["counts"]
             print(
                 f"review packets: {counts['packets']} packets, "
-                f"{counts['scheduled']} scheduled, {counts['deferred']} deferred "
+                f"{counts['scheduled']} scheduled, {counts['deferred']} deferred, {counts['failed']} failed "
                 f"-> {out_dir}",
                 file=sys.stderr,
             )
+            if packet_report["identity_error"] is not None:
+                raise ValueError("review packet source identity could not be verified")
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"shipproof: {exc}", file=sys.stderr)
         return 2

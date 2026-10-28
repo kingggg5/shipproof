@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add opt-in `--packet-discover` to the existing scan command. With `--packet-out`,
+  it schedules bounded source-file discovery targets even without native findings.
+  Discovery is source preparation, not AI execution, and remains context rather than
+  SP findings or gate proof. Existing limits remain 10 files/128 KiB/20 packets;
+  orchestration also caps 256 review items per packet, 5,000 eligible/discovery files,
+  and 4 MiB read for import-context parsing. Packet 1.1 replies bind to source identity
+  and echo `packet_digest`; `review_complete` requires valid replies and no deferred,
+  failed, or partial-context items, but does not prove correctness or gate eligibility.
+
 - Add six medium L1 structural Luau/Roblox advisories SP708–SP713 and extend
   SP707 to direct RemoveAsync/IncrementAsync mutations. The research cohort uses
   Reddit, DevForum, Stack Overflow and GitHub to identify questions, then checks

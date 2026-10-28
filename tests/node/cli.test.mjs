@@ -210,6 +210,33 @@ test("in-process dispatch covers stable, grouped, retired, and legacy commands",
   }
 });
 
+test("packet discovery forwards flags without changing the scan verdict", () => {
+  const parent = mkdtempSync(join(tmpdir(), "shipproof-packets-"));
+  const root = join(parent, "source");
+  const output = join(parent, "packets");
+  try {
+    mkdirSync(root);
+    mkdirSync(output);
+    writeFileSync(join(root, "entry.ts"), "export const value = 1;\n");
+    const cli = join(internals.PACKAGE_ROOT, "bin", "shipproof.mjs");
+    const plain = spawnSync(process.execPath, [cli, "scan", root, "--format", "json"], { encoding: "utf8", windowsHide: true });
+    const discovery = spawnSync(process.execPath, [cli, "scan", "--packet-discover", "--packet-out", output, root, "--format", "json"], { encoding: "utf8", windowsHide: true });
+    assert.equal(discovery.status, plain.status, discovery.stderr);
+    assert.deepEqual(JSON.parse(discovery.stdout), JSON.parse(plain.stdout));
+    const ledger = JSON.parse(readFileSync(join(output, "ledger.json"), "utf8"));
+    assert.equal(ledger.packet_version, "review-packet/1.1");
+    assert.equal(ledger.counts.scheduled, 1);
+    assert.equal(ledger.selection_accounting[0].kind, "discovery");
+    assert.deepEqual(ledger.packets[0].findings, []);
+    assert.ok(ledger.packets[0].review_focus["typescript/javascript"]);
+    const invalid = spawnSync(process.execPath, [cli, "scan", root, "--packet-discover"], { encoding: "utf8", windowsHide: true });
+    assert.equal(invalid.status, 2);
+    assert.match(invalid.stderr, /requires --packet-out/);
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
+});
+
 test("1.0 migration gate rejects every hidden legacy alias with a replacement", () => {
   assert.equal(internals.legacyAliasesEnabled("0.10.0"), true);
   assert.equal(internals.legacyAliasesEnabled("1.0.0"), false);

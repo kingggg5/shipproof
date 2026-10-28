@@ -12,7 +12,7 @@ Security · Correctness · Scale · Performance · Release evidence
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Release](https://img.shields.io/badge/release-v0.12.0-2563eb)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.12.0-2563eb)](https://github.com/kingggg5/shipproof/blob/main/CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -186,6 +186,8 @@ shipproof labs impact src/app.py   # experimental blast radius before editing
 ```
 
 Full prompt samples, invariant analysis, token cost budgeting, worktree isolation, status badges, and `--trace` output live in [docs/features.md](docs/features.md).
+
+For an opt-in local agent handoff, `shipproof scan . --changed-since HEAD --packet-discover --packet-out ./review-packets` adds bounded source-file discovery targets to review packets, including files without native ShipProof findings. Discovery is local source preparation, not AI execution; targets are context, never findings or gate proof. Packets also expose deduplicated human review questions and native-rule summaries. See the [scan command reference](docs/commands.md) for limits, unresolved import links, and response identity requirements.
 
 ## Detection rules
 
