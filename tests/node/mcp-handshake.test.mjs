@@ -208,12 +208,65 @@ test(
         ["socket.ts", "import {WebSocketServer} from 'ws'; new WebSocketServer({noServer:true,maxPayload:65536});", []],
         ["cookies.cs", 'using Microsoft.AspNetCore.Http; void Set(IResponseCookies cookies, string value) { cookies.Append("session", value, new CookieOptions { HttpOnly = false, Secure = false }); }', ["SP056", "SP084"]],
         ["cookies.cs", 'using Microsoft.AspNetCore.Http; var set = (HttpContext context, string value) => { context.Response.Cookies.Append("session", value, new CookieOptions() { HttpOnly = false, Secure = false }); };', ["SP056", "SP084"]],
+        ["next.config.ts", "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};", ["SP688"]],
+        ["server.cs", "using Microsoft.AspNetCore.Server.Kestrel.Core; void Configure(KestrelServerOptions options) { options.Limits.MaxRequestBodySize = null; }", ["SP689"]],
+        ["client.dart", "import 'package:http/http.dart' as http; Future<void> send(String bearer) async { await http.get(Uri.parse('http://service.example.org'), headers: {'Authorization': bearer}); }", ["SP170"]],
+        ["client.dart", "import 'package:http/http.dart' as http; Future<void> send(String bearer) async { await http.get(Uri.parse('https://service.example.org'), headers: {'Authorization': bearer}); }", []],
+        ["modules.luau", 'local remote = Instance.new("RemoteFunction")\nremote.OnServerInvoke = function(player: Player, data: number) return require(data) end', ["SP690"]],
+        ["delete.lua", 'local remote = Instance.new("RemoteEvent")\nremote.OnServerEvent:Connect(function(player, data) data:Destroy() end)', ["SP691"]],
+        ["delete.luau", 'local remote = Instance.new("RemoteEvent")\nremote.OnServerEvent:Connect(function(player, data) if not owns(player, data) then return end data:Destroy() end)', []],
+        ["execute.luau", 'remote.OnServerInvoke = function(player: Player, data: string) return loadstring(data)() end', ["SP672"]],
+        ["sign.ts", "import {sign} from 'jsonwebtoken'; sign(payload,key,{algorithm:'RS256',allowInsecureKeySizes:true});", ["SP692"]],
+        ["sign.ts", "import {sign} from 'jsonwebtoken'; sign(payload,key,{algorithm:'RS256',allowInvalidAsymmetricKeyTypes:true});", ["SP676"]],
+        ["http.ts", "import {createServer} from 'node:http'; createServer({httpValidation:'insecure'},handler);", ["SP679"]],
+        ["deadlines.ts", "import {createServer} from 'node:http'; createServer({requestTimeout:0,headersTimeout:0});", ["SP693"]],
+        ["wait.ts", "async function wait() { await Promise.race([]); }", ["SP694"]],
+        ["wait.dart", "import 'dart:async'; void main() async { await Future.any([]); }", ["SP694"]],
+        ["sort.ts", "const sorted = [3,1,2].sort((a,b)=>a>b);", ["SP695"]],
+        ["reader.cs", "using System.Xml; XmlReader.Create(input,new XmlReaderSettings{DtdProcessing=DtdProcessing.Parse,MaxCharactersFromEntities=0});", ["SP696"]],
+        ["listener.py", "import logging.config\nlogging.config.listen(9030,verify=None).start()", ["SP697"]],
+        ["compression.ts", "import {gzipSync} from 'node:zlib'; async function pack(data) { return await gzipSync(data); }", ["SP698"]],
+        ["value.rs", "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }", ["SP699"]],
+        ["timer.ts", "import {setTimeout} from 'node:timers'; setTimeout(tick,30*24*60*60*1000);", ["SP700"]],
+        ["pool.py", "from sqlalchemy.pool import QueuePool\npool=QueuePool(connect,max_overflow=-1)", ["SP701"]],
+        ["kick.luau", 'local remote = Instance.new("RemoteEvent")\nremote.OnServerEvent:Connect(function(player, target) target:Kick() end)', ["SP691"]],
+        ["effect.tsx", "import {useEffect} from 'react'; function useRefresh() { useEffect(async () => { await refresh(); }, []); }", ["SP702"]],
+        ["pipeline.ts", "import {pipeline} from 'node:stream'; async function transfer(source,destination) { await pipeline(source,destination,(error)=>{report(error);}); }", ["SP703"]],
+        ["database.ts", "import {Client} from 'pg'; const db = new Client({connectionString:'postgresql://db.example/app?sslmode=require',ssl:{ca:trustedCA}});", ["SP704"]],
+        ["migration.sql", "BEGIN; CREATE INDEX CONCURRENTLY idx ON accounts(id); COMMIT;", ["SP705"]],
+        ["definer.sql", "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path=pg_temp,private AS $$ SELECT value FROM settings $$;", ["SP706"]],
+        ["stream.ts", "import {createReadStream,createWriteStream} from 'node:fs'; createReadStream(input).pipe(createWriteStream(output));", ["SP336"]],
+        ["read.ts", "import {readFile} from 'node:fs'; async function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }", ["SP703"]],
+        ["write.ts", "import {writeFile} from 'node:fs'; async function save(path,data) { await writeFile(path,data,error=>report(error)); }", ["SP703"]],
+        ["drop.sql", "BEGIN; DROP INDEX CONCURRENTLY idx; COMMIT;", ["SP705"]],
+        ["reindex.sql", "BEGIN; REINDEX INDEX CONCURRENTLY idx; COMMIT;", ["SP705"]],
+        ["store.server.luau", "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value) game:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value) end)", ["SP707"]],
+        ["range.luau", "return math.random(-3,-8)", ["SP708"]],
+        ["table.luau", "for _,value in ipairs(table.sort(items)) do consume(value) end", ["SP709"]],
+        ["frozen.luau", "local config=table.freeze({enabled=true})\nconfig.enabled=false", ["SP710"]],
+        ["schedule.luau", "task.delay(1,print('ready'))", ["SP711"]],
+        ["transform.luau", "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1);return old end)", ["SP712"]],
+        ["signal.luau", "game:GetService('Players').PlayerAdded:Wait(5)", ["SP713"]],
+        ["reference.rs", "unsafe fn build() { let value = std::mem::uninitialized::<&u32>(); }", ["SP673"]],
+        ["tls.cs", "using System.Net.Security; async System.Threading.Tasks.Task Connect(SslStream tls) { await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost=host, RemoteCertificateValidationCallback=(_,_,_,_)=>true }); }", ["SP104"]],
       ]) {
         const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
         assert.equal(result.isError, undefined);
-        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP686", "SP687"].includes(finding.rule_id));
+        const findings = result.structuredContent.findings.filter((finding) => ["SP056", "SP084", "SP104", "SP170", "SP336", "SP672", "SP673", "SP676", "SP679", "SP686", "SP687", "SP688", "SP689", "SP690", "SP691", "SP692", "SP693", "SP694", "SP695", "SP696", "SP697", "SP698", "SP699", "SP700", "SP701", "SP702", "SP703", "SP704", "SP705", "SP706", "SP707", "SP708", "SP709", "SP710", "SP711", "SP712", "SP713"].includes(finding.rule_id));
         assert.deepEqual(findings.map((finding) => finding.rule_id).sort(), expectedRules);
         assert.ok(findings.every((finding) => finding.tier === "advisory" && finding.proof_level === "L1"));
+      }
+
+      for (const [filename, code] of [
+        ["task.py", "import asyncio\nasync def run():\n    await asyncio.create_task(work())\n"],
+        ["pool.py", "from concurrent.futures import ThreadPoolExecutor\npool=ThreadPoolExecutor()"],
+        ["pool.go", 'package pool\nimport "database/sql"\nfunc configure(db *sql.DB) { db.SetMaxIdleConns(0) }'],
+        ["gather.py", "import asyncio\nasync def run():\n    return await asyncio.gather(work())"],
+        ["engine.py", "from sqlalchemy import create_engine\nengine=create_engine(url)"],
+      ]) {
+        const result = await client.callTool({ name: "shipproof_lint_snippet", arguments: { filename, code } });
+        assert.equal(result.isError, undefined);
+        assert.ok(result.structuredContent.findings.every((finding) => !["SP346", "SP347", "SP348", "SP350", "SP375"].includes(finding.rule_id)));
       }
 
       for (const [name, argumentsValue] of [

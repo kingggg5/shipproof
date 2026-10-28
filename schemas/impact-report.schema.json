@@ -13,11 +13,31 @@
         "target_file": { "type": "string" }, "target_line": { "type": ["integer", "null"], "minimum": 1 },
         "target_symbols": { "$ref": "#/$defs/strings" }, "direct_callers": { "$ref": "#/$defs/strings" },
         "transitive_callers": { "$ref": "#/$defs/strings" }, "tables_touched": { "$ref": "#/$defs/strings" },
-        "relevant_tests": { "$ref": "#/$defs/strings" }, "total_files_analyzed": { "type": "integer", "minimum": 1 },
-        "blast_radius_score": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+        "relevant_tests": { "$ref": "#/$defs/strings" }, "total_files_analyzed": { "type": "integer", "minimum": 0 },
+        "blast_radius_score": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"] },
         "reachability_status": { "type": "string" },
-        "cross_file_taint_flows": { "type": "array", "items": { "type": "object" } }
-      }
+        "cross_file_taint_flows": { "type": "array", "items": { "type": "object" } },
+        "completeness": {
+          "type": "object", "additionalProperties": false,
+          "required": ["is_complete", "reasons", "affected_inputs", "unreadable", "oversized", "parser_limit"],
+          "properties": {
+            "is_complete": {"type": "boolean"},
+            "reasons": {"$ref": "#/$defs/strings"},
+            "affected_inputs": {"type": "integer", "minimum": 0, "maximum": 5000},
+            "unreadable": {"type": "integer", "minimum": 0, "maximum": 5000},
+            "oversized": {"type": "integer", "minimum": 0, "maximum": 5000},
+            "parser_limit": {"type": "integer", "minimum": 0, "maximum": 5000}
+          }
+        }
+      },
+      "allOf": [{
+        "if": {"required": ["completeness"], "properties": {"completeness": {"properties": {"is_complete": {"const": false}}}}},
+        "then": {"properties": {"blast_radius_score": {"const": "UNKNOWN"}, "completeness": {"properties": {"affected_inputs": {"minimum": 1}, "reasons": {"minItems": 1}}}}},
+        "else": {"properties": {"total_files_analyzed": {"minimum": 1}, "blast_radius_score": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]}}}
+      }, {
+        "if": {"required": ["completeness"], "properties": {"completeness": {"properties": {"is_complete": {"const": true}}}}},
+        "then": {"properties": {"completeness": {"properties": {"reasons": {"maxItems": 0}, "affected_inputs": {"const": 0}, "unreadable": {"const": 0}, "oversized": {"const": 0}, "parser_limit": {"const": 0}}}}}
+      }]
     }
   ],
   "$defs": { "strings": { "type": "array", "items": { "type": "string" }, "uniqueItems": true } },

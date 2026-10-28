@@ -176,10 +176,11 @@ router.get("/files/:name", async (req, res) => {
         self._write(
             "utils/storage.js",
             """
+const path = require('node:path');
 async function readFileReport(rawName) {
   const fileName = path.basename(rawName);
-  const reportPath = path.join(REPORTS_DIR, fileName);
-  if (!reportPath.startsWith(REPORTS_DIR)) throw new Error("bad path");
+  const reportPath = path.resolve(REPORTS_DIR, fileName);
+  if (!reportPath.startsWith(REPORTS_DIR + path.sep)) throw new Error("bad path");
   return fs.readFile(reportPath, "utf8");
 }
 """,

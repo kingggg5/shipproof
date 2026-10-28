@@ -1,0 +1,956 @@
+{
+  "cohort": "field-cohort-20261023",
+  "baseline_revision": "09adda62066122dd8f3614592bf6a505fde6e6a1",
+  "candidate_scanner": {
+    "workspace_head": "09adda62066122dd8f3614592bf6a505fde6e6a1",
+    "source_tree_sha256": "4afd5efec492ac3fca05db215266dd9a0bf72157bed61a74ad2a17c886e7c78a",
+    "identity_note": "Candidate scanner source digest is a snapshot from this pass, not a final committed SHA."
+  },
+  "labels_default": "unreviewed",
+  "review_summary": {
+    "method": "Primary-agent source review, not independent human ground truth or a precision-rate estimate.",
+    "reviewed_false_positive_locations": 9,
+    "unreviewed_removed_locations": 65,
+    "unchanged_findings_not_reclassified": 201,
+    "shlink_basis": "The pinned package.json/vite.config.ts/src/index.tsx establish React/Vite browser rendering via createRoot, not RSC server entries; all eight SP596 locations are in that client/test project.",
+    "umami_basis": "UpdateNotice.tsx has one visible consumer, App.tsx, whose real use-client directive places the imported module in the client subtree.",
+    "sources": [
+      "https://github.com/shlinkio/shlink-web-client/blob/2883bc9d75974fbde43570804594940b5c2b5aca/src/index.tsx",
+      "https://github.com/shlinkio/shlink-web-client/blob/2883bc9d75974fbde43570804594940b5c2b5aca/vite.config.ts",
+      "https://github.com/umami-software/umami/blob/559e3c607c23d2c72d9bd4f6481bda428255323c/src/app/(main)/App.tsx",
+      "https://react.dev/reference/rsc/use-client"
+    ]
+  },
+  "final_replay": {
+    "scanner_sources_sha256": "57f36db1563c5aa58685e083b79ef3b14195616c5c8934b8ba9364393398b223",
+    "raw_report_sha256": "77a29fa30ed5ce02dfebd5e34d8ee0502f8e918d94c58d51d5ad5a6a21c49030",
+    "all_source_and_context_hashes_verified": true,
+    "files_scanned": 2606,
+    "findings": 201,
+    "complete_selected_language_coverage": true,
+    "added_locations": 0,
+    "removed_locations": 74
+  },
+  "source_file_count_total": 2606,
+  "aggregate_per_rule_counts": {
+    "SP003": {"before": 16, "after": 16},
+    "SP019": {"before": 14, "after": 14},
+    "SP055": {"before": 1, "after": 1},
+    "SP058": {"before": 5, "after": 5},
+    "SP103": {"before": 29, "after": 29},
+    "SP104": {"before": 1, "after": 1},
+    "SP109": {"before": 48, "after": 48},
+    "SP126": {"before": 2, "after": 2},
+    "SP132": {"before": 5, "after": 5},
+    "SP140": {"before": 2, "after": 2},
+    "SP306": {"before": 4, "after": 4},
+    "SP311": {"before": 3, "after": 3},
+    "SP322": {"before": 12, "after": 12},
+    "SP339": {"before": 3, "after": 3},
+    "SP367": {"before": 4, "after": 4},
+    "SP389": {"before": 6, "after": 6},
+    "SP423": {"before": 40, "after": 40},
+    "SP463": {"before": 3, "after": 3},
+    "SP547": {"before": 1, "after": 1},
+    "SP593": {"before": 1, "after": 1},
+    "SP596": {"before": 74, "after": 0},
+    "SP642": {"before": 1, "after": 1}
+  },
+  "before_findings_total": 275,
+  "after_findings_total": 201,
+  "location_added_total": 0,
+  "location_removed_total": 74,
+  "fingerprint_added_total": 0,
+  "fingerprint_removed_total": 74,
+  "projects": [
+    {
+      "name": "umami-software/umami",
+      "slug": "umami",
+      "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+      "language": "TypeScript",
+      "source_file_count": 1393,
+      "source_tree_sha256": "7b769f55655729a1df7c6d5e6cbed89c3a47e16ff18be9d32537d01a69d3c757",
+      "source_tree_digest_unchanged": true,
+      "language_scope": {
+        "complete": true,
+        "actual": 1393,
+        "included": 1393,
+        "scanned": 1393,
+        "omitted": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "unreadable": 0
+      },
+      "before_findings": 237,
+      "after_findings": 171,
+      "per_rule_counts": {
+        "SP055": {
+          "before": 1,
+          "after": 1
+        },
+        "SP642": {
+          "before": 1,
+          "after": 1
+        },
+        "SP596": {
+          "before": 66,
+          "after": 0
+        },
+        "SP593": {
+          "before": 1,
+          "after": 1
+        },
+        "SP140": {
+          "before": 2,
+          "after": 2
+        },
+        "SP109": {
+          "before": 48,
+          "after": 48
+        },
+        "SP306": {
+          "before": 2,
+          "after": 2
+        },
+        "SP463": {
+          "before": 3,
+          "after": 3
+        },
+        "SP322": {
+          "before": 12,
+          "after": 12
+        },
+        "SP339": {
+          "before": 3,
+          "after": 3
+        },
+        "SP103": {
+          "before": 29,
+          "after": 29
+        },
+        "SP126": {
+          "before": 2,
+          "after": 2
+        },
+        "SP547": {
+          "before": 1,
+          "after": 1
+        },
+        "SP367": {
+          "before": 4,
+          "after": 4
+        },
+        "SP019": {
+          "before": 14,
+          "after": 14
+        },
+        "SP003": {
+          "before": 7,
+          "after": 7
+        },
+        "SP423": {
+          "before": 38,
+          "after": 38
+        },
+        "SP311": {
+          "before": 3,
+          "after": 3
+        }
+      },
+      "location_added_count": 0,
+      "location_removed_count": 66,
+      "fingerprint_added_count": 0,
+      "fingerprint_removed_count": 66
+    },
+    {
+      "name": "shlinkio/shlink-web-client",
+      "slug": "shlink-web-client",
+      "revision": "2883bc9d75974fbde43570804594940b5c2b5aca",
+      "language": "TypeScript",
+      "source_file_count": 111,
+      "source_tree_sha256": "d8314c45bfda96c7763ec7254cace21d85c68fe4aecc3b71745f7ced7d48f83d",
+      "source_tree_digest_unchanged": true,
+      "language_scope": {
+        "complete": true,
+        "actual": 111,
+        "included": 111,
+        "scanned": 111,
+        "omitted": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "unreadable": 0
+      },
+      "before_findings": 21,
+      "after_findings": 13,
+      "per_rule_counts": {
+        "SP423": {
+          "before": 2,
+          "after": 2
+        },
+        "SP306": {
+          "before": 2,
+          "after": 2
+        },
+        "SP003": {
+          "before": 9,
+          "after": 9
+        },
+        "SP596": {
+          "before": 8,
+          "after": 0
+        }
+      },
+      "location_added_count": 0,
+      "location_removed_count": 8,
+      "fingerprint_added_count": 0,
+      "fingerprint_removed_count": 8
+    },
+    {
+      "name": "ardalis/CleanArchitecture",
+      "slug": "cleanarchitecture",
+      "revision": "e7c79be54ba0b001a5b332c1efe935f520b9db4b",
+      "language": "C#",
+      "source_file_count": 362,
+      "source_tree_sha256": "ef4e96472377630296359fd9ba8f25de5660f0fd658958c393bebd4c37d1b5cb",
+      "source_tree_digest_unchanged": true,
+      "language_scope": {
+        "complete": true,
+        "actual": 362,
+        "included": 362,
+        "scanned": 362,
+        "omitted": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "unreadable": 0
+      },
+      "before_findings": 10,
+      "after_findings": 10,
+      "per_rule_counts": {
+        "SP132": {
+          "before": 5,
+          "after": 5
+        },
+        "SP389": {
+          "before": 5,
+          "after": 5
+        }
+      },
+      "location_added_count": 0,
+      "location_removed_count": 0,
+      "fingerprint_added_count": 0,
+      "fingerprint_removed_count": 0
+    },
+    {
+      "name": "davidfowl/TodoApp",
+      "slug": "todoapp",
+      "revision": "307a1eadbbd77a3004c318f2377e4818bc400af6",
+      "language": "C#",
+      "source_file_count": 40,
+      "source_tree_sha256": "e1d504f61749e461de42bab6ceebe85f9bb55e930d98c6fdb9465f7c4e7f951f",
+      "source_tree_digest_unchanged": true,
+      "language_scope": {
+        "complete": true,
+        "actual": 40,
+        "included": 40,
+        "scanned": 40,
+        "omitted": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "unreadable": 0
+      },
+      "before_findings": 1,
+      "after_findings": 1,
+      "per_rule_counts": {
+        "SP389": {
+          "before": 1,
+          "after": 1
+        }
+      },
+      "location_added_count": 0,
+      "location_removed_count": 0,
+      "fingerprint_added_count": 0,
+      "fingerprint_removed_count": 0
+    },
+    {
+      "name": "localsend/localsend",
+      "slug": "localsend",
+      "revision": "6e37efd5fe750299758b6778d2b150b31af3b95d",
+      "language": "Dart",
+      "source_file_count": 393,
+      "source_tree_sha256": "45abc855b75027414990db6149080cd1043336b1291cbf29c2b5ad4dbbc17cc7",
+      "source_tree_digest_unchanged": true,
+      "language_scope": {
+        "complete": true,
+        "actual": 393,
+        "included": 393,
+        "scanned": 393,
+        "omitted": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "unreadable": 0
+      },
+      "before_findings": 1,
+      "after_findings": 1,
+      "per_rule_counts": {
+        "SP104": {
+          "before": 1,
+          "after": 1
+        }
+      },
+      "location_added_count": 0,
+      "location_removed_count": 0,
+      "fingerprint_added_count": 0,
+      "fingerprint_removed_count": 0
+    },
+    {
+      "name": "GitJournal/GitJournal",
+      "slug": "gitjournal",
+      "revision": "c8a67e098db06335762f822d7733c330f4bd0d6b",
+      "language": "Dart",
+      "source_file_count": 307,
+      "source_tree_sha256": "8f43d0a68c435835aef7dfadfa634e14d340d7a2a0ad0163fd26c3f32842d741",
+      "source_tree_digest_unchanged": true,
+      "language_scope": {
+        "complete": true,
+        "actual": 307,
+        "included": 307,
+        "scanned": 307,
+        "omitted": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "unreadable": 0
+      },
+      "before_findings": 5,
+      "after_findings": 5,
+      "per_rule_counts": {
+        "SP058": {
+          "before": 5,
+          "after": 5
+        }
+      },
+      "location_added_count": 0,
+      "location_removed_count": 0,
+      "fingerprint_added_count": 0,
+      "fingerprint_removed_count": 0
+    }
+  ],
+  "added_locations": [],
+  "removed_locations": [
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/UpdateNotice.tsx",
+      "line": 13,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/admin/teams/AdminTeamsTable.tsx",
+      "line": 23,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/admin/users/UsersTable.tsx",
+      "line": 24,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/admin/websites/AdminWebsitesTable.tsx",
+      "line": 17,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/boards/[boardId]/BoardComponentSelect.tsx",
+      "line": 59,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/boards/[boardId]/BoardEditBody.tsx",
+      "line": 17,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/boards/[boardId]/BoardEditColumn.tsx",
+      "line": 40,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/boards/[boardId]/BoardEditRow.tsx",
+      "line": 39,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/boards/[boardId]/BoardShareCreateForm.tsx",
+      "line": 27,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/boards/[boardId]/BoardShareDialog.tsx",
+      "line": 32,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/links/LinkEditForm.tsx",
+      "line": 48,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/links/[linkId]/LinkShareForm.tsx",
+      "line": 32,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/pixels/PixelEditForm.tsx",
+      "line": 45,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/pixels/[pixelId]/PixelShareForm.tsx",
+      "line": 32,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/settings/preferences/DateRangeSetting.tsx",
+      "line": 10,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/settings/preferences/LanguageSetting.tsx",
+      "line": 8,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/settings/preferences/TimezoneSetting.tsx",
+      "line": 9,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/WebsiteAddButton.tsx",
+      "line": 15,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/(reports)/breakdown/FieldSelectForm.tsx",
+      "line": 14,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/(reports)/funnels/EventDataFilterRow.tsx",
+      "line": 41,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/(reports)/funnels/FunnelEditForm.tsx",
+      "line": 46,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/(reports)/journeys/Journey.tsx",
+      "line": 32,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/(reports)/revenue/Revenue.tsx",
+      "line": 47,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/(reports)/utm/BoardUTM.tsx",
+      "line": 21,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/annotations/AnnotationsModal.tsx",
+      "line": 54,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/cohorts/CohortEditForm.tsx",
+      "line": 39,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/compare/CompareTables.tsx",
+      "line": 11,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/events/EventsDataTable.tsx",
+      "line": 15,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/realtime/RealtimeLog.tsx",
+      "line": 39,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/segments/SegmentEditForm.tsx",
+      "line": 39,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/sessions/SessionProperties.tsx",
+      "line": 22,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/settings/ShareEditForm.tsx",
+      "line": 39,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/app/(main)/websites/[websiteId]/settings/WebsiteReplaySettings.tsx",
+      "line": 29,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/charts/BubbleChart.tsx",
+      "line": 10,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/charts/Chart.tsx",
+      "line": 65,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/charts/PieChart.tsx",
+      "line": 10,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/common/CopyButton.tsx",
+      "line": 6,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/common/DataGrid.tsx",
+      "line": 58,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/common/FilterLink.tsx",
+      "line": 16,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/common/FilterRecord.tsx",
+      "line": 53,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/common/Panel.tsx",
+      "line": 45,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/BoardSelect.tsx",
+      "line": 23,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/CurrencySelect.tsx",
+      "line": 8,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/DateFilter.tsx",
+      "line": 26,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/ExportButton.tsx",
+      "line": 11,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/FilterEditForm.tsx",
+      "line": 29,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/LinkSelect.tsx",
+      "line": 23,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/LookupField.test.tsx",
+      "line": 47,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/LookupField.tsx",
+      "line": 27,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/MobileMenuButton.tsx",
+      "line": 22,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/PixelSelect.tsx",
+      "line": 23,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/SavedDefinitionEditButton.tsx",
+      "line": 46,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/UserSelect.tsx",
+      "line": 17,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/WebsiteFilterButton.tsx",
+      "line": 26,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/WebsiteSelect.tsx",
+      "line": 30,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/input/WebsiteValueComboBox.tsx",
+      "line": 37,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/metrics/DatePickerForm.tsx",
+      "line": 20,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/metrics/EventsChart.tsx",
+      "line": 102,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/metrics/ListTable.tsx",
+      "line": 117,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/metrics/MetricCard.tsx",
+      "line": 40,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/metrics/MetricsExpandedTable.tsx",
+      "line": 36,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/metrics/MetricsTable.tsx",
+      "line": 63,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/metrics/PerformanceCard.tsx",
+      "line": 52,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/metrics/WorldMap.tsx",
+      "line": 22,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/share/SimpleShareCreateForm.tsx",
+      "line": 27,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "umami-software/umami",
+      "rule_id": "SP596",
+      "path": "src/components/share/SimpleShareEditForm.tsx",
+      "line": 32,
+      "count": 1,
+      "label": "unreviewed"
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "rule_id": "SP596",
+      "path": "src/app/App.tsx",
+      "line": 30,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "rule_id": "SP596",
+      "path": "src/common/Home.tsx",
+      "line": 20,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "rule_id": "SP596",
+      "path": "src/common/ScrollToTop.tsx",
+      "line": 8,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "rule_id": "SP596",
+      "path": "src/servers/ManageServers.tsx",
+      "line": 25,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "rule_id": "SP596",
+      "path": "src/servers/helpers/ServerForm.tsx",
+      "line": 22,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "rule_id": "SP596",
+      "path": "src/servers/helpers/withSelectedServer.tsx",
+      "line": 15,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "rule_id": "SP596",
+      "path": "src/servers/helpers/withoutSelectedServer.tsx",
+      "line": 8,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    },
+    {
+      "repository": "shlinkio/shlink-web-client",
+      "rule_id": "SP596",
+      "path": "test/__helpers__/TestModalWrapper.tsx",
+      "line": 10,
+      "count": 1,
+      "label": "false_positive",
+      "reviewer": "primary-agent",
+      "review_basis": "review_summary; scoped to the pinned project and visible module/build context"
+    }
+  ]
+}

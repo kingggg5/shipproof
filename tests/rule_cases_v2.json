@@ -1515,7 +1515,7 @@
           "claim": "CWE-94 covers treating externally supplied data as executable source and crossing an application's code-execution boundary."
         }
       ],
-      "false_positive_analysis": "Only an OnServerEvent Connect callback with two untyped parameters and an entire body of loadstring(secondParameter)() is recognized. The source is a client data argument, not the implicit Player. Guarded or complex handlers, fixed commands, aliases, comments, long strings, field methods and shadowed builtins stay silent. The local signature cannot prove Roblox deployment or LoadStringEnabled, and is advisory.",
+      "false_positive_analysis": "Only a two-parameter server remote callback with simple optional types and an entire body of loadstring(secondParameter)() is recognized, including OnServerInvoke and return. The source is client data, not the implicit Player. Guards, complex types, aliases, comments, long strings, member calls and shadowed builtins stay silent. Event identity, deployment and LoadStringEnabled remain unknown; this is advisory.",
       "positive": [
         {
           "path": "Remote.server.luau",
@@ -1560,8 +1560,8 @@
         {
           "path": "Typed.luau",
           "source": "remote.OnServerEvent:Connect(function(player: Player, code: string)\nloadstring(code)()\nend)\n",
-          "expected": false,
-          "rationale": "Typed parameters require additional Luau syntax handling. They are a documented unsupported shape rather than inferred data-flow evidence."
+          "expected": true,
+          "rationale": "Simple Luau type annotations do not validate client source at runtime. The same direct parameter-to-evaluator boundary remains present."
         },
         {
           "path": "Reassigned.lua",
@@ -1588,15 +1588,23 @@
           "claim": "The Rust standard library documents that all-zero reference values are invalid and that constructing them with mem::zeroed causes undefined behavior."
         },
         {
+          "url": "https://doc.rust-lang.org/std/mem/fn.uninitialized.html",
+          "claim": "The deprecated uninitialized constructor does not establish the valid initialized address required by references; reaching such construction violates validity."
+        },
+        {
           "url": "https://cwe.mitre.org/data/definitions/665.html",
           "claim": "CWE-665 classifies improper initialization; this rule narrows that class to explicitly zero-initialized Rust references."
         }
       ],
-      "false_positive_analysis": "Requires a fully qualified std/core mem::zeroed turbofish whose type begins with a reference, followed by a direct empty call. Raw pointers, integers, Option references, MaybeUninit storage, shadowed modules, documentation strings and nested block comments are excluded. Aliases, inferred types and complex nested generic types remain unsupported. This is local invalid-state evidence, not an exploitability claim.",
+      "false_positive_analysis": "Requires qualified std/core zeroed or uninitialized construction whose type begins with a reference. Other types are outside this signature, not certified safe. MaybeUninit storage, visible module shadows/import ambiguity, raw identifiers, stringify token data and nested comments stay silent. This is local validity evidence, not reachability or exploitability.",
       "positive": [
         {
           "path": "main.rs",
           "source": "fn main() { let _value = unsafe { std::mem::zeroed::<&u32>() }; }\n"
+        },
+        {
+          "path": "uninit.rs",
+          "source": "fn main() { let _value = unsafe { std::mem::uninitialized::<&u32>() }; }\n"
         },
         {
           "path": "lib.rs",
@@ -1851,7 +1859,7 @@
           "claim": "CWE-347 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
         }
       ],
-      "false_positive_analysis": "Advisory: reviewed legacy migrations may need compatibility. Requires an unambiguous runtime jsonwebtoken import and final literal true; custom verify methods and type imports stay silent.",
+      "false_positive_analysis": "Advisory: legacy migrations may need compatibility. Requires a runtime import and final true; sign also requires an explicit asymmetric algorithm without header overrides. Custom bindings and type imports stay silent.",
       "positive": [
         {
           "path": "verify.ts",
@@ -2106,7 +2114,7 @@
           "claim": "CWE-444 supplies the risk taxonomy only; this bounded signature does not establish exploitability, remote reachability or runtime deployment."
         }
       ],
-      "false_positive_analysis": "Advisory: controlled legacy peers may need leniency. Requires a direct imported Node HTTP(S) API and literal true in the options argument. Custom request helpers, spreads, false overrides and data objects stay silent.",
+      "false_positive_analysis": "Advisory: imported HTTP(S), insecureHTTPParser=true or httpValidation=insecure on supporting Node versions. Legacy peers may need leniency. Conflicting switches, strict/relaxed modes, spreads and custom bindings stay silent.",
       "positive": [
         {
           "path": "http.ts",
@@ -3291,6 +3299,3262 @@
       "expected_confidence": "high",
       "blocking_eligible": false,
       "false_positive_analysis": "Advisory: trusted bounded workloads or independent transport controls can justify this setting. An omitted option has a finite default. Only direct imported server constructors and exact bounded decimal integers are checked, not clients or computed options."
+    },
+    {
+      "rule_id": "SP688",
+      "sources": [
+        {
+          "url": "https://nextjs.org/docs/app/api-reference/components/image#dangerouslyallowsvg",
+          "claim": "Next recommends a restrictive image CSP and attachment disposition when serving SVG; enabling SVG alone does not establish missing protections."
+        },
+        {
+          "url": "https://github.com/vercel/next.js/blob/canary/packages/next/src/server/image-optimizer.ts",
+          "claim": "The image response uses the configured CSP and disposition values. Empty CSP is not evidence of a restrictive policy; deployment may still add controls."
+        }
+      ],
+      "positive": [
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.js",
+          "source": "module.exports = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.mjs",
+          "source": "const config = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; export default config;"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'script-src none',contentSecurityPolicy:''}};"
+        }
+      ],
+      "negative": [
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:false,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'attachment',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:\"script-src 'none'; sandbox;\"}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:policy}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',unoptimized:true}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',loader:'custom'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',loaderFile:'./image-loader.ts'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',contentDispositionType:'attachment'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',...hardened}};"
+        },
+        {
+          "path": "settings.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {output:'export',images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const unused = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; export default {};"
+        },
+        {
+          "path": "next.config.cts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "next.config.ts",
+          "source": "/* export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; */",
+          "expected": false,
+          "rationale": "Export-shaped comment text cannot configure the optimizer or clear its response policy."
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',['contentSecurityPolicy']:''}};",
+          "expected": false,
+          "rationale": "Computed property identity stays unresolved rather than overriding known protective options."
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,\ncontentDispositionType:'inline',\ncontentSecurityPolicy:''}};",
+          "expected": true,
+          "rationale": "Multiline literal configuration preserves all three explicitly unsafe header choices."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "false_positive_analysis": "Advisory only. Trusted images or a reverse proxy can supply independent controls. SVG enablement alone, default/explicit protective CSP, attachment delivery, custom loaders, unoptimized images and output overrides stay silent.",
+      "blocking_eligible": false
+    },
+    {
+      "rule_id": "SP689",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.server.kestrel.core.kestrelserverlimits.maxrequestbodysize?view=aspnetcore-10.0",
+          "claim": "Kestrel's nullable body-size property disables this limit when null; a finite default and independent per-request or proxy limits must be distinguished."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Resource-consumption limits are a CWE-400 control, but an absent local cap alone does not prove endpoint reachability or exploitable exhaustion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvar configure = (KestrelServerOptions options) => {\n options.Limits.MaxRequestBodySize = null;\n};"
+        },
+        {
+          "path": "Server.cs",
+          "source": "void Configure(global::Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = 4096; options.Limits.MaxRequestBodySize = null;\n}"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = 4096;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n \n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = configuredLimit;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null; options.Limits.MaxRequestBodySize = 4096;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n if (development) options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n Customize(options); options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null; Register(options);\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Project.Server;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "class KestrelServerOptions {}\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using KestrelServerOptions = Project.Options;\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(dynamic options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Server.cs",
+          "source": "/*\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}*/",
+          "expected": false,
+          "rationale": "A comment cannot bind server options or disable a request-processing resource limit."
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = /* deliberately unbounded */ null;\n}",
+          "expected": true,
+          "rationale": "A comment inside the actual null assignment must not hide the explicit local limit opt-out."
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n}\nvoid Other() { options.Limits.MaxRequestBodySize = null;\n}",
+          "expected": false,
+          "rationale": "An options parameter from another method does not establish the type of a similarly named field."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "false_positive_analysis": "Advisory only. An independent cap or intentional streaming may justify this option. Require a locally bound standard options type and a flat literal configuration block; defaults, finite limits, reconfiguration, custom types and branching stay unresolved.",
+      "blocking_eligible": false
+    },
+    {
+      "rule_id": "SP690",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
+          "claim": "Roblox requires server validation of remote input before privileged actions such as loading modules or removing selected instances/Players. Player.Kick disconnects the selected Player, but source matching does not establish its runtime type."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/829.html",
+          "claim": "Maps the local trust/authorization boundary, not demonstrated runtime exploitability."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local function register()\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: any)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player: Player, data: any)\nreturn require(data)\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local adminRemote = Instance.new(\"RemoteEvent\")\nadminRemote.OnServerEvent:Connect(function(player, data)\n-- inspect boundary\nrequire(data);\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote: RemoteEvent = Instance.new(\"RemoteEvent\")\nremote.Name = \"Actions\"\nremote.Parent = game.ReplicatedStorage\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player, data)\nreturn require(data)\nend and safeHandler\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\") == other\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\nlocal remote = Instance.new(\"RemoteEvent\")\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "function factory()\nlocal remote = Instance.new(\"RemoteEvent\")\nend\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(script.ServerActions)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nif not allowed(player, data) then return end\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata = serverOwnedValue\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"BindableEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnClientEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(player)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data, extra)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: {id: number})\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local alias = remote\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\ncontainer.remote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\").Custom\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnClientInvoke = function(player, data)\nreturn require(data)\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\nremote.OnServerEvent:Connect(function(player, data) print(data) end)\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Server.server.luau",
+          "source": "local sample = `outer {`inner local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n`} tail`\n",
+          "expected": false,
+          "rationale": "Nested interpolated strings must remain opaque; callback-shaped text inside them is not a callback registration."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "--[=[\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n]=]\n",
+          "expected": false,
+          "rationale": "A long comment cannot register a remote callback."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local sample = [==[\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n]==]\n",
+          "expected": false,
+          "rationale": "A long literal is data, not executable callback code."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local Instance = factories\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n",
+          "expected": false,
+          "rationale": "A local Instance factory cannot establish Roblox engine identity."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, player)\nrequire(data)\nend)\n",
+          "expected": false,
+          "rationale": "Duplicate parameter names invalidate client provenance."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "setfenv(1, customEnvironment)\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n",
+          "expected": false,
+          "rationale": "A modified global environment leaves builtin identity unresolved."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local unused, require = nil, customLoader\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\n",
+          "expected": false,
+          "rationale": "A multi-local declaration shadows the native module loader."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "for require in loaders do\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nrequire(data)\nend)\nend",
+          "expected": false,
+          "rationale": "A loop binding is not the Roblox builtin require."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: requires a local native remote and a single-statement callback. Fixed modules, guards, aliases, escaped/rebound receivers and complex types are unresolved; deployment is unknown."
+    },
+    {
+      "rule_id": "SP691",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
+          "claim": "Roblox requires server validation of remote input before privileged actions such as loading modules or removing selected instances/Players. Player.Kick disconnects the selected Player, but source matching does not establish its runtime type."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/862.html",
+          "claim": "Maps the local trust/authorization boundary, not demonstrated runtime exploitability."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local function register()\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: any)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player: Player, data: any)\nreturn data:Destroy()\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local adminRemote = Instance.new(\"RemoteEvent\")\nadminRemote.OnServerEvent:Connect(function(player, data)\n-- inspect boundary\ndata:Destroy();\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote: RemoteEvent = Instance.new(\"RemoteEvent\")\nremote.Name = \"Actions\"\nremote.Parent = game.ReplicatedStorage\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: any)\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player, data)\nreturn data:Kick()\nend\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnServerInvoke = function(player, data)\nreturn data:Destroy()\nend and safeHandler\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\") == other\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "remote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\nlocal remote = Instance.new(\"RemoteEvent\")\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "function factory()\nlocal remote = Instance.new(\"RemoteEvent\")\nend\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nplayer.Character:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nif not allowed(player, data) then return end\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata = serverOwnedValue\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"BindableEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnClientEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nplayer:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data, extra)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player: Player, data: {id: number})\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local alias = remote\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\ncontainer.remote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\").Custom\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteFunction\")\nremote.OnClientInvoke = function(player, data)\nreturn data:Destroy()\nend\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\nremote.OnServerEvent:Connect(function(player, data) print(data) end)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nplayer:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nif authorized(player, data) then data:Kick() end\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\nlocal data = serverSelectedPlayer\ndata:Kick()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nauditAction()\nend)\n"
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = customRemote\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Server.server.luau",
+          "source": "local sample = `outer {`inner local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n`} tail`\n",
+          "expected": false,
+          "rationale": "Nested interpolated strings must remain opaque; callback-shaped text inside them is not a callback registration."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "--[=[\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n]=]\n",
+          "expected": false,
+          "rationale": "A long comment cannot register a remote callback."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local sample = [==[\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n]==]\n",
+          "expected": false,
+          "rationale": "A long literal is data, not executable callback code."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local Instance = factories\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n",
+          "expected": false,
+          "rationale": "A local Instance factory cannot establish Roblox engine identity."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, player)\ndata:Destroy()\nend)\n",
+          "expected": false,
+          "rationale": "Duplicate parameter names invalidate client provenance."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "setfenv(1, customEnvironment)\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Destroy()\nend)\n",
+          "expected": false,
+          "rationale": "A modified global environment leaves builtin identity unresolved."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "--[=[local remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n]=]",
+          "expected": false,
+          "rationale": "A commented Kick cannot remove a Player."
+        },
+        {
+          "path": "Server.server.luau",
+          "source": "local Instance = customFactory\nlocal remote = Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player, data)\ndata:Kick()\nend)\n",
+          "expected": false,
+          "rationale": "A custom factory does not establish a native remote."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: requires a single direct callback statement and local native remote. Guards, server-selected objects and ambiguous bindings stay silent. Runtime exposure and independent controls need review."
+    },
+    {
+      "rule_id": "SP692",
+      "sources": [
+        {
+          "url": "https://github.com/auth0/node-jsonwebtoken",
+          "claim": "RSA signing normally requires 2048-bit modulus; allowInsecureKeySizes explicitly disables the size safeguard."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/326.html",
+          "claim": "Inadequate key strength can weaken cryptographic protection; this signature proves an opt-out, not the actual key size."
+        }
+      ],
+      "positive": [
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign as issue} from 'jsonwebtoken';\nissue(payload, key, {algorithm:'PS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "const {sign} = require('jsonwebtoken');\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {\nalgorithm:'RS256',allowInsecureKeySizes:true}, callback);\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:false});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256'});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'HS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'ES256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true,allowInsecureKeySizes:false});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true,...hardened});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true,header:{alg:'HS256'}});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true,header:customHeader});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from './jwt-policy';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import type {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign = issueSafely;\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "sign.ts",
+          "source": "/* import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n */",
+          "expected": false,
+          "rationale": "Commented examples cannot invoke signing."
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nfunction issue(sign: Signer) { return sign(payload, key, {algorithm:'RS256',allowInsecureKeySizes:true});\n}",
+          "expected": false,
+          "rationale": "A parameter shadows the imported function."
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'RS256',['allowInsecureKeySizes']:true});\n",
+          "expected": false,
+          "rationale": "Computed option keys stay unresolved rather than being treated as a proven signing configuration."
+        },
+        {
+          "path": "sign.ts",
+          "source": "import {sign} from 'jsonwebtoken';\nsign(payload, key, {algorithm:'PS512',allowInsecureKeySizes:false,allowInsecureKeySizes:true});\n",
+          "expected": true,
+          "rationale": "The final literal setting wins for a supported RSA/PSS signing algorithm."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: actual key strength is unknown. Require explicit RS/PS algorithm and true opt-out; HMAC, EC, defaults, header overrides and ambiguous imports stay silent."
+    },
+    {
+      "rule_id": "SP693",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/http.html#serverrequesttimeout",
+          "claim": "The receive deadlines can be explicitly disabled with zero; other ingress controls and exposure remain unknown."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: direct HTTP(S) imports and two literal zero options only. Defaults, finite caps, clients, spreads and shadowed imports stay silent. Trusted streams or independent ingress controls may be intentional.",
+      "positive": [
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:https';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer as serve} from 'node:http';\nserve({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "const {createServer} = require('node:http');\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:30000, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:5000}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:deadline}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0,...bounded}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0,headersTimeout:5000}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from './transport';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import {request} from 'node:http';\nrequest({requestTimeout:0, headersTimeout:0}, handler);\n"
+        },
+        {
+          "path": "server.ts",
+          "source": "import type {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "server.ts",
+          "source": "/* import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, headersTimeout:0}, handler);\n */",
+          "expected": false,
+          "rationale": "A commented example cannot configure a live HTTP server."
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\nfunction build(createServer: Factory) { return createServer({requestTimeout:0, headersTimeout:0}, handler);\n}",
+          "expected": false,
+          "rationale": "A parameter shadows the native HTTP factory and its option semantics."
+        },
+        {
+          "path": "server.ts",
+          "source": "import {createServer} from 'node:http';\ncreateServer({requestTimeout:0, ['headersTimeout']:0}, handler);\n",
+          "expected": false,
+          "rationale": "Computed property identity and override order remain unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP694",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/race",
+          "claim": "An empty Promise.race cannot settle; a direct await does not progress through it."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/754.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        },
+        {
+          "url": "https://api.dart.dev/dart-async/Future/any.html",
+          "claim": "Dart Future.any never completes when its iterable is empty; runtime type identity and wrappers require separate resolution."
+        }
+      ],
+      "false_positive_analysis": "Advisory: literal empty inputs and direct await only. Standalone pending sentinels, chained wrappers, unknown/type-only/custom bindings and nonempty input stay silent. Dart requires an explicit dart:async import.",
+      "positive": [
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([ /* no participants */ ]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "export const run = async () => { await Promise.race(\n[]\n); };"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async' as tasks;\nvoid main() async { await tasks.Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.any(const []); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([Promise.resolve(1)]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.all([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race(entries); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { const never = Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([]).timeout(1000); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await local.Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "import Promise from 'bluebird';\nasync function wait() { await Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.ts",
+          "source": "const Promise = custom;\nasync function wait() { await Promise.race([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.any([Future.value(1)]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.wait([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { final never = Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main() async { await Future.any([]).timeout(const Duration(seconds: 1)); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'custom.dart';\nvoid main() async { await Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nvoid main(Future) async { await Future.any([]); }\n"
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nimport 'custom.dart';\nvoid main() async { await Future.any([]); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "wait.ts",
+          "source": "// async function wait() { await Promise.race([]); }\n",
+          "expected": false,
+          "rationale": "Code-shaped comments must remain data rather than awaited races."
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait(Promise: Scheduler) { await Promise.race([]); }\n",
+          "expected": false,
+          "rationale": "An explicitly shadowed scheduler is not the native Promise class."
+        },
+        {
+          "path": "wait.ts",
+          "source": "async function wait() { await Promise.race([,,,]); }\n",
+          "expected": false,
+          "rationale": "A sparse array yields undefined participants and is not an empty iterable."
+        },
+        {
+          "path": "wait.dart",
+          "source": "/* import 'dart:async';\nvoid main() async { await Future.any([]); }\n */",
+          "expected": false,
+          "rationale": "Comment contents do not create a native asynchronous wait."
+        },
+        {
+          "path": "wait.dart",
+          "source": "import 'dart:async';\nclass Future {}\nvoid main() async { await Future.any([]); }\n",
+          "expected": false,
+          "rationale": "A local Future type is not the imported standard library class."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP695",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#sorting_with_non-well-formed_comparator",
+          "claim": "Comparators must provide consistent signed ordering results; boolean comparators can yield engine-dependent or unintended order."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/682.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: only literal native arrays with at least two entries and a simple two-parameter comparison callback. Custom receivers, spreads, numeric comparators, complex bodies and visible prototype changes stay unresolved.",
+      "positive": [
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const toSorteded = [3,1,2].toSorted((a,b) => a < b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a: number,b: number) => { return a >= b; });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a,b) => a - b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a,b) => b - a);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort((a,b) => a > b ? 1 : a < b ? -1 : 0);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = custom.sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [].sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [1].sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [...items].sort((a,b) => a > b);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort(compare);\n"
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = [3,1,2].sort[(a,b) => a > b];\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "sort.ts",
+          "source": "/* const sorted = [3,1,2].sort((a,b) => a > b);\n */",
+          "expected": false,
+          "rationale": "Comparator-looking prose is not a native array operation."
+        },
+        {
+          "path": "sort.ts",
+          "source": "const sorted = matrix[3,1,2].sort((a,b) => a > b);\n",
+          "expected": false,
+          "rationale": "An indexed custom receiver is not an array literal despite its closing bracket."
+        },
+        {
+          "path": "sort.ts",
+          "source": "Array.prototype.sort = custom;\nconst sorted = [3,1,2].sort((a,b) => a > b);\n",
+          "expected": false,
+          "rationale": "Visible prototype replacement makes native sort semantics unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP696",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.xml.xmlreadersettings.maxcharactersfromentities",
+          "claim": "Zero removes the entity expansion cap; external resolver restrictions do not bound internal entity expansion."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/776.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: settings must be passed directly to XmlReader.Create. DTD prohibition, finite entity/document caps, aliases, custom types, duplicate fields and complex strings stay silent. Trusted finite XML can justify the setting.",
+      "positive": [
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0L, XmlResolver = null });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "var reader = System.Xml.XmlReader.Create(input, new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 128 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, MaxCharactersFromEntities = 0 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0, MaxCharactersInDocument = 1024 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = limit });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using Custom.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = CustomReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0, ConformanceLevel = ConformanceLevel.Fragment });\n"
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0, MaxCharactersFromEntities = 100 });\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "reader.cs",
+          "source": "/* using System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n */",
+          "expected": false,
+          "rationale": "XML configuration in a comment cannot change parser bounds."
+        },
+        {
+          "path": "reader.cs",
+          "source": "class XmlReader {}\nusing System.Xml;\nvar reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n",
+          "expected": false,
+          "rationale": "A local reader type prevents native framework identity from being inferred."
+        },
+        {
+          "path": "reader.cs",
+          "source": "using System.Xml;\nvar reader = XmlReader.Create(input, new OtherSettings { DtdProcessing = DtdProcessing.Parse, MaxCharactersFromEntities = 0 });\n",
+          "expected": false,
+          "rationale": "A settings-shaped custom object is not a native XmlReaderSettings instance."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP697",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://docs.python.org/3/library/logging.config.html#logging.config.listen",
+          "claim": "The standard logging listener accepts configuration on localhost; verification should authenticate bytes before object construction/evaluation."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/94.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: direct import, literal valid port, verify=None and immediate start only. Authenticated callbacks, mere construction, aliases, custom/escaped bindings and dynamic configuration stay unresolved.",
+      "positive": [
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "from logging.config import listen as serve\nserve(9030, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config as config\nconfig.listen(0, None).start()\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, verify=verify_signature).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, verify=None)\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(configured_port, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(-1, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(True, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import custom.config\ncustom.config.listen(9030, verify=None).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, **options).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen(9030, verify=None, port=1).start()\n"
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.__dict__.update({'listen': safe})\nlogging.config.listen(9030,verify=None).start()"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "listener.py",
+          "source": "# import logging.config\n# logging.config.listen(9030, verify=None).start()\n# ",
+          "expected": false,
+          "rationale": "Commented listener examples cannot open a configuration channel."
+        },
+        {
+          "path": "listener.py",
+          "source": "import logging.config\nlogging.config.listen = safe_listener\nlogging.config.listen(9030, verify=None).start()\n",
+          "expected": false,
+          "rationale": "Overwriting the listener invalidates the imported function identity."
+        },
+        {
+          "path": "listener.py",
+          "source": "import local as logging\nimport logging.config\nlogging.config.listen(9030, verify=None).start()\n",
+          "expected": false,
+          "rationale": "A conflicting import leaves the logging namespace unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP698",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/zlib.html",
+          "claim": "Synchronous compression executes on the calling thread before returning a value; await does not offload that work."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Classifies the local failure boundary; this mapping does not establish deployed exposure or exploitability."
+        }
+      ],
+      "false_positive_analysis": "Advisory: directly awaited imported synchronous compression/decompression only. Small intentional work may be acceptable. Asynchronous APIs, streams, custom functions, shadows and calls not directly awaited stay silent.",
+      "positive": [
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzipSync(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync as encodeNow} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await encodeNow(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "const zlib = require('node:zlib');\nasync function encode(data: Uint8Array) { return await zlib.brotliCompressSync(data); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return gzipSync(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzip} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzip(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from './compression';\nasync function encode(data: Uint8Array) { return await gzipSync(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import type {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzipSync(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await runInWorker(data); }\n"
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await Promise.resolve(gzipSync(data)); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "compression.ts",
+          "source": "/* import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzipSync(data); }\n */",
+          "expected": false,
+          "rationale": "Commented compression examples cannot block the calling thread."
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array, gzipSync: Compressor) { return await gzipSync(data); }\n",
+          "expected": false,
+          "rationale": "A local compressor parameter has unknown synchronous semantics."
+        },
+        {
+          "path": "compression.ts",
+          "source": "import {gzipSync} from 'node:zlib';\nasync function encode(data: Uint8Array) { return await gzipSync(...inputs); }\n",
+          "expected": false,
+          "rationale": "Spread arguments leave overload and invocation validity unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP699",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: qualified std/core primitive NonZero constructors and literal zero only. Safe constructors, nonzero/computed values, imported/custom modules, raw identifiers and stringify token data stay unresolved or silent.",
+      "sources": [
+        {
+          "url": "https://doc.rust-lang.org/std/num/struct.NonZero.html#method.new_unchecked",
+          "claim": "The unsafe NonZero constructor requires a nonzero value; zero violates Rust's validity contract."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/665.html",
+          "claim": "Maps the local validity/trust/resource boundary, not proof of deployed exposure or exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { core::num::NonZeroI64::new_unchecked(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0u32) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroUsize::new_unchecked(0_usize) }; }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(1) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(value) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { custom::std::num::NonZeroU32::new_unchecked(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::CustomNumber::new_unchecked(0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0.0) }; }\n"
+        },
+        {
+          "path": "value.rs",
+          "source": "fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0u64) }; }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "value.rs",
+          "source": "/* fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n */",
+          "expected": false,
+          "rationale": "A comment cannot construct an unsafe integer value or establish reachability."
+        },
+        {
+          "path": "value.rs",
+          "source": "use custom::std;\nfn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n",
+          "expected": false,
+          "rationale": "An imported standard-looking module name has unresolved identity, so its constructors are not presumed native."
+        },
+        {
+          "path": "value.rs",
+          "source": "use custom::{core};\nfn build() { let value = unsafe { core::num::NonZeroU32::new_unchecked(0) }; }\n",
+          "expected": false,
+          "rationale": "A grouped import can bind core to a custom module rather than the Rust standard library."
+        },
+        {
+          "path": "value.rs",
+          "source": "mod r#std {}\nfn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n",
+          "expected": false,
+          "rationale": "A raw identifier declaration can shadow a standard module spelling and must not establish native identity."
+        },
+        {
+          "path": "value.rs",
+          "source": "const EXAMPLE: &str = stringify!(fn build() { let value = unsafe { std::num::NonZeroU32::new_unchecked(0) }; }\n);",
+          "expected": false,
+          "rationale": "stringify consumes token data; a constructor-looking token sequence is not an evaluated call."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP700",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: imported timers or timers/promises and the correct delay position. Only exact decimal integers or bounded products are evaluated. Global/browser timers, other computed delays, callback data, safe limits and ambiguous bindings stay silent.",
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/timers.html",
+          "claim": "Node coerces delays greater than 2147483647 milliseconds to one millisecond; callback and promise APIs use different delay positions."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/681.html",
+          "claim": "Maps the local validity/trust/resource boundary, not proof of deployed exposure or exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setTimeout} from 'node:timers';\nsetTimeout(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval as repeat} from 'node:timers';\nrepeat(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setTimeout as wait} from 'node:timers/promises';\nawait wait(3000000000, 'value');"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 30 * 24 * 60 * 60 * 1000);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "const timers = require('node:timers');\ntimers.setTimeout(tick, 3000000000);"
+        }
+      ],
+      "negative": [
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 2147483647);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 0);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, -1);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, delay);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 1000, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from './timers';\nsetInterval(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import type {setInterval} from 'node:timers';\nsetInterval(tick, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setTimeout as wait} from 'node:timers/promises';\nawait wait(1000, 2147483648);"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 2147483648n);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 0 * 30 * 24 * 60 * 60 * 1000);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(null, 2147483648);\n"
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(0, 2147483648);\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "timer.ts",
+          "source": "/* import {setInterval} from 'node:timers';\nsetInterval(tick, 2147483648);\n */",
+          "expected": false,
+          "rationale": "Timer-looking comment text does not create a runtime schedule."
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nfunction run(setInterval: Custom) { setInterval(tick, 2147483648);\n}",
+          "expected": false,
+          "rationale": "A local parameter shadows the imported timer and invalidates its coercion semantics."
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999);\n",
+          "expected": false,
+          "rationale": "Oversized numeric tokens remain unresolved without unbounded integer conversion or evaluation."
+        },
+        {
+          "path": "timer.ts",
+          "source": "import {setInterval} from 'node:timers';\nsetInterval(tick, 9007199254740991 * 9007199254740991);\n",
+          "expected": false,
+          "rationale": "Products outside exact JavaScript integer range are not evaluated into affirmative evidence."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP701",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: import-bound QueuePool constructor with explicit pool_size=0 or max_overflow=-1. Engine defaults, other pool classes, positional/keyword collisions, unknown values and changed/escaped bindings stay silent. QueuePool is not imported or executed by the scanner.",
+      "sources": [
+        {
+          "url": "https://docs.sqlalchemy.org/en/20/core/pooling.html#sqlalchemy.pool.QueuePool",
+          "claim": "QueuePool defaults are finite; pool_size=0 or max_overflow=-1 explicitly removes a capacity bound."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Maps the local validity/trust/resource boundary, not proof of deployed exposure or exploitation."
+        }
+      ],
+      "positive": [
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, max_overflow=-1)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool as Pool\npool = Pool(connect, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "import sqlalchemy.pool as pools\npool = pools.QueuePool(connect, 5, -1)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(creator=connect, pool_size=0, max_overflow=10)\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=5, max_overflow=10)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=1, max_overflow=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=limit)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=5, max_overflow=-2)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=False)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=-1)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from custom.pool import QueuePool\npool = QueuePool(connect, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import NullPool\npool = NullPool(connect, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, **options)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, 5, pool_size=0)\n"
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy import create_engine\nengine = create_engine(url)\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "pool.py",
+          "source": "# from sqlalchemy.pool import QueuePool\n# pool = QueuePool(connect, pool_size=0)\n# ",
+          "expected": false,
+          "rationale": "A pool configuration in comments cannot instantiate a connection pool."
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\nQueuePool = custom\npool = QueuePool(connect, pool_size=0)\n",
+          "expected": false,
+          "rationale": "A reassigned constructor is no longer the import-bound QueuePool."
+        },
+        {
+          "path": "pool.py",
+          "source": "from sqlalchemy.pool import QueuePool\ndef build(QueuePool):\n    return QueuePool(connect, pool_size=0)\n",
+          "expected": false,
+          "rationale": "A function parameter masks the imported class; its settings need separate review."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP702",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct runtime React import and inline async function only. Inner async work, synchronous setup, custom hooks, type-only imports, binding escapes and shadows stay silent. TypeScript or lint may already reject this code.",
+      "sources": [
+        {
+          "url": "https://react.dev/reference/react/useEffect",
+          "claim": "Effect setup may return cleanup or nothing; an async function returns a Promise. Missing dependencies alone do not establish an infinite loop."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        }
+      ],
+      "positive": [
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useLayoutEffect} from 'react';\nexport function useRefresh() { useLayoutEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useInsertionEffect} from 'react';\nexport function useRefresh() { useInsertionEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect as setup} from 'react';\nexport function useRefresh() { setup(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async function setup() { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import * as React from 'react';\nexport function useRefresh() { React.useEffect(async () => { await refresh(); }, []); }\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { void refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { async function run() { await refresh(); } void run(); return cancel; }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { auditCommit(); } ); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from './custom-hooks';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import type {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {type useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(synchronousSetup, []); }\n"
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async function* setup() { yield 1; }, []); }\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "effect.tsx",
+          "source": "/* import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\n */",
+          "expected": false,
+          "rationale": "A comment cannot invoke React or register asynchronous effect setup."
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh(useEffect: any) { useEffect(async () => { await refresh(); }, []); }\n",
+          "expected": false,
+          "rationale": "A typed parameter shadows the imported hook."
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { await refresh(); }, []); }\nuseEffect = customHook;",
+          "expected": false,
+          "rationale": "A changed hook binding does not establish React identity."
+        },
+        {
+          "path": "effect.tsx",
+          "source": "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(async () => { /* returning cleanup asynchronously is still wrong */ return cancel; }, []); }\n",
+          "expected": true,
+          "rationale": "Returning cleanup through a Promise is still not synchronous effect cleanup."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP703",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct await of imported callback pipeline/readFile/writeFile with an inline function callback and supported arity. Promises imports, callback-only calls, wrappers, type imports, shadows, spreads and chained results stay unresolved or silent. A deliberately thenable custom pipeline destination needs review.",
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/stream.html#streampipelinesource-transforms-destination-callback",
+          "claim": "Callback pipeline returns the destination; the stream/promises API supplies completion promises."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        },
+        {
+          "url": "https://nodejs.org/api/fs.html#fsreadfilepath-options-callback",
+          "claim": "Callback file APIs do not return the Promise for completion; the fs/promises API supplies the awaited result."
+        }
+      ],
+      "positive": [
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline as pipe} from 'node:stream';\nasync function transfer(source, destination) { await pipe(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, function done(error) { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "const streams = require('node:stream');\nasync function transfer(source, destination) { await streams.pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,error=>report(error)); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,async (error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,'utf8',(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,{encoding:'utf8'},(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile as read} from 'node:fs';\nasync function load(path) { return await read(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "const fs=require('fs');\nasync function load(path) { return await fs.readFile(path,(error,data)=>{report(error,data);}); }"
+        }
+      ],
+      "negative": [
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream/promises';\nasync function transfer(source, destination) { await pipeline(source, destination); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from './custom-stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import type {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await new Promise((resolve, reject) => pipeline(source, destination, (error) => error ? reject(error) : resolve())); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(...streams, (error) => { report(error); }); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, completionHandler); }\n"
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await wrappedPipeline(source, destination); }\n"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs/promises';\nasync function load(path) { return await readFile(path); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs/promises';\nasync function save(path,data) { await writeFile(path,data); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { writeFile(path,data,(error)=>{report(error);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from './filesystem';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import type {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,callback); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(...inputs,(error,data)=>{report(error,data);}); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path) { return await new Promise((resolve,reject)=>readFile(path,(error,data)=>error?reject(error):resolve(data))); }"
+        },
+        {
+          "path": "callback.ts",
+          "source": "import fs from 'node:fs'; async function load(path) { return await fs.promises.readFile(path); }"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "pipeline.ts",
+          "source": "/* import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await pipeline(source, destination, (error) => { report(error); }); }\n */",
+          "expected": false,
+          "rationale": "A commented pipeline example cannot register streams or a completion callback."
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination, pipeline) { await pipeline(source, destination, (error) => { report(error); }); }\n",
+          "expected": false,
+          "rationale": "An argument shadows the pipeline import."
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await object.pipeline(source, destination, (error) => { report(error); }); }\n",
+          "expected": false,
+          "rationale": "A property spelling does not establish native pipeline identity."
+        },
+        {
+          "path": "pipeline.ts",
+          "source": "import {pipeline} from 'node:stream';\nasync function transfer(source, destination) { await /* completion? */ pipeline(source, destination, (error) => { report(error); }); }\n",
+          "expected": true,
+          "rationale": "Comments do not change the awaited callback overload."
+        },
+        {
+          "path": "callback.ts",
+          "source": "/* import {readFile} from 'node:fs';\nasync function load(path) { return await readFile(path,(error,data)=>{report(error,data);}); } */",
+          "expected": false,
+          "rationale": "An API signature inside a comment cannot start asynchronous file I/O."
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {readFile} from 'node:fs';\nasync function load(path,readFile) { return await readFile(path,(error,data)=>{report(error,data);}); }",
+          "expected": false,
+          "rationale": "A shadowing function parameter invalidates imported callback API identity."
+        },
+        {
+          "path": "callback.ts",
+          "source": "import {writeFile} from 'node:fs';\nasync function save(path,data) { await writeFile(path,data,(error)=>{report(error);}); }writeFile=customWriter;",
+          "expected": false,
+          "rationale": "A changed imported binding cannot establish the callback completion contract."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP704",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: imported pg Client/Pool, direct new, flat literal options, literal PostgreSQL URL with a recognized SSL override and a separate SSL object containing ca. Dynamic URLs, duplicate URL keys, custom Client/connection/stream options, spreads and unresolved bindings stay silent. Intentional precedence may be acceptable.",
+      "sources": [
+        {
+          "url": "https://node-postgres.com/features/ssl",
+          "claim": "SSL parameters in a connectionString replace the separately supplied SSL object and its extra options."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/436.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        }
+      ],
+      "positive": [
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Pool} from 'pg';\nconst db = new Pool({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client as Database} from 'pg';\nconst db = new Database({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "const pg = require('pg');\nconst db = new pg.Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslrootcert=%2Fetc%2Ftrusted-ca.pem', ssl:{ca: trustedCA}});\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:true});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{cert:clientCertificate}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from './database';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import type {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:environmentUrl, ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=unknown', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?application_name=sslmode-require', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require&sslmode=disable', ssl:{ca: trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{...tlsDefaults, ca:trustedCA}});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}, stream:customStream});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Pool} from 'pg';\nconst db = new Pool({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}, Client:CustomClient});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}, connection:customConnection});\n"
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'https://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "database.ts",
+          "source": "/* import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n */",
+          "expected": false,
+          "rationale": "A literal example cannot configure a pool."
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst Client = CustomClient;\nconst db = new Client({connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n",
+          "expected": false,
+          "rationale": "A local constructor invalidates import provenance."
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({...base, connectionString:'postgresql://db.example/app?sslmode=require', ssl:{ca: trustedCA}});\n",
+          "expected": false,
+          "rationale": "A spread leaves effective options unresolved."
+        },
+        {
+          "path": "database.ts",
+          "source": "import {Client} from 'pg';\nconst db = new Client({connectionString:'postgresql://db.example/app?%73slmode=require', ssl:{ca: trustedCA}});\n",
+          "expected": true,
+          "rationale": "Standard URL parameter decoding preserves the SSL override."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP705",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: one SQL file with supported explicit BEGIN or START TRANSACTION and concurrent CREATE/DROP INDEX or REINDEX INDEX/TABLE before completion. Other REINDEX forms/options remain unresolved. Comments, strings, dollar bodies, committed transactions and non-concurrent forms stay silent. Dialect, runner and cross-file state are not resolved.",
+      "sources": [
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-createindex.html",
+          "claim": "PostgreSQL CREATE INDEX CONCURRENTLY cannot run inside a transaction block."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        },
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-dropindex.html",
+          "claim": "PostgreSQL concurrent DROP INDEX cannot execute in a transaction block; ordinary DROP INDEX can."
+        },
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-reindex.html",
+          "claim": "PostgreSQL concurrent REINDEX cannot execute in a transaction block; other REINDEX restrictions depend on the object type."
+        }
+      ],
+      "positive": [
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "START TRANSACTION;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN WORK;\nCREATE UNIQUE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nCREATE INDEX CONCURRENTLY IF NOT EXISTS account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; COMMIT AND CHAIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; SAVEPOINT migration; ROLLBACK TO SAVEPOINT migration;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX TABLE CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "START TRANSACTION;\nDROP INDEX CONCURRENTLY IF EXISTS account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; COMMIT AND CHAIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "CREATE TEMP TABLE sample(id integer);\nBEGIN; CREATE INDEX CONCURRENTLY sample_idx ON sample(id); COMMIT;"
+        }
+      ],
+      "negative": [
+        {
+          "path": "migration.sql",
+          "source": "\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nCREATE INDEX account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; COMMIT;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; ROLLBACK;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; END;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN; COMMIT AND NO CHAIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nSELECT 'CREATE INDEX CONCURRENTLY account_lookup ON accounts(id)';\nCOMMIT;\n"
+        },
+        {
+          "path": "migration.sql",
+          "source": "DO $body$ BEGIN CREATE INDEX account_lookup ON accounts(id); END; $body$;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts(id);"
+        },
+        {
+          "path": "migration.sql",
+          "source": "CREATE FUNCTION sample() RETURNS void LANGUAGE SQL BEGIN ATOMIC SELECT 1; END;\nBEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n"
+        },
+        {
+          "path": "index.sql",
+          "source": "\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; COMMIT;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN; ROLLBACK;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nREINDEX (CONCURRENTLY false) INDEX account_lookup;\nCOMMIT;"
+        },
+        {
+          "path": "index.sql",
+          "source": "DO $$ BEGIN PERFORM 1; END $$;\nDROP INDEX CONCURRENTLY account_lookup;"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "migration.sql",
+          "source": "-- BEGIN;\n-- CREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\n-- COMMIT;\n-- ",
+          "expected": false,
+          "rationale": "Commented transaction text has no DDL effect."
+        },
+        {
+          "path": "migration.sql",
+          "source": "SELECT $note$BEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n$note$;",
+          "expected": false,
+          "rationale": "A dollar-quoted body does not begin a top-level transaction."
+        },
+        {
+          "path": "migration.sql",
+          "source": "/* outer /* nested BEGIN;\nCREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n */ end */",
+          "expected": false,
+          "rationale": "Nested PostgreSQL comments keep transaction-looking text outside executable SQL."
+        },
+        {
+          "path": "migration.sql",
+          "source": "BEGIN;\nCREATE /* gap */ INDEX CONCURRENTLY account_lookup ON accounts (id);\nCOMMIT;\n",
+          "expected": true,
+          "rationale": "Whitespace and comments preserve concurrent DDL."
+        },
+        {
+          "path": "index.sql",
+          "source": "SELECT $example$BEGIN;\nDROP INDEX CONCURRENTLY account_lookup;\nCOMMIT;$example$;",
+          "expected": false,
+          "rationale": "Transaction and DDL text inside a dollar literal are data, not commands."
+        },
+        {
+          "path": "index.sql",
+          "source": "/* outer /* nested BEGIN;\nREINDEX INDEX CONCURRENTLY account_lookup;\nCOMMIT; */ comment */",
+          "expected": false,
+          "rationale": "Nested comments cannot start a transaction or rebuild a persistent index."
+        },
+        {
+          "path": "index.sql",
+          "source": "BEGIN;\nDROP /* gap */ INDEX CONCURRENTLY account_lookup;\nCOMMIT;",
+          "expected": true,
+          "rationale": "A comment between keywords does not remove the concurrent transaction restriction."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP706",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: single SQL-language SELECT body, explicit pg_temp-first path and bare FROM relation only. Invoker functions, qualified relations, temp-last or empty paths, procedural bodies, CTEs, dynamic settings, escaped bodies and multiple statements stay unresolved or silent. Files with ALTER/DROP FUNCTION need lifecycle analysis and stay silent for this rule. Deliberately reading temporary relations may be intended.",
+      "sources": [
+        {
+          "url": "https://www.postgresql.org/docs/18/sql-createfunction.html#SQL-CREATEFUNCTION-SECURITY",
+          "claim": "SECURITY DEFINER functions need safe name resolution: pg_temp should follow trusted schemas, and protected relations should be qualified."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/426.html",
+          "claim": "Taxonomy for the local API/configuration boundary, not execution or exploitability evidence."
+        }
+      ],
+      "positive": [
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE OR REPLACE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = 'pg_temp, private' AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path TO pg_temp, private AS $body$ SELECT value FROM settings $body$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = \"pg_temp\", \"private\" AS $$ SELECT value FROM settings $$;\n"
+        }
+      ],
+      "negative": [
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY INVOKER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = private, pg_temp AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = '' AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM private.settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM ONLY private.settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM LATERAL private.get_settings() $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT EXTRACT(YEAR FROM current_date) $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings() $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT 'FROM settings' $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ WITH settings AS (SELECT 'fixed' AS value) SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path FROM CURRENT AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SET search_path = private; SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = \"PG_TEMP\", private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM (SELECT 'fixed' AS value) AS settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SECURITY INVOKER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\nALTER FUNCTION lookup_setting() SET search_path = private, pg_temp;"
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\nDROP FUNCTION lookup_setting();"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "definer.sql",
+          "source": "/* CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n */",
+          "expected": false,
+          "rationale": "Commented function definitions do not create privileged functions."
+        },
+        {
+          "path": "definer.sql",
+          "source": "SELECT $example$CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM settings $$;\n$example$;",
+          "expected": false,
+          "rationale": "A nested dollar-quoted example is data and cannot create a privileged SQL function."
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, get_schema() AS $$ SELECT value FROM settings $$;\n",
+          "expected": false,
+          "rationale": "Computed or malformed path settings are unresolved."
+        },
+        {
+          "path": "definer.sql",
+          "source": "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = pg_temp, private AS $$ SELECT value FROM /* relation */ settings $$;\n",
+          "expected": true,
+          "rationale": "A comment does not qualify the relation."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP707",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: flat native DataStore chain, short fixed name and distinct simple client parameters. Set/increment use key and value; removal uses the key. Guards, aliases and wrappers remain unresolved. Shared writable stores may be intentional; exposure and successful writes are unknown.",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/scripting/security/client-server-boundary",
+          "claim": "Remote arguments that affect persistent player data require server-side validation and authorization; successful data corruption is not implied by a source match."
+        },
+        {
+          "url": "https://create.roblox.com/docs/cloud-services/data-stores",
+          "claim": "Server code obtains a native DataStore and SetAsync takes the key and value; the API can fail and is not invoked by this scanner."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/862.html",
+          "claim": "Taxonomy for the local ownership/authorization boundary, not proof of deployment or successful exploitation."
+        },
+        {
+          "url": "https://create.roblox.com/docs/reference/engine/classes/GlobalDataStore",
+          "claim": "Remove and increment mutate the record selected by a key; source matching does not prove authorization or a successful write."
+        }
+      ],
+      "positive": [
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteFunction')\nremote.OnServerInvoke=function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(actor: Player, key: string, value: any)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(actor,recordKey,recordValue)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(recordKey,recordValue)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService(\"DataStoreService\"):GetDataStore(\"Profiles\"):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\n-- direct write\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value);\nend)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(actor: Player, key: string) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount: number) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player,key) game:GetService(\"DataStoreService\"):GetDataStore(\"Profiles\"):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new(\"RemoteEvent\")\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService(\"DataStoreService\"):GetDataStore(\"Profiles\"):IncrementAsync(key,amount) end)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(tostring(player.UserId),value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,serverValue)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\nif not authorized(player,key) then return end\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\nlocal key=serverKey\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=customRemote\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('BindableEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnClientEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('CustomStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore(storeName):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value,options)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,key)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'):SetAsync(key,value)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\npcall(function() game:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value) end)\nend)"
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)\nremote.OnServerEvent:Connect(function(player,key,value) audit(value) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(tostring(player.UserId)) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(tostring(player.UserId),amount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) if not authorized(player,key) then return end game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,serverAmount) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=customRemote\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote.OnClientEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "store.server.luau",
+          "source": "--[=[local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)]=]",
+          "expected": false,
+          "rationale": "A long Luau comment cannot register a remote or issue a persistent write."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local sample=[==[local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)]==]",
+          "expected": false,
+          "rationale": "A long literal contains data, not a native server callback or DataStore call."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local game=customGame\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
+          "expected": false,
+          "rationale": "A shadowed game name cannot prove native DataStoreService identity."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local Instance=customFactory\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
+          "expected": false,
+          "rationale": "An Instance-like custom factory does not establish a native Roblox remote."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "setfenv(1,customEnvironment)\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
+          "expected": false,
+          "rationale": "A modified environment leaves the game and Instance globals unresolved."
+        },
+        {
+          "path": "store.server.luau",
+          "source": "local remote=Instance.new('RemoteEvent')\nremote=customRemote\nremote.OnServerEvent:Connect(function(player,key,value)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)",
+          "expected": false,
+          "rationale": "Reassignment invalidates the locally constructed remote receiver."
+        },
+        {
+          "path": "module.luau",
+          "source": "--[=[local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key) game:GetService('DataStoreService'):GetDataStore('Profiles'):RemoveAsync(key) end)]=]",
+          "expected": false,
+          "rationale": "A long comment cannot register a destructive persistent-record operation."
+        },
+        {
+          "path": "module.luau",
+          "source": "local game=customGame\nlocal remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,amount) game:GetService('DataStoreService'):GetDataStore('Profiles'):IncrementAsync(key,amount) end)",
+          "expected": false,
+          "rationale": "A game-like custom object does not establish native persistent-data semantics."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP708",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: visible unshadowed globals and decimal signed-32-bit integer limits only. Equal/ordered limits, computed values, floats, aliases and changed environments stay silent. Not a general numeric analyzer.",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/luau-lang/luau/master/VM/src/lmathlib.cpp",
+          "claim": "The native math implementations require ordered limits; equality is valid and reversed random limits produce an empty interval."
+        },
+        {
+          "url": "https://www.reddit.com/r/robloxgamedev/comments/zc7up9/",
+          "claim": "2022 discovery lead: reversed negative random limits cause an interval error. Owning source, not comments, establishes the rule."
+        },
+        {
+          "url": "https://devforum.roblox.com/t/playermodulecameramoduletransparencycontroller-invalid-argument-3-to-clamp/1131588",
+          "claim": "2021 discovery lead: reversed clamp limits break a camera path; runtime source confirms the API boundary."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/682.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,10,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(10,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(-3,-8)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.clamp(value,-1,-8)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.clamp(0,5,4)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(2,1)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,2,10)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,2,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(1,1)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(-8,-3)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,low,high)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,10.5,2.5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=custom.clamp(input,10,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local math=customMath\nlocal value=math.clamp(input,10,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return math.random(9007199254740991,2)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local random=math.random\nreturn random(10,2)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "-- local value=math.clamp(input,10,2)",
+          "expected": false,
+          "rationale": "A commented invalid-range example cannot invoke a native numeric API."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=[=[local value=math.clamp(input,10,2)]=]",
+          "expected": false,
+          "rationale": "A long literal is data and cannot establish an invalid numeric invocation."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function f(math) local value=math.clamp(input,10,2) end",
+          "expected": false,
+          "rationale": "A function parameter shadows the native math table and invalidates API identity."
+        },
+        {
+          "path": "module.luau",
+          "source": "math.clamp=customClamp\nlocal value=math.clamp(input,10,2)",
+          "expected": false,
+          "rationale": "A changed library member must not be presumed to use the native bounds contract."
+        },
+        {
+          "path": "module.luau",
+          "source": "local value=math.clamp(input,10,-- bound\n2)",
+          "expected": true,
+          "rationale": "An intervening comment does not change the order of literal integer bounds."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP709",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: native globals and direct table-result consumption only. Ordinary mutation, clone/freeze results, custom iterators, shadows and aliases stay unresolved or silent. It does not infer assignment intent.",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/luau-lang/luau/master/VM/src/ltablib.cpp",
+          "claim": "Native sort, insert and clear mutate in place and return no table; clone/freeze return table values."
+        },
+        {
+          "url": "https://stackoverflow.com/questions/57064238/calling-table-sort-returns-nil",
+          "claim": "Historical discovery lead about in-place sorting. Current Luau implementation confirms which return values are supported."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "for _,value in ipairs(table.sort(items)) do consume(value) end"
+        },
+        {
+          "path": "module.luau",
+          "source": "return pairs(table.clear(items))"
+        },
+        {
+          "path": "module.luau",
+          "source": "return ipairs(table.insert(items,value))"
+        },
+        {
+          "path": "module.luau",
+          "source": "return table.sort(items)[1]"
+        },
+        {
+          "path": "module.luau",
+          "source": "return #table.clear(items)"
+        },
+        {
+          "path": "module.luau",
+          "source": "for _,value in table.sort(items) do consume(value) end"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "table.sort(items)\nfor _,value in ipairs(items) do consume(value) end"
+        },
+        {
+          "path": "module.luau",
+          "source": "return ipairs(table.clone(items))"
+        },
+        {
+          "path": "module.luau",
+          "source": "return pairs(table.freeze(items))"
+        },
+        {
+          "path": "module.luau",
+          "source": "return table.remove(items)"
+        },
+        {
+          "path": "module.luau",
+          "source": "return table.sort(items)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local table=customTable\nfor _,value in ipairs(table.sort(items)) do consume(value) end"
+        },
+        {
+          "path": "module.luau",
+          "source": "local ipairs=customIterator\nfor _,value in ipairs(table.sort(items)) do consume(value) end"
+        },
+        {
+          "path": "module.luau",
+          "source": "return custom.sort(items)[1]"
+        },
+        {
+          "path": "module.luau",
+          "source": "local sorted=sortCopy(items)\nreturn ipairs(sorted)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "--[=[for _,value in ipairs(table.sort(items)) do consume(value) end]=]",
+          "expected": false,
+          "rationale": "A long comment cannot consume a table-mutator return value at runtime."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=`for _,value in ipairs(table.sort(items)) do consume(value) end`",
+          "expected": false,
+          "rationale": "An interpolated-string literal remains opaque to executable API signatures."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function run(table) for _,value in ipairs(table.sort(items)) do consume(value) end end",
+          "expected": false,
+          "rationale": "A shadowing library parameter does not establish a nil-returning native mutator."
+        },
+        {
+          "path": "module.luau",
+          "source": "setfenv(1,environment)\nfor _,value in ipairs(table.sort(items)) do consume(value) end",
+          "expected": false,
+          "rationale": "A modified environment makes native table and iterator identity unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP710",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct freeze of a table literal or a unique same-region local binding, then top-level assignment. Nested mutable children, clones, escapes, reassignments and ambiguous scopes stay unresolved. No deep-freeze claim.",
+      "sources": [
+        {
+          "url": "https://luau.org/library/#table-library",
+          "claim": "Freezing prevents top-level changes, does not recursively freeze nested children, and cloning returns a mutable shallow copy."
+        },
+        {
+          "url": "https://rfcs.luau.org/function-table-clone.html",
+          "claim": "The clone RFC distinguishes a mutable copy from the original frozen table; shared nested values are not deep copies."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/664.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({enabled=true})\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "table.freeze({enabled=true}).enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "table.freeze({})['value']=1"
+        },
+        {
+          "path": "module.luau",
+          "source": "local state=table.freeze({value=1});state['value']=2"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({});config.value=2"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({enabled=true})\nreturn config.enabled"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.clone(table.freeze({enabled=true}))\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({nested={}})\nconfig.nested.value=2"
+        },
+        {
+          "path": "module.luau",
+          "source": "table.freeze({nested={}}).nested.value=2"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config={enabled=true}\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=custom.freeze({enabled=true})\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({enabled=true})\nshare(config)\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({enabled=true})\nconfig=mutable\nconfig.enabled=false"
+        },
+        {
+          "path": "module.luau",
+          "source": "local config=table.freeze({}) and mutable\nconfig.value=1"
+        },
+        {
+          "path": "module.luau",
+          "source": "local function factory() local config=table.freeze({}) end\nconfig.value=1"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "local text=[==[local config=table.freeze({enabled=true})\nconfig.enabled=false]==]",
+          "expected": false,
+          "rationale": "Quoted frozen-table examples cannot freeze or modify an actual local value."
+        },
+        {
+          "path": "module.luau",
+          "source": "local table=customTable\nlocal config=table.freeze({enabled=true})\nconfig.enabled=false",
+          "expected": false,
+          "rationale": "A custom table library need not return an immutable value from its freeze method."
+        },
+        {
+          "path": "module.luau",
+          "source": "do local config=table.freeze({}) end\nconfig.value=2",
+          "expected": false,
+          "rationale": "A closed lexical region cannot establish the later receiver's frozen binding."
+        },
+        {
+          "path": "module.luau",
+          "source": "table.freeze=copyTable\nlocal config=table.freeze({enabled=true})\nconfig.enabled=false",
+          "expected": false,
+          "rationale": "Reassigning the freeze member makes the native immutability contract unresolved."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP711",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: native task spawn/defer/delay and a direct known noncallable call result only. Function values, closures, coroutine values, unknown factory results, shadows and modified environments stay silent.",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/reference/engine/libraries/task",
+          "claim": "Spawn/defer/delay take a function or thread; task.wait returns elapsed time rather than a callback."
+        },
+        {
+          "url": "https://luau.org/library/#global-functions",
+          "claim": "The standard print function does not return a callable value to be used as a scheduler callback."
+        },
+        {
+          "url": "https://www.reddit.com/r/robloxgamedev/comments/1vcool6/this_is_probably_really_inefficient_in_some_way/",
+          "claim": "2026 scheduling discussion is a discovery lead; its generic resume-function comment is not adopted as API truth."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/628.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "task.spawn(print('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.defer(warn('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.delay(1,print('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(task.wait(1))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.delay(2,task.wait())"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.defer(print('ready'),argument)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "task.spawn(print)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(function() print('ready') end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.delay(1,function() warn('ready') end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(callback)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(coroutine.create(callback))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn(factory())"
+        },
+        {
+          "path": "module.luau",
+          "source": "local task=customScheduler\ntask.spawn(print('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "local print=callableFactory\ntask.spawn(print('ready'))"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.wait(1)"
+        },
+        {
+          "path": "module.luau",
+          "source": "print('ready')"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "-- task.spawn(print('ready'))",
+          "expected": false,
+          "rationale": "An example in a line comment does not call or schedule any function."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=[=[task.spawn(print('ready'))]=]",
+          "expected": false,
+          "rationale": "A long string literal must not be interpreted as a scheduler invocation."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function f(task) task.spawn(print('ready')) end",
+          "expected": false,
+          "rationale": "A local scheduler parameter may accept values outside the native API contract."
+        },
+        {
+          "path": "module.luau",
+          "source": "task.spawn=customSpawn\ntask.spawn(print('ready'))",
+          "expected": false,
+          "rationale": "A reassigned scheduler method must not establish native callback requirements."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP712",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: direct/native uniquely bound DataStore and a flat inline transform beginning with task.wait/wait. Nested tasks, wrappers, custom stores, aliases and ambiguous scopes stay unresolved; catching errors does not make yielding valid.",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/reference/engine/classes/GlobalDataStore.yaml",
+          "claim": "The owning GlobalDataStore reference explicitly forbids yielding in UpdateAsync transforms, including task.wait calls."
+        },
+        {
+          "url": "https://devforum.roblox.com/t/how-to-properly-utilize-updateasync/1133216",
+          "claim": "2021 discussion points to transform-yield failures; owning API documentation confirms the restriction."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/754.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local store=game:GetService('DataStoreService'):GetDataStore('Profiles')\nstore:UpdateAsync(key,function(old) task.wait();return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local service=game:GetService('DataStoreService')\nlocal store=service:GetDataStore('Profiles')\nstore:UpdateAsync(key,function(old) task.wait(1);return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old: any) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1) return old end)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "task.wait(1);game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.spawn(function() task.wait(1) end); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "customStore:UpdateAsync(key,function(old) task.wait(1);return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local game=customGame\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local task=customTask\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore(storeName):UpdateAsync(key,function(old) task.wait(1); return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local store=game:GetService('DataStoreService'):GetDataStore('Profiles')\nshare(store)\nstore:UpdateAsync(key,function(old) task.wait(1);return old end)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local function make() local store=game:GetService('DataStoreService'):GetDataStore('Profiles') end\nstore:UpdateAsync(key,function(old) task.wait(1);return old end)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "--[=[game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)]=]",
+          "expected": false,
+          "rationale": "A commented transform cannot invoke UpdateAsync or perform a yielding wait."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=[=[game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)]=]",
+          "expected": false,
+          "rationale": "A transform signature inside a literal is data, not an executable callback."
+        },
+        {
+          "path": "module.luau",
+          "source": "getfenv(0)\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) task.wait(1); return old end)",
+          "expected": false,
+          "rationale": "An environment-dependent script does not establish native wait or store identity."
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old) if allowed then task.wait(1) end; return old end)",
+          "expected": false,
+          "rationale": "Conditional or nested callback control flow remains outside the flat direct-yield signature."
+        }
+      ]
+    },
+    {
+      "rule_id": "SP713",
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "blocking_eligible": false,
+      "false_positive_analysis": "Advisory: supported native service/Instance signal, positive literal integer argument and unique local bindings only. Custom signals with real timeout support, argument-free waits, aliases and computed durations stay unresolved or silent.",
+      "sources": [
+        {
+          "url": "https://create.roblox.com/docs/reference/engine/datatypes/RBXScriptSignal",
+          "claim": "The native signal Wait API takes no timeout parameter; custom signal libraries may define a different contract."
+        },
+        {
+          "url": "https://devforum.roblox.com/t/what-is-better-repeat-until-or-eventwait/1990098",
+          "claim": "2022 discussion warns against assuming a timeout on native signal waits; owning reference confirms its signature."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/754.html",
+          "claim": "Maps the local API/state boundary; not a deployed exploitation or recall assertion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('RunService').Heartbeat:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "Instance.new('BindableEvent').Event:Wait(3)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local players=game:GetService('Players')\nplayers.PlayerAdded:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local event=Instance.new('RemoteEvent')\nevent.OnServerEvent:Wait(5)"
+        }
+      ],
+      "negative": [
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait()"
+        },
+        {
+          "path": "module.luau",
+          "source": "customSignal:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local event=Signal.new();event:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait(timeout)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait(0)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('Players').PlayerAdded:Wait(5.5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local game=customGame\ngame:GetService('Players').PlayerAdded:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "Instance.new('Folder').CustomSignal:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "game:GetService('BindableEvent').Event:Wait(5)"
+        },
+        {
+          "path": "module.luau",
+          "source": "local players=game:GetService('Players') and proxy\nplayers.PlayerAdded:Wait(5)"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "module.luau",
+          "source": "-- game:GetService('Players').PlayerAdded:Wait(5)",
+          "expected": false,
+          "rationale": "A commented wait call cannot create a thread or an unsupported deadline."
+        },
+        {
+          "path": "module.luau",
+          "source": "local text=[==[game:GetService('Players').PlayerAdded:Wait(5)]==]",
+          "expected": false,
+          "rationale": "A signal-wait example in a long literal has no native scheduling effect."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function f(Instance) Instance.new('BindableEvent').Event:Wait(5) end",
+          "expected": false,
+          "rationale": "A shadowed Instance factory cannot establish a native RBXScriptSignal receiver."
+        },
+        {
+          "path": "module.luau",
+          "source": "local function make() local players=game:GetService('Players') end\nplayers.PlayerAdded:Wait(5)",
+          "expected": false,
+          "rationale": "A receiver declared in a closed region cannot prove the later signal's native identity."
+        }
+      ]
     }
   ]
 }

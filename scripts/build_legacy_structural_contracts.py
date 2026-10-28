@@ -201,12 +201,13 @@ STRUCTURAL_CASES: dict[str, dict[str, str]] = {
         "adversarial": "'use server';\nconst mutate = prisma.user['up' + 'date'];\nexport async function updateItem() { await mutate({ where: { id: '1' } }); }\n",
     },
     "SP596": {
-        "ecosystem": "react",
-        "path": "page.tsx",
-        "positive": "export default function Page() {\n  const [count] = useState(0);\n  return <div>{count}</div>;\n}\n",
-        "negative_a": "'use client';\nexport default function Page() {\n  const [count] = useState(0);\n  return <div>{count}</div>;\n}\n",
+        "ecosystem": "nextjs",
+        "path": "app/page.tsx",
+        "positive": "import {useState} from 'react';\nexport default function Page() {\n  const [count] = useState(0);\n  return <div>{count}</div>;\n}\n",
+        "negative_a": "'use client';\nimport {useState} from 'react';\nexport default function Page() {\n  const [count] = useState(0);\n  return <div>{count}</div>;\n}\n",
         "negative_b": "export default function Page() { return <div>static</div>; }\n",
-        "adversarial": "const stateHook = useState;\nexport default function Page() { const [count] = stateHook(0); return <div>{count}</div>; }\n",
+        "negative_c": "import {useState} from './local-state';\nexport default function Page() { const [count] = useState(0); return <div>{count}</div>; }\n",
+        "adversarial": "import {useState} from 'react';\nconst stateHook = useState;\nexport default function Page() { const [count] = stateHook(0); return <div>{count}</div>; }\n",
     },
     "SP598": {
         "ecosystem": "nextjs",
@@ -514,6 +515,55 @@ def precision_artifact_entry(rule: Any) -> dict[str, Any]:
 def build_payloads() -> dict[str, str]:
     rules = {rule.rule_id: rule for rule in RULES}
     grouped: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+    # SP346 and SP336 moved from line patterns to import-bound structural
+    # evidence. Preserve authored cases in this existing legacy partition.
+    from build_broad_quality_contracts import records as broad_records
+    from build_io_ownership_contracts import records as io_ownership_records
+
+    migrated_rows = [
+        (
+            next(row for row in broad_records() if row["rule_id"] == "SP346"),
+            "python",
+            "tasks.py",
+        ),
+        (
+            next(row for row in io_ownership_records() if row["rule_id"] == "SP336"),
+            "javascript",
+            "stream.ts",
+        ),
+    ]
+    for migrated_row, ecosystem, path_name in migrated_rows:
+        rule_id = migrated_row["rule_id"]
+        rule = rules[rule_id]
+        base = {"ecosystem": ecosystem, "path": path_name}
+        cases_by_kind: dict[str, list] = {"positive": [], "negative": [], "adversarial": []}
+        for kind, converted_cases in cases_by_kind.items():
+            for index, case in enumerate(migrated_row[kind]):
+                case_id = f"{kind}-{index}"
+                source = case["source"]
+                if kind == "positive":
+                    converted = positive_case(rule, base, case_id, source)
+                else:
+                    path = structural_case_path(rule_id, base, case_id)
+                    if structural_findings(rule_id, path, source):
+                        raise ValueError(f"{rule_id} safe/unresolved contract unexpectedly matched")
+                    converted = {"path": path, **encoded_text(source)}
+                    if kind == "adversarial":
+                        converted.update(expected=case["expected"], rationale=case["rationale"])
+                converted_cases.append(converted)
+        grouped[ecosystem].append(
+            {
+                "rule_id": rule_id,
+                "title": rule.title,
+                "category": rule.category,
+                "expected_severity": rule.severity,
+                "expected_confidence": rule.confidence,
+                "cwe": rule.cwe,
+                "frameworks": [],
+                "false_positive_analysis": migrated_row["false_positive_analysis"],
+                "cases": cases_by_kind,
+            }
+        )
     for rule_id, base in sorted(STRUCTURAL_CASES.items(), key=lambda item: rule_number(item[0])):
         if rule_id in PRECISION_RULE_IDS:
             continue

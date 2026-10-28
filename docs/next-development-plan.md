@@ -1,6 +1,6 @@
 # ShipProof next development plan
 
-Last reviewed: 2026-09-04 (P0/P1 recheck; historical benchmark snapshot below is unchanged).
+Last reviewed: 2026-10-28 (context-specific taint closeout; dated baselines below remain historical).
 
 สถานะ: แผนหลักสำหรับเปลี่ยน research backlog ให้เป็น production evidence ที่เชื่อถือได้ โดยไม่เปิดกฎจำนวนมากแบบ big-bang และไม่ลดมาตรฐาน false-positive
 
@@ -18,7 +18,7 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 
 ข้อมูลต่อไปนี้เป็น snapshot วันที่ 2026-08-27 ไม่ใช่ตัวเลขรับประกันในอนาคตหรือผลทดสอบรอบ recheck:
 
-- executable scanner rules: 656
+- pre-cohort rule baseline: 656 at `09adda6` (2026-10-23, not the dated August measurement)
 - research inventory: 7,800 catalogued candidates plus 1,000 reserved promotion slots (`SP651–SP9450`)
 - language-specific research candidates: 5,000 (`SP4451–SP9450`)
 - project Python test cases ที่ discover ได้: 636 พร้อม Node, package และ end-to-end suites
@@ -27,6 +27,87 @@ ShipProof ต้องรักษาแกนหลักสามข้อพ�
 - default path: read-only, offline และไม่มี dependency เพิ่ม
 
 Candidate ID ไม่ได้แปลว่ามี detector แล้ว จำนวน research slots จึงห้ามนำไปรวมกับ executable rule count ในเอกสารหรือการตลาด
+
+## Previous field-cohort status — 2026-10-23
+
+- historical executable scanner rules: 661
+
+The registry then contained 661 executable rules through SP692. The Luau/TypeScript
+continuation adds SP690–SP692 and extends SP672/SP676/SP679 without duplicate
+IDs; see the [cohort evidence](../research/luau-typescript-cohort-2026-10.md).
+The bounded
+TypeScript/.NET/Dart cohort adds SP688/SP689, extends SP170 and SP056/SP084,
+and narrows SP596. SP688 and SP689 are advisory regardless of their medium
+severity. Local pinned-snapshot evaluation and compatibility gates are complete;
+the scoped source review is not a universal zero-false-positive or independent
+precision claim. See the [cohort evidence and limits](../research/field-cohort-ts-dotnet-dart-2026-10.md).
+
+The failure catalog is maintainer-source-only and excluded from npm to preserve
+package ceilings; see the [catalog](knowledge/failure-catalog.md).
+
+## Previous value/default/trust cohort — historical
+
+- previous historical executable scanner rules: 667 through SP701
+
+SP699–SP701 add bounded Rust validity, Node timer-range and explicit QueuePool
+capacity checks. SP673/SP104 gain scoped variants; SP347/SP350 are retired because
+their default assumptions do not establish a defect. See the
+[cohort record](../research/value-cohort-2026-10.md) for evidence and limitations.
+
+## Previous Node/React/Luau/PostgreSQL cohort — historical
+
+- historical executable scanner rules: 667 through SP706
+- added SP702–SP706, expanded SP691, and retired SP325/SP334/SP359/SP363/SP423
+
+Earlier Luau/TypeScript, broad-quality, and value/default/trust selections are
+reflected in that historical registry. See the
+[cohort record](../research/web-database-cohort-2026-10.md).
+
+## Previous I/O ownership cohort — historical
+
+- historical executable scanner rules: 667 through SP707
+- repaired SP336, retired SP367, extended SP703/SP705, and added advisory SP707
+
+See the [cohort record](../research/io-ownership-cohort-2026-10.md).
+
+## Current taint-contract closeout — 2026-10-28
+
+แก้การเชื่อชื่อ sanitizer และการใช้ protection ข้ามบริบทแล้ว: แยก provenance
+จากค่าที่แปลง ป้องกัน raw sibling/mixed-value หลุด ตรวจ binding/shadowing และ
+แยก SQLModel session.exec จาก Python exec. Unknown calls และ query builder
+ยังเป็น advisory โดยไม่ลดเกณฑ์ gate หรือแก้ป้ายกำกับ benchmark.
+
+รายละเอียด ข้อจำกัด และผลทดสอบของรอบนี้อยู่ใน
+[taint-contract closeout](../research/sanitizer-contracts-2026-10.md).
+จำนวน executable ยังเป็น 673 กฎ งานเพิ่มกฎหรือรองรับ semantics ที่ซับซ้อนขึ้น
+ต้องผ่านหลักฐานเฉพาะ ecosystem ต่อไป ไม่ถือว่า research candidates ใช้งานแล้ว.
+
+## Previous Luau community cohort — 2026-10-26
+
+- executable scanner rules: 673 through SP713, with deliberate ID gaps
+- adds SP708–SP713 and extends SP707 for direct RemoveAsync/IncrementAsync
+
+The [source cohort](../research/luau-community-cohort-2026-10.md) records scope
+and source provenance; the [pinned library manifest](../benchmarks/luau-community-cohort-repositories.json)
+identifies the two source-only libraries. No test, CI, performance, or precision
+result is stated here.
+
+## Previous broad-quality cohort status — 2026-10-23
+
+- historical executable scanner rules: 666
+
+The registry then contained 666 executable rules through SP698. The six additions,
+SP693–SP698, are medium advisory checks with bounded source syntax. SP346 now
+matches only import-bound standalone `asyncio.create_task` expressions that are
+not awaited, returned, or assigned. SP375 no longer treats `SetMaxIdleConns(0)` as
+an unlimited open-connection cap. SP348 is retired because the Python executor's
+default is bounded; its ID will not be reused.
+
+The cohort record describes its limits and pending verification. No test or
+performance metrics are claimed, and the source checks do not establish deployed
+impact or a universal false-positive rate. The 2,800 expert/annual and 5,000
+language-catalog entries remain non-executable candidates. See the
+[broad-quality cohort record](../research/broad-quality-cohort-2026-10.md).
 
 ## หลักการตัดสินใจ
 

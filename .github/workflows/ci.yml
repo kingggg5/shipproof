@@ -163,6 +163,20 @@ jobs:
         run: npm run test:mcp:peers -- "${{ matrix.zod-version }}"
 
   coverage:
+    needs: [python-coverage, node-coverage]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Require both coverage gates
+        env:
+          PYTHON_COVERAGE_RESULT: ${{ needs['python-coverage'].result }}
+          NODE_COVERAGE_RESULT: ${{ needs['node-coverage'].result }}
+        run: |
+          test "$PYTHON_COVERAGE_RESULT" = "success"
+          test "$NODE_COVERAGE_RESULT" = "success"
+
+  python-coverage:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -183,6 +197,24 @@ jobs:
         run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
       - name: Enforce Python branch coverage
         run: npm run test:python:coverage
+
+  node-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: Install coverage tools
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
       - name: Enforce Node line coverage
         env:
           # The coverage runner executes the repository self-check under

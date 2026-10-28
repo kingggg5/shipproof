@@ -1,0 +1,948 @@
+{
+  "schema_version": 1,
+  "assessed_on": "2026-10-28",
+  "baseline_revision": "6d9bd5968ed3cc213acc7504eb910fd63603fea0",
+  "scope": "Guarded graph source analysis, honest coverage and packet-error bookkeeping; no target/model execution or vulnerability labels",
+  "reproductions": {
+    "before": {
+      "large_source": {
+        "bytes": 459152,
+        "l2_findings": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 0,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        }
+      },
+      "read_race": {
+        "content_limit": 32,
+        "actual_read_lengths": [
+          576
+        ],
+        "files_read": 1,
+        "completeness": {
+          "reported": false
+        }
+      },
+      "late_timeout": {
+        "review_complete": true,
+        "counts": {
+          "selected": 1,
+          "scheduled": 0,
+          "completed": 1,
+          "failed": 0,
+          "deferred": 0,
+          "packets": 1
+        },
+        "response_validation": {
+          "accepted_decisions": 1,
+          "accepted_errors": 1,
+          "rejected": 0,
+          "duplicates": 0
+        }
+      }
+    },
+    "after": {
+      "large_source": {
+        "bytes": 459152,
+        "l2_findings": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "parser_limit"
+          ],
+          "unreadable": 0,
+          "parser_limit": 1,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 0,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        }
+      },
+      "read_race": {
+        "content_limit": 32,
+        "actual_read_lengths": [
+          33
+        ],
+        "files_read": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "byte_limit"
+          ],
+          "affected_inputs": 1,
+          "unreadable": 0,
+          "oversized": 1,
+          "parser_limit": 0
+        }
+      },
+      "late_timeout": {
+        "review_complete": false,
+        "counts": {
+          "selected": 1,
+          "scheduled": 0,
+          "completed": 1,
+          "failed": 0,
+          "deferred": 0,
+          "packets": 1
+        },
+        "response_validation": {
+          "accepted_decisions": 1,
+          "accepted_errors": 1,
+          "rejected": 0,
+          "duplicates": 0
+        }
+      }
+    }
+  },
+  "measurements": {
+    "clean": {
+      "before": {
+        "profile": "clean",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "runtime_digest": "f040246a7263589017fedd43b5e470870bfddcebbf249861cf9b179d1863d7d0",
+        "fixture": {
+          "files": 500,
+          "bytes": 256000,
+          "sha256": "95f632c1401be25c71e41f48e2f626f0bb6f4c1296e463e8b4157f0d5310c8cf"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.23863179999170825,
+          0.23856080003315583,
+          0.2332639999804087
+        ],
+        "median_seconds": 0.23856080003315583,
+        "p95_seconds": 0.23863179999170825,
+        "peak_rss_mib": 24.890625,
+        "files_read": 500,
+        "flows": 0,
+        "completeness": {
+          "reported": false
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        },
+        "scope": "Graph construction on synthetic files only; no target execution or production throughput claim"
+      },
+      "after": {
+        "profile": "clean",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "runtime_digest": "16d43a901df1b77bcd1b3f75d8f3bd79a5614323b2b85513418b51a23660234e",
+        "fixture": {
+          "files": 500,
+          "bytes": 256000,
+          "sha256": "95f632c1401be25c71e41f48e2f626f0bb6f4c1296e463e8b4157f0d5310c8cf"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.5317286999779753,
+          0.44815000001108274,
+          0.4399545000051148
+        ],
+        "median_seconds": 0.44815000001108274,
+        "p95_seconds": 0.5317286999779753,
+        "peak_rss_mib": 25.19140625,
+        "files_read": 500,
+        "flows": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "affected_inputs": 0,
+          "unreadable": 0,
+          "oversized": 0,
+          "parser_limit": 0
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        },
+        "scope": "Graph construction on synthetic files only; no target execution or production throughput claim"
+      }
+    },
+    "limits": {
+      "before": {
+        "profile": "limits",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "runtime_digest": "f040246a7263589017fedd43b5e470870bfddcebbf249861cf9b179d1863d7d0",
+        "fixture": {
+          "files": 16,
+          "bytes": 7344816,
+          "sha256": "d1f4cf3c0e68b024f1f5f1c8f60224a9823e681184600fb702ce8f199b5797c9"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          1.3315113999997266,
+          1.3284840999986045,
+          1.3353015999891795
+        ],
+        "median_seconds": 1.3315113999997266,
+        "p95_seconds": 1.3353015999891795,
+        "peak_rss_mib": 28.1171875,
+        "files_read": 16,
+        "flows": 0,
+        "completeness": {
+          "reported": false
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        },
+        "scope": "Graph construction on synthetic files only; no target execution or production throughput claim"
+      },
+      "after": {
+        "profile": "limits",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "runtime_digest": "16d43a901df1b77bcd1b3f75d8f3bd79a5614323b2b85513418b51a23660234e",
+        "fixture": {
+          "files": 16,
+          "bytes": 7344816,
+          "sha256": "d1f4cf3c0e68b024f1f5f1c8f60224a9823e681184600fb702ce8f199b5797c9"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          1.3707090999814682,
+          1.3342634000000544,
+          1.3377967999549583
+        ],
+        "median_seconds": 1.3377967999549583,
+        "p95_seconds": 1.3707090999814682,
+        "peak_rss_mib": 28.48046875,
+        "files_read": 16,
+        "flows": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "file_chars"
+          ],
+          "affected_inputs": 16,
+          "unreadable": 0,
+          "oversized": 0,
+          "parser_limit": 16
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        },
+        "scope": "Graph construction on synthetic files only; no target execution or production throughput claim"
+      }
+    }
+  },
+  "public_source_replays": [
+    {
+      "name": "umami",
+      "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+      "projection": ".cache/field-cohort-20261023/source-verified/umami",
+      "cross_file": false,
+      "same_findings": true,
+      "same_native_report": true,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "before_summary": {
+        "findings": 129,
+        "app_findings": 61,
+        "test_findings": 68,
+        "files_scanned": 1405,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "frameworks": [
+          "nextjs",
+          "prisma"
+        ],
+        "by_severity": {
+          "high": 107,
+          "medium": 22
+        }
+      },
+      "after_summary": {
+        "findings": 129,
+        "app_findings": 61,
+        "test_findings": 68,
+        "files_scanned": 1405,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "frameworks": [
+          "nextjs",
+          "prisma"
+        ],
+        "by_severity": {
+          "high": 107,
+          "medium": 22
+        }
+      },
+      "scope": "Static source replay only; no project/model execution or finding labels"
+    },
+    {
+      "name": "todoapp",
+      "revision": "307a1eadbbd77a3004c318f2377e4818bc400af6",
+      "projection": ".cache/field-cohort-20261023/source-verified/todoapp",
+      "cross_file": false,
+      "same_findings": true,
+      "same_native_report": true,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "before_summary": {
+        "findings": 1,
+        "app_findings": 1,
+        "test_findings": 0,
+        "files_scanned": 44,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 11,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "library",
+        "frameworks": [
+          "dotnet"
+        ],
+        "by_severity": {
+          "medium": 1
+        }
+      },
+      "after_summary": {
+        "findings": 1,
+        "app_findings": 1,
+        "test_findings": 0,
+        "files_scanned": 44,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 11,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "library",
+        "frameworks": [
+          "dotnet"
+        ],
+        "by_severity": {
+          "medium": 1
+        }
+      },
+      "scope": "Static source replay only; no project/model execution or finding labels"
+    },
+    {
+      "name": "localsend",
+      "revision": "6e37efd5fe750299758b6778d2b150b31af3b95d",
+      "projection": ".cache/field-cohort-20261023/source-verified/localsend",
+      "cross_file": false,
+      "same_findings": true,
+      "same_native_report": true,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "before_summary": {
+        "findings": 1,
+        "app_findings": 1,
+        "test_findings": 0,
+        "files_scanned": 406,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 3,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "by_severity": {
+          "high": 1
+        }
+      },
+      "after_summary": {
+        "findings": 1,
+        "app_findings": 1,
+        "test_findings": 0,
+        "files_scanned": 406,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 3,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "by_severity": {
+          "high": 1
+        }
+      },
+      "scope": "Static source replay only; no project/model execution or finding labels"
+    },
+    {
+      "name": "profilestore",
+      "revision": "45c9847cbcf1fc260369c50eb335aba7c35aecdd",
+      "projection": ".cache/luau-research-20261026/source/profilestore",
+      "cross_file": false,
+      "same_findings": true,
+      "same_native_report": true,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "before_summary": {
+        "findings": 0,
+        "app_findings": 0,
+        "test_findings": 0,
+        "files_scanned": 6,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 0,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "library",
+        "by_severity": {}
+      },
+      "after_summary": {
+        "findings": 0,
+        "app_findings": 0,
+        "test_findings": 0,
+        "files_scanned": 6,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 0,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "library",
+        "by_severity": {}
+      },
+      "scope": "Static source replay only; no project/model execution or finding labels"
+    },
+    {
+      "name": "umami-cross",
+      "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+      "projection": ".cache/field-cohort-20261023/source-verified/umami",
+      "cross_file": true,
+      "same_findings": true,
+      "same_native_report": false,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "before_summary": {
+        "findings": 129,
+        "app_findings": 61,
+        "test_findings": 68,
+        "files_scanned": 1405,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "cross_file_flows": 0,
+        "cross_file_flows_unsanitized": 0,
+        "frameworks": [
+          "nextjs",
+          "prisma"
+        ],
+        "by_severity": {
+          "high": 107,
+          "medium": 22
+        }
+      },
+      "after_summary": {
+        "findings": 129,
+        "app_findings": 61,
+        "test_findings": 68,
+        "files_scanned": 1405,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "parser_limit",
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 10,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "cross_file_flows": 0,
+        "cross_file_flows_unsanitized": 0,
+        "frameworks": [
+          "nextjs",
+          "prisma"
+        ],
+        "by_severity": {
+          "high": 107,
+          "medium": 22
+        }
+      },
+      "scope": "Static source replay only; no project/model execution or finding labels"
+    },
+    {
+      "name": "shlink-cross",
+      "revision": "2883bc9d75974fbde43570804594940b5c2b5aca",
+      "projection": ".cache/field-cohort-20261023/source-verified/shlink-web-client",
+      "cross_file": true,
+      "same_findings": true,
+      "same_native_report": true,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "before_summary": {
+        "findings": 11,
+        "app_findings": 0,
+        "test_findings": 11,
+        "files_scanned": 115,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "library",
+        "cross_file_flows": 0,
+        "cross_file_flows_unsanitized": 0,
+        "frameworks": [
+          "react"
+        ],
+        "by_severity": {
+          "high": 9,
+          "medium": 2
+        }
+      },
+      "after_summary": {
+        "findings": 11,
+        "app_findings": 0,
+        "test_findings": 11,
+        "files_scanned": 115,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "library",
+        "cross_file_flows": 0,
+        "cross_file_flows_unsanitized": 0,
+        "frameworks": [
+          "react"
+        ],
+        "by_severity": {
+          "high": 9,
+          "medium": 2
+        }
+      },
+      "scope": "Static source replay only; no project/model execution or finding labels"
+    },
+    {
+      "name": "fastapi-cross",
+      "revision": "b1125d8839482cb7bbae603ddc6d0081bf87532e",
+      "projection": ".cache/value-cohort-20261023/inventory/source/fastapi-full-stack-template",
+      "cross_file": true,
+      "same_findings": true,
+      "same_native_report": true,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "before_summary": {
+        "findings": 21,
+        "app_findings": 17,
+        "test_findings": 4,
+        "files_scanned": 45,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "parser_limit",
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 1,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "cross_file_flows": 2,
+        "cross_file_flows_unsanitized": 2,
+        "by_severity": {
+          "high": 6,
+          "medium": 15
+        }
+      },
+      "after_summary": {
+        "findings": 21,
+        "app_findings": 17,
+        "test_findings": 4,
+        "files_scanned": 45,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "parser_limit",
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 1,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "cross_file_flows": 2,
+        "cross_file_flows_unsanitized": 2,
+        "by_severity": {
+          "high": 6,
+          "medium": 15
+        }
+      },
+      "scope": "Static source replay only; no project/model execution or finding labels"
+    },
+    {
+      "name": "prefect-api-cross",
+      "revision": "e516d51cc39ee055b5539146ce94e432575abeb3",
+      "projection": ".cache/value-cohort-20261023/inventory/source/prefect/src/prefect/server/api",
+      "cross_file": true,
+      "same_findings": true,
+      "same_native_report": true,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "before_summary": {
+        "findings": 52,
+        "app_findings": 52,
+        "test_findings": 0,
+        "files_scanned": 40,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 0,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "cross_file_flows": 5,
+        "cross_file_flows_unsanitized": 5,
+        "by_severity": {
+          "high": 7,
+          "medium": 36,
+          "low": 9
+        }
+      },
+      "after_summary": {
+        "findings": 52,
+        "app_findings": 52,
+        "test_findings": 0,
+        "files_scanned": 40,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 0,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "cross_file_flows": 5,
+        "cross_file_flows_unsanitized": 5,
+        "by_severity": {
+          "high": 7,
+          "medium": 36,
+          "low": 9
+        }
+      },
+      "scope": "Static source replay only; no project/model execution or finding labels"
+    }
+  ],
+  "validation": {
+    "npm_check": "passed",
+    "python_tests": 1040,
+    "windows_symlink_skips": 3,
+    "python_branch_coverage_percent": 88,
+    "packed_cli_action_and_skills": "passed",
+    "impact_schema": "preinstalled Draft202012Validator with local referencing.Registry: complete, legacy, incomplete accepted; false LOW rejected",
+    "assurance": {
+      "executable_rules": 673,
+      "complete": 673,
+      "partial": 0,
+      "uncontracted": 0,
+      "metadata_debt": 0,
+      "realistic_negatives": 128,
+      "near_miss_only_negatives": 545,
+      "high_critical_without_realistic_negatives": 409,
+      "by_severity": {
+        "critical": {
+          "complete": 143,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "high": {
+          "complete": 325,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "low": {
+          "complete": 7,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "medium": {
+          "complete": 198,
+          "partial": 0,
+          "uncontracted": 0
+        }
+      }
+    },
+    "high_self_scan": {
+      "findings": 32,
+      "app_findings": 0,
+      "test_findings": 32,
+      "files_scanned": 539,
+      "suppressed": 0,
+      "completeness": {
+        "is_complete": true,
+        "reasons": [],
+        "unreadable": 0,
+        "parser_limit": 0,
+        "line_limit": 0,
+        "oversized": 0,
+        "containers": 0,
+        "assets": 10,
+        "binary": 0,
+        "symlinks": 0,
+        "excluded": 5,
+        "databases": 0,
+        "baseline_excluded": 0
+      },
+      "scan_profile": "application",
+      "frameworks": [
+        "github-actions"
+      ],
+      "by_severity": {
+        "critical": 1,
+        "high": 20,
+        "medium": 11
+      }
+    },
+    "package": {
+      "files": 113,
+      "packed_bytes": 476332,
+      "unpacked_bytes": 1866889,
+      "max_packed_bytes": 500000,
+      "max_unpacked_bytes": 1870000
+    }
+  },
+  "limitations": [
+    "Structural graph coverage is not complete program semantics or runtime reachability.",
+    "No new vulnerability labels, model token/precision/recall or production-scale claims.",
+    "Sanitizer bindings/context remain a separate research lead; this cohort does not certify them.",
+    "Static public-source replays preserve existing incomplete coverage; no public project tests or game executed."
+  ]
+}

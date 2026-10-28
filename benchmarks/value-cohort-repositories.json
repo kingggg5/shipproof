@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "cohort": "value-cohort-20261023",
+  "baseline_revision": "e4877bcc2ed4a104b318a5a6d6fc4fe3a8b67b73",
+  "evaluation_note": "Pinned static source projection only; template/framework observations are not a deployed application safety claim.",
+  "source_tree_digest_canonicalization": "SHA-256 of UTF-8 ordinal case-sensitive relative path, NUL, lowercase file SHA-256, LF.",
+  "projects": [
+    {
+      "name": "Full Stack FastAPI Template",
+      "slug": "fastapi-full-stack-template",
+      "repository": "fastapi/full-stack-fastapi-template",
+      "revision": "b1125d8839482cb7bbae603ddc6d0081bf87532e",
+      "language": "Python",
+      "kind": "template",
+      "license_spdx": "MIT",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/fastapi/full-stack-fastapi-template/blob/b1125d8839482cb7bbae603ddc6d0081bf87532e/LICENSE",
+      "license_sha256": "0bd4e76cdd06ab24cce2de5e74f490920897f90a22ad35e8403ed006d4560f48",
+      "expected_source_files": 43,
+      "source_tree_sha256": "4472dd413f5bc0585f8381d8500da69551684fd21fb1aaa2bdf8fb62b2912b37",
+      "source_extensions": [
+        ".py"
+      ],
+      "source_projection": "all repository .py files",
+      "context_files": {
+        "LICENSE": "0bd4e76cdd06ab24cce2de5e74f490920897f90a22ad35e8403ed006d4560f48",
+        "pyproject.toml": "aa3d765c8786f7670c5d0ab9370ec06f29d7cfefba2e5000c3232f09c16993cf",
+        "backend/pyproject.toml": "a4fdc75ae9c47e77dd70c3460a4a3a83545def601650786df386976b49da892e"
+      }
+    },
+    {
+      "name": "Prefect",
+      "slug": "prefect",
+      "repository": "PrefectHQ/prefect",
+      "revision": "e516d51cc39ee055b5539146ce94e432575abeb3",
+      "language": "Python",
+      "kind": "library",
+      "license_spdx": "Apache-2.0",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/PrefectHQ/prefect/blob/e516d51cc39ee055b5539146ce94e432575abeb3/LICENSE",
+      "license_sha256": "302c6c9fca2c024cdfc4a0b8082fdd2dc52453c0d92e4ca2859f261acdc08774",
+      "expected_source_files": 857,
+      "source_tree_sha256": "f1ab07497a0e189eac2e40b0656922464ab1044bac9cd39a9362c1840ffbcb3f",
+      "source_extensions": [
+        ".py"
+      ],
+      "source_projection": "src/prefect/**/*.py (tests excluded)",
+      "context_files": {
+        "LICENSE": "302c6c9fca2c024cdfc4a0b8082fdd2dc52453c0d92e4ca2859f261acdc08774",
+        "pyproject.toml": "f28524652b580eb7e9f53ab9266589b8633f7b0e2addd69ac6b38af40180d169"
+      }
+    }
+  ]
+}

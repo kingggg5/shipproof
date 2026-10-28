@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-26",
+  "policy": "Community reports are discovery leads. Promotion requires owning documentation/source, independent original fixtures, safe counterparts and bounded applicability. Votes and self-reported success are not a benchmark.",
+  "sources": [
+    {"url":"https://www.reddit.com/r/robloxgamedev/comments/zc7up9/","year":2022,"kind":"reddit","topic":"reversed negative random limits","decision":"SP708 supported subset; primary VM source confirms ordered integer bounds"},
+    {"url":"https://www.reddit.com/r/robloxgamedev/comments/19f2qhu/","year":2024,"kind":"reddit","topic":"reversed random bounds with fractional literals","decision":"discovery only for fractional forms; this detector deliberately supports bounded integer literals"},
+    {"url":"https://www.reddit.com/r/robloxgamedev/comments/s68e7y/","year":2022,"kind":"reddit","topic":"empty player selection and an incorrect equal-bounds comment","decision":"reject claim that equal limits are invalid; keep math.random(1,1) as a silent regression; empty runtime populations need dataflow"},
+    {"url":"https://www.reddit.com/r/robloxgamedev/comments/1vcool6/this_is_probably_really_inefficient_in_some_way/","year":2026,"kind":"reddit","topic":"scheduler/coroutine confusion","decision":"discovery only; do not adopt the generic resume-function description for task.spawn, which returns a thread"},
+    {"url":"https://www.reddit.com/r/robloxgamedev/comments/1e0m9wi/","year":2024,"kind":"reddit","topic":"WaitForChild timeout result dereferenced","decision":"defer generic missing-nil-guard rule: asset lifetime/ownership and program invariants are not established"},
+    {"url":"https://devforum.roblox.com/t/playermodulecameramoduletransparencycontroller-invalid-argument-3-to-clamp/1131588","year":2021,"kind":"devforum","topic":"reversed clamp bounds","decision":"SP708 owning source confirms the API condition; do not infer client exploitation from a camera error"},
+    {"url":"https://devforum.roblox.com/t/mathclamp-expects-to-get-a-number-as-its-1st-argument/4185276","year":2025,"kind":"devforum","topic":"placement bounds and type assertions","decision":"discovery only for computed bounds; a type assertion does not establish valid runtime range ordering"},
+    {"url":"https://stackoverflow.com/questions/57064238/calling-table-sort-returns-nil","year":2019,"kind":"stackoverflow_historical","topic":"in-place sorting return value","decision":"historical lead outside the preferred 2021–2026 period; current Luau VM source is the promotion basis"},
+    {"url":"https://devforum.roblox.com/t/how-to-define-immutable-constant-variables/1626919","year":2022,"kind":"devforum","topic":"top-level freeze and mutable nested tables","decision":"SP710 requires direct top-level mutation; do not promote deep-freeze/shallow-clone guesses"},
+    {"url":"https://devforum.roblox.com/t/how-to-force-for-iv-to-start-a-function-but-not-wait-for-it-to-finish-and-keep-looping/2565641","year":2023,"kind":"devforum","topic":"scheduler expects a function/thread","decision":"SP711 recognizes only known noncallable builtin results; arbitrary user-function results remain unknown"},
+    {"url":"https://devforum.roblox.com/t/how-to-properly-utilize-updateasync/1133216","year":2021,"kind":"devforum","topic":"yielding transforms","decision":"SP712 is grounded by the owning GlobalDataStore reference, not all advice in the thread"},
+    {"url":"https://devforum.roblox.com/t/what-is-better-repeat-until-or-eventwait/1990098","year":2022,"kind":"devforum","topic":"native signal waits have no timeout parameter","decision":"SP713 requires a supported native receiver; custom signal libraries are not presumed native"},
+    {"url":"https://github.com/luau-lang/luau/issues/3041","year":2026,"kind":"github_compiler_issue","topic":"frozen indexer typing","decision":"defer to compiler/type-analysis lane; do not describe a type-solver issue as a runtime readonly bypass"},
+    {"url":"https://raw.githubusercontent.com/luau-lang/luau/master/VM/src/lmathlib.cpp","kind":"owning_implementation","topic":"integer random limits and clamp contract","decision":"SP708 authoritative semantics; detector code/fixtures are original, not copied"},
+    {"url":"https://raw.githubusercontent.com/luau-lang/luau/master/VM/src/ltablib.cpp","kind":"owning_implementation","topic":"mutator return counts and readonly state","decision":"SP709/SP710 authoritative semantics; no compiler/runtime vulnerability claim"},
+    {"url":"https://luau.org/library/","kind":"owning_documentation","topic":"native globals, returned values and frozen tables","decision":"confirm safe returned-table APIs and distinguish shallow behavior"},
+    {"url":"https://rfcs.luau.org/function-table-clone.html","kind":"owning_rfc","topic":"mutable shallow copies","decision":"retain clone/nested-child safe counterparts; no blanket clone rule"},
+    {"url":"https://create.roblox.com/docs/reference/engine/libraries/task","kind":"owning_documentation","topic":"function/thread scheduler arguments and numeric task.wait result","decision":"SP711 API contract, not the semantics of arbitrary callback factories"},
+    {"url":"https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/reference/engine/classes/GlobalDataStore.yaml","kind":"owning_reference_source","topic":"non-yielding transforms and persistent record operations","decision":"SP712 and SP707 extension; no live storage request was performed"},
+    {"url":"https://create.roblox.com/docs/reference/engine/datatypes/RBXScriptSignal","kind":"owning_documentation","topic":"Wait signature","decision":"SP713 unsupported duration does not establish a deadline; actual delay/leakage remains unknown"}
+  ],
+  "limitations": [
+    "No community source establishes a universal false-positive rate or deployed reachability.",
+    "Some leads are rejected/deferred or partially supported; six chosen families are not an implementation of every example in the linked threads.",
+    "No third-party post, project implementation or detector rule pack is copied into the authored fixtures."
+  ]
+}

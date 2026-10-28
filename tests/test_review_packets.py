@@ -133,20 +133,24 @@ class PacketTests(unittest.TestCase):
                 ],
             )
         packet_id = report["packets"][0]["packet_id"]
+        packet_digest = report["packets"][0]["packet_digest"]
         report = packets.reconcile(
             report,
             [
                 {
                     "packet_id": packet_id,
+                    "packet_digest": packet_digest,
                     "decided": [{"fingerprint": "a" * 16, "verdict": "completed"}],
                 },
                 {
                     "packet_id": packet_id,
+                    "packet_digest": packet_digest,
                     "decided": [{"fingerprint": "a" * 16, "verdict": "completed"}],
                 },
                 {"packet_id": "packet-999", "decided": []},
                 {
                     "packet_id": packet_id,
+                    "packet_digest": packet_digest,
                     "decided": [{"fingerprint": "z" * 16, "verdict": "completed"}],
                 },
             ],
@@ -165,7 +169,16 @@ class PacketTests(unittest.TestCase):
                 Path(tmp), [finding(fingerprint="a" * 16, path="app.py")]
             )
         packet_id = report["packets"][0]["packet_id"]
-        report = packets.reconcile(report, [{"packet_id": packet_id, "timed_out": True}])
+        report = packets.reconcile(
+            report,
+            [
+                {
+                    "packet_id": packet_id,
+                    "timed_out": True,
+                    "packet_digest": report["packets"][0]["packet_digest"],
+                }
+            ],
+        )
         ledger = {entry["fingerprint"]: entry for entry in report["selection_accounting"]}
         self.assertEqual(ledger["a" * 16]["status"], "failed")
 

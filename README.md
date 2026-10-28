@@ -12,7 +12,7 @@ Security · Correctness · Scale · Performance · Release evidence
 
 [![CI](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/ci.yml)
 [![Security](https://github.com/kingggg5/shipproof/actions/workflows/security.yml/badge.svg)](https://github.com/kingggg5/shipproof/actions/workflows/security.yml)
-[![Release](https://img.shields.io/badge/release-v0.12.0-2563eb)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.12.0-2563eb)](https://github.com/kingggg5/shipproof/blob/main/CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933)](package.json)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -21,7 +21,7 @@ ShipProof is an independently developed production gate for repositories written
 
 ShipProof is not a certification, penetration test, formal proof, or substitute for product-specific threat modeling and runtime tests. It makes assumptions visible, reports the strength of available evidence, and preserves human authority for consequential actions and releases.
 
-**Project resources:** [Website](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](https://github.com/kingggg5/shipproof/blob/main/docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) · [Citation](CITATION.cff)
+**Project resources:** [Website](https://shipproof-site.sjet2744.chatgpt.site/shipproof/) · [Commands](docs/commands.md) · [Contributing](https://github.com/kingggg5/shipproof/blob/main/CONTRIBUTING.md) · [Support](SUPPORT.md) · [Governance](https://github.com/kingggg5/shipproof/blob/main/GOVERNANCE.md) · [Security](SECURITY.md) · [Community validation](https://github.com/kingggg5/shipproof/blob/main/docs/community-validation.md) · [Research methodology](https://github.com/kingggg5/shipproof/blob/main/docs/research.md) · [Roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) · [Citation](CITATION.cff)
 
 <p align="center">
   <img src="docs/assets/terminal-demo.svg" width="100%" alt="ShipProof terminal demo" />
@@ -67,13 +67,13 @@ Node.js 20+ runs the front-door CLI. Python 3.10+ is needed for `scan`, `check`,
 
 ## Scope and project status
 
-ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **656 deterministic rules** for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
+ShipProof applies the same review contract regardless of who wrote the code. Its executable scanner currently contains **673 deterministic rules** (`SP001`–`SP713`, with deliberate gaps) for locally observable security, correctness, scale, performance, configuration, and supply-chain risks. The default path is read-only, offline, and dependency-free beyond Node.js and the Python standard library.
 
 | Property | Current contract |
 | :--- | :--- |
 | Current release | `v0.12.0` reviewed release |
 | Runtime | Node.js 20+; Python 3.10+ for scanner-backed commands |
-| Executable rules | 656 (`SP001`–`SP687`, with deliberate reserved gaps) |
+| Executable rules | 673 (`SP001`–`SP713`, with deliberate reserved gaps) |
 | Evidence levels | `L0` pattern, `L1` structural/artifact, `L2` interprocedural taint (`--cross-file`; Python + JavaScript/TypeScript) |
 | Research inventory | 7,800 catalogued candidates plus 1,000 reserved promotion slots; none are findings until promoted |
 | Exit codes | `0` pass, `1` policy gate failure, `2` invalid or unavailable evidence |
@@ -89,11 +89,22 @@ direct reqwest TLS configuration in `SP104`. See the [rule boundaries](docs/rule
 for supported syntax and limitations. The registry above describes this checkout;
 tagged release notes describe their published artifacts.
 
+The Luau callback boundary includes simple optionally typed RemoteEvent and
+RemoteFunction handlers; `SP672` recognizes `OnServerInvoke` and an optional
+return, but event ownership remains unresolved.
+
 The TypeScript/JavaScript configuration cohort (`SP674`–`SP682`) adds import-aware
 advisories for explicit JWT, Node, Next.js, Electron and Puppeteer security opt-outs.
 Type-only imports do not trigger `SP591`. `SP429` is retired: Express's JSON parser
 already has a bounded default. See the [rule boundaries](docs/rules.md) and
 [source/fixture record](https://github.com/kingggg5/shipproof/blob/main/research/typescript-cohort-2026-10.md).
+
+`SP676` also covers imported `jsonwebtoken.sign` with explicit RS/PS/ES
+algorithms and no header override. `SP679` also recognizes `httpValidation:
+'insecure'` on supporting Node versions; strict/relaxed modes and conflicting
+legacy switches stay quiet. `SP690`–`SP692` are bounded advisory checks described
+in the [Luau/TypeScript cohort record](research/luau-typescript-cohort-2026-10.md);
+they do not establish deployment or actual RSA key strength.
 
 The offline advisory snapshot reviewed **22 October 2026** includes PHP2Shell
 (`CVE-2026-109618`, `CVE-2026-109619`) as `SP683`. It checks explicit PHP pins and
@@ -103,7 +114,11 @@ upgrade the actual web runtime. See the [PHP2Shell boundaries](docs/rules.md#php
 
 `SP684` checks exact Node.js pins against the October 2026 security baseline; `SP685` checks upstream EOL. Both are advisory. See [supported declarations and limits](docs/rules.md#nodejs-version-declarations).
 
-`SP686`/`SP687` advise on legacy Node TLS selection (handshake unverified) and `ws maxPayload` literals that become nonpositive after signed-32-bit conversion; omission keeps a finite cap. C# cookie calls on typed ASP.NET parameters with explicit `CookieOptions` false flags extend existing `SP056`/`SP084`; middleware can override local settings. See [transport boundaries](docs/rules.md#transport-and-cookie-options).
+`SP686`/`SP687` advise on legacy Node TLS selection (handshake unverified) and `ws maxPayload` literals that become nonpositive after signed-32-bit conversion; omission keeps a finite cap. Typed C# `CookieAuthenticationOptions` assignments extend `SP056`/`SP084`; middleware can override local settings. Dart HTTP coverage of `SP170` requires imported `package:http`, a literal external HTTP URI and an explicit Authorization key; values and transport remain unverified. Legacy FTP/Telnet signatures are unchanged. See [transport boundaries](docs/rules.md#transport-and-cookie-options).
+
+The prior TypeScript/.NET/Dart field cohort documented advisory SP688/SP689 for narrowly bounded Next.js image and Kestrel settings. These local configurations do not establish exploitable deployment or absence of proxy/per-request caps; see the [field-cohort record](research/field-cohort-ts-dotnet-dart-2026-10.md).
+
+The broad-quality cohort adds medium advisories SP693–SP698 and narrows SP346/SP375 while retiring SP348. The signatures describe local source, not deployment impact. Authored cases, native API probes, pinned field observations and measured budgets are recorded in the [cohort evidence](research/broad-quality-cohort-2026-10.md).
 
 | ShipProof guarantees | ShipProof does not claim |
 | :--- | :--- |
@@ -172,11 +187,51 @@ shipproof labs impact src/app.py   # experimental blast radius before editing
 
 Full prompt samples, invariant analysis, token cost budgeting, worktree isolation, status badges, and `--trace` output live in [docs/features.md](docs/features.md).
 
+For an opt-in local handoff, prepare packets with `shipproof scan . --changed-since HEAD --packet-discover --packet-out ../shipproof-review-packets`, then apply an agent response using `--packet-responses ../shipproof-agent-responses.json` with the same scan options and unchanged source. Discovery prepares local source context; it does not call a model, create findings, or add gate proof. See the [scan command reference](docs/commands.md) for the response format and limits.
+
 ## Detection rules
 
-**656 deterministic executable rules** (`SP001`–`SP687`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
+**673 deterministic executable rules** (`SP001`–`SP713`, with deliberate reserved gaps) across security, correctness, scale, performance, configuration, and supply-chain risks. Findings carry an evidence `proof_level`: `L0` pattern match, `L1` structural/AST/artifact evidence, and `L2` interprocedural taint flows (`--cross-file`; Python plus JavaScript/TypeScript route-to-sink chains since v0.8).
 
-The complete catalog, severity, category, and detection method per rule, plus the ecosystem/framework mapping that decides where each structural check runs, lives in **[docs/rules.md](docs/rules.md)**.
+Selected source-level advisories include these additional boundaries:
+
+| Rule | Catalog title | Advisory boundary |
+| :--- | :--- | :--- |
+| `SP336` | Node inline file stream has no source error handler | Only direct imported fs.createReadStream(path).pipe(createWriteStream(path)) with no options, escapes, prototype handlers, or native handlers; named streams and Zod pipe are not proof |
+| `SP690` | Roblox remote directly requires a client-selected module | Requires a local `Instance.new` remote, unescaped handler, two simple optionally typed parameters, and one direct sink statement; aliases, guards, complex parameters, and deployment remain unknown |
+| `SP691` | Roblox remote directly removes a client-selected object | Direct Destroy or Kick on the client-selected argument; requires a local native remote and one sink statement; authorization and target type remain unknown |
+| `SP692` | JWT RSA signing key-size safeguard explicitly disabled | Requires imported `jsonwebtoken.sign`, explicit RS/PS algorithm and no header override; actual key strength is unknown |
+| `SP693` | Node HTTP receive deadlines explicitly disabled | Requires directly imported server options with both literal request/header timeouts zero; external bounds remain unknown |
+| `SP694` | Direct await of an empty asynchronous race | Requires directly awaited literal `[]` in native Promise.race or Dart Future.any with explicit dart:async import; wrappers and complex bindings are excluded |
+| `SP695` | Native array sort comparator returns a boolean | Requires a literal array with at least two elements and a simple boolean comparator |
+| `SP696` | XML entity expansion limit explicitly removed | Requires inline settings passed to XmlReader.Create, DTD parsing, zero entity-character limit and no finite document cap; not proof of external entity access |
+| `SP697` | Unverified logging configuration listener explicitly started | Requires direct logging.config.listen import, literal valid port, verify=None and immediate start(); standard listener is loopback only |
+| `SP698` | Awaited synchronous compression still blocks the caller | Requires a directly awaited imported Node zlib synchronous call; input size and actual work are unknown |
+| `SP699` | Rust unchecked NonZero construction receives zero | Qualified native constructor and literal zero; custom/imported module identities remain unresolved |
+| `SP700` | Node timer delay exceeds its supported range | Imported callback/promise API and bounded decimal value/product; no global timer inference |
+| `SP701` | SQLAlchemy QueuePool capacity explicitly unlimited | Explicit zero size or unlimited overflow on an import-bound QueuePool; engine defaults are not inferred |
+| `SP702` | React effect setup is an async function | Imported effect and inline async setup; inner async work in synchronous setup stays silent |
+| `SP703` | Await uses a callback Node I/O API | Direct await of imported callback pipeline/readFile/writeFile; promises APIs, wrappers, and shadows stay silent |
+| `SP704` | PostgreSQL URL overrides an explicit custom-CA TLS object | Imported pg constructor with literal URL SSL parameters and a separate CA object; no connection is made |
+| `SP705` | PostgreSQL concurrent index operation is inside a transaction | Concurrent CREATE/DROP INDEX or REINDEX INDEX/TABLE inside an explicit same-file transaction; other options and runner state remain unresolved |
+| `SP706` | PostgreSQL definer SELECT searches temporary relations first | SQL definer function, temp-first explicit path and unqualified relation; deployed privileges remain unknown |
+| `SP707` | Roblox remote mutates client-selected DataStore records | Direct client-selected key in native SetAsync, RemoveAsync or IncrementAsync; local native-remote boundary |
+| `SP708` | Luau numeric range has reversed literal bounds | Reversed native literal integer limits; equal bounds stay silent |
+| `SP709` | Luau in-place table result is consumed as a table | Directly consumes nil-returning table operation result |
+| `SP710` | Luau writes to a just-frozen table | Direct top-level write to a just-frozen literal |
+| `SP711` | Luau scheduler receives a noncallable result | Native task API receives a direct noncallable result |
+| `SP712` | Roblox DataStore transform directly yields | Native UpdateAsync transform directly calls a yielding wait |
+| `SP713` | Roblox signal wait supplies an unsupported timeout | Native signal Wait receives an unsupported timeout argument |
+
+These findings are advisory evidence about local source, not proof of deployed exposure or exploitability. See the [Luau/TypeScript cohort](research/luau-typescript-cohort-2026-10.md) and the [broad-quality cohort](research/broad-quality-cohort-2026-10.md).
+
+The [value/default/trust cohort](research/value-cohort-2026-10.md) adds SP699–SP701,
+extends SP673/SP104 and retires SP347/SP350. Default gather exception propagation
+and omitted engine pool settings are not, by themselves, defects.
+
+The [I/O ownership cohort](research/io-ownership-cohort-2026-10.md) is historical at 667 rules through SP707. The current [Luau community cohort](research/luau-community-cohort-2026-10.md) adds SP708–SP713 and extends SP707; its pinned source manifest is [here](benchmarks/luau-community-cohort-repositories.json). Reddit, DevForum, Stack Overflow and GitHub help identify questions; owning documentation confirms semantics.
+
+The [complete source catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-catalog.md) lists every rule's severity, category and detection method. The shipped [rule guide](docs/rules.md) explains boundaries and ecosystem mapping; `shipproof explain SPxxx` provides individual rule details offline.
 
 ## False Positive Control
 
@@ -192,6 +247,7 @@ Precision signatures require relevant code and framework context. Realistic nega
 - **Reviewed baselines:** Generate `.shipproof-baseline.json` with `shipproof scan --baseline-out .shipproof-baseline.json --baseline-reason "Reviewed migration debt"`, then review it before using `--baseline`. Generation is not approval; the default reason explicitly says review is required.
 - **Auditable suppression:** Baselines (format version 2) combine exact finding fingerprints with reasoned glob rules. `--show-suppressed` reveals them in JSON, Markdown, terminal, or SARIF; SARIF marks them as external suppressions. Unknown fields, duplicate keys, invalid reasons, and oversized baselines fail with exit `2`. Fingerprints are not whole-file digests or signed approvals.
 - **Honest coverage:** Unreadable selected files/directories, parser limits, overlong source lines (over 8,192 characters), oversized source files, symlinks/reparse points, unknown binaries, and uninspected containers prevent a complete-pass verdict. Repository scans fail closed on incomplete coverage by default; the explicit `--fail-on-incomplete` flag remains accepted for readable command intent, while `--allow-incomplete` is an intentionally visible exploratory override. GitHub Action and MCP scan defaults are also strict (set their boolean to `false` only for a reviewed exploratory run; adapters translate that to `--allow-incomplete`). The production `check` command additionally ignores repository attempts to weaken the security floor or narrow scope, scans the full root, and fails closed. Incomplete evidence reports `CONDITIONAL` while the process exits `1`, so no omitted source can silently become a green gate. Coverage describes supported source inspection, not runtime safety. See [coverage and baseline contracts](docs/commands.md#coverage-and-baseline-contracts).
+- **Cross-file coverage:** Optional graph read/parse limits are coverage failures, not vulnerability findings. Partial findings remain visible; strict `scan --cross-file` exits `1` on incomplete coverage, while `--allow-incomplete` keeps the report exploratory and conditional. Default scans, rules, fingerprints, and thresholds are unchanged. `labs impact` reports incomplete graph evidence as `UNKNOWN` and exits `2`; see [cross-file limits and impact semantics](docs/commands.md#scan).
 
 ## Add the GitHub Action
 
@@ -342,7 +398,7 @@ All detailed walkthroughs are in [docs/features.md](docs/features.md).
 
 ## Research & evaluation status
 
-The scanner ships 656 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready` and are mapped into the non-blocking SP666-SP668 wave; Wave D adds SP669-SP670 for Dart and C#/.NET; the other candidates remain research-only or rejected until their evidence boundary is met. See the [batch record](research/promotion-batch-a.json), [promotion waves](research/promotion-wave-b.md), and [broader plan](research/promotion-plan.json).
+The scanner ships 673 executable rules. Behind them sits a research backlog of 7,800 catalogued candidates, separate from executable rules. The current promotion triage identifies 934 targets with a possible local signature, 435 that need dataflow evidence beyond today's engines, and 1,595 design, process, or hardware classes that a regex-based gate cannot catch; the remaining catalog entries retain discovery status until their evidence boundary is reviewed. The bounded P2 batch-A record reviews 25 direct candidates across nine requested ecosystems: 3 reached research-only `fixture_ready` and are mapped into the non-blocking SP666-SP668 wave; Wave D adds SP669-SP670 for Dart and C#/.NET; the other candidates remain research-only or rejected until their evidence boundary is met. See the [batch record](research/promotion-batch-a.json), [promotion waves](research/promotion-wave-b.md), and [broader plan](research/promotion-plan.json).
 
 Fixture battery (median of 3 runs, `--cross-file`, labels in [benchmarks/head-to-head-labels.json](benchmarks/head-to-head-labels.json)):
 
@@ -358,7 +414,7 @@ The version-3 label contract distinguishes expected finding locations from conte
 
 The opt-in real-world evaluator pins express, flask, and requests as clean baselines plus juice-shop, DVWA, and NodeGoat as intentionally vulnerable apps. The reviewed 2026-08-24 manifest run scanned 1,805 files and observed 310 application-scope findings (2 / 9 / 3 / 184 / 84 / 28 in that order). Every alert remains explicitly `unreviewed`; these inventory counts are not a real-world precision claim.
 
-Operating profile: no repository or contributor limits, fully offline against local files only, and interprocedural taint for JavaScript/TypeScript and Python in the open core. Bounded added-line git-history scanning is available with `--history`; live credential validation, SBOM/licensing, and AppSec management remain outside the core and should be paired with dedicated tools ([layering guidance](docs/features.md)). Measurement methodology and current results: [docs/benchmarks.md](docs/benchmarks.md).
+Operating profile: no repository or contributor limits, fully offline against local files only, and interprocedural taint for JavaScript/TypeScript and Python in the open core. Bounded added-line git-history scanning is available with `--history`; live credential validation, SBOM/licensing, and AppSec management remain outside the core and should be paired with dedicated tools ([layering guidance](docs/features.md)). Measurement methodology and current results: [benchmark methodology and results on GitHub](https://github.com/kingggg5/shipproof/blob/main/docs/benchmarks.md).
 
 ## Research methodology and provenance
 
@@ -376,18 +432,20 @@ A research candidate becomes an executable `SPxxx` rule only after deduplication
 
 | Research artifact | Scope | Runtime effect |
 | :--- | :--- | :--- |
-| [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 model-assisted, source-mapped hypotheses | None |
-| [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 time-bounded CVE/CWE/community signals | None |
-| [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 deduplicated ecosystem/CWE research slots | None |
-| [Executable rule table](docs/rules.md#detection-rules-reference) | 656 reviewed detectors | Emits versioned findings |
+| [Expert candidate catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-1000.md) | 1,000 non-executable model-assisted, source-mapped candidates | None |
+| [2021–2026 annual catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-2021-2026.md) | 1,800 non-executable time-bounded candidates | None |
+| [Language catalog](https://github.com/kingggg5/shipproof/blob/main/docs/rule-expansion-languages-5000.md) | 5,000 non-executable ecosystem/CWE candidates | None |
+| [Executable rule table](docs/rules.md#detection-rules-reference) | 673 reviewed detectors | Emits versioned findings |
 
-The machine-derived [rule assurance inventory](docs/rule-assurance.md) verifies all 656 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
+The 2,800 expert/annual and 5,000 language-catalog entries are research candidates, not executable rules; they cannot emit findings until separately promoted.
+
+The machine-derived [rule assurance inventory](https://github.com/kingggg5/shipproof/blob/main/docs/rule-assurance.md) verifies all 673 executable rules through explicit positive/negative/adversarial contracts. The checked-in debt baseline is empty and fail-closed: any new partial or uncontracted executable rule fails CI instead of silently joining legacy debt.
 
 See the [production playbook](docs/production-playbook.md), [development plan](https://github.com/kingggg5/shipproof/blob/main/docs/next-development-plan.md), and [delivery roadmap](https://github.com/kingggg5/shipproof/blob/main/docs/roadmap.md) for operational boundaries and acceptance gates. Cite a release using [CITATION.cff](CITATION.cff). ShipProof deliberately avoids a single readiness score because one veto-level failure must not be averaged away by many clean checks.
 
 ## Project governance
 
-ShipProof uses a maintainer-led, evidence-first decision model. Backward compatibility, rule promotion, releases, security response, and changes to the default trust boundary follow [GOVERNANCE.md](GOVERNANCE.md). Contributions must follow [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Public feature and defect discussions belong in GitHub Issues; exploitable vulnerabilities belong in the private reporting channel described in [SECURITY.md](SECURITY.md).
+ShipProof uses a maintainer-led, evidence-first decision model. Backward compatibility, rule promotion, releases, security response, and changes to the default trust boundary follow [GOVERNANCE.md](https://github.com/kingggg5/shipproof/blob/main/GOVERNANCE.md). Contributions must follow [CONTRIBUTING.md](https://github.com/kingggg5/shipproof/blob/main/CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Public feature and defect discussions belong in GitHub Issues; exploitable vulnerabilities belong in the private reporting channel described in [SECURITY.md](SECURITY.md).
 
 ## Development
 

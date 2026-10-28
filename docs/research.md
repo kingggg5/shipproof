@@ -1,6 +1,6 @@
 # ShipProof research notebook
 
-Last cohort review: 2026-10-22; older notebook entries retain their original context.
+Last cohort review: 2026-10-26; older notebook entries retain their original context.
 
 This notebook records the external pages consulted while ShipProof was designed. It is intentionally separate from the [production playbook](production-playbook.md): the playbook contains ShipProof's operating model; this file preserves provenance, challenges assumptions, and makes later re-verification possible.
 
@@ -12,7 +12,7 @@ This notebook is an engineering provenance record, not a peer-reviewed publicati
 
 | Corpus | Count | Status |
 | --- | ---: | --- |
-| Executable scanner rules | 656 | Versioned behavior; covered by structure and regression tests |
+| Executable scanner rules | 673 | Current executable registry through SP713 |
 | Expert research candidates | 1,000 | Non-executable hypotheses |
 | Annual 2021–2026 candidates | 1,800 | Non-executable time-bounded signals |
 | Language/ecosystem candidates | 5,000 | Non-executable deduplicated research slots |
@@ -30,6 +30,31 @@ verifies the 21 October 2026 runtime advisories against PHP/GHSA and documents e
 branch cutoffs, vendor-backport uncertainty and the source-only evidence boundary.
 The 0.12 release also corrects syslog argument positions and the C# DTD/resolver
 distinction instead of promoting those keyword matches into confirmed vulnerabilities.
+
+The [2026-10 TypeScript/.NET/Dart field-cohort record](../research/field-cohort-ts-dotnet-dart-2026-10.md)
+documents bounded detector scope and duplicate decisions for SP688/SP689, SP170,
+SP056/SP084, and the SP596 correction. This prior cohort's bounded evaluation
+record is complete and historical; it is not a zero-false-positive claim, and no
+final cohort precision or performance counts are asserted. The maintainer-only [failure catalog](https://github.com/kingggg5/shipproof/blob/main/docs/knowledge/failure-catalog.md)
+is excluded from npm packaging to preserve package size ceilings.
+
+The [2026-10 broad-quality cohort record](../research/broad-quality-cohort-2026-10.md)
+documents SP693–SP698, the SP346/SP375 scope repairs, and retirement of SP348.
+The six new rules are advisory. Evaluation is pending, with no test or performance
+metrics claimed. The 2,800 expert/annual and 5,000 language-catalog entries remain
+non-executable research candidates and cannot emit findings.
+
+The [2026-10 Node/React/Luau/PostgreSQL cohort](../research/web-database-cohort-2026-10.md)
+records the previous 667-rule registry through SP706, SP691 scope expansion, and its
+legacy-rule retirements.
+
+The previous [I/O ownership cohort](../research/io-ownership-cohort-2026-10.md) records
+SP336 repair, SP367 retirement, SP703/SP705 extensions, and SP707 at the historical
+667-rule registry.
+
+The current [Luau community cohort](../research/luau-community-cohort-2026-10.md)
+records SP708–SP713 and the SP707 boundary extension. Its pinned source inventory
+is [benchmarks/luau-community-cohort-repositories.json](../benchmarks/luau-community-cohort-repositories.json). Community sources guide question discovery; owning docs anchor semantics.
 
 ## Reading protocol
 

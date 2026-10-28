@@ -2,6 +2,94 @@
 
 ## Unreleased
 
+- Align the repository's GitHub alert stream with its existing application-scope gate. Preserve the complete SARIF as an artifact, retain both established comparison categories, and keep application severity, fingerprints and incomplete evidence unchanged.
+
+- Preserve JavaScript binding evidence through template expressions while keeping inert text opaque. Ambiguous protection views stay advisory; actual binding-token exhaustion retains partial findings and fails source completeness.
+
+- Keep contribution and governance methodology source-only in the npm artifact; the repository copies remain available through canonical README links.
+
+- Keep maintainer rule-assurance inventory and methodology source-only in the npm package, with the repository copy available online.
+
+- Fix context-specific taint contracts across Python and JS/TS: preserve receiver/mixed-value provenance, join Python branches, require exact unshadowed bindings, and stop treating HTML encoding or numeric URL conversion as unrelated protections. Unknown calls, custom HTML configuration and unsupported guards remain advisory. Distinguish SQLModel session.exec from Python execution, retain bound SQL parameters and verify CLI, SARIF, packed and installed-skill parity.
+
+- Run Python and Node coverage gates in parallel within their existing timeouts; retain the required aggregate check and reject failed, cancelled or skipped child results.
+
+- Report cross-file graph read/parse and bounded-analysis omissions as incomplete coverage, retain partial findings, and preserve strict `scan --cross-file` exit semantics. Add completeness-aware `labs impact` metadata and UNKNOWN reachability/blast-risk reporting; invalid targets and incomplete graph evidence return exit 2. Packet response timeouts/errors always keep review incomplete and exit 2.
+
+- Add opt-in `--packet-discover` to the existing scan command. With `--packet-out`,
+  it schedules bounded source-file discovery targets even without native findings.
+  Discovery is source preparation, not AI execution, and remains context rather than
+  SP findings or gate proof. Existing limits remain 10 files/128 KiB/20 packets;
+  orchestration also caps 256 review items per packet, 5,000 eligible/discovery files,
+  and 4 MiB read for import-context parsing. Packet 1.1 replies bind to source identity
+  and echo `packet_digest`; `review_complete` requires valid replies and no deferred,
+  failed, or partial-context items, but does not prove correctness or gate eligibility.
+
+- Add opt-in `--packet-responses FILE` to apply bounded host-agent replies with `--packet-out`. Responses are read as validated local evidence; malformed or stale replies fail with exit 2, and valid replies do not alter native findings or the gate. Correct packet-body digest checks, dynamic import notes, and failed-read budget charging are included.
+
+- Add six medium L1 structural Luau/Roblox advisories SP708–SP713 and extend
+  SP707 to direct RemoveAsync/IncrementAsync mutations. The research cohort uses
+  Reddit, DevForum, Stack Overflow and GitHub to identify questions, then checks
+  semantics against owning docs; its pinned source set contains ProfileStore and
+  RbxUtil. Defaults remain read-only, offline and dependency-free. No test, CI,
+  performance or false-positive result is claimed here.
+
+
+- Add advisory SP707 for a narrow client-selected Roblox DataStore write, repair
+  SP336 under its existing ID, and retire SP367 while reserving its ID. Extend
+  SP703 to import-bound callback fs.readFile/writeFile and SP705 to supported
+  concurrent PostgreSQL operations inside explicit same-file transactions. The
+  SP423 review inventory records per-site missing-array findings without a
+  whole-component safety claim. Version 0.12.0 remains unchanged; the default stays read-only, offline and
+  dependency-free. No test, CI or performance result is claimed here.
+
+
+- Add five advisory checks SP702–SP706 for async React effect setup, awaited
+  callback stream pipelines, pg URL/TLS precedence, transactional concurrent
+  index creation and temp-first SQL definer relation lookup. Extend SP691's
+  client-selected removal boundary to Kick. The default remains offline and
+  dependency-free; no database or scanned application is executed by the scanner.
+- Retire unsupported absence claims SP325/SP334/SP359/SP363/SP423, preserving
+  their IDs. Missing local timeout/listener/pool/dependency settings do not prove
+  failure; Express 5 handles rejected handler promises. Existing gate thresholds
+  and original/remediated corpus labels remain unchanged. See the
+  [cohort evidence and limitations](research/web-database-cohort-2026-10.md).
+
+- Add advisory SP699–SP701 for unchecked Rust NonZero zero construction, Node timer
+  delay overflow, and explicitly unlimited SQLAlchemy QueuePool capacity. Extend
+  SP673 reference validity and typed .NET SP104 certificate-validation evidence.
+  Retire SP347/SP350's unsupported default assumptions; IDs are not reused.
+- Preserve incomplete pinned-source replay reports with a nonzero result, rather
+  than losing observations. Split the complete source catalog from the shipped
+  boundary guide; offline rule explanations and all catalog checks remain.
+
+- Add six medium advisory rules SP693–SP698 for explicitly disabled HTTP receive
+  deadlines, directly awaited empty asynchronous races, boolean array comparators,
+  removed XML entity limits, an unverified local logging listener, and directly
+  awaited synchronous compression. Narrow SP346 to import-bound standalone task
+  creation, correct SP375's idle/open connection distinction, and retire SP348:
+  Python's executor default is bounded. The cohort does not claim deployment
+  impact. See measured tests and limits in the [cohort record](research/broad-quality-cohort-2026-10.md).
+- Move the explanation dictionary into a pure-data module while preserving its
+  public import API. Keep benchmark maintainer notes in the source checkout;
+  runtime benchmark drivers remain shipped and package ceilings are unchanged.
+
+- Add advisory Roblox/Luau checks SP690/SP691 for a locally constructed remote
+  passing a client argument directly to `require` or `Destroy`, and SP692 for
+  imported JWT signing with an explicit RS/PS algorithm and insecure RSA-size
+  opt-out. Extend SP672 to the supported simple RemoteFunction callback, SP676
+  to qualifying signing calls, and SP679 to Node's explicit insecure validation
+  mode. Local source evidence does not establish deployment or actual key
+  strength; evaluation results are pending. See the [cohort record](research/luau-typescript-cohort-2026-10.md).
+
+- Add advisory SP688 for the explicit Next.js SVG inline/empty-CSP combination
+  and SP689 for a typed Kestrel null body limit. Extend SP170 to a bounded Dart
+  `package:http` external-HTTP Authorization case and SP056/SP084 to typed C#
+  `CookieAuthenticationOptions`; narrow SP596 to qualifying Next.js app entries.
+  These source-bounded checks do not establish deployment behavior or zero false
+  positives. Field evaluation is in progress; final precision/performance counts
+  are not yet available.
+
 - Add nonblocking transport advisories SP686/SP687 for legacy Node TLS options
   and `ws` payload-cap opt-outs/32-bit overflow; omitted payload limits remain
   finite. Extend SP056/SP084 with explicit typed C# CookieOptions false flags.

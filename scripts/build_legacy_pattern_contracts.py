@@ -58,6 +58,9 @@ MANUAL_WITNESSES = {
 # production-shaped code that must stay silent; the builder fails closed if
 # any of them ever matches its rule.
 CURATED_NEGATIVES: dict[str, list[str]] = {
+    "SP375": [
+        'package pool\nimport "database/sql"\nfunc configure(db *sql.DB) {\n db.SetMaxOpenConns(25)\n db.SetMaxIdleConns(0)\n}\n',
+    ],
     "SP101": [
         "import ast\n\n\ndef parse_payload(raw):\n    return ast.literal_eval(raw)\n",
     ],

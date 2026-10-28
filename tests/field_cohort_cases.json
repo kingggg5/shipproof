@@ -1,0 +1,617 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule_id": "SP688",
+      "sources": [
+        {
+          "url": "https://nextjs.org/docs/app/api-reference/components/image#dangerouslyallowsvg",
+          "claim": "Next recommends a restrictive image CSP and attachment disposition when serving SVG; enabling SVG alone does not establish missing protections."
+        },
+        {
+          "url": "https://github.com/vercel/next.js/blob/canary/packages/next/src/server/image-optimizer.ts",
+          "claim": "The image response uses the configured CSP and disposition values. Empty CSP is not evidence of a restrictive policy; deployment may still add controls."
+        }
+      ],
+      "positive": [
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.js",
+          "source": "module.exports = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.mjs",
+          "source": "const config = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; export default config;"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'script-src none',contentSecurityPolicy:''}};"
+        }
+      ],
+      "negative": [
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:false,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'attachment',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:\"script-src 'none'; sandbox;\"}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:policy}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',unoptimized:true}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',loader:'custom'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',loaderFile:'./image-loader.ts'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',contentDispositionType:'attachment'}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:'',...hardened}};"
+        },
+        {
+          "path": "settings.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {output:'export',images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        },
+        {
+          "path": "next.config.ts",
+          "source": "const unused = {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; export default {};"
+        },
+        {
+          "path": "next.config.cts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}};"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "next.config.ts",
+          "source": "/* export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',contentSecurityPolicy:''}}; */",
+          "expected": false,
+          "rationale": "Export-shaped comment text cannot configure the optimizer or clear its response policy."
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,contentDispositionType:'inline',['contentSecurityPolicy']:''}};",
+          "expected": false,
+          "rationale": "Computed property identity stays unresolved rather than overriding known protective options."
+        },
+        {
+          "path": "next.config.ts",
+          "source": "export default {images:{dangerouslyAllowSVG:true,\ncontentDispositionType:'inline',\ncontentSecurityPolicy:''}};",
+          "expected": true,
+          "rationale": "Multiline literal configuration preserves all three explicitly unsafe header choices."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "false_positive_analysis": "Advisory only. Trusted images or a reverse proxy can supply independent controls. SVG enablement alone, default/explicit protective CSP, attachment delivery, custom loaders, unoptimized images and output overrides stay silent.",
+      "blocking_eligible": false
+    },
+    {
+      "rule_id": "SP689",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.server.kestrel.core.kestrelserverlimits.maxrequestbodysize?view=aspnetcore-10.0",
+          "claim": "Kestrel's nullable body-size property disables this limit when null; a finite default and independent per-request or proxy limits must be distinguished."
+        },
+        {
+          "url": "https://cwe.mitre.org/data/definitions/400.html",
+          "claim": "Resource-consumption limits are a CWE-400 control, but an absent local cap alone does not prove endpoint reachability or exploitable exhaustion."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvar configure = (KestrelServerOptions options) => {\n options.Limits.MaxRequestBodySize = null;\n};"
+        },
+        {
+          "path": "Server.cs",
+          "source": "void Configure(global::Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = 4096; options.Limits.MaxRequestBodySize = null;\n}"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = 4096;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n \n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = configuredLimit;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null; options.Limits.MaxRequestBodySize = 4096;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n if (development) options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n Customize(options); options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null; Register(options);\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Project.Server;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "class KestrelServerOptions {}\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using KestrelServerOptions = Project.Options;\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(dynamic options) {\n options.Limits.MaxRequestBodySize = null;\n}"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Server.cs",
+          "source": "/*\nusing Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = null;\n}*/",
+          "expected": false,
+          "rationale": "A comment cannot bind server options or disable a request-processing resource limit."
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n options.Limits.MaxRequestBodySize = /* deliberately unbounded */ null;\n}",
+          "expected": true,
+          "rationale": "A comment inside the actual null assignment must not hide the explicit local limit opt-out."
+        },
+        {
+          "path": "Server.cs",
+          "source": "using Microsoft.AspNetCore.Server.Kestrel.Core;\nvoid Configure(KestrelServerOptions options) {\n}\nvoid Other() { options.Limits.MaxRequestBodySize = null;\n}",
+          "expected": false,
+          "rationale": "An options parameter from another method does not establish the type of a similarly named field."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "high",
+      "false_positive_analysis": "Advisory only. An independent cap or intentional streaming may justify this option. Require a locally bound standard options type and a flat literal configuration block; defaults, finite limits, reconfiguration, custom types and branching stay unresolved.",
+      "blocking_eligible": false
+    },
+    {
+      "rule_id": "SP170",
+      "sources": [
+        {
+          "url": "https://pub.dev/documentation/http/latest/http/get.html",
+          "claim": "The package:http convenience API accepts a URI and header map; no TLS is inferred from a plain HTTP URI."
+        },
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc6750.html#section-5.3",
+          "claim": "Bearer credentials require transport protection. A header declaration supports a local concern, not proof of the value or the deployed transport."
+        }
+      ],
+      "positive": [
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.post(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('HTTP://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as remote;\nFuture<void> send(String bearer) async {\n await remote.put(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'authorization': 'Bearer $bearer'});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse(r'http://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        }
+      ],
+      "negative": [
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('https://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://localhost/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://127.0.0.1/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://[::1]/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://10.0.0.1/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://node.local/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://internal/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://$host/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org:99999/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Accept': 'application/json'});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': ''});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer, 'authorization': ''});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: reviewedHeaders);\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'local_http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer, dynamic http) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "class Uri {}\nimport 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "void runWithClient() {}\nimport 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}"
+        },
+        {
+          "path": "client.dart",
+          "source": "const documentation = 'http://api.example.org/help';"
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(target, headers: {'Authorization': bearer});\n}"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "client.dart",
+          "source": "/* outer /* inner */\nimport 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}*/",
+          "expected": false,
+          "rationale": "Dart block comments nest, so a source-like request after an inner closing marker is still comment data."
+        },
+        {
+          "path": "client.dart",
+          "source": "final documentation = r\"\"\"import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}\"\"\";",
+          "expected": false,
+          "rationale": "A multiline raw string is a single data literal; its embedded imports and calls are not executed."
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.\nget(\nUri.parse('http://service.example.org/items'), headers: {'Authorization': bearer});\n}",
+          "expected": true,
+          "rationale": "Whitespace must not remove the direct binding between package:http, the URI and its Authorization header."
+        },
+        {
+          "path": "client.dart",
+          "source": "import 'package:http/http.dart' as http;\nFuture<void> send(String bearer) async {\n await http.get(Uri.parse('http://service.example.org/items'), headers: {'Authorization': bearer, ...safeHeaders});\n}",
+          "expected": false,
+          "rationale": "A spread may replace the header, so this bounded rule cannot establish the effective authentication map."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "false_positive_analysis": "Local mock transports need review. Dart HTTP requires an imported package:http call, literal external HTTP URI and Authorization header; that variant is advisory. Loopback/private IPs, bare HTTP URL text, custom bindings and visible runWithClient overrides stay silent. Header values and cross-file overrides remain unverified; legacy FTP/Telnet signatures are unchanged.",
+      "blocking_eligible": false
+    },
+    {
+      "rule_id": "SP596",
+      "blocking_eligible": true,
+      "sources": [
+        {
+          "url": "https://nextjs.org/docs/app/api-reference/directives/use-client",
+          "claim": "Next requires a client entry boundary, not a directive in every transitive client component."
+        },
+        {
+          "url": "https://react.dev/reference/rsc/use-client",
+          "claim": "The directive belongs to React Server Components and follows the module import graph; ordinary client-rendered React does not need it."
+        }
+      ],
+      "positive": [
+        {
+          "path": "app/page.tsx",
+          "source": "import {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }"
+        },
+        {
+          "path": "src/app/settings/layout.tsx",
+          "source": "import {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }"
+        },
+        {
+          "path": "app/page.tsx",
+          "source": "import {useState as state} from 'react';\nexport default function Page() { const [score] = state(1); return <span>{score}</span>; }"
+        }
+      ],
+      "negative": [
+        {
+          "path": "app/page.tsx",
+          "source": "'use client';\nimport {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }"
+        },
+        {
+          "path": "app/components/Counter.tsx",
+          "source": "import {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }"
+        },
+        {
+          "path": "src/widgets/Page.tsx",
+          "source": "import {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }"
+        },
+        {
+          "path": "app/page.tsx",
+          "source": "import {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }",
+          "frameworks": [
+            "react"
+          ]
+        },
+        {
+          "path": "app/page.tsx",
+          "source": "import {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }",
+          "frameworks": null
+        },
+        {
+          "path": "app/page.tsx",
+          "source": "import {useState} from './state';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }"
+        },
+        {
+          "path": "app/page.tsx",
+          "source": "import {type useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }"
+        },
+        {
+          "path": "app/page.tsx",
+          "source": "import {useState} from 'react';\nexport default function Page(useState: Factory) { const [score] = useState(1); return <span>{score}</span>; }"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "app/page.tsx",
+          "source": "/* 'use client' is discussed here */\nimport {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }",
+          "expected": true,
+          "rationale": "A comment mentioning a directive is not a module boundary and must not hide a genuine server-entry hook call."
+        },
+        {
+          "path": "app/page.tsx",
+          "source": "/*\nimport {useState} from 'react';\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }*/",
+          "expected": false,
+          "rationale": "An import and hook-shaped example inside a comment do not establish executable React usage."
+        },
+        {
+          "path": "app/page.tsx",
+          "source": "const example = \"import {useState} from 'react';\\nexport default function Page() { const [score] = useState(1); return <span>{score}</span>; }\";",
+          "expected": false,
+          "rationale": "Source-shaped quoted text is documentation data, not an exported Next entry component or imported React hook."
+        }
+      ],
+      "expected_severity": "high",
+      "expected_confidence": "high",
+      "false_positive_analysis": "Only a declared Next.js app page/layout entry with an imported React hook call is checked. Ordinary React apps, shared components inheriting a client import boundary, type-only imports, shadows, unknown frameworks and actual client directives stay silent. This is not a complete RSC module-graph analysis."
+    },
+    {
+      "rule_id": "SP056",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.cookies.cookieauthenticationoptions.cookie?view=aspnetcore-10.0",
+          "claim": "Authentication cookies expose an actual CookieBuilder policy; defaults differ from explicit insecure overrides."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.cookiesecurepolicy?view=aspnetcore-10.0",
+          "claim": "None, not Never, disables Secure. SameAsRequest and Always are distinct policies and must not be conflated."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = false; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvar configure = (CookieAuthenticationOptions options) => { options.Cookie.HttpOnly = false; };"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(global::Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions options) { options.Cookie.HttpOnly = false; }"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = true; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = reviewedPolicy; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = CookieSecurePolicy.SameAsRequest; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = CookieSecurePolicy.Never; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Project.Authentication;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = false; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CustomOptions options) { options.Cookie.HttpOnly = false; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { if (localDevelopment) options.Cookie.HttpOnly = false; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = false; options.Cookie.HttpOnly = true; }"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Auth.cs",
+          "source": "using CookieAuthenticationOptions = Project.Options;\nusing Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = false; }",
+          "expected": false,
+          "rationale": "A custom type alias cannot establish ASP.NET's authentication-cookie policy semantics."
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.HttpOnly = /* explicit override */ false; }",
+          "expected": true,
+          "rationale": "An inline comment inside the actual configuration assignment does not change its unsafe literal value."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "false_positive_analysis": "Names alone do not establish a credential. C# requires typed ASP.NET parameters and inline CookieOptions or a flat CookieAuthenticationOptions policy block with explicit HttpOnly=false. These variants are advisory because middleware can override flags; verify final headers.",
+      "blocking_eligible": false
+    },
+    {
+      "rule_id": "SP084",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.cookies.cookieauthenticationoptions.cookie?view=aspnetcore-10.0",
+          "claim": "Authentication cookies expose an actual CookieBuilder policy; defaults differ from explicit insecure overrides."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.cookiesecurepolicy?view=aspnetcore-10.0",
+          "claim": "None, not Never, disables Secure. SameAsRequest and Always are distinct policies and must not be conflated."
+        }
+      ],
+      "positive": [
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.None; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvar configure = (CookieAuthenticationOptions options) => { options.Cookie.SecurePolicy = CookieSecurePolicy.None; };"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(global::Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.None; }"
+        }
+      ],
+      "negative": [
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.Always; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = reviewedPolicy; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.Never; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Project.Authentication;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.None; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CustomOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.None; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { if (localDevelopment) options.Cookie.SecurePolicy = CookieSecurePolicy.None; }"
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.None; options.Cookie.SecurePolicy = CookieSecurePolicy.Always; }"
+        }
+      ],
+      "adversarial": [
+        {
+          "path": "Auth.cs",
+          "source": "using CookieAuthenticationOptions = Project.Options;\nusing Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = CookieSecurePolicy.None; }",
+          "expected": false,
+          "rationale": "A custom type alias cannot establish ASP.NET's authentication-cookie policy semantics."
+        },
+        {
+          "path": "Auth.cs",
+          "source": "using Microsoft.AspNetCore.Authentication.Cookies;\nusing Microsoft.AspNetCore.Http;\nvoid Configure(CookieAuthenticationOptions options) { options.Cookie.SecurePolicy = /* explicit override */ CookieSecurePolicy.None; }",
+          "expected": true,
+          "rationale": "An inline comment inside the actual configuration assignment does not change its unsafe literal value."
+        }
+      ],
+      "expected_severity": "medium",
+      "expected_confidence": "medium",
+      "false_positive_analysis": "Local development and upstream policy require review. C# requires typed ASP.NET parameters with inline Secure=false or a flat authentication-cookie SecurePolicy=None assignment. SameAsRequest, branches and unresolved changes stay silent; local policy is advisory, not final-header evidence.",
+      "blocking_eligible": false
+    }
+  ]
+}

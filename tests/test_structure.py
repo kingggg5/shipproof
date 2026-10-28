@@ -1,3 +1,4 @@
+import inspect
 import json
 import re
 import sys
@@ -9,7 +10,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills" / "audit-production-readiness" / "scripts"))
 
 from capacity_model import VERSION as CAPACITY_VERSION  # noqa: E402
-from scan_repo import RULES  # noqa: E402
+from scan_repo import RULES, scan_repository  # noqa: E402
 from scan_repo import VERSION as SCAN_VERSION  # noqa: E402
 
 sys.path.insert(0, str(ROOT / "skills" / "engineer-production-systems" / "scripts"))
@@ -19,6 +20,11 @@ SKILL_NAMES = ("engineer-production-systems", "audit-production-readiness")
 
 
 class StructureTests(unittest.TestCase):
+    def test_runtime_sources_fit_the_default_self_scan_file_budget(self):
+        limit = inspect.signature(scan_repository).parameters["max_file_bytes"].default
+        for path in (ROOT / "skills/audit-production-readiness/scripts").glob("*.py"):
+            self.assertLessEqual(path.stat().st_size, limit, path.name)
+
     def test_plugin_manifest_points_to_skill(self):
         manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["name"], "shipproof")
@@ -321,7 +327,7 @@ class StructureTests(unittest.TestCase):
             r"^\|\s*\*\*`(SP\d+)`\*\*\s*\|\s*(CRITICAL|HIGH|MEDIUM|LOW)\s*\|",
             re.MULTILINE,
         )
-        sources = (("docs/rules.md", english_row),)
+        sources = (("docs/rule-catalog.md", english_row),)
         for readme_name, row_pattern in sources:
             content = (ROOT / readme_name).read_text(encoding="utf-8")
             documented = {match.group(1): match.group(2) for match in row_pattern.finditer(content)}
@@ -338,6 +344,10 @@ class StructureTests(unittest.TestCase):
                 )
 
     def test_framework_table_rules_exist_in_scanner(self):
+        guide = (ROOT / "docs/rules.md").read_text(encoding="utf-8")
+        self.assertIn("## Detection Rules Reference", guide)
+        self.assertIn("/docs/rule-catalog.md", guide)
+        self.assertIn("shipproof explain SPxxx", guide)
         scanner_rule_ids = {rule.rule_id for rule in RULES}
         for doc_name in ("docs/rules.md",):
             content = (ROOT / doc_name).read_text(encoding="utf-8")

@@ -87,6 +87,54 @@ def fixture_source(index: int, profile: str, bytes_per_file: int) -> str:
     if profile == "clean":
         prefix = f"def normalize_{index}(value: str) -> str:\n    return value.strip()\n"
         padding = "# bounded benchmark padding\n"
+    elif profile == "value-config":
+        sources = (
+            "import {setTimeout} from 'node:timers';\nsetTimeout(tick, 24 * 60 * 60 * 1000);\n",
+            "fn main() { let id = std::num::NonZeroU32::new(7); }\n",
+            "from sqlalchemy.pool import QueuePool\npool = QueuePool(connect, pool_size=5, max_overflow=10)\n",
+        )
+        prefix = sources[index % 3]
+        padding = (
+            "# bounded benchmark padding\n" if index % 3 == 2 else "// bounded benchmark padding\n"
+        )
+    elif profile == "luau-remotes":
+        prefix = (
+            'local remote = Instance.new("RemoteEvent")\n'
+            "remote.OnServerEvent:Connect(function(player: Player, item: Instance)\n"
+            "    if not owns(player, item) then return end\n"
+            "    item:Destroy()\n"
+            "end)\n"
+            "math.clamp(value,0,1);table.sort(items)\n"
+            "local copy=table.clone(table.freeze({}));copy.x=1\n"
+            "task.defer(callback)\n"
+            "game:GetService('Players').PlayerAdded:Wait()\n"
+            "game:GetService('DataStoreService'):GetDataStore('Profiles'):UpdateAsync(key,function(old)return old end)\n"
+        )
+        padding = "-- bounded benchmark padding\n"
+    elif profile == "io-ownership":
+        sources = (
+            "import {readFile} from 'node:fs/promises';\nexport async function load(path) { return await readFile(path); }\n",
+            "import {pipeline} from 'node:stream/promises';\nimport {createReadStream,createWriteStream} from 'node:fs';\nexport async function copy(input,output) { await pipeline(createReadStream(input),createWriteStream(output)); }\n",
+            "BEGIN; CREATE INDEX account_lookup ON accounts(id); COMMIT;\nREINDEX INDEX CONCURRENTLY account_lookup;\nDROP INDEX CONCURRENTLY account_lookup;\n",
+            "local remote=Instance.new('RemoteEvent')\nremote.OnServerEvent:Connect(function(player,key,value)\nif not authorized(player,key) then return end\ngame:GetService('DataStoreService'):GetDataStore('Profiles'):SetAsync(key,value)\nend)\n",
+        )
+        prefix = sources[index % len(sources)]
+        padding = (
+            "// bounded benchmark padding\n" if index % 4 < 2 else "-- bounded benchmark padding\n"
+        )
+    elif profile == "web-database":
+        sources = (
+            "import {useEffect} from 'react';\nexport function useRefresh() { useEffect(() => { void refresh(); return cancel; }, []); }\n",
+            "import {pipeline} from 'node:stream/promises';\nexport async function transfer(source, destination) { await pipeline(source, destination); }\n",
+            "import {Client} from 'pg';\nexport const database = new Client({connectionString:'postgresql://db.example/app',ssl:{ca: trustedCA}});\n",
+            "CREATE INDEX CONCURRENTLY account_lookup ON accounts (id);\n",
+            "CREATE FUNCTION lookup_setting() RETURNS text LANGUAGE SQL SECURITY DEFINER SET search_path = private, pg_temp AS $$ SELECT value FROM settings $$;\n",
+            'local remote = Instance.new("RemoteEvent")\nremote.OnServerEvent:Connect(function(player, target)\nif not authorized(player, target) then return end\ntarget:Kick()\nend)\n',
+        )
+        prefix = sources[index % len(sources)]
+        padding = (
+            "-- bounded benchmark padding\n" if index % 6 >= 3 else "// bounded benchmark padding\n"
+        )
     elif profile == "typescript-config":
         sources = (
             "import {verify} from 'jsonwebtoken';\nexport function authenticate(token: string, key: string) { return verify(token, key, {ignoreExpiration: false, ignoreNotBefore: false, algorithms: ['RS256']}); }\n",
@@ -121,7 +169,19 @@ def write_fixture(
     for index in range(file_count):
         bucket = root / f"module-{index // 250:04d}"
         bucket.mkdir(exist_ok=True)
-        suffix = ".ts" if profile == "typescript-config" else ".py"
+        suffix = (
+            (".ts", ".ts", ".sql", ".luau")[index % 4]
+            if profile == "io-ownership"
+            else (".tsx", ".ts", ".ts", ".sql", ".sql", ".luau")[index % 6]
+            if profile == "web-database"
+            else (".ts", ".rs", ".py")[index % 3]
+            if profile == "value-config"
+            else ".luau"
+            if profile == "luau-remotes"
+            else ".ts"
+            if profile == "typescript-config"
+            else ".py"
+        )
         path = bucket / f"service-{index:06d}{suffix}"
         source = fixture_source(index, profile, bytes_per_file)
         path.write_text(source, encoding="utf-8")
@@ -150,7 +210,15 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--samples", type=int, default=3, help="Measured scan samples")
     parser.add_argument(
         "--profile",
-        choices=("clean", "adversarial-regex", "typescript-config"),
+        choices=(
+            "clean",
+            "adversarial-regex",
+            "typescript-config",
+            "luau-remotes",
+            "value-config",
+            "web-database",
+            "io-ownership",
+        ),
         default="clean",
         help="Generated finding-free workload shape",
     )

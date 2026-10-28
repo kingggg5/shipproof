@@ -10,6 +10,8 @@ from __future__ import annotations
 import re
 from collections import Counter
 
+import luau_quality_checks
+
 MAX_TOKENS = 50_000
 WORD = re.compile(r"[A-Za-z_][A-Za-z_0-9]*|[0-9]+|::|[.][.][.]")
 LUA_LONG = re.compile(r"\[(=*)\[")
@@ -19,6 +21,104 @@ RUST_LIFETIME = re.compile(r"'[A-Za-z_][A-Za-z_0-9]*")
 
 class LexicalLimitError(ValueError):
     """Unsupported incomplete lexical input or exhausted token budget."""
+
+
+def dart_literal_end(source: str, start: int, nesting: int = 0) -> int:
+    """Skip raw, multiline and interpolated Dart strings without evaluating them."""
+    if nesting > 32:
+        raise LexicalLimitError("Dart interpolation nesting exceeded")
+    raw = source[start] == "r"
+    quote_start = start + int(raw)
+    quote = source[quote_start]
+    delimiter = quote * 3 if source.startswith(quote * 3, quote_start) else quote
+    cursor = quote_start + len(delimiter)
+    while cursor < len(source):
+        if source.startswith(delimiter, cursor):
+            return cursor + len(delimiter)
+        if not raw and source[cursor] == "\\":
+            cursor += 2
+            continue
+        if not raw and source.startswith("${", cursor):
+            cursor += 2
+            depth = 1
+            while cursor < len(source) and depth:
+                char = source[cursor]
+                if char in {"'", '"'} or (
+                    char == "r" and source[cursor + 1 : cursor + 2] in {"'", '"'}
+                ):
+                    cursor = dart_literal_end(source, cursor, nesting + 1)
+                elif source.startswith("//", cursor):
+                    end = source.find("\n", cursor)
+                    cursor = len(source) if end < 0 else end
+                elif source.startswith("/*", cursor):
+                    comment_depth = 1
+                    cursor += 2
+                    while cursor < len(source) and comment_depth:
+                        if source.startswith("/*", cursor):
+                            comment_depth += 1
+                            cursor += 2
+                        elif source.startswith("*/", cursor):
+                            comment_depth -= 1
+                            cursor += 2
+                        else:
+                            cursor += 1
+                        if comment_depth > 128:
+                            raise LexicalLimitError("Dart comment nesting exceeded")
+                else:
+                    depth += int(char == "{") - int(char == "}")
+                    if depth > 128:
+                        raise LexicalLimitError("Dart interpolation braces exceeded")
+                    cursor += 1
+            if depth:
+                raise LexicalLimitError("unterminated Dart interpolation")
+            continue
+        if len(delimiter) == 1 and source[cursor] in "\r\n":
+            raise LexicalLimitError("newline in Dart single-line literal")
+        cursor += 1
+    raise LexicalLimitError("unterminated Dart literal")
+
+
+def lua_literal_end(source: str, start: int, nesting: int = 0) -> int:
+    """Keep the whole interpolated string opaque, including nested backticks."""
+    if nesting > 32:
+        raise LexicalLimitError("Luau interpolation nesting exceeded")
+    quote = source[start]
+    cursor = start + 1
+    while cursor < len(source):
+        char = source[cursor]
+        if char == "\\":
+            cursor += 2
+        elif char == quote:
+            return cursor + 1
+        elif quote == "`" and char == "{":
+            depth = 1
+            cursor += 1
+            while cursor < len(source) and depth:
+                char = source[cursor]
+                if char in {"'", '"', "`"}:
+                    cursor = lua_literal_end(source, cursor, nesting + 1)
+                    continue
+                comment = source.startswith("--", cursor)
+                opening = LUA_LONG.match(source, cursor + 2 if comment else cursor)
+                if opening:
+                    delimiter = "]" + opening[1] + "]"
+                    end = source.find(delimiter, opening.end())
+                    if end < 0:
+                        raise LexicalLimitError("unterminated Luau interpolation literal")
+                    cursor = end + len(delimiter)
+                elif comment:
+                    end = source.find("\n", cursor)
+                    cursor = len(source) if end < 0 else end + 1
+                else:
+                    depth += int(char == "{") - int(char == "}")
+                    if depth > 128:
+                        raise LexicalLimitError("Luau interpolation braces exceeded")
+                    cursor += 1
+            if depth:
+                raise LexicalLimitError("unterminated Luau interpolation")
+        else:
+            cursor += 1
+    raise LexicalLimitError("unterminated Lua quoted literal")
 
 
 def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
@@ -72,8 +172,10 @@ def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
                 depth = 1
                 index += 2
                 while index < len(source) and depth:
-                    if language == "rust" and source.startswith("/*", index):
+                    if language in {"rust", "dart"} and source.startswith("/*", index):
                         depth += 1
+                        if language == "dart" and depth > 128:
+                            raise LexicalLimitError("Dart comment nesting exceeded")
                         index += 2
                     elif source.startswith("*/", index):
                         depth -= 1
@@ -103,7 +205,16 @@ def tokens(source: str, language: str) -> list[tuple[str, int, int]]:
                     record(source[index:end], start, end)
                     index = end
                     continue
-        if char in ({"'", '"', "`"} if language == "lua" else {"'", '"'}):
+        if language == "dart" and (
+            char in {"'", '"'} or (char == "r" and source[index + 1 : index + 2] in {"'", '"'})
+        ):
+            index = dart_literal_end(source, start)
+            record(source[start:index], start, index)
+            continue
+        if language == "lua" and char in {"'", '"', "`"}:
+            index = lua_literal_end(source, start)
+            record(source[start:index], start, index)
+        elif char in {"'", '"'}:
             index += 1
             while index < len(source):
                 if source[index] == "\\":
@@ -448,6 +559,215 @@ def rust_http_spans(stream: list[tuple[str, int, int]]) -> list[tuple[str, int, 
     return hits
 
 
+def lua_spans(stream: list[tuple[str, int, int]]) -> list[tuple[str, int, int]]:
+    """Direct remote boundaries only; no execution, type inference or alias flow."""
+    values = [item[0] for item in stream]
+    if not {"loadstring", "OnServerEvent", "OnServerInvoke"}.intersection(values):
+        return []
+    counts = Counter(values)
+    positions: dict[str, list[int]] = {}
+    boundary_at: list[int] = []
+    boundary = 0
+    for index, value in enumerate(values):
+        positions.setdefault(value, []).append(index)
+        boundary_at.append(boundary)
+        boundary += int(value in {"end", "else", "elseif", "until"})
+    hits: list[tuple[str, int, int]] = []
+
+    def emit(rule_id: str, first: int, last: int) -> None:
+        hits.append((rule_id, stream[first][1], stream[last][2]))
+
+    def expression_continues(index: int) -> bool:
+        return index < len(values) and values[index] in {
+            ".",
+            ":",
+            "::",
+            "[",
+            "(",
+            "and",
+            "or",
+            "+",
+            "-",
+            "*",
+            "/",
+            "%",
+            "^",
+            "<",
+            ">",
+            "=",
+            "~",
+        }
+
+    def builtin(name: str, suffix: list[str]) -> bool:
+        # Escapes, multi-local declarations, loop variables and function names
+        # all invalidate builtin identity. Type/member spellings are not uses.
+        for index, value in enumerate(values):
+            if value != name:
+                continue
+            previous = values[index - 1] if index else ""
+            if previous in {".", ":", "::"}:
+                continue
+            if previous == "function" or values[index + 1 : index + 1 + len(suffix)] != suffix:
+                return False
+        return not any(value in {"getfenv", "setfenv"} for value in values)
+
+    evaluator = "loadstring" in positions and builtin("loadstring", ["("])
+    if evaluator and not shadowed(values, "game"):
+        services: set[str] = set()
+        for i in range(len(values) - 8):
+            if (
+                values[i] == "local"
+                and values[i + 2 : i + 7] == ["=", "game", ":", "GetService", "("]
+                and values[i + 7] in {'"HttpService"', "'HttpService'"}
+                and values[i + 8] == ")"
+                and counts[values[i + 1]] == 2
+            ):
+                services.add(values[i + 1])
+        for i in range(len(values) - 10):
+            if (
+                values[i : i + 2] == ["loadstring", "("]
+                and (i == 0 or values[i - 1] not in {".", ":"})
+                and values[i + 2] in services
+                and values[i + 3 : i + 6] == [":", "GetAsync", "("]
+                and values[i + 7 : i + 11] == [")", ")", "(", ")"]
+                and not values[i + 6].startswith("<")
+            ):
+                emit("SP671", i, i + 10)
+
+    # New rules require a local native construction, not just an event-like name.
+    remotes: dict[str, tuple[str, int]] = {}
+    if builtin("Instance", [".", "new", "("]):
+        for i in range(len(values) - 8):
+            if values[i] != "local" or not re.fullmatch(r"[A-Za-z_]\w*", values[i + 1]):
+                continue
+            cursor = i + 2
+            if values[cursor : cursor + 1] == [":"]:
+                cursor += 2  # one simple type name, not a cast/provenance proof
+            if values[cursor : cursor + 5] != ["=", "Instance", ".", "new", "("]:
+                continue
+            kind = values[cursor + 5 : cursor + 6]
+            if (
+                kind
+                and kind[0]
+                in {'"RemoteEvent"', "'RemoteEvent'", '"RemoteFunction"', "'RemoteFunction'"}
+                and values[cursor + 6 : cursor + 7] == [")"]
+                and not expression_continues(cursor + 7)
+            ):
+                remotes[values[i + 1]] = (kind[0][1:-1], i + 1)
+    for name, (_kind, declaration) in list(remotes.items()):
+        handlers = 0
+        for index in positions[name]:
+            if index == declaration:
+                continue
+            if (index and values[index - 1] in {".", ":"}) or values[index + 1 : index + 2] != [
+                "."
+            ]:
+                remotes.pop(name, None)
+                break
+            member = values[index + 2 : index + 3]
+            if member in (["OnServerEvent"], ["OnServerInvoke"]):
+                handlers += 1
+            elif member not in (["Parent"], ["Name"]) or values[index + 3 : index + 4] != ["="]:
+                remotes.pop(name, None)
+                break
+        if handlers != 1:
+            remotes.pop(name, None)
+
+    module_loader = builtin("require", ["("])
+    native_game = "game" in positions and builtin("game", [":", "GetService", "("])
+    for i in range(1, len(values) - 12):
+        event = values[i : i + 6] == [".", "OnServerEvent", ":", "Connect", "(", "function"]
+        invoke = values[i : i + 4] == [".", "OnServerInvoke", "=", "function"]
+        if not (event or invoke):
+            continue
+        opening = i + (6 if event else 4)
+        if values[opening] != "(":
+            continue
+        end = opening + 1
+        while end < min(len(values), opening + 24) and values[end] != ")":
+            end += 1
+        parts = " ".join(values[opening + 1 : end]).split(",")
+        parameters = []
+        for part in parts:
+            match = re.fullmatch(r"\s*([A-Za-z_]\w*)(?:\s*:\s*[A-Za-z_]\w*(?:\s*\?)?)?\s*", part)
+            if match:
+                parameters.append(match[1])
+        if (
+            len(parts) not in {2, 3}
+            or len(parameters) != len(parts)
+            or len(set(parameters)) != len(parameters)
+        ):
+            continue
+        body = end + 1
+        if values[body : body + 1] == [":"]:
+            if not re.fullmatch(
+                r"[A-Za-z_]\w*", values[body + 1] if body + 1 < len(values) else ""
+            ):
+                continue
+            body += 2
+        if values[body : body + 1] == ["return"]:
+            body += 1
+        data = parameters[1]
+        binding = remotes.get(values[i - 1])
+        native = binding is not None and binding[0] == (
+            "RemoteEvent" if event else "RemoteFunction"
+        )
+        native = native and binding[1] < i - 1 and boundary_at[binding[1]] == boundary_at[i]
+        candidates = []
+        if evaluator and len(parameters) == 2:
+            candidates.append(("SP672", ["loadstring", "(", data, ")", "(", ")"]))
+        if native and module_loader and len(parameters) == 2:
+            candidates.append(("SP690", ["require", "(", data, ")"]))
+        if native and len(parameters) == 2:
+            candidates.append(("SP691", [data, ":", "Destroy", "(", ")"]))
+            candidates.append(("SP691", [data, ":", "Kick", "(", ")"]))
+        if native and native_game:
+            store = values[body + 9 : body + 10]
+            if (
+                store
+                and re.fullmatch(r"[\"'][A-Za-z0-9_ -]{1,32}[\"']", store[0])
+                and store[0][0] == store[0][-1]
+            ):
+                for quote in ("'", '"'):
+                    prefix = [
+                        "game",
+                        ":",
+                        "GetService",
+                        "(",
+                        quote + "DataStoreService" + quote,
+                        ")",
+                        ":",
+                        "GetDataStore",
+                        "(",
+                        store[0],
+                        ")",
+                        ":",
+                    ]
+                    if len(parameters) == 3:
+                        for method in ("SetAsync", "IncrementAsync"):
+                            candidates.append(
+                                (
+                                    "SP707",
+                                    [*prefix, method, "(", parameters[1], ",", parameters[2], ")"],
+                                )
+                            )
+                    else:
+                        candidates.append(
+                            ("SP707", [*prefix, "RemoveAsync", "(", parameters[1], ")"])
+                        )
+        for rule_id, signature in candidates:
+            last = body + len(signature)
+            terminator = last + int(values[last : last + 1] == [";"])
+            if (
+                values[body:last] == signature
+                and values[terminator : terminator + (2 if event else 1)]
+                == (["end", ")"] if event else ["end"])
+                and (event or not expression_continues(terminator + 1))
+            ):
+                emit(rule_id, body, last - 1)
+    return hits
+
+
 def signature_spans(source: str, language: str) -> list[tuple[str, int, int]]:
     if language == "go" and not any(
         name in source for name in ("Server", "WithCancel", "WithTimeout", "WithDeadline")
@@ -456,69 +776,66 @@ def signature_spans(source: str, language: str) -> list[tuple[str, int, int]]:
     stream = tokens(source, language)
     if language == "go":
         return go_spans(stream)
+    if language == "lua":
+        return list(
+            dict.fromkeys(
+                lua_spans(stream) + luau_quality_checks.signatures(stream, delimiter_pairs)
+            )
+        )
     values = [item[0] for item in stream]
     hits: list[tuple[str, int, int]] = []
 
     def emit(rule_id: str, first: int, last: int) -> None:
         hits.append((rule_id, stream[first][1], stream[last][2]))
 
-    if language == "lua":
-        if shadowed(values, "loadstring") or shadowed(values, "game"):
-            return []
-        services: set[str] = set()
-        counts = Counter(values)
-        for i in range(len(values) - 9):
-            if (
-                values[i] == "local"
-                and values[i + 2 : i + 7] == ["=", "game", ":", "GetService", "("]
-                and values[i + 7] in {'"HttpService"', "'HttpService'"}
-                and values[i + 8] == ")"
-            ):
-                name = values[i + 1]
-                # Require one binding and no later assignments/parameters.
-                if counts[name] == 2:
-                    services.add(name)
-        for i in range(len(values) - 8):
-            if values[i : i + 2] != ["loadstring", "("]:
-                continue
-            if i and values[i - 1] in {".", ":"}:
-                continue
-            if (
-                values[i + 2] in services
-                and values[i + 3 : i + 6] == [":", "GetAsync", "("]
-                and values[i + 7 : i + 11] == [")", ")", "(", ")"]
-                and not values[i + 6].startswith("<")
-            ):
-                emit("SP671", i, i + 10)
-        # Deliberately require the sink as the entire first callback statement.
-        # Guards, aliases and arbitrary callback bodies need a real flow engine.
-        for i in range(len(values) - 15):
-            if values[i : i + 6] != [".", "OnServerEvent", ":", "Connect", "(", "function"]:
-                continue
-            if values[i + 6] != "(":
-                continue
-            end = i + 7
-            while end < min(len(values), i + 24) and values[end] != ")":
-                end += 1
-            params = values[i + 7 : end]
-            if (
-                len(params) != 3
-                or params[1] != ","
-                or not all(re.fullmatch(r"[A-Za-z_]\w*", p) for p in (params[0], params[2]))
-            ):
-                continue
-            body = end + 1
-            if values[body : body + 8] == ["loadstring", "(", params[2], ")", "(", ")", "end", ")"]:
-                emit("SP672", body, body + 5)
-    else:
+    if language == "rust":
         hidden = {name for name in ("std", "core", "reqwest") if shadowed(values, name)}
+        hidden.update(
+            name
+            for name in ("std", "core", "reqwest")
+            if any(values[i : i + 3] == ["r", "#", name] for i in range(len(values)))
+        )
+        # stringify! consumes token data, not a call expression. Other macros are
+        # not expanded; this lexer is not a Rust compiler.
+        quoted = set()
+        if "stringify" in values:
+            pairs = delimiter_pairs(values)
+            quoted_through = -1
+            for index, value in enumerate(values):
+                if index <= quoted_through:
+                    continue
+                if (
+                    value == "stringify"
+                    and values[index + 1 : index + 2] == ["!"]
+                    and index + 2 in pairs
+                ):
+                    quoted_through = pairs[index + 2]
+                    quoted.update(range(index + 2, quoted_through + 1))
+        for index, value in enumerate(values):
+            if value != "use":
+                continue
+            end = index + 1
+            while end < min(len(values), index + 129) and values[end] != ";":
+                end += 1
+            if end == min(len(values), index + 129):
+                hidden.update({"std", "core", "reqwest"})
+            else:
+                # An imported custom path/group can bind a standard-looking module.
+                # Longer/grouped imports stay unresolved rather than implying std identity.
+                hidden.update(
+                    name for name in ("std", "core", "reqwest") if name in values[index + 2 : end]
+                )
         for i in range(len(values) - 6):
+            if i in quoted:
+                continue
             if i >= 2 and values[i - 1] == "::" and re.fullmatch(r"\w+", values[i - 2]):
                 continue
             if (
                 values[i] in {"std", "core"}
                 and values[i] not in hidden
-                and values[i + 1 : i + 6] == ["::", "mem", "::", "zeroed", "::"]
+                and values[i + 1 : i + 4] == ["::", "mem", "::"]
+                and values[i + 4] in {"zeroed", "uninitialized"}
+                and values[i + 5] == "::"
             ):
                 opening = i + 6
                 if values[opening : opening + 2] != ["<", "&"]:
@@ -528,6 +845,19 @@ def signature_spans(source: str, language: str) -> list[tuple[str, int, int]]:
                     closing += 1
                 if values[closing : closing + 3] == [">", "(", ")"]:
                     emit("SP673", i, closing + 2)
+            if (
+                values[i] in {"std", "core"}
+                and values[i] not in hidden
+                and values[i + 1 : i + 4] == ["::", "num", "::"]
+                and re.fullmatch(r"NonZero[UI](?:8|16|32|64|128|size)", values[i + 4])
+                and values[i + 5 : i + 9] == ["::", "new_unchecked", "(", "0"]
+            ):
+                end = i + 9
+                suffix = values[i + 4].removeprefix("NonZero").lower()
+                if values[end : end + 1] in ([suffix], ["_" + suffix]):
+                    end += 1
+                if values[end : end + 1] == [")"]:
+                    emit("SP699", i, end)
             if values[i] != "reqwest" or "reqwest" in hidden:
                 continue
             cursor = i + 1

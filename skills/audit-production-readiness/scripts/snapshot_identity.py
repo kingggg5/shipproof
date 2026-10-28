@@ -39,7 +39,26 @@ def scanner_code_identity() -> str:
     """Bind rule and analysis implementations, not just their count/version."""
     scripts = Path(__file__).resolve().parent
     digest = hashlib.sha256()
-    for name in ("scan_repo.py", "impact_graph.py", "snapshot_identity.py"):
+    for name in (
+        "scan_repo.py",
+        "impact_graph.py",
+        "snapshot_identity.py",
+        "taint_contracts.py",
+        "archive_inspect.py",
+        "dart_transport_checks.py",
+        "dotnet_cookie_checks.py",
+        "js_config_checks.py",
+        "luau_quality_checks.py",
+        "node_advisories.py",
+        "php_advisories.py",
+        "polyglot_checks.py",
+        "precision.py",
+        "python_runtime_checks.py",
+        "sql_checks.py",
+        "rule_explanations.py",
+        "review_context.py",
+        "review_packets.py",
+    ):
         content = read_bytes_guarded(scripts / name, 2_000_000)
         digest.update(name.encode("utf-8") + b"\x00" + hashlib.sha256(content).digest())
     return digest.hexdigest()
@@ -78,13 +97,20 @@ def _is_link_or_reparse(metadata: os.stat_result) -> bool:
     return bool(getattr(metadata, "st_file_attributes", 0) & 0x400)
 
 
+class SourceSizeError(ValueError):
+    """A guarded source exceeds its byte budget, including a concurrent growth."""
+
+
 def read_bytes_guarded(path: Path, limit: int) -> bytes:
     """Read a regular file without following a final symlink; fail closed on change."""
     try:
         before = path.lstat()
         if not stat_module.S_ISREG(before.st_mode) or _is_link_or_reparse(before):
             raise ValueError(f"refused non-regular file: {path}")
+        if before.st_size > limit:
+            raise SourceSizeError(f"file exceeds byte limit: {path}")
         flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        flags |= getattr(os, "O_NONBLOCK", 0)
         descriptor = os.open(path, flags)
         try:
             opened = os.fstat(descriptor)
@@ -103,7 +129,7 @@ def read_bytes_guarded(path: Path, limit: int) -> bytes:
     except OSError as exc:
         raise ValueError(f"unavailable file bytes: {path}") from exc
     if len(content) > limit:
-        raise ValueError(f"file exceeds byte limit: {path}")
+        raise SourceSizeError(f"file exceeds byte limit: {path}")
     return content
 
 

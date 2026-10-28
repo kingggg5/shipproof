@@ -210,6 +210,90 @@ test("in-process dispatch covers stable, grouped, retired, and legacy commands",
   }
 });
 
+test("packet discovery forwards flags without changing the scan verdict", () => {
+  const parent = mkdtempSync(join(tmpdir(), "shipproof-packets-"));
+  const root = join(parent, "source");
+  const output = join(parent, "packets");
+  try {
+    mkdirSync(root);
+    mkdirSync(output);
+    writeFileSync(join(root, "entry.ts"), "export const value = 1;\n");
+    const cli = join(internals.PACKAGE_ROOT, "bin", "shipproof.mjs");
+    const plain = spawnSync(process.execPath, [cli, "scan", root, "--format", "json"], { encoding: "utf8", windowsHide: true });
+    const discovery = spawnSync(process.execPath, [cli, "scan", "--packet-discover", "--packet-out", output, root, "--format", "json"], { encoding: "utf8", windowsHide: true });
+    assert.equal(discovery.status, plain.status, discovery.stderr);
+    assert.deepEqual(JSON.parse(discovery.stdout), JSON.parse(plain.stdout));
+    const ledger = JSON.parse(readFileSync(join(output, "ledger.json"), "utf8"));
+    assert.equal(ledger.packet_version, "review-packet/1.1");
+    assert.equal(ledger.counts.scheduled, 1);
+    assert.equal(ledger.selection_accounting[0].kind, "discovery");
+    assert.deepEqual(ledger.packets[0].findings, []);
+    assert.ok(ledger.packets[0].review_focus["typescript/javascript"]);
+    const invalid = spawnSync(process.execPath, [cli, "scan", root, "--packet-discover"], { encoding: "utf8", windowsHide: true });
+    assert.equal(invalid.status, 2);
+    assert.match(invalid.stderr, /requires --packet-out/);
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("packet response paths are values and valid replies preserve the native report", () => {
+  const parent = mkdtempSync(join(tmpdir(), "shipproof-responses-"));
+  const root = join(parent, "source");
+  const output = join(parent, "packets");
+  const responsePath = join(parent, "responses.json");
+  const cli = join(internals.PACKAGE_ROOT, "bin", "shipproof.mjs");
+  const run = (args) => spawnSync(process.execPath, [cli, "scan", ...args], { encoding: "utf8", windowsHide: true });
+  try {
+    mkdirSync(root);
+    mkdirSync(output);
+    writeFileSync(join(root, "entry.ts"), "export const value=1;\n");
+    const initial = run([root, "--format", "json", "--packet-discover", "--packet-out", output]);
+    assert.equal(initial.status, 0, initial.stderr);
+    const before = JSON.parse(readFileSync(join(output, "ledger.json"), "utf8"));
+    writeFileSync(responsePath, JSON.stringify(before.packets.map((packet) => ({
+      packet_id: packet.packet_id,
+      packet_digest: packet.packet_digest,
+      decided: packet.review_targets.map((item) => ({ item_id: item.item_id, verdict: "completed" })),
+    }))));
+    const applied = run(["--packet-responses", responsePath, "--packet-out", output, "--packet-discover", root, "--format", "json"]);
+    assert.equal(applied.status, initial.status, applied.stderr);
+    assert.deepEqual(JSON.parse(applied.stdout), JSON.parse(initial.stdout));
+    const after = JSON.parse(readFileSync(join(output, "ledger.json"), "utf8"));
+    assert.equal(after.review_complete, true);
+    assert.equal(after.response_validation.rejected, 0);
+    writeFileSync(join(root, "entry.ts"), "export const value=2;\n");
+    const stale = run([root, "--format", "json", "--packet-discover", "--packet-out", output, "--packet-responses", responsePath]);
+    assert.equal(stale.status, 2);
+    assert.match(stale.stderr, /invalid or unavailable evidence/);
+    assert.equal(run([root, "--packet-responses", responsePath]).status, 2);
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("cross-file and impact commands expose incomplete graph evidence", () => {
+  const root = mkdtempSync(join(tmpdir(), "shipproof-graph-coverage-"));
+  const cli = join(internals.PACKAGE_ROOT, "bin", "shipproof.mjs");
+  const run = (args) => spawnSync(process.execPath, [cli, ...args], { encoding: "utf8", windowsHide: true });
+  try {
+    const source = "function queryUser(value) { return db." + "query(value); }\napp.get('/user', (req, res) => { return queryUser(req.query.id); });\n";
+    writeFileSync(join(root, "entry.js"), "// bounded padding\n".repeat(24000) + source);
+    const plain = run(["scan", root, "--format", "json"]);
+    assert.equal(plain.status, 0, plain.stderr);
+    const cross = run(["scan", root, "--format", "json", "--cross-file"]);
+    assert.equal(cross.status, 1, cross.stderr);
+    assert.equal(JSON.parse(cross.stdout).summary.completeness.is_complete, false);
+    const impact = run(["labs", "impact", "entry.js", "--root", root, "--format", "json"]);
+    assert.equal(impact.status, 2, impact.stderr);
+    assert.equal(JSON.parse(impact.stdout).completeness.is_complete, false);
+    assert.equal(JSON.parse(impact.stdout).blast_radius_score, "UNKNOWN");
+    assert.equal(run(["labs", "impact", "missing.js", "--root", root]).status, 2);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("1.0 migration gate rejects every hidden legacy alias with a replacement", () => {
   assert.equal(internals.legacyAliasesEnabled("0.10.0"), true);
   assert.equal(internals.legacyAliasesEnabled("1.0.0"), false);

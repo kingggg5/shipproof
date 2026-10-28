@@ -108,7 +108,7 @@ def records() -> list[dict]:
                     "claim": "CWE-94 covers treating externally supplied data as executable source and crossing an application's code-execution boundary.",
                 },
             ],
-            "false_positive_analysis": "Only an OnServerEvent Connect callback with two untyped parameters and an entire body of loadstring(secondParameter)() is recognized. The source is a client data argument, not the implicit Player. Guarded or complex handlers, fixed commands, aliases, comments, long strings, field methods and shadowed builtins stay silent. The local signature cannot prove Roblox deployment or LoadStringEnabled, and is advisory.",
+            "false_positive_analysis": "Only a two-parameter server remote callback with simple optional types and an entire body of loadstring(secondParameter)() is recognized, including OnServerInvoke and return. The source is client data, not the implicit Player. Guards, complex types, aliases, comments, long strings, member calls and shadowed builtins stay silent. Event identity, deployment and LoadStringEnabled remain unknown; this is advisory.",
             "positive": [
                 case("Remote.server.luau", event),
                 case(
@@ -142,8 +142,8 @@ def records() -> list[dict]:
                 case(
                     "Typed.luau",
                     event.replace("player, code", "player: Player, code: string"),
-                    expected=False,
-                    rationale="Typed parameters require additional Luau syntax handling. They are a documented unsupported shape rather than inferred data-flow evidence.",
+                    expected=True,
+                    rationale="Simple Luau type annotations do not validate client source at runtime. The same direct parameter-to-evaluator boundary remains present.",
                 ),
                 case(
                     "Reassigned.lua",
@@ -170,13 +170,18 @@ def records() -> list[dict]:
                     "claim": "The Rust standard library documents that all-zero reference values are invalid and that constructing them with mem::zeroed causes undefined behavior.",
                 },
                 {
+                    "url": "https://doc.rust-lang.org/std/mem/fn.uninitialized.html",
+                    "claim": "The deprecated uninitialized constructor does not establish the valid initialized address required by references; reaching such construction violates validity.",
+                },
+                {
                     "url": "https://cwe.mitre.org/data/definitions/665.html",
                     "claim": "CWE-665 classifies improper initialization; this rule narrows that class to explicitly zero-initialized Rust references.",
                 },
             ],
-            "false_positive_analysis": "Requires a fully qualified std/core mem::zeroed turbofish whose type begins with a reference, followed by a direct empty call. Raw pointers, integers, Option references, MaybeUninit storage, shadowed modules, documentation strings and nested block comments are excluded. Aliases, inferred types and complex nested generic types remain unsupported. This is local invalid-state evidence, not an exploitability claim.",
+            "false_positive_analysis": "Requires qualified std/core zeroed or uninitialized construction whose type begins with a reference. Other types are outside this signature, not certified safe. MaybeUninit storage, visible module shadows/import ambiguity, raw identifiers, stringify token data and nested comments stay silent. This is local validity evidence, not reachability or exploitability.",
             "positive": [
                 case("main.rs", zero),
+                case("uninit.rs", zero.replace("zeroed", "uninitialized")),
                 case("lib.rs", zero.replace("std::", "core::").replace("&u32", "&mut i64")),
                 case(
                     "ffi.rs",

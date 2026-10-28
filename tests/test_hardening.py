@@ -488,12 +488,19 @@ class FalsePositiveRegressionTests(unittest.TestCase):
             ");\n"
         )
         findings = scan_snippet(source, "service.ts")
-        self.assertFalse(any(item.rule_id == "SP367" for item in findings))
+        self.assertFalse(any(item.rule_id in {"SP336", "SP367"} for item in findings))
 
-    def test_node_stream_pipe_without_handler_still_flagged(self):
-        source = "readStream.pipe(res);\n"
+    def test_native_stream_without_source_error_owner_is_flagged(self):
+        source = "import {createReadStream,createWriteStream} from 'node:fs';\ncreateReadStream(input).pipe(createWriteStream(output));\n"
         findings = scan_snippet(source, "server.js")
-        self.assertTrue(any(item.rule_id == "SP367" for item in findings))
+        self.assertTrue(
+            any(
+                item.rule_id == "SP336" and item.proof_level == "L1" and item.tier == "advisory"
+                for item in findings
+            )
+        )
+        unknown = scan_snippet("readStream.pipe(res);\n", "server.js")
+        self.assertFalse(any(item.rule_id in {"SP336", "SP367"} for item in unknown))
 
     def test_ignore_scripts_install_is_not_unsafe(self):
         source = "run: npm install --ignore-scripts --include=dev\n"

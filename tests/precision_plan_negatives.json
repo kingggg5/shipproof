@@ -68,7 +68,7 @@
       "source": "from starlette.responses import StreamingResponse\n\nclass APIRouter:\n    def stream(self):\n        return StreamingResponse(body, media_type='text/event-stream')\n"
     },
     {
-      "rule_id": "SP367",
+      "rule_id": "SP336",
       "path": "lib/read.js",
       "source": "function contentstream(req) {\n  const stream = createDecompressionStream(encoding);\n  req.pipe(stream);\n  return stream;\n}\n"
     },

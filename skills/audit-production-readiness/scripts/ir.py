@@ -12,6 +12,8 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import taint_contracts
+
 # ---------------------------------------------------------------------------
 # Effect kinds (normalized across languages)
 # ---------------------------------------------------------------------------
@@ -105,6 +107,7 @@ class IRSink:
     variable: str  # root tainted variable name
     call_expr: str  # truncated evidence snippet
     line: int
+    transforms: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -115,6 +118,7 @@ class IRCallee:
     arg_index: int
     param_name: str  # caller-side carrier (root tainted variable)
     line: int
+    transforms: tuple[str, ...] = ()
 
 
 @dataclass
@@ -156,7 +160,7 @@ class IRProgram:
             self._by_file.setdefault(fn.file, []).append(fn)
 
     def find_by_name(self, name: str) -> list[IRFunction]:
-        return self._by_name.get(name, [])
+        return self._by_name.get(name.rsplit(".", 1)[-1], [])
 
     def find_by_file(self, path: str) -> list[IRFunction]:
         return self._by_file.get(path, [])
@@ -191,11 +195,11 @@ def propagate_taint(program: IRProgram) -> list[dict]:
 
     for entry in program.entrypoints:
         for taint_var in entry.entry_taint_vars:
-            stack = [(entry, taint_var, [f"{entry.file}:{entry.name}"], False)]
-            local_visited: set[tuple[str, str]] = set()
+            stack = [(entry, taint_var, [f"{entry.file}:{entry.name}"], False, frozenset(), False)]
+            local_visited = set()
             while stack:
-                fn, carrier, chain, was_sanitized = stack.pop(0)
-                state_key = (fn.name, carrier)
+                fn, carrier, chain, was_sanitized, proofs, uncertain = stack.pop(0)
+                state_key = (fn.file, fn.name, carrier, was_sanitized, proofs, uncertain)
                 if state_key in local_visited:
                     continue
                 local_visited.add(state_key)
@@ -205,7 +209,15 @@ def propagate_taint(program: IRProgram) -> list[dict]:
                 for sink in fn.sinks:
                     if sink.variable != carrier:
                         continue
-                    flow_key = (entry.file, fn.file, f"{sink.rule_id}:{sink.line}")
+                    sink_proofs, sink_uncertain = taint_contracts.transfer(proofs, sink.transforms)
+                    cleared = was_sanitized or taint_contracts.protected(sink_proofs, sink.rule_id)
+                    flow_key = (
+                        entry.file,
+                        fn.file,
+                        f"{sink.rule_id}:{sink.line}",
+                        cleared,
+                        uncertain or sink_uncertain,
+                    )
                     if flow_key in visited:
                         continue
                     visited.add(flow_key)
@@ -220,7 +232,8 @@ def propagate_taint(program: IRProgram) -> list[dict]:
                             "sink_type": sink.sink_type,
                             "sink_line": sink.line,
                             "call_chain": list(chain),
-                            "is_sanitized": was_sanitized,
+                            "is_sanitized": cleared,
+                            "uncertain": uncertain or sink_uncertain,
                         }
                     )
 
@@ -241,7 +254,19 @@ def propagate_taint(program: IRProgram) -> list[dict]:
                         if next_idx < len(target_fn.params):
                             c_param = target_fn.params[next_idx]
                             new_chain = [*chain, f"{target_fn.file}:{target_fn.name}"]
-                            stack.append((target_fn, c_param, new_chain, was_sanitized))
+                            next_proofs, next_uncertain = taint_contracts.transfer(
+                                proofs, callee.transforms
+                            )
+                            stack.append(
+                                (
+                                    target_fn,
+                                    c_param,
+                                    new_chain,
+                                    was_sanitized,
+                                    next_proofs,
+                                    uncertain or next_uncertain,
+                                )
+                            )
 
     return flows
 

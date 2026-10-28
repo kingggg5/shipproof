@@ -20,6 +20,14 @@
   "blast_radius_score": "LOW",
   "reachability_status": "REACHABLE (Hot Path from API Entrypoint)",
   "cross_file_taint_flows": [],
+  "completeness": {
+    "is_complete": true,
+    "reasons": [],
+    "affected_inputs": 0,
+    "unreadable": 0,
+    "oversized": 0,
+    "parser_limit": 0
+  },
   "limitations": [
     "Impact is inferred from static symbols and references; dynamic dispatch may be absent.",
     "Selected tests are candidates, not proof that all affected behavior is covered."

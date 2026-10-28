@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "cohort": "luau-ts-20261023",
+  "baseline_revision": "f4459ba0bf081e9c9bc70a3dd5712661e0860191",
+  "evaluation_note": "Opt-in field evaluation corpus; inclusion does not assert that a repository is clean.",
+  "source_tree_digest_canonicalization": "SHA-256 of UTF-8 concatenation of files sorted by ordinal, case-sensitive relative path: path, NUL, lowercase SHA-256 of file bytes, LF.",
+  "projects": [
+    {
+      "name": "Knit",
+      "slug": "knit",
+      "repository": "Sleitnick/Knit",
+      "revision": "bb1ecf3dea69ca89147b9abe802a8c14399cb5e5",
+      "language": "Luau",
+      "kind": "library",
+      "license_spdx": "MIT",
+      "license_path": "LICENSE.md",
+      "license_url": "https://github.com/Sleitnick/Knit/blob/bb1ecf3dea69ca89147b9abe802a8c14399cb5e5/LICENSE.md",
+      "license_sha256": "53d88992d6d1772a0b9b45a3f7616a13c5163d7adf2a23874830ce14a1ade275",
+      "expected_source_files": 6,
+      "source_tree_sha256": "ee00d975b122ca8ee86313f7324c063cd98ccbf901cf98a1f0a58d1aff88b06e",
+      "source_extensions": [".lua", ".luau"],
+      "context_files": {
+        "LICENSE.md": "53d88992d6d1772a0b9b45a3f7616a13c5163d7adf2a23874830ce14a1ade275"
+      }
+    },
+    {
+      "name": "roblox-lua-promise",
+      "slug": "roblox-lua-promise",
+      "repository": "evaera/roblox-lua-promise",
+      "revision": "031d429c82ee458a849e79fa523523bd349d7695",
+      "language": "Lua",
+      "kind": "library",
+      "license_spdx": "MIT",
+      "license_path": "LICENSE",
+      "license_url": "https://github.com/evaera/roblox-lua-promise/blob/031d429c82ee458a849e79fa523523bd349d7695/LICENSE",
+      "license_sha256": "1b326bf4c7bb9ba78d58347790d2898fb41843b8be826f63a544b086a8cd185a",
+      "expected_source_files": 3,
+      "source_tree_sha256": "9769a6c5da46137c282304560d82ab3f003f090698f7f86585a25f3e692ba852",
+      "source_extensions": [".lua", ".luau"],
+      "context_files": {
+        "LICENSE": "1b326bf4c7bb9ba78d58347790d2898fb41843b8be826f63a544b086a8cd185a"
+      }
+    }
+  ]
+}

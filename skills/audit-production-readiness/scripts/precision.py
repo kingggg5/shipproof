@@ -25,6 +25,7 @@ L0_BLOCK_ALLOWLIST = frozenset(
 ADVISORY_RULE_IDS = frozenset(
     {
         "SP061",  # bare except / except Exception
+        "SP336",  # Inline native stream ownership, not a deployed I/O failure.
         "SP591",  # Client bundling boundary, not evidence of leaked credentials.
         # These cohorts explicitly ship advisory pending representative labels.
         "SP666",
@@ -49,6 +50,32 @@ ADVISORY_RULE_IDS = frozenset(
         "SP685",  # Upstream support status, distinct from vendor support.
         "SP686",  # Local protocol selection, not a negotiated connection.
         "SP687",  # Local message cap, not demonstrated denial of service.
+        "SP688",  # Image configuration, not an attacker-controlled SVG response.
+        "SP689",  # Local body limit; upstream/per-request controls are unknown.
+        "SP690",  # Client-selected module; deployment/asset permissions unknown.
+        "SP691",  # Direct instance deletion; deployment/ownership unknown.
+        "SP692",  # RSA size guard opt-out, not proof of a weak deployed key.
+        "SP693",  # Ingress config, not a deployed slow-request attack.
+        "SP694",  # Local noncompletion; surrounding cancellation is unknown.
+        "SP695",  # Comparator contract, not a claim about all input ordering.
+        "SP696",  # XML expansion settings, not proven hostile input.
+        "SP697",  # Loopback configuration listener, not remote exploitability.
+        "SP698",  # Synchronous API behavior; input size and CPU cost unknown.
+        "SP699",  # Literal validity violation; execution/reachability unknown.
+        "SP700",  # Delay coercion, not proof of a deployed timer storm.
+        "SP701",  # Local pool capacity, not measured database exhaustion.
+        "SP702",  # Async setup return contract; mounting and effects unknown.
+        "SP703",  # Await does not own callback completion; caller intent unknown.
+        "SP704",  # TLS object replacement, not a negotiated database connection.
+        "SP705",  # Explicit transaction boundary, not runner execution evidence.
+        "SP706",  # Local name resolution; role privileges/exploitability unknown.
+        "SP707",  # Direct client-selected persistence; runtime exposure unknown.
+        "SP708",
+        "SP709",
+        "SP710",
+        "SP711",
+        "SP712",
+        "SP713",  # Luau source contracts, not deployed impact.
     }
 )
 
