@@ -166,10 +166,11 @@ coverage. No zero-false-positive, model-quality or production-scale claim is mad
 
 ## Frozen verification results
 
-`npm run check` passes with 1,091 Python tests (three local Windows symlink
+`npm run check` passes with 1,099 Python tests (three local Windows symlink
 privilege skips), two demo tests, Node/MCP source suites, exact package manifest
 and isolated packed smoke. The 50 new regression tests include 49 contract cases
-and a runtime identity invalidation test. Fresh coverage with branch measurement
+and a runtime identity invalidation test. Eight additional CI-projection tests
+cover retained application risk and full test evidence. Fresh native coverage with branch measurement
 enabled is 88%, above the unchanged 80% floor; the new contract module is 96%.
 
 The paired benchmark retains all 30 original packages and 867 files, 130 original
@@ -229,3 +230,38 @@ is reused to avoid another file pass.
 The initial pass receipts remain in the ignored cache and Git history. Frozen
 verification and observations are refreshed for the repair before its follow-up
 commit; no source pins, labels, baselines, thresholds or rule IDs change.
+
+## GitHub alert-stream follow-up
+
+The final check inventory includes GitHub's generated code-scanning checks,
+not just successful workflow jobs. The 6fba57f workflow matrix passed, but the
+generated ShipProof check reported the deliberately unsafe in-memory SQL test at
+`tests/test_sanitizer_contracts.py:614` as a new application alert. Native gating
+already excludes test scope by default; raw SARIF retained all 33 test findings.
+
+The repository workflow now keeps that complete native report as an artifact and
+uploads an application-scope projection. Only explicit `scope: test` results move
+out of the alert stream. Unknown/missing scope remains active, and application
+severity, rule IDs, fingerprints, invocation failures and completeness stay
+unchanged. The CLI's full SARIF output, test fixture, native detector and gate
+policy are unchanged. No alert is manually dismissed and no baseline is edited.
+
+GitHub also expected the historical category
+`.github/workflows/security.yml:shipproof-sarif` alongside the current `shipproof`
+category. Both were verified in the main-branch analysis metadata. The projection
+preserves both categories, avoiding deletion of historical analyses or comparison
+gaps. Input reads are bounded to 16 MiB, malformed evidence fails with exit 2, and
+the full source report and existing output files cannot be overwritten.
+
+Eight regressions exercise positive application alerts, retained full test
+evidence, unknown scope, incomplete invocations, invalid input/categories,
+byte-budget rejection and output preservation. Local projection keeps 33 full
+results and produces zero application alerts in both existing categories. This
+CI-only adapter is outside the distributed artifact and native runtime identity;
+the 88% native coverage measurement above remains bound to unchanged runtime
+`db00499d9236a02823c56b33fcf469f11f08854f0b1fdca8007f9d4fb96f192b`.
+
+The supported GitHub fields and category matching were checked against
+[GitHub's SARIF documentation](https://docs.github.com/en/code-security/reference/code-scanning/sarif-files/sarif-support)
+and the pinned upload action source. This is scope projection with preserved
+evidence, not a claim that test code cannot contain real vulnerabilities.

@@ -41,12 +41,12 @@
   "verification": {
     "npm_run_check_exit": 0,
     "python_tests": [
-      1091,
+      1099,
       2
     ],
     "local_python_skips": 3,
     "skip_reason": "Windows symlink creation privilege; hosted Linux matrix covers these tests",
-    "new_regression_tests": 50,
+    "new_regression_tests": 58,
     "fresh_python_coverage_percent": 88,
     "branch_measurement_enabled": true,
     "coverage_floor_percent": 80,
@@ -64,7 +64,7 @@
       "findings": 33,
       "app_findings": 0,
       "test_findings": 33,
-      "files_scanned": 547,
+      "files_scanned": 549,
       "suppressed": 0,
       "completeness": {
         "is_complete": true,
@@ -100,7 +100,13 @@
       "installed Codex skill",
       "installed Claude skill"
     ],
-    "hosted_checks": "Exact-head CI, Security and manual Benchmarks links are maintained in PR #49; this pre-push receipt does not claim hosted completion"
+    "hosted_checks": "Exact-head CI, Security and manual Benchmarks links are maintained in PR #49; this pre-push receipt does not claim hosted completion",
+    "native_regression_tests": 50,
+    "ci_projection_regression_tests": 8,
+    "coverage_suite_python_tests": [
+      1091,
+      2
+    ]
   },
   "assurance": {
     "summary": {
@@ -1988,5 +1994,21 @@
     "128 realistic-negative rules and 409 high/critical rules without realistic-negative coverage remain visible.",
     "Performance is three samples after one warmup on bounded synthetic files, with maximum sample used as conservative p95 proxy; not production throughput.",
     "No zero-false-positive, model precision/recall/token-savings or absence-of-vulnerabilities claim."
-  ]
+  ],
+  "github_alert_projection": {
+    "native_output_changed": false,
+    "full_results_preserved": 33,
+    "application_results_per_category": 0,
+    "categories": [
+      "shipproof",
+      ".github/workflows/security.yml:shipproof-sarif"
+    ],
+    "missing_or_unknown_scope": "kept active",
+    "application_severity_and_fingerprints": "unchanged",
+    "input_budget_bytes": 16777216,
+    "invalid_evidence_exit": 2,
+    "historical_analyses_deleted": false,
+    "alerts_manually_dismissed": false,
+    "native_runtime_identity_changed": false
+  }
 }

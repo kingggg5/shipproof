@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align the repository's GitHub alert stream with its existing application-scope gate. Preserve the complete SARIF as an artifact, retain both established comparison categories, and keep application severity, fingerprints and incomplete evidence unchanged.
+
 - Preserve JavaScript binding evidence through template expressions while keeping inert text opaque. Ambiguous protection views stay advisory; actual binding-token exhaustion retains partial findings and fails source completeness.
 
 - Keep contribution and governance methodology source-only in the npm artifact; the repository copies remain available through canonical README links.

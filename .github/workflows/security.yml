@@ -42,8 +42,23 @@ jobs:
           python-version: "3.12"
       - name: Generate SARIF and enforce gate
         run: python skills/audit-production-readiness/scripts/scan_repo.py . --format sarif --output shipproof.sarif --fail-on high
+      - name: Prepare application alerts and preserve comparison categories
+        if: always() && hashFiles('shipproof.sarif') != ''
+        run: |
+          python scripts/application-sarif.py shipproof.sarif shipproof-app.sarif \
+            --category shipproof \
+            --category .github/workflows/security.yml:shipproof-sarif
       - name: Upload SARIF
-        if: always() && hashFiles('shipproof.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: always() && hashFiles('shipproof-app.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
-          sarif_file: shipproof.sarif
+          sarif_file: shipproof-app.sarif
+      - name: Preserve full and application-scope evidence
+        if: always() && hashFiles('shipproof.sarif') != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shipproof-security-${{ github.run_id }}
+          path: |
+            shipproof.sarif
+            shipproof-app.sarif
+          retention-days: 30
