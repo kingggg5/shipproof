@@ -237,6 +237,41 @@ test("packet discovery forwards flags without changing the scan verdict", () => 
   }
 });
 
+test("packet response paths are values and valid replies preserve the native report", () => {
+  const parent = mkdtempSync(join(tmpdir(), "shipproof-responses-"));
+  const root = join(parent, "source");
+  const output = join(parent, "packets");
+  const responsePath = join(parent, "responses.json");
+  const cli = join(internals.PACKAGE_ROOT, "bin", "shipproof.mjs");
+  const run = (args) => spawnSync(process.execPath, [cli, "scan", ...args], { encoding: "utf8", windowsHide: true });
+  try {
+    mkdirSync(root);
+    mkdirSync(output);
+    writeFileSync(join(root, "entry.ts"), "export const value=1;\n");
+    const initial = run([root, "--format", "json", "--packet-discover", "--packet-out", output]);
+    assert.equal(initial.status, 0, initial.stderr);
+    const before = JSON.parse(readFileSync(join(output, "ledger.json"), "utf8"));
+    writeFileSync(responsePath, JSON.stringify(before.packets.map((packet) => ({
+      packet_id: packet.packet_id,
+      packet_digest: packet.packet_digest,
+      decided: packet.review_targets.map((item) => ({ item_id: item.item_id, verdict: "completed" })),
+    }))));
+    const applied = run(["--packet-responses", responsePath, "--packet-out", output, "--packet-discover", root, "--format", "json"]);
+    assert.equal(applied.status, initial.status, applied.stderr);
+    assert.deepEqual(JSON.parse(applied.stdout), JSON.parse(initial.stdout));
+    const after = JSON.parse(readFileSync(join(output, "ledger.json"), "utf8"));
+    assert.equal(after.review_complete, true);
+    assert.equal(after.response_validation.rejected, 0);
+    writeFileSync(join(root, "entry.ts"), "export const value=2;\n");
+    const stale = run([root, "--format", "json", "--packet-discover", "--packet-out", output, "--packet-responses", responsePath]);
+    assert.equal(stale.status, 2);
+    assert.match(stale.stderr, /invalid or unavailable evidence/);
+    assert.equal(run([root, "--packet-responses", responsePath]).status, 2);
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
+});
+
 test("1.0 migration gate rejects every hidden legacy alias with a replacement", () => {
   assert.equal(internals.legacyAliasesEnabled("0.10.0"), true);
   assert.equal(internals.legacyAliasesEnabled("1.0.0"), false);

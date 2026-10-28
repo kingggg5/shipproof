@@ -1,0 +1,659 @@
+{
+  "schema_version": 1,
+  "assessed_on": "2026-10-28",
+  "baseline_revision": "ed1baea6f95be0660477297c73413a12e3137c1f",
+  "scope": "Local packet preparation, bounded response parsing and simulated bookkeeping; no model or target execution",
+  "measurements": {
+    "split": {
+      "before": {
+        "schema_version": 1,
+        "workload": "split",
+        "response_validation": false,
+        "measurement": "local source preparation; synthetic findings; no AI review or model tokens",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "engine_digest": "1b7e229c15992374a429c1cb76794d5440f45c52d70ec210ba7cb8514c64cc8f",
+        "fixture": {
+          "files": 97,
+          "bytes": 49664,
+          "sha256": "cb83324cf4c1b5ae618a98b71f275509495030350dc01854910f871718e03491"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.1757588000036776,
+          0.17771180003182963,
+          0.17478260002098978,
+          0.18067580001661554,
+          0.22734679997665808
+        ],
+        "median_seconds": 0.17771180003182963,
+        "p95_seconds": 0.22734679997665808,
+        "peak_rss_mib": 27.99609375,
+        "counts": {
+          "selected": 48,
+          "scheduled": 48,
+          "failed": 0,
+          "deferred": 0,
+          "packets": 8
+        },
+        "source_bytes": 30720,
+        "source_token_estimate": 7680,
+        "bounds": {
+          "max_files": 10,
+          "max_source_bytes": 5120
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        }
+      },
+      "after": {
+        "schema_version": 1,
+        "workload": "split",
+        "response_validation": false,
+        "measurement": "local source preparation; synthetic findings; no AI review or model tokens",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "engine_digest": "f040246a7263589017fedd43b5e470870bfddcebbf249861cf9b179d1863d7d0",
+        "fixture": {
+          "files": 97,
+          "bytes": 49664,
+          "sha256": "cb83324cf4c1b5ae618a98b71f275509495030350dc01854910f871718e03491"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.18811829999322072,
+          0.16874479997204617,
+          0.18046460003824905,
+          0.18692020000889897,
+          0.20394760003546253
+        ],
+        "median_seconds": 0.18692020000889897,
+        "p95_seconds": 0.20394760003546253,
+        "peak_rss_mib": 26.19140625,
+        "counts": {
+          "selected": 48,
+          "scheduled": 48,
+          "failed": 0,
+          "deferred": 0,
+          "packets": 8
+        },
+        "source_bytes": 30720,
+        "source_token_estimate": 7680,
+        "bounds": {
+          "max_files": 10,
+          "max_source_bytes": 5120
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        }
+      }
+    },
+    "minimize": {
+      "before": {
+        "schema_version": 1,
+        "workload": "minimize",
+        "response_validation": false,
+        "measurement": "local source preparation; synthetic findings; no AI review or model tokens",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "engine_digest": "1b7e229c15992374a429c1cb76794d5440f45c52d70ec210ba7cb8514c64cc8f",
+        "fixture": {
+          "files": 33,
+          "bytes": 16896,
+          "sha256": "19e120c9a6720957aef5fc6a156129f7a3b847fdc4a3e7eb0f693581046a7d2a"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.024631300009787083,
+          0.02478269999846816,
+          0.02518150000832975,
+          0.03053429996361956,
+          0.026433999999426305
+        ],
+        "median_seconds": 0.02518150000832975,
+        "p95_seconds": 0.03053429996361956,
+        "peak_rss_mib": 24.92578125,
+        "counts": {
+          "selected": 4,
+          "scheduled": 4,
+          "failed": 0,
+          "deferred": 0,
+          "packets": 4
+        },
+        "source_bytes": 6144,
+        "source_token_estimate": 1536,
+        "bounds": {
+          "max_files": 3,
+          "max_source_bytes": 1536
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        }
+      },
+      "after": {
+        "schema_version": 1,
+        "workload": "minimize",
+        "response_validation": false,
+        "measurement": "local source preparation; synthetic findings; no AI review or model tokens",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "engine_digest": "f040246a7263589017fedd43b5e470870bfddcebbf249861cf9b179d1863d7d0",
+        "fixture": {
+          "files": 33,
+          "bytes": 16896,
+          "sha256": "19e120c9a6720957aef5fc6a156129f7a3b847fdc4a3e7eb0f693581046a7d2a"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.025607199990190566,
+          0.027352500008419156,
+          0.02665239997440949,
+          0.023771699983626604,
+          0.024818000034429133
+        ],
+        "median_seconds": 0.025607199990190566,
+        "p95_seconds": 0.027352500008419156,
+        "peak_rss_mib": 24.8828125,
+        "counts": {
+          "selected": 4,
+          "scheduled": 4,
+          "failed": 0,
+          "deferred": 0,
+          "packets": 4
+        },
+        "source_bytes": 6144,
+        "source_token_estimate": 1536,
+        "bounds": {
+          "max_files": 3,
+          "max_source_bytes": 1536
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        }
+      }
+    },
+    "minimize-responses": {
+      "before": {
+        "schema_version": 1,
+        "workload": "minimize",
+        "response_validation": true,
+        "measurement": "local source preparation; synthetic findings; no AI review or model tokens",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "engine_digest": "1b7e229c15992374a429c1cb76794d5440f45c52d70ec210ba7cb8514c64cc8f",
+        "fixture": {
+          "files": 33,
+          "bytes": 16896,
+          "sha256": "19e120c9a6720957aef5fc6a156129f7a3b847fdc4a3e7eb0f693581046a7d2a"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.02579039998818189,
+          0.026164100039750338,
+          0.03164539998397231,
+          0.02851649996591732,
+          0.030163599993102252
+        ],
+        "median_seconds": 0.02851649996591732,
+        "p95_seconds": 0.03164539998397231,
+        "peak_rss_mib": 24.89453125,
+        "counts": {
+          "selected": 4,
+          "scheduled": 0,
+          "completed": 4,
+          "failed": 0,
+          "deferred": 0,
+          "packets": 4
+        },
+        "source_bytes": 6144,
+        "source_token_estimate": 1536,
+        "bounds": {
+          "max_files": 3,
+          "max_source_bytes": 1536
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        }
+      },
+      "after": {
+        "schema_version": 1,
+        "workload": "minimize",
+        "response_validation": true,
+        "measurement": "local source preparation; synthetic findings; no AI review or model tokens",
+        "environment": {
+          "python": "3.12.10",
+          "platform": "Windows-11-10.0.26200-SP0"
+        },
+        "engine_digest": "f040246a7263589017fedd43b5e470870bfddcebbf249861cf9b179d1863d7d0",
+        "fixture": {
+          "files": 33,
+          "bytes": 16896,
+          "sha256": "19e120c9a6720957aef5fc6a156129f7a3b847fdc4a3e7eb0f693581046a7d2a"
+        },
+        "warmup": 1,
+        "samples_seconds": [
+          0.027910999953746796,
+          0.026490600022953004,
+          0.02494129998376593,
+          0.03597610001452267,
+          0.033659800013992935
+        ],
+        "median_seconds": 0.027910999953746796,
+        "p95_seconds": 0.03597610001452267,
+        "peak_rss_mib": 24.81640625,
+        "counts": {
+          "selected": 4,
+          "scheduled": 0,
+          "completed": 4,
+          "failed": 0,
+          "deferred": 0,
+          "packets": 4
+        },
+        "source_bytes": 6144,
+        "source_token_estimate": 1536,
+        "bounds": {
+          "max_files": 3,
+          "max_source_bytes": 1536
+        },
+        "budget": {
+          "p95_seconds": 8,
+          "peak_rss_mib": 256,
+          "pass": true
+        }
+      }
+    }
+  },
+  "failed_read_budget": {
+    "before": {
+      "files": 8,
+      "bytes_per_file": 200,
+      "budget_bytes": 64,
+      "attempts": 8,
+      "guarded_read_bytes": 520,
+      "remaining_bytes": 64,
+      "measurement": "All files exceed every requested limit; each guarded read consumes limit+1 bytes before rejection."
+    },
+    "after": {
+      "files": 8,
+      "bytes_per_file": 200,
+      "budget_bytes": 64,
+      "attempts": 1,
+      "guarded_read_bytes": 64,
+      "remaining_bytes": 0,
+      "measurement": "All files exceed every requested limit; each guarded read consumes limit+1 bytes before rejection."
+    }
+  },
+  "public_source_replays": [
+    {
+      "project": "umami",
+      "revision": "559e3c607c23d2c72d9bd4f6481bda428255323c",
+      "source_projection": ".cache/field-cohort-20261023/source-verified/umami",
+      "native_report_equal": true,
+      "fail_on": "high",
+      "native_exit_codes": [
+        1,
+        1,
+        1
+      ],
+      "native_verdict": "REVIEW",
+      "native_summary": {
+        "findings": 129,
+        "app_findings": 61,
+        "test_findings": 68,
+        "files_scanned": 1405,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 1,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "frameworks": [
+          "nextjs",
+          "prisma"
+        ],
+        "by_severity": {
+          "high": 107,
+          "medium": 22
+        }
+      },
+      "prepared_counts": {
+        "selected": 1295,
+        "scheduled": 89,
+        "failed": 0,
+        "deferred": 1206,
+        "packets": 20
+      },
+      "applied_counts": {
+        "selected": 1295,
+        "scheduled": 0,
+        "completed": 89,
+        "failed": 0,
+        "deferred": 1206,
+        "packets": 20
+      },
+      "response_validation": {
+        "accepted_decisions": 89,
+        "accepted_errors": 0,
+        "rejected": 0,
+        "duplicates": 0
+      },
+      "review_complete": false,
+      "simulated_responses": true,
+      "scope": "Static source and simulated status responses only; no target execution, model or human finding labels"
+    },
+    {
+      "project": "todoapp",
+      "revision": "307a1eadbbd77a3004c318f2377e4818bc400af6",
+      "source_projection": ".cache/field-cohort-20261023/source-verified/todoapp",
+      "native_report_equal": true,
+      "fail_on": "high",
+      "native_exit_codes": [
+        1,
+        1,
+        1
+      ],
+      "native_verdict": "CONDITIONAL",
+      "native_summary": {
+        "findings": 1,
+        "app_findings": 1,
+        "test_findings": 0,
+        "files_scanned": 44,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 11,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "library",
+        "frameworks": [
+          "dotnet"
+        ],
+        "by_severity": {
+          "medium": 1
+        }
+      },
+      "prepared_counts": {
+        "selected": 40,
+        "scheduled": 40,
+        "failed": 0,
+        "deferred": 0,
+        "packets": 14
+      },
+      "applied_counts": {
+        "selected": 40,
+        "scheduled": 0,
+        "completed": 40,
+        "failed": 0,
+        "deferred": 0,
+        "packets": 14
+      },
+      "response_validation": {
+        "accepted_decisions": 40,
+        "accepted_errors": 0,
+        "rejected": 0,
+        "duplicates": 0
+      },
+      "review_complete": false,
+      "simulated_responses": true,
+      "scope": "Static source and simulated status responses only; no target execution, model or human finding labels"
+    },
+    {
+      "project": "localsend",
+      "revision": "6e37efd5fe750299758b6778d2b150b31af3b95d",
+      "source_projection": ".cache/field-cohort-20261023/source-verified/localsend",
+      "native_report_equal": true,
+      "fail_on": "high",
+      "native_exit_codes": [
+        1,
+        1,
+        1
+      ],
+      "native_verdict": "REVIEW",
+      "native_summary": {
+        "findings": 1,
+        "app_findings": 1,
+        "test_findings": 0,
+        "files_scanned": 406,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": false,
+          "reasons": [
+            "binary"
+          ],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 3,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "by_severity": {
+          "high": 1
+        }
+      },
+      "prepared_counts": {
+        "selected": 370,
+        "scheduled": 39,
+        "failed": 0,
+        "deferred": 331,
+        "packets": 20
+      },
+      "applied_counts": {
+        "selected": 370,
+        "scheduled": 0,
+        "completed": 39,
+        "failed": 0,
+        "deferred": 331,
+        "packets": 20
+      },
+      "response_validation": {
+        "accepted_decisions": 39,
+        "accepted_errors": 0,
+        "rejected": 0,
+        "duplicates": 0
+      },
+      "review_complete": false,
+      "simulated_responses": true,
+      "scope": "Static source and simulated status responses only; no target execution, model or human finding labels"
+    },
+    {
+      "project": "profilestore",
+      "revision": "45c9847cbcf1fc260369c50eb335aba7c35aecdd",
+      "source_projection": ".cache/luau-research-20261026/source/profilestore",
+      "native_report_equal": true,
+      "fail_on": "high",
+      "native_exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "native_verdict": "PASS_WITH_EVIDENCE",
+      "native_summary": {
+        "findings": 0,
+        "app_findings": 0,
+        "test_findings": 0,
+        "files_scanned": 6,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 0,
+          "binary": 0,
+          "symlinks": 0,
+          "excluded": 0,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "library",
+        "by_severity": {}
+      },
+      "prepared_counts": {
+        "selected": 2,
+        "scheduled": 2,
+        "failed": 0,
+        "deferred": 0,
+        "packets": 1
+      },
+      "applied_counts": {
+        "selected": 2,
+        "scheduled": 0,
+        "completed": 2,
+        "failed": 0,
+        "deferred": 0,
+        "packets": 1
+      },
+      "response_validation": {
+        "accepted_decisions": 2,
+        "accepted_errors": 0,
+        "rejected": 0,
+        "duplicates": 0
+      },
+      "review_complete": false,
+      "simulated_responses": true,
+      "scope": "Static source and simulated status responses only; no target execution, model or human finding labels"
+    }
+  ],
+  "validation": {
+    "npm_check": "passed",
+    "python_tests": 1024,
+    "windows_symlink_skips": 3,
+    "python_branch_coverage_percent": 87,
+    "packed_cli_action_and_installed_skills": "passed",
+    "schema_reference_validator": "preinstalled Draft 2020-12 validator: passed",
+    "assurance": {
+      "executable_rules": 673,
+      "complete": 673,
+      "partial": 0,
+      "uncontracted": 0,
+      "metadata_debt": 0,
+      "realistic_negatives": 128,
+      "near_miss_only_negatives": 545,
+      "high_critical_without_realistic_negatives": 409,
+      "by_severity": {
+        "critical": {
+          "complete": 143,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "high": {
+          "complete": 325,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "low": {
+          "complete": 7,
+          "partial": 0,
+          "uncontracted": 0
+        },
+        "medium": {
+          "complete": 198,
+          "partial": 0,
+          "uncontracted": 0
+        }
+      }
+    },
+    "high_self_scan": {
+      "verdict": "PASS_WITH_EVIDENCE",
+      "summary": {
+        "findings": 32,
+        "app_findings": 0,
+        "test_findings": 32,
+        "files_scanned": 536,
+        "suppressed": 0,
+        "completeness": {
+          "is_complete": true,
+          "reasons": [],
+          "unreadable": 0,
+          "parser_limit": 0,
+          "line_limit": 0,
+          "oversized": 0,
+          "containers": 0,
+          "assets": 10,
+          "binary": 0,
+          "symlinks": 0,
+          "excluded": 5,
+          "databases": 0,
+          "baseline_excluded": 0
+        },
+        "scan_profile": "application",
+        "frameworks": [
+          "github-actions"
+        ],
+        "by_severity": {
+          "critical": 1,
+          "high": 20,
+          "medium": 11
+        }
+      }
+    },
+    "package": {
+      "files": 113,
+      "packed_bytes": 473990,
+      "unpacked_bytes": 1856829,
+      "max_packed_bytes": 500000,
+      "max_unpacked_bytes": 1870000
+    }
+  },
+  "limitations": [
+    "Simulation validates bookkeeping and input consistency, not real agent work or finding correctness.",
+    "No model token, precision, recall or production throughput claims.",
+    "Existing incomplete source coverage and deferred/partial contexts remain explicit.",
+    "Response-case timing covers the in-memory API, not file parsing or model latency."
+  ]
+}

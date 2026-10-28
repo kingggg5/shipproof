@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingggg5/shipproof/schemas/packet-responses.schema.json",
+  "title": "ShipProof local packet responses",
+  "description": "UTF-8 JSON array, at most 2000000 input bytes. Responses record unverified agent work against freshly regenerated packet 1.1 inputs; they never change native findings or gate eligibility. Error/note text is redacted and truncated to 4096 characters in the ledger.",
+  "type": "array",
+  "maxItems": 1000,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["packet_id", "packet_digest"],
+    "properties": {
+      "packet_id": {"type": "string", "pattern": "^packet-[0-9]{3}$", "maxLength": 10},
+      "packet_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$", "maxLength": 64},
+      "timed_out": {"type": "boolean"},
+      "error": {"type": "string", "maxLength": 2000000},
+      "decided": {
+        "type": "array",
+        "maxItems": 256,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verdict"],
+          "anyOf": [{"required": ["item_id"]}, {"required": ["fingerprint"]}],
+          "properties": {
+            "item_id": {"type": "string", "pattern": "^[0-9a-f]{64}$", "maxLength": 64},
+            "fingerprint": {"type": "string", "minLength": 1, "maxLength": 128},
+            "verdict": {"enum": ["completed", "failed"]},
+            "note": {"type": "string", "maxLength": 2000000}
+          }
+        }
+      }
+    },
+    "allOf": [{
+      "if": {"anyOf": [
+        {"required": ["timed_out"], "properties": {"timed_out": {"const": true}}},
+        {"required": ["error"], "properties": {"error": {"minLength": 1}}}
+      ]},
+      "then": {"properties": {"decided": {"maxItems": 0}}}
+    }]
+  }
+}

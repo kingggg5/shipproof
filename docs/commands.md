@@ -81,7 +81,30 @@ Review packets are optional local artifacts. `--packet-out DIR` writes them to a
 shipproof scan . --changed-since HEAD --packet-discover --packet-out ./review-packets
 ```
 
-Discovery is source preparation only; it does not execute an AI review or make provider API calls. A discovery target is context only, never an SP finding or gate proof. Limits remain 10 files, 128 KiB of source per packet, 20 packets, 256 review items per packet, 5,000 eligible/discovery files, and 4 MiB total bytes read for import-context parsing. Selected targets precede bounded literal-import and test context. Import hints currently cover Python, JavaScript/TypeScript, Dart, and Lua/Luau; C#/.NET namespace/type binding and package aliases remain unresolved, and this is not a complete call graph. `review_focus` deduplicates language-specific human review questions. `rule_guidance` contains only native finding rule summaries, deduplicated by rule ID, with a 16 KiB metadata cap. Each review occurrence has an `item_id`, distinct from the unchanged native tracking `fingerprint`; packet 1.1 replies echo `packet_digest` and identify decisions by `item_id`. Fingerprint-only replies are accepted only when unambiguous. Legacy 1.0 unique-fingerprint replies remain supported; repeated fingerprints that cannot be uniquely matched stay unresolved rather than being collapsed. Responses are bounded and validated data. Model assessments never change native findings, native fingerprints, or gate output. `review_complete` stays false until valid agent replies arrive and also stays false when items are deferred/failed or context is partial; even true completion does not establish correctness or gate proof. These options do not change the deterministic scan verdict.
+Discovery is source preparation only: it does not call a provider or execute an AI review. A discovery target is context only, never an SP finding or gate proof. Limits are 10 files, 128 KiB of source per packet, 20 packets, 256 review items per packet, 5,000 eligible/discovery files, and 4 MiB total bytes read for import-context parsing. Targets precede bounded literal-import and test context. Import hints currently cover Python, JavaScript/TypeScript, Dart, and Lua/Luau; C#/.NET namespace/type binding and package aliases remain unresolved, so this is not a complete call graph. `review_focus` deduplicates language-specific human questions. `rule_guidance` includes summaries only for rules on native findings, deduplicated by rule ID, with a 16 KiB metadata cap.
+
+To prepare and apply a response, keep both artifacts outside the audited root and rerun with the same scan/discovery options while source remains unchanged. The packet output directory must already exist:
+
+```bash
+shipproof scan . --changed-since HEAD --packet-discover --packet-out ../shipproof-review-packets
+shipproof scan . --changed-since HEAD --packet-discover --packet-out ../shipproof-review-packets --packet-responses ../shipproof-agent-responses.json
+```
+
+`--packet-responses FILE` accepts a UTF-8 JSON array up to 2,000,000 bytes, at most 1,000 responses and 256 decisions per packet. A response identifies the packet and its exact digest; decisions use each review occurrence `item_id`, distinct from its unchanged native tracking `fingerprint`. Example:
+
+```json
+[
+  {
+    "packet_id": "packet-001",
+    "packet_digest": "<copy the digest from the packet JSON>",
+    "decided": [
+      { "item_id": "<copy the item_id from the packet JSON>", "verdict": "completed" }
+    ]
+  }
+]
+```
+
+Packet 1.1 replies must echo `packet_digest` and use `item_id`; fingerprint-only replies are accepted only when unambiguous. Legacy 1.0 unique-fingerprint bookkeeping remains readable but cannot establish verified `review_complete`; repeated fingerprints remain unresolved. Malformed, stale, unknown, wrong-packet replies or agent failures return exit `2` as invalid/unavailable opt-in evidence. Missing replies, deferred items, failures, and partial context keep the review incomplete. For valid response data the native JSON/SARIF findings and gate output are unchanged. Responses are bounded and validated data; model assessments never suppress findings or create blocking proof. Even a complete review does not establish correctness or gate proof.
 
 The Node launcher resolves Python from absolute host `PATH` entries and rejects repository-local shadow binaries. For `scan <path>`, the selected path is also the runtime trust boundary, while the original launcher directory remains the working directory so relative scanner arguments keep their documented meaning. Missing or unsupported runtimes return exit `2` rather than running a repository-provided interpreter.
 

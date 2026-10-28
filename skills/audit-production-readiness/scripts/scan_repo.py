@@ -15897,6 +15897,12 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Include selected source files without findings in opt-in review packets",
     )
     parser.add_argument(
+        "--packet-responses",
+        metavar="FILE",
+        default=None,
+        help="Validate local agent responses against freshly generated --packet-out artifacts",
+    )
+    parser.add_argument(
         "--trace",
         action="store_true",
         default=False,
@@ -15971,7 +15977,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             stream.reconfigure(encoding="utf-8")
     arguments = parse_arguments(argv)
 
-    if arguments.packet_discover and (
+    if (arguments.packet_discover or arguments.packet_responses is not None) and (
         arguments.packet_out is None
         or arguments.explain
         or arguments.fix_prompt
@@ -15981,7 +15987,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         or arguments.snippet_stdin
     ):
         print(
-            "shipproof: --packet-discover requires --packet-out and a repository scan",
+            "shipproof: --packet-discover/--packet-responses requires --packet-out and a repository scan",
             file=sys.stderr,
         )
         return 2
@@ -16330,6 +16336,20 @@ def main(argv: Sequence[str] | None = None) -> int:
                 import review_packets
             except ImportError as exc:
                 raise ValueError(f"review packets unavailable: {exc}") from exc
+            out_dir = Path(arguments.packet_out)
+            if not out_dir.is_dir() or out_dir.is_symlink():
+                raise ValueError(f"packet output must be an existing directory: {out_dir}")
+            responses = None
+            if arguments.packet_responses is not None:
+                try:
+                    response_bytes = read_scannable_bytes(
+                        Path(arguments.packet_responses), review_packets.MAX_RESPONSE_BYTES
+                    )
+                except ScanCoverageError as exc:
+                    raise ValueError(
+                        "packet responses unavailable or exceed the 2000000-byte limit"
+                    ) from exc
+                responses = review_packets.parse_responses(response_bytes)
             finding_rule_ids = {item.rule_id for item in findings}
             packet_report = review_packets.build_packets(
                 arguments.root,
@@ -16372,9 +16392,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     if rule.rule_id in finding_rule_ids
                 },
             )
-            out_dir = Path(arguments.packet_out)
-            if not out_dir.is_dir() or out_dir.is_symlink():
-                raise ValueError(f"packet output must be an existing directory: {out_dir}")
+            if responses is not None:
+                review_packets.reconcile(packet_report, responses)
             safe_write_text(
                 out_dir / "ledger.json",
                 json.dumps(packet_report, indent=2) + "\n",
@@ -16395,6 +16414,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             if packet_report["identity_error"] is not None:
                 raise ValueError("review packet source identity could not be verified")
+            if responses is not None:
+                validation = packet_report["response_validation"]
+                print(
+                    f"review responses: {counts['completed']} completed, "
+                    f"{validation['rejected']} rejected; review_complete={packet_report['review_complete']}",
+                    file=sys.stderr,
+                )
+                if validation["rejected"] or counts["failed"]:
+                    raise ValueError(
+                        "packet responses contain invalid or unavailable evidence; see ledger.json"
+                    )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"shipproof: {exc}", file=sys.stderr)
         return 2

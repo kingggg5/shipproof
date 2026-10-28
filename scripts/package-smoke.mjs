@@ -115,6 +115,19 @@ function main(peerVersion) {
     assert.equal(packetLedger.packet_version, "review-packet/1.1");
     assert.equal(packetLedger.counts.scheduled, 1);
     assert.deepEqual(packetLedger.packets[0].findings, []);
+    assert.ok(existsSync(join(installedPackageRoot, "schemas", "packet-responses.schema.json")));
+    const packetResponses = join(workDirectory, "responses.json");
+    writeFileSync(packetResponses, JSON.stringify(packetLedger.packets.map((packet) => ({
+      packet_id: packet.packet_id,
+      packet_digest: packet.packet_digest,
+      decided: packet.review_targets.map((item) => ({ item_id: item.item_id, verdict: "completed" })),
+    }))));
+    const responseScan = runProcess(process.execPath, [installedCli, "scan", packetSource, "--format", "json", "--packet-discover", "--packet-out", packetOutput, "--packet-responses", packetResponses]);
+    assert.equal(responseScan.status, 0, responseScan.stderr);
+    assert.deepEqual(JSON.parse(responseScan.stdout), JSON.parse(packetScan.stdout));
+    const appliedLedger = JSON.parse(readFileSync(join(packetOutput, "ledger.json"), "utf8"));
+    assert.equal(appliedLedger.review_complete, true);
+    assert.deepEqual(appliedLedger.packets, packetLedger.packets);
 
     const skillProject = join(workDirectory, "skill-project");
     mkdirSync(skillProject);
@@ -130,7 +143,14 @@ function main(peerVersion) {
       assert.equal(skillScan.status, 0, skillScan.stderr);
       assert.deepEqual(JSON.parse(skillScan.stdout), JSON.parse(packetScan.stdout));
       assert.deepEqual(JSON.parse(readFileSync(join(skillOutput, "ledger.json"), "utf8")), packetLedger);
+      const skillResponse = runProcess(python.command, [...python.argumentPrefix, skillScanner, packetSource, "--format", "json", "--packet-discover", "--packet-out", skillOutput, "--packet-responses", packetResponses]);
+      assert.equal(skillResponse.status, 0, skillResponse.stderr);
+      assert.deepEqual(JSON.parse(skillResponse.stdout), JSON.parse(packetScan.stdout));
+      assert.deepEqual(JSON.parse(readFileSync(join(skillOutput, "ledger.json"), "utf8")), appliedLedger);
     }
+    writeFileSync(join(packetSource, "entry.ts"), "export const value = 2;\n");
+    const staleResponse = runProcess(process.execPath, [installedCli, "scan", packetSource, "--packet-discover", "--packet-out", packetOutput, "--packet-responses", packetResponses]);
+    assert.equal(staleResponse.status, 2);
 
     const explained = runProcess(process.execPath, [installedCli, "explain", "SP402"]);
     assert.equal(explained.status, 0, explained.stderr);

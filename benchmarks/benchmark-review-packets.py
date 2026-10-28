@@ -53,6 +53,9 @@ def main() -> int:
     parser.add_argument("--engine-root", type=Path, required=True)
     parser.add_argument("--workload", choices=("split", "minimize"), required=True)
     parser.add_argument("--samples", type=int, default=5)
+    parser.add_argument(
+        "--responses", action="store_true", help="Also validate local synthetic agent replies"
+    )
     args = parser.parse_args()
     if not 1 <= args.samples <= 10:
         parser.error("samples must be from 1 through 10")
@@ -73,12 +76,30 @@ def main() -> int:
             absolute = root / path
             absolute.parent.mkdir(parents=True, exist_ok=True)
             absolute.write_text(text, encoding="utf-8", newline="\n")
+
+        def prepare():
+            report = review_packets.build_packets(root, rows, **options)
+            if args.responses:
+                responses = [
+                    {
+                        "packet_id": packet["packet_id"],
+                        "packet_digest": packet["packet_digest"],
+                        "decided": [
+                            {"item_id": item["item_id"], "verdict": "completed"}
+                            for item in packet["review_targets"]
+                        ],
+                    }
+                    for packet in report["packets"]
+                ]
+                review_packets.reconcile(report, responses)
+            return report
+
         # One unmeasured warmup; fresh reports for every identical sample.
-        review_packets.build_packets(root, rows, **options)
+        prepare()
         samples = []
         for _ in range(args.samples):
             started = time.perf_counter()
-            report = review_packets.build_packets(root, rows, **options)
+            report = prepare()
             samples.append(time.perf_counter() - started)
     memory_helpers = runpy.run_path(str(engine / "scripts/benchmark-scanner.py"))
     peak = memory_helpers["peak_rss_mb"]()
@@ -91,7 +112,12 @@ def main() -> int:
             {
                 "schema_version": 1,
                 "workload": args.workload,
-                "measurement": "local source preparation; synthetic findings; no AI review or model tokens",
+                "response_validation": bool(args.responses),
+                "measurement": (
+                    "local source preparation and in-memory response reconciliation; synthetic findings; no model or response-file I/O"
+                    if args.responses
+                    else "local source preparation; synthetic findings; no AI review or model tokens"
+                ),
                 "environment": {
                     "python": platform.python_version(),
                     "platform": platform.platform(),

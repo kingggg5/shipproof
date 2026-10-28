@@ -187,7 +187,7 @@ shipproof labs impact src/app.py   # experimental blast radius before editing
 
 Full prompt samples, invariant analysis, token cost budgeting, worktree isolation, status badges, and `--trace` output live in [docs/features.md](docs/features.md).
 
-For an opt-in local agent handoff, `shipproof scan . --changed-since HEAD --packet-discover --packet-out ./review-packets` adds bounded source-file discovery targets to review packets, including files without native ShipProof findings. Discovery is local source preparation, not AI execution; targets are context, never findings or gate proof. Packets also expose deduplicated human review questions and native-rule summaries. See the [scan command reference](docs/commands.md) for limits, unresolved import links, and response identity requirements.
+For an opt-in local handoff, prepare packets with `shipproof scan . --changed-since HEAD --packet-discover --packet-out ../shipproof-review-packets`, then apply an agent response using `--packet-responses ../shipproof-agent-responses.json` with the same scan options and unchanged source. Discovery prepares local source context; it does not call a model, create findings, or add gate proof. See the [scan command reference](docs/commands.md) for the response format and limits.
 
 ## Detection rules
 

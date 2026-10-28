@@ -130,10 +130,17 @@ class ContextIndex:
         notes: list[str] = []
         self.cache[relative] = (found, notes)
         if relative not in self.paths:
-            return found, ["source outside eligible context scope"]
+            notes.append("source outside eligible context scope")
+            return found, notes
         try:
-            content = read_source(self.root, relative, min(131072, self.remaining_bytes))
-            self.remaining_bytes -= len(content)
+            if self.remaining_bytes <= 0:
+                raise ValueError("context read budget exhausted")
+            # Guarded reads may consume limit+1 before rejecting an oversized
+            # source. Reserve that entire attempt, including failures/races.
+            reserved = min(131073, self.remaining_bytes)
+            self.remaining_bytes -= reserved
+            content = read_source(self.root, relative, reserved - 1)
+            self.remaining_bytes += reserved - len(content)
             source = content.decode("utf-8")
             suffix = Path(relative).suffix.lower()
             parent = posixpath.dirname(relative)
@@ -180,10 +187,11 @@ class ContextIndex:
                 )
                 for i, lexeme in enumerate(values):
                     literal = None
-                    if lexeme in {"from", "import", "export"} and i + 1 < len(values):
-                        literal = values[i + 1]
-                    elif lexeme in {"require", "import"} and values[i + 1 : i + 2] == ["("]:
-                        if values[i + 2 : i + 3] == ["script"]:
+                    if lexeme in {"require", "import"} and values[i + 1 : i + 2] == ["("]:
+                        if i and values[i - 1] in {".", "?.", ":"}:
+                            notes.append("member import/require binding unresolved")
+                            continue
+                        if suffix in {".lua", ".luau"} and values[i + 2 : i + 3] == ["script"]:
                             cursor, base = i + 3, relative
                             while values[cursor : cursor + 1] == ["."] and cursor + 1 < len(values):
                                 name = values[cursor + 1]
@@ -197,12 +205,16 @@ class ContextIndex:
                                 cursor += 2
                             if values[cursor : cursor + 1] == [")"]:
                                 requests.append((base, suffixes))
+                            else:
+                                notes.append("script require expression unresolved")
                             continue
                         literal = values[i + 2] if i + 2 < len(values) else None
                         if values[i + 3 : i + 4] != [")"]:
                             literal = None
                         if literal is None or not literal.startswith(("'", '"')):
                             notes.append("dynamic import unresolved")
+                    elif lexeme in {"from", "import", "export"} and i + 1 < len(values):
+                        literal = values[i + 1]
                     if (
                         literal
                         and len(literal) > 2

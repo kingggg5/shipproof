@@ -11,6 +11,8 @@
   and echo `packet_digest`; `review_complete` requires valid replies and no deferred,
   failed, or partial-context items, but does not prove correctness or gate eligibility.
 
+- Add opt-in `--packet-responses FILE` to apply bounded host-agent replies with `--packet-out`. Responses are read as validated local evidence; malformed or stale replies fail with exit 2, and valid replies do not alter native findings or the gate. Correct packet-body digest checks, dynamic import notes, and failed-read budget charging are included.
+
 - Add six medium L1 structural Luau/Roblox advisories SP708–SP713 and extend
   SP707 to direct RemoveAsync/IncrementAsync mutations. The research cohort uses
   Reddit, DevForum, Stack Overflow and GitHub to identify questions, then checks

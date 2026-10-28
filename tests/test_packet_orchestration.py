@@ -205,6 +205,7 @@ class OrchestrationTests(unittest.TestCase):
     def test_legacy_artifact_response_remains_readable(self):
         with make_tree({"app.py": "value=1\n"}) as root:
             report = review_packets.build_packets(Path(root), [finding()])
+        report["packet_version"] = "review-packet/1.0"
         report["packets"][0]["packet_version"] = "review-packet/1.0"
         review_packets.reconcile(
             report,
@@ -365,6 +366,7 @@ class OrchestrationTests(unittest.TestCase):
     def test_legacy_repeated_fingerprints_never_silently_collapse(self):
         with make_tree({"app.py": "value=1\nvalue=2\n"}) as root:
             report = review_packets.build_packets(Path(root), [finding(line=1), finding(line=2)])
+        report["packet_version"] = "review-packet/1.0"
         report["packets"][0]["packet_version"] = "review-packet/1.0"
         for row in report["selection_accounting"]:
             row.pop("item_id")

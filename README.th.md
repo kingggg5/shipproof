@@ -137,7 +137,7 @@ shipproof labs impact src/app.py   # blast radius แบบ experimental ก่�
 
 ตัวอย่าง prompt เต็ม, invariant analysis, token cost budgeting, worktree isolation, status badges และ output `--trace` อยู่ใน [docs/features.md](docs/features.md)
 
-สำหรับการส่งต่อให้ agent แบบ opt-in ในเครื่อง ใช้ `shipproof scan . --changed-since HEAD --packet-discover --packet-out ./review-packets` เพื่อเพิ่มไฟล์ซอร์สที่ค้นพบเข้า packet แม้ไม่มี native finding การค้นพบเป็นเพียงการเตรียมซอร์สในเครื่อง ไม่ใช่การรัน AI; ไฟล์เหล่านี้เป็น context ไม่ใช่ finding หรือ gate proof packet ยังมีคำถาม review สำหรับมนุษย์และสรุปกฎของ native finding แบบ deduplicate ดู limits, import links ที่ยัง unresolved และ identity ของ response ใน [คู่มือคำสั่ง scan](docs/commands.md)
+สำหรับ handoff ในเครื่องแบบ opt-in เตรียม packet ด้วย `shipproof scan . --changed-since HEAD --packet-discover --packet-out ../shipproof-review-packets` แล้วนำ response จาก agent มาใช้ด้วย `--packet-responses ../shipproof-agent-responses.json` โดยใช้ตัวเลือก scan เดิมและซอร์สที่ไม่เปลี่ยน การค้นพบเป็นการเตรียม context ในเครื่อง ไม่เรียก model ไม่สร้าง finding และไม่เพิ่ม gate proof ดูรูปแบบ response และ limits ใน [คู่มือคำสั่ง scan](docs/commands.md)
 
 ## กฎการตรวจจับ
 

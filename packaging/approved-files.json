@@ -69,6 +69,7 @@
     "schemas/finding-label.schema.json",
     "schemas/impact-report.schema.json",
     "schemas/invariants-report.schema.json",
+    "schemas/packet-responses.schema.json",
     "schemas/scan-report.schema.json",
     "schemas/shipproof-config.schema.json",
     "schemas/shipproof-policy.schema.json",

@@ -35,6 +35,8 @@ MAX_FILES_PER_PACKET = 10
 MAX_BYTES_PER_PACKET = 131072
 MAX_PACKETS = 20
 MAX_ITEMS_PER_PACKET = 256
+MAX_RESPONSE_BYTES = 2_000_000
+MAX_RESPONSES = 1000
 SECRET_VALUE_RE = re.compile(r"(?i)(?:sk-|ghp_|github_pat_|xox[baprs]-|Bearer\s+)[A-Za-z0-9._\-]+")
 
 ITEM_STATUSES = frozenset({"selected", "scheduled", "completed", "failed", "deferred"})
@@ -42,6 +44,64 @@ ITEM_STATUSES = frozenset({"selected", "scheduled", "completed", "failed", "defe
 
 def redact(text: str) -> str:
     return SECRET_VALUE_RE.sub("[REDACTED]", text)
+
+
+def _response_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    fields: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in fields:
+            raise ValueError("packet responses contain a duplicate JSON field")
+        fields[key] = value
+    return fields
+
+
+def _response_number(_value: str) -> Any:
+    # The closed response protocol has no numeric fields. Reject before parsing
+    # arbitrary-size integers or nonfinite floats from untrusted model data.
+    raise ValueError("packet response fields do not accept numeric JSON values")
+
+
+def parse_responses(content: bytes) -> list[dict[str, Any]]:
+    if len(content) > MAX_RESPONSE_BYTES:
+        raise ValueError("packet responses exceed the 2000000-byte limit")
+    try:
+        text = content.decode("utf-8-sig")
+        depth, quoted, escaped = 0, False, False
+        for char in text:
+            if quoted:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    quoted = False
+            elif char == '"':
+                quoted = True
+            elif char in "[{":
+                depth += 1
+                if depth > 8:
+                    raise ValueError("packet response JSON nesting exceeds 8 levels")
+            elif char in "]}":
+                depth -= 1
+        responses = json.loads(
+            text,
+            object_pairs_hook=_response_object,
+            parse_int=_response_number,
+            parse_float=_response_number,
+            parse_constant=_response_number,
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise ValueError("packet responses must be bounded UTF-8 JSON") from exc
+    if not isinstance(responses, list) or len(responses) > MAX_RESPONSES:
+        raise ValueError("agent responses must be a list of at most 1000 records")
+    return responses
+
+
+def _packet_digest(packet: dict[str, Any]) -> str:
+    body = {key: value for key, value in packet.items() if key != "packet_digest"}
+    return hashlib.sha256(
+        json.dumps(body, sort_keys=True, ensure_ascii=True).encode("utf-8")
+    ).hexdigest()
 
 
 def classify_role(relative: str) -> tuple[str, str]:
@@ -358,9 +418,7 @@ def build_packets(
             packet["config_digest"] = snapshot["config_digest"]
             packet["target"]["commit"] = snapshot["commit"]
             packet["target"]["root_kind"] = snapshot["root_kind"]
-            packet["packet_digest"] = hashlib.sha256(
-                json.dumps(packet, sort_keys=True, ensure_ascii=True).encode("utf-8")
-            ).hexdigest()
+            packet["packet_digest"] = _packet_digest(packet)
         identity_report = {
             "target_digest": snapshot["target_digest"],
             "config_digest": snapshot["config_digest"],
@@ -397,9 +455,26 @@ def build_packets(
 
 def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[str, Any]:
     """Fold host-agent responses into the ledger without ever inventing completion."""
-    if not isinstance(responses, list) or len(responses) > 1000:
+    if not isinstance(responses, list) or len(responses) > MAX_RESPONSES:
         raise ValueError("agent responses must be a list of at most 1000 records")
-    packets = {packet["packet_id"]: packet for packet in report.get("packets", [])}
+    report_version = report.get("packet_version")
+    if not isinstance(report_version, str) or report_version not in {
+        "review-packet/1.0",
+        PACKET_VERSION,
+    }:
+        raise ValueError("unsupported review packet version")
+    packet_rows = report.get("packets", [])
+    if not isinstance(packet_rows, list) or len(packet_rows) > MAX_PACKETS:
+        raise ValueError("invalid packet collection")
+    packets: dict[str, dict[str, Any]] = {}
+    for packet in packet_rows:
+        if (
+            not isinstance(packet, dict)
+            or not isinstance(packet.get("packet_id"), str)
+            or packet["packet_id"] in packets
+        ):
+            raise ValueError("invalid or duplicate packet identity")
+        packets[packet["packet_id"]] = packet
     ledger: dict[str, dict[str, Any]] = {}
     for ordinal, entry in enumerate(report.get("selection_accounting", [])):
         key = entry.get("item_id") or f"legacy-{ordinal}"
@@ -410,7 +485,34 @@ def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[s
     for key, entry in ledger.items():
         fingerprint_index.setdefault(entry["fingerprint"], []).append(key)
     notes: list[str] = list(report.get("reconcile_notes", []))
-    decided: set[str] = set()
+    validation = {"accepted_decisions": 0, "accepted_errors": 0, "rejected": 0, "duplicates": 0}
+
+    def reject(note: str) -> None:
+        validation["rejected"] += 1
+        notes.append(note)
+
+    invalid_packets: set[str] = set()
+    for packet_id, packet in packets.items():
+        valid = packet.get("packet_version") == report_version
+        if valid and report_version == PACKET_VERSION:
+            try:
+                valid = (
+                    bool(packet.get("packet_digest"))
+                    and _packet_digest(packet) == packet["packet_digest"]
+                )
+            except (TypeError, ValueError, RecursionError):
+                valid = False
+        if not valid:
+            invalid_packets.add(packet_id)
+            reject(f"{packet_id}: packet body/version does not match its input digest")
+    for entry in ledger.values():
+        if entry.get("packet_id") in invalid_packets and entry.get("status") in {
+            "scheduled",
+            "completed",
+        }:
+            entry["status"] = "failed"
+            entry["reasons"].append("packet body identity is invalid")
+    decided: dict[str, str] = {}
     for response in responses:
         if not isinstance(response, dict) or set(response) - {
             "packet_id",
@@ -419,18 +521,21 @@ def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[s
             "timed_out",
             "error",
         }:
-            notes.append("invalid agent response ignored")
+            reject("invalid agent response ignored")
             continue
         packet_id = response.get("packet_id")
         if not isinstance(packet_id, str) or packet_id not in packets:
-            notes.append("response for unknown packet ignored")
+            reject("response for unknown packet ignored")
             continue
         packet = packets[packet_id]
+        if packet_id in invalid_packets:
+            reject(f"{packet_id}: response cannot attest an invalid packet body")
+            continue
         if packet.get("packet_version") != "review-packet/1.0" and (
             not packet.get("packet_digest")
             or response.get("packet_digest") != packet["packet_digest"]
         ):
-            notes.append(f"{packet_id}: missing or stale packet_digest; response ignored")
+            reject(f"{packet_id}: missing or stale packet_digest; response ignored")
             continue
         decisions = response.get("decided", [])
         if (
@@ -444,9 +549,13 @@ def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[s
             or not isinstance(response.get("timed_out", False), bool)
             or not isinstance(response.get("error", ""), str)
         ):
-            notes.append(f"{packet_id}: invalid response fields ignored")
+            reject(f"{packet_id}: invalid response fields ignored")
             continue
         if response.get("timed_out") or response.get("error"):
+            if decisions:
+                reject(f"{packet_id}: error response cannot also decide items")
+                continue
+            validation["accepted_errors"] += 1
             reason = redact((response.get("error") or "agent timed out")[:4096])
             for entry in ledger.values():
                 if entry.get("packet_id") == packet_id and entry.get("status") == "scheduled":
@@ -461,16 +570,21 @@ def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[s
                 "verdict",
                 "note",
             }:
-                notes.append(f"{packet_id}: invalid decision ignored")
+                reject(f"{packet_id}: invalid decision ignored")
                 continue
             fingerprint = decision.get("fingerprint")
             item_id = decision.get("item_id")
+            if ("item_id" in decision and not isinstance(item_id, str)) or (
+                "fingerprint" in decision and not isinstance(fingerprint, str)
+            ):
+                reject(f"{packet_id}: decision identifiers must be strings")
+                continue
             if item_id is None:
                 matches = (
                     fingerprint_index.get(fingerprint, []) if isinstance(fingerprint, str) else []
                 )
                 if len(matches) != 1:
-                    notes.append(
+                    reject(
                         f"{packet_id}: unknown fingerprint or ambiguous fingerprint; use item_id"
                     )
                     continue
@@ -481,21 +595,33 @@ def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[s
                 or (fingerprint is not None and fingerprint != ledger[item_id]["fingerprint"])
                 or not isinstance(decision.get("note", ""), str)
             ):
-                notes.append(f"{packet_id}: invalid item identity or note ignored")
+                reject(f"{packet_id}: invalid item identity or note ignored")
                 continue
             if ledger[item_id].get("packet_id") != packet_id:
-                notes.append(
+                reject(
                     f"{packet_id}: item belongs to {ledger[item_id].get('packet_id')!r}; kept with its own packet"
                 )
                 continue
-            if item_id in decided:
-                notes.append(f"{packet_id}: duplicate decision ignored")
-                continue
-            decided.add(item_id)
-            if ledger[item_id].get("status") != "scheduled":
-                notes.append(f"{packet_id}: item was not scheduled; ignored")
-                continue
             verdict = decision.get("verdict")
+            if verdict not in ("completed", "failed"):
+                reject(f"{packet_id}: item has no usable verdict; left scheduled")
+                continue
+            if item_id in decided:
+                if decided[item_id] != verdict:
+                    reject(f"{packet_id}: conflicting duplicate decision ignored")
+                else:
+                    validation["duplicates"] += 1
+                    notes.append(f"{packet_id}: duplicate decision ignored")
+                continue
+            if ledger[item_id].get("status") != "scheduled":
+                if ledger[item_id].get("status") == verdict:
+                    validation["duplicates"] += 1
+                    notes.append(f"{packet_id}: duplicate completed/failed decision ignored")
+                else:
+                    reject(f"{packet_id}: item was not scheduled; ignored")
+                continue
+            decided[item_id] = verdict
+            validation["accepted_decisions"] += 1
             if verdict == "completed":
                 ledger[item_id]["status"] = "completed"
             elif verdict == "failed":
@@ -503,9 +629,8 @@ def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[s
                 ledger[item_id]["reasons"].append(
                     redact(str(decision.get("note") or "agent reported failure")[:4096])
                 )
-            else:
-                notes.append(f"{packet_id}: item has no usable verdict; left scheduled")
     report["reconcile_notes"] = notes
+    report["response_validation"] = validation
     report["counts"] = {
         "selected": len(ledger),
         "scheduled": sum(1 for entry in ledger.values() if entry.get("status") == "scheduled"),
@@ -515,7 +640,9 @@ def reconcile(report: dict[str, Any], responses: list[dict[str, Any]]) -> dict[s
         "packets": len(packets),
     }
     report["review_complete"] = (
-        bool(ledger)
+        report_version == PACKET_VERSION
+        and not validation["rejected"]
+        and bool(ledger)
         and all(entry.get("status") == "completed" for entry in ledger.values())
         and all(packet.get("status") == "complete" for packet in packets.values())
     )
